@@ -1,0 +1,63 @@
+.kt-page .ql-side-note div span {
+  width: 81%;
+}
+
+.kt-amount {
+  color: var(--ql-green-dark);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.kt-money-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.kt-money-card {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--ql-line);
+  border-radius: 28px;
+  box-shadow: var(--ql-shadow);
+  display: flex;
+  gap: 18px;
+  padding: 22px;
+}
+
+.kt-money-card > .portal-icon {
+  background: var(--ql-green-soft);
+  border-radius: 18px;
+  color: var(--ql-green-dark);
+  height: 54px;
+  padding: 15px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  width: 54px;
+}
+
+.kt-money-card h2 {
+  color: var(--ql-muted);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+}
+
+.kt-money-card strong {
+  color: var(--ql-heading);
+  display: block;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 24px;
+  margin-top: 4px;
+}
+
+.kt-money-card p {
+  color: var(--ql-green-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .kt-money-grid {
+    grid-template-columns: 1fr;
+  }
+}

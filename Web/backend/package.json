@@ -1,0 +1,20 @@
+{
+  "name": "happyroom-backend",
+  "version": "1.0.0",
+  "description": "Backend skeleton for room rental management system",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "mssql": "^12.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

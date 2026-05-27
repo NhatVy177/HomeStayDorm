@@ -1,0 +1,31 @@
+import * as service from '../services/auth.service.js';
+
+function getToken(req) {
+  const authorization = req.headers.authorization || '';
+  return authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+}
+
+export async function dangKy(req, res, next) {
+  try {
+    res.status(201).json(await service.dangKy(req.body));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function dangNhap(req, res, next) {
+  try {
+    res.json(await service.dangNhap(req.body));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export function getToi(req, res) {
+  res.json(req.user);
+}
+
+export async function dangXuat(req, res) {
+  await service.dangXuat(getToken(req));
+  res.status(204).send();
+}

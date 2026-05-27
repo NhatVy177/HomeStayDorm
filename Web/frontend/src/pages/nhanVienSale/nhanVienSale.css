@@ -1,0 +1,877 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap");
+
+.sale-page {
+  --sale-green: #2fb7a4;
+  --sale-green-dark: #16796f;
+  --sale-green-soft: #eaf7f5;
+  --sale-orange: #e86f51;
+  --sale-orange-dark: #bf4c32;
+  --sale-orange-soft: #fff1ed;
+  --sale-surface: #fff;
+  --sale-soft: #f9fafb;
+  --sale-bg: #f8f9fa;
+  --sale-text: #222;
+  --sale-heading: #1a1a1a;
+  --sale-muted: #555;
+  --sale-subtle: #7b8794;
+  --sale-line: #e9ecef;
+  --sale-line-strong: #dde4e8;
+  --sale-warning-soft: #fff6df;
+  --sale-danger: #c9504b;
+  --sale-danger-soft: #fff1f1;
+  --sale-success: #2d9f7f;
+  --sale-success-soft: #eaf8f3;
+  --sale-shadow: 0 14px 34px rgba(15, 23, 42, 0.075);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(47, 183, 164, 0.055), transparent 30%),
+    radial-gradient(circle at 92% 4%, rgba(232, 111, 81, 0.05), transparent 24%),
+    var(--sale-bg);
+  color: var(--sale-text);
+  font-family: "Inter", "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+.sale-page *,
+.sale-page *::before,
+.sale-page *::after {
+  box-sizing: border-box;
+}
+
+.sale-page button,
+.sale-page input,
+.sale-page select {
+  font: inherit;
+}
+
+.sale-page button {
+  cursor: pointer;
+}
+
+.sale-page h1,
+.sale-page h2,
+.sale-page p {
+  margin: 0;
+}
+
+.sale-frame {
+  margin: 0 auto;
+  width: min(1750px, calc(100% - 150px));
+}
+
+.sale-header {
+  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid var(--sale-line);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.035);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+.sale-header-row {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  height: 84px;
+  justify-content: space-between;
+}
+
+.sale-brand-button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.sale-brand {
+  align-items: center;
+  display: inline-flex;
+  gap: 12px;
+}
+
+.sale-brand-icon {
+  background: #fff;
+  border: 1px solid var(--sale-line);
+  border-radius: 50%;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.055);
+  color: var(--sale-green-dark);
+  display: grid;
+  height: 48px;
+  place-items: center;
+  width: 48px;
+}
+
+.sale-brand-icon .portal-icon {
+  height: 23px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+  width: 23px;
+}
+
+.sale-brand-name {
+  color: var(--sale-heading);
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.018em;
+}
+
+.sale-brand-name strong {
+  color: var(--sale-green-dark);
+  font-weight: 800;
+}
+
+.sale-header-right {
+  align-items: center;
+  display: flex;
+  gap: 24px;
+}
+
+.sale-context {
+  line-height: 1.35;
+  text-align: right;
+}
+
+.sale-context span {
+  color: #777;
+  display: block;
+  font-size: 13px;
+}
+
+.sale-context strong {
+  color: var(--sale-heading);
+  display: block;
+  font-size: 16px;
+}
+
+.sale-account {
+  align-items: center;
+  background: var(--sale-surface);
+  border: 1px solid var(--sale-line);
+  border-radius: 999px;
+  display: flex;
+  gap: 10px;
+  min-width: 196px;
+  padding: 8px 15px 8px 8px;
+}
+
+.sale-avatar {
+  background: linear-gradient(135deg, var(--sale-orange), var(--sale-orange-dark));
+  border-radius: 50%;
+  color: #fff;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  height: 42px;
+  place-items: center;
+  width: 42px;
+}
+
+.sale-account strong,
+.sale-account small {
+  display: block;
+}
+
+.sale-account strong {
+  color: var(--sale-heading);
+  font-size: 14px;
+}
+
+.sale-account small {
+  color: var(--sale-muted);
+  font-size: 11px;
+}
+
+.sale-shell {
+  align-items: start;
+  display: grid;
+  gap: 30px;
+  grid-template-columns: 310px minmax(0, 1fr);
+  min-height: calc(100vh - 84px);
+  padding: 38px 0 42px;
+}
+
+.sale-sidebar {
+  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--sale-line);
+  border-radius: 30px;
+  box-shadow: var(--sale-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: calc(100vh - 132px);
+  overflow: auto;
+  padding: 22px 18px;
+  position: sticky;
+  top: 112px;
+}
+
+.sale-side-label {
+  color: var(--sale-subtle);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0 14px;
+  text-transform: uppercase;
+}
+
+.sale-nav {
+  display: grid;
+  gap: 7px;
+}
+
+.sale-nav-item {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #333;
+  display: flex;
+  font-size: 14.5px;
+  font-weight: 600;
+  gap: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  transition: 0.2s ease;
+  width: 100%;
+}
+
+.sale-nav-item:hover,
+.sale-nav-item.active {
+  color: var(--sale-green-dark);
+}
+
+.sale-nav-item:hover {
+  background: var(--sale-green-soft);
+}
+
+.sale-nav-item.active {
+  background: #fff;
+  border-color: var(--sale-line);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.sale-nav-item > span {
+  background: var(--sale-soft);
+  border: 1px solid var(--sale-line);
+  border-radius: 14px;
+  display: grid;
+  height: 36px;
+  place-items: center;
+  width: 36px;
+}
+
+.sale-nav-item.active > span {
+  background: var(--sale-green-soft);
+  border-color: rgba(47, 183, 164, 0.18);
+}
+
+.sale-nav-item .portal-icon {
+  height: 21px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+  width: 21px;
+}
+
+.sale-side-note {
+  background: linear-gradient(180deg, #fff 0%, #f9fafb 100%);
+  border: 1px solid var(--sale-line);
+  border-radius: 24px;
+  margin-top: auto;
+  padding: 16px;
+}
+
+.sale-side-note strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.sale-side-note p {
+  color: var(--sale-muted);
+  font-size: 13px;
+}
+
+.sale-side-note > div {
+  background: #f1f3f5;
+  border-radius: 999px;
+  height: 9px;
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.sale-side-note > div span {
+  background: linear-gradient(135deg, var(--sale-green), var(--sale-green-dark));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  width: 68%;
+}
+
+.sale-main {
+  min-width: 0;
+}
+
+.sale-page-head {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.sale-page-head h1 {
+  color: var(--sale-heading);
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: clamp(27px, 3vw, 34px);
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.sale-page-head p {
+  color: var(--sale-muted);
+  font-size: 14px;
+  margin-top: 7px;
+}
+
+.sale-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.sale-search {
+  align-items: center;
+  background: var(--sale-surface);
+  border: 1px solid var(--sale-line);
+  border-radius: 999px;
+  color: var(--sale-muted);
+  display: flex;
+  gap: 8px;
+  padding: 0 13px;
+}
+
+.sale-search .portal-icon {
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  width: 18px;
+}
+
+.sale-search input {
+  background: transparent;
+  border: 0;
+  outline: 0;
+  padding: 11px 0;
+  width: 195px;
+}
+
+.sale-btn {
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.sale-btn.primary {
+  background: linear-gradient(135deg, var(--sale-orange), var(--sale-orange-dark));
+  border: 0;
+  box-shadow: 0 12px 24px rgba(232, 111, 81, 0.2);
+  color: #fff;
+}
+
+.sale-btn.secondary {
+  background: #fff;
+  border: 1px solid var(--sale-line-strong);
+  color: var(--sale-green-dark);
+}
+
+.sale-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.sale-stats,
+.sale-three-col {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.sale-three-col {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.sale-stat {
+  align-items: flex-start;
+  background: var(--sale-surface);
+  border: 1px solid var(--sale-line);
+  border-radius: 24px;
+  box-shadow: var(--sale-shadow);
+  display: flex;
+  gap: 13px;
+  padding: 18px;
+}
+
+.sale-stat > span {
+  background: var(--sale-green-soft);
+  border-radius: 16px;
+  color: var(--sale-green-dark);
+  display: grid;
+  flex-shrink: 0;
+  height: 48px;
+  place-items: center;
+  width: 48px;
+}
+
+.sale-stat .portal-icon {
+  height: 24px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+  width: 24px;
+}
+
+.sale-stat strong {
+  color: var(--sale-heading);
+  display: block;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 27px;
+  line-height: 1;
+}
+
+.sale-stat p {
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.sale-stat small {
+  color: var(--sale-green-dark);
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.sale-card,
+.sale-table-card {
+  background: var(--sale-surface);
+  border: 1px solid var(--sale-line);
+  border-radius: 28px;
+  box-shadow: var(--sale-shadow);
+  padding: 22px;
+}
+
+.sale-card-head,
+.sale-table-head {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.sale-card h2,
+.sale-table-card h2,
+.sale-room-card h2 {
+  color: var(--sale-heading);
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 18px;
+  letter-spacing: -0.025em;
+}
+
+.sale-card-head p,
+.sale-table-head p {
+  color: var(--sale-muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.sale-pipeline {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.sale-pipeline div {
+  background: var(--sale-soft);
+  border: 1px solid var(--sale-line);
+  border-radius: 19px;
+  padding: 16px;
+}
+
+.sale-pipeline strong {
+  color: var(--sale-green-dark);
+  display: block;
+  font-size: 27px;
+}
+
+.sale-pipeline span {
+  color: var(--sale-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.sale-two-col {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(560px, 1.55fr) minmax(290px, 0.85fr);
+}
+
+.sale-table-wrap {
+  overflow-x: auto;
+}
+
+.sale-table-wrap table {
+  border-collapse: collapse;
+  min-width: 700px;
+  width: 100%;
+}
+
+.sale-table-wrap th {
+  color: var(--sale-subtle);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  padding: 0 11px 12px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.sale-table-wrap td {
+  border-top: 1px solid var(--sale-line);
+  font-size: 13.5px;
+  padding: 13px 11px;
+  vertical-align: middle;
+}
+
+.sale-person {
+  align-items: center;
+  display: flex;
+  gap: 9px;
+}
+
+.sale-person > span {
+  background: var(--sale-green-soft);
+  border-radius: 50%;
+  color: var(--sale-green-dark);
+  display: grid;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  height: 34px;
+  place-items: center;
+  width: 34px;
+}
+
+.sale-person strong,
+.sale-person small {
+  display: block;
+}
+
+.sale-person small {
+  color: var(--sale-muted);
+  font-size: 12px;
+}
+
+.sale-room-pill {
+  background: var(--sale-green-soft);
+  border-radius: 999px;
+  color: var(--sale-green-dark);
+  display: inline-flex;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.sale-status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 750;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.sale-status.good {
+  background: var(--sale-success-soft);
+  color: var(--sale-success);
+}
+
+.sale-status.wait {
+  background: var(--sale-warning-soft);
+  color: #a96b16;
+}
+
+.sale-status.neutral {
+  background: #eef4f3;
+  color: #536663;
+}
+
+.sale-row-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.sale-todos {
+  display: grid;
+  gap: 11px;
+}
+
+.sale-todos > div {
+  background: var(--sale-soft);
+  border: 1px solid var(--sale-line);
+  border-radius: 18px;
+  padding: 13px;
+}
+
+.sale-todos strong {
+  display: block;
+  font-size: 14px;
+  margin: 9px 0 3px;
+}
+
+.sale-todos p {
+  color: var(--sale-muted);
+  font-size: 13px;
+}
+
+.sale-filters {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.sale-filters label {
+  color: var(--sale-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sale-filters input,
+.sale-filters select {
+  background: var(--sale-soft);
+  border: 1px solid var(--sale-line);
+  border-radius: 14px;
+  color: var(--sale-text);
+  display: block;
+  margin-top: 7px;
+  outline: none;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+.sale-timeline {
+  display: grid;
+  gap: 12px;
+}
+
+.sale-timeline > div {
+  align-items: start;
+  display: grid;
+  gap: 11px;
+  grid-template-columns: 34px 1fr;
+}
+
+.sale-timeline > div > span {
+  background: var(--sale-green-soft);
+  border-radius: 13px;
+  color: var(--sale-green-dark);
+  display: grid;
+  font-weight: 800;
+  height: 34px;
+  place-items: center;
+}
+
+.sale-timeline div div {
+  border-bottom: 1px solid var(--sale-line);
+  padding-bottom: 12px;
+}
+
+.sale-timeline div:last-child div {
+  border-bottom: 0;
+}
+
+.sale-timeline strong,
+.sale-timeline small {
+  display: block;
+}
+
+.sale-timeline small {
+  color: var(--sale-muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.sale-checklist {
+  display: grid;
+  gap: 10px;
+}
+
+.sale-checklist > div {
+  align-items: center;
+  background: var(--sale-soft);
+  border: 1px solid var(--sale-line);
+  border-radius: 17px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 35px 1fr auto;
+  padding: 12px;
+}
+
+.sale-checklist .portal-icon {
+  color: var(--sale-green-dark);
+  height: 23px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  width: 23px;
+}
+
+.sale-checklist strong,
+.sale-checklist small {
+  display: block;
+}
+
+.sale-checklist small {
+  color: var(--sale-muted);
+}
+
+.sale-room-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.sale-room-card {
+  background: #fff;
+  border: 1px solid var(--sale-line);
+  border-radius: 24px;
+  box-shadow: var(--sale-shadow);
+  padding: 20px;
+}
+
+.sale-room-card h2 {
+  margin-top: 16px;
+}
+
+.sale-room-card p {
+  color: var(--sale-muted);
+  font-size: 13px;
+  margin: 6px 0 16px;
+}
+
+.sale-room-card > div {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.sale-room-card > div span {
+  color: var(--sale-muted);
+  display: flex;
+  font-size: 13px;
+  justify-content: space-between;
+}
+
+.sale-room-card strong {
+  color: var(--sale-heading);
+}
+
+@media (max-width: 1280px) {
+  .sale-frame {
+    width: min(100% - 40px, 1280px);
+  }
+
+  .sale-shell {
+    grid-template-columns: 255px minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .sale-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sale-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .sale-header-row,
+  .sale-page-head {
+    align-items: stretch;
+    height: auto;
+    padding: 14px 0;
+  }
+
+  .sale-page-head {
+    flex-direction: column;
+  }
+
+  .sale-shell {
+    display: block;
+    padding-top: 18px;
+  }
+
+  .sale-sidebar {
+    margin-bottom: 20px;
+    max-height: none;
+    position: static;
+  }
+
+  .sale-nav {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .sale-nav-item {
+    flex: 0 0 188px;
+  }
+
+  .sale-three-col,
+  .sale-room-grid,
+  .sale-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .sale-frame {
+    width: min(100% - 28px, 1280px);
+  }
+
+  .sale-context {
+    display: none;
+  }
+
+  .sale-account {
+    min-width: auto;
+  }
+
+  .sale-account div {
+    display: none;
+  }
+
+  .sale-stats,
+  .sale-pipeline {
+    grid-template-columns: 1fr;
+  }
+
+  .sale-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sale-search input {
+    width: 100%;
+  }
+}

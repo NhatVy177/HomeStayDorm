@@ -1,0 +1,446 @@
+import React, { useState } from 'react';
+import { useAuth } from '../../auth/AuthContext.jsx';
+import { EmployeeAccountMenu, EmployeeAccountView } from '../../components/common/EmployeeAccount.jsx';
+import PortalIcon from '../../components/common/PortalIcon.jsx';
+import './nhanVienQuanLy.css';
+
+const views = [
+  {
+    id: 'overview',
+    icon: 'dashboard',
+    label: 'Tổng quan',
+    title: 'Tổng quan nhân viên quản lý',
+    subtitle: 'Theo dõi xác nhận cọc, bàn giao phòng, bảo trì và kiểm tra trả phòng trong một màn hình.'
+  },
+  {
+    id: 'deposits',
+    icon: 'deposit',
+    label: 'Xác nhận cọc',
+    title: 'Xác nhận cọc',
+    subtitle: 'Kiểm tra phiếu cọc, phòng/giường liên quan, trạng thái hiện tại và minh chứng thanh toán.'
+  },
+  {
+    id: 'handover',
+    icon: 'contract',
+    label: 'Bàn giao phòng',
+    title: 'Bàn giao phòng',
+    subtitle: 'Kiểm tra thực tế phòng/giường, tài sản đi kèm và xác nhận khách nhận phòng.'
+  },
+  {
+    id: 'maintenance',
+    icon: 'repair',
+    label: 'Bảo trì / Sửa chữa',
+    title: 'Bảo trì / Sửa chữa',
+    subtitle: 'Tiếp nhận yêu cầu sửa chữa từ khách, cập nhật xử lý và ghi nhận chi phí nếu có.'
+  },
+  {
+    id: 'returns',
+    icon: 'checkout',
+    label: 'Kiểm tra trả phòng',
+    title: 'Kiểm tra trả phòng',
+    subtitle: 'Đối chiếu tài sản khi khách trả phòng và ghi nhận chi phí phát sinh.'
+  },
+  {
+    id: 'rooms',
+    icon: 'building',
+    label: 'Phòng/Giường',
+    title: 'Phòng/Giường',
+    subtitle: 'Theo dõi trạng thái phòng/giường phục vụ bàn giao, bảo trì và trả phòng.'
+  },
+  {
+    id: 'assets',
+    icon: 'asset',
+    label: 'Tài sản',
+    title: 'Tài sản',
+    subtitle: 'Quản lý tài sản theo phòng/giường, tình trạng hiện tại và lịch sử hư hỏng.'
+  }
+];
+
+// UI seed drawn from records assigned to manager NV0003 in database/sql/data.sql.
+const contracts = [
+  { id: 'HD0003', customer: 'Lê Quốc Cường', room: 'P103', deposit: 'PC0003', status: 'Hiệu lực', tone: 'good' },
+  { id: 'HD0006', customer: 'Võ Gia Hân', room: 'P202 · G02', deposit: 'PC0006', status: 'Hiệu lực', tone: 'good' },
+  { id: 'HD0009', customer: 'Huỳnh Nhật Nam', room: 'P201 · G01', deposit: 'PC0009', status: 'Đã thanh lý', tone: 'neutral' },
+  { id: 'HD0012', customer: 'Đinh Đức Quang', room: 'P301 · G01', deposit: 'PC0012', status: 'Hiệu lực', tone: 'good' }
+];
+
+const handovers = [
+  { id: 'BB0003', customer: 'Lê Quốc Cường', room: 'P103', date: '01/05/2025', type: 'Bàn giao vào', tone: 'good' },
+  { id: 'BB0006', customer: 'Võ Gia Hân', room: 'P202 · G02', date: '01/08/2025', type: 'Bàn giao vào', tone: 'good' },
+  { id: 'BB0013', customer: 'Huỳnh Nhật Nam', room: 'P201 · G01', date: '31/12/2024', type: 'Bàn giao ra', tone: 'neutral' },
+  { id: 'BB0014', customer: 'Võ Gia Hân', room: 'P202 · G02', date: '01/02/2026', type: 'Bàn giao ra', tone: 'wait' }
+];
+
+const maintenance = [
+  { id: 'SC0001', room: 'P101', asset: 'Máy lạnh', issue: 'Máy lạnh không lạnh', status: 'Hoàn tất', cost: '350.000đ', tone: 'good' },
+  { id: 'SC0002', room: 'P102', asset: 'Tủ cá nhân', issue: 'Ổ khóa tủ bị kẹt', status: 'Đang xử lý', cost: '0đ', tone: 'wait' },
+  { id: 'SC0003', room: 'P202', asset: 'Nệm', issue: 'Nệm bị rách', status: 'Hoàn tất', cost: '200.000đ', tone: 'good' },
+  { id: 'SC0007', room: 'P105', asset: 'Tủ cá nhân', issue: 'Hỏng bản lề', status: 'Hoàn tất', cost: '250.000đ', tone: 'good' }
+];
+
+const returnChecks = [
+  { id: 'KT0001', request: 'PT0002', room: 'P102', date: '15/01/2026', condition: 'Mất 1 thẻ từ', cost: '100.000đ' },
+  { id: 'KT0002', request: 'PT0003', room: 'P202', date: '12/01/2026', condition: 'Nệm rách nhẹ', cost: '200.000đ' },
+  { id: 'KT0005', request: 'PT0007', room: 'P105', date: '20/01/2026', condition: 'Hỏng tủ và mất thẻ', cost: '350.000đ' }
+];
+
+const rooms = [
+  { id: 'P103', status: 'Đang thuê', type: 'Phòng 4 người', note: 'HD0003 · Lê Quốc Cường', tone: 'wait' },
+  { id: 'P202', status: 'Chờ trả phòng', type: 'Phòng 2 người', note: 'HD0006 · Võ Gia Hân', tone: 'neutral' },
+  { id: 'P201', status: 'Đã thu hồi', type: 'Phòng 2 người', note: 'BB0013 · Đã bàn giao ra', tone: 'good' },
+  { id: 'P301', status: 'Đang thuê', type: 'Phòng 2 người', note: 'HD0012 · Đinh Đức Quang', tone: 'wait' }
+];
+
+const assets = [
+  { id: 'TS0004', name: 'Chìa khóa/thẻ từ', room: 'P102', status: 'Thiếu 1 thẻ', note: 'KT0001 · 100.000đ', tone: 'danger' },
+  { id: 'TS0002', name: 'Nệm', room: 'P202', status: 'Cần sửa', note: 'KT0002 · 200.000đ', tone: 'wait' },
+  { id: 'TS0003', name: 'Tủ cá nhân', room: 'P105', status: 'Hỏng bản lề', note: 'KT0005 · 250.000đ', tone: 'danger' },
+  { id: 'TS0004', name: 'Chìa khóa/thẻ từ', room: 'P301', status: 'Đã bàn giao', note: 'BB0012', tone: 'good' }
+];
+
+function initials(name = '') {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(-2)
+    .map((part) => part.charAt(0))
+    .join('')
+    .toUpperCase() || 'QL';
+}
+
+function Status({ tone = 'neutral', children }) {
+  return <span className={`ql-status ${tone}`}>{children}</span>;
+}
+
+function Button({ primary = false, children }) {
+  return <button className={`ql-btn ${primary ? 'primary' : 'secondary'}`} type="button">{children}</button>;
+}
+
+function Person({ name, detail }) {
+  return (
+    <div className="ql-person">
+      <span>{initials(name)}</span>
+      <div><strong>{name}</strong><small>{detail}</small></div>
+    </div>
+  );
+}
+
+function Brand() {
+  return (
+    <span className="ql-brand">
+      <span className="ql-brand-icon"><PortalIcon name="home" /></span>
+      <span className="ql-brand-name">Homestay <strong>Dorm</strong></span>
+    </span>
+  );
+}
+
+export default function NhanVienQuanLyPage() {
+  const { user, dangXuat } = useAuth();
+  const [activeView, setActiveView] = useState('overview');
+  const currentView = activeView === 'account'
+    ? { title: 'Thông tin tài khoản', subtitle: 'Xem thông tin tài khoản nhân viên đang đăng nhập.' }
+    : views.find((view) => view.id === activeView) || views[0];
+
+  return (
+    <div className="ql-page">
+      <header className="ql-header">
+        <div className="ql-frame ql-header-row">
+          <button className="ql-brand-button" type="button" onClick={() => setActiveView('overview')}>
+            <Brand />
+          </button>
+          <div className="ql-header-right">
+            <div className="ql-context">
+              <span>Cổng nhân viên</span>
+              <strong>Quản lý vận hành phòng</strong>
+            </div>
+            <EmployeeAccountMenu
+              user={user}
+              positionLabel="Nhân viên quản lý"
+              onShowAccount={() => setActiveView('account')}
+              onLogout={dangXuat}
+            />
+          </div>
+        </div>
+      </header>
+
+      <div className="ql-frame ql-shell">
+        <aside className="ql-sidebar">
+          <p className="ql-side-label">Menu chính</p>
+          <nav className="ql-nav">
+            {views.map((view) => (
+              <button
+                className={`ql-nav-item ${activeView === view.id ? 'active' : ''}`}
+                key={view.id}
+                type="button"
+                onClick={() => setActiveView(view.id)}
+              >
+                <span><PortalIcon name={view.icon} /></span>
+                {view.label}
+              </button>
+            ))}
+          </nav>
+          <div className="ql-side-note">
+            <strong>Ca trực hôm nay</strong>
+            <p>Ưu tiên bàn giao phòng, yêu cầu sửa chữa và kiểm tra trả phòng đang chờ xử lý.</p>
+            <div><span /></div>
+          </div>
+        </aside>
+
+        <main className="ql-main">
+          <section className="ql-page-head">
+            <div>
+              <h1>{currentView.title}</h1>
+              <p>{currentView.subtitle}</p>
+            </div>
+            {activeView !== 'account' && <div className="ql-actions">
+              <label className="ql-search">
+                <PortalIcon name="search" />
+                <input type="search" placeholder="Tìm khách, phòng, yêu cầu..." />
+              </label>
+            </div>}
+          </section>
+
+          {activeView === 'account' && <EmployeeAccountView user={user} positionLabel="Nhân viên quản lý" />}
+          {activeView === 'overview' && <Overview />}
+          {activeView === 'deposits' && <Deposits />}
+          {activeView === 'handover' && <Handovers />}
+          {activeView === 'maintenance' && <Maintenance />}
+          {activeView === 'returns' && <ReturnChecks />}
+          {activeView === 'rooms' && <Rooms />}
+          {activeView === 'assets' && <Assets />}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function Overview() {
+  return (
+    <section className="ql-stack">
+      <div className="ql-stats">
+        <article className="ql-stat"><span><PortalIcon name="deposit" /></span><div><strong>04</strong><p>Hợp đồng phụ trách</p><small>Hồ sơ vận hành mẫu</small></div></article>
+        <article className="ql-stat"><span><PortalIcon name="contract" /></span><div><strong>06</strong><p>Biên bản bàn giao</p><small>Vào và ra phòng</small></div></article>
+        <article className="ql-stat"><span><PortalIcon name="repair" /></span><div><strong>04</strong><p>Yêu cầu sửa chữa</p><small>01 đang xử lý</small></div></article>
+        <article className="ql-stat"><span><PortalIcon name="checkout" /></span><div><strong>03</strong><p>Kiểm tra trả phòng</p><small>Có chi phí phát sinh</small></div></article>
+      </div>
+      <article className="ql-card">
+        <div className="ql-card-head">
+          <div><h2>Luồng công việc quản lý</h2><p>Xác nhận thông tin, bàn giao, xử lý bảo trì và kiểm tra trả phòng.</p></div>
+          <Button primary>Xem lịch xử lý</Button>
+        </div>
+        <div className="ql-pipeline">
+          <div><strong>04</strong><span>Hợp đồng quản lý</span></div>
+          <div><strong>04</strong><span>Bàn giao vào</span></div>
+          <div><strong>04</strong><span>Bảo trì / sửa chữa</span></div>
+          <div><strong>03</strong><span>Kiểm tra trả phòng</span></div>
+        </div>
+      </article>
+      <div className="ql-two-col">
+        <article className="ql-table-card">
+          <div className="ql-table-head"><div><h2>Hợp đồng đang phụ trách</h2><p>Các hợp đồng được phân công cho nhân viên quản lý.</p></div></div>
+          <div className="ql-table-wrap">
+            <table>
+              <thead><tr><th>Hợp đồng</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Phiếu cọc</th><th>Trạng thái</th></tr></thead>
+              <tbody>
+                {contracts.map((contract) => (
+                  <tr key={contract.id}>
+                    <td><strong>{contract.id}</strong></td>
+                    <td><Person name={contract.customer} detail={contract.deposit} /></td>
+                    <td><span className="ql-room-pill">{contract.room}</span></td>
+                    <td>{contract.deposit}</td>
+                    <td><Status tone={contract.tone}>{contract.status}</Status></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+        <article className="ql-card">
+          <div className="ql-card-head"><div><h2>Việc cần theo dõi</h2><p>Các hồ sơ đang có bước xử lý tiếp.</p></div></div>
+          <div className="ql-todos">
+            <div><Status tone="wait">Đang xử lý</Status><strong>SC0002 · Ổ khóa tủ bị kẹt</strong><p>Phòng P102 đã có lịch thợ sửa.</p></div>
+            <div><Status tone="danger">Chi phí</Status><strong>KT0005 · P105</strong><p>Hỏng tủ cá nhân và mất thẻ, tổng 350.000đ.</p></div>
+            <div><Status tone="good">Hoàn tất</Status><strong>BB0013 · P201</strong><p>Đã bàn giao ra và thu hồi tài sản.</p></div>
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function Deposits() {
+  return (
+    <section className="ql-stack">
+      <FilterBar search="Mã phiếu, tên khách, phòng/giường..." labels={['Trạng thái phiếu', 'Trạng thái phòng', 'Chi nhánh']} />
+      <article className="ql-table-card">
+        <div className="ql-table-head"><div><h2>Phiếu cọc của hợp đồng quản lý</h2><p>Sườn kiểm tra thông tin cọc trước bước bàn giao phòng.</p></div><Button primary>Xác nhận cọc</Button></div>
+        <div className="ql-table-wrap">
+          <table>
+            <thead><tr><th>Phiếu cọc</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Hợp đồng</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <tbody>
+              {contracts.map((contract) => (
+                <tr key={contract.deposit}>
+                  <td><strong>{contract.deposit}</strong></td>
+                  <td>{contract.customer}</td>
+                  <td><span className="ql-room-pill">{contract.room}</span></td>
+                  <td>{contract.id}</td>
+                  <td><Status tone={contract.tone}>{contract.status}</Status></td>
+                  <td><Button>Kiểm tra</Button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  );
+}
+
+function Handovers() {
+  return (
+    <section className="ql-two-col">
+      <article className="ql-table-card">
+        <div className="ql-table-head"><div><h2>Danh sách bàn giao</h2><p>Biên bản do nhân viên quản lý lập hoặc xác nhận.</p></div><Button primary>Tạo biên bản</Button></div>
+        <div className="ql-table-wrap">
+          <table>
+            <thead><tr><th>Mã</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Ngày</th><th>Loại bàn giao</th><th>Thao tác</th></tr></thead>
+            <tbody>
+              {handovers.map((item) => (
+                <tr key={item.id}>
+                  <td><strong>{item.id}</strong></td>
+                  <td>{item.customer}</td>
+                  <td><span className="ql-room-pill">{item.room}</span></td>
+                  <td>{item.date}</td>
+                  <td><Status tone={item.tone}>{item.type}</Status></td>
+                  <td><Button>Chi tiết</Button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article className="ql-card">
+        <div className="ql-card-head"><div><h2>Checklist bàn giao</h2><p>Các mục kiểm tra thực tế tại phòng.</p></div></div>
+        <div className="ql-checklist">
+          <div><PortalIcon name="building" /><span><strong>Tình trạng phòng</strong><small>Vệ sinh, điện nước, khóa cửa</small></span><Status tone="good">Bắt buộc</Status></div>
+          <div><PortalIcon name="asset" /><span><strong>Kiểm kê tài sản</strong><small>Giường, nệm, tủ, thẻ từ</small></span><Status tone="wait">Cần ảnh</Status></div>
+          <div><PortalIcon name="contract" /><span><strong>Biên bản ký nhận</strong><small>Khách xác nhận bàn giao</small></span><Status tone="neutral">Lưu hồ sơ</Status></div>
+        </div>
+      </article>
+    </section>
+  );
+}
+
+function Maintenance() {
+  return (
+    <section className="ql-stack">
+      <FilterBar search="Mã yêu cầu, phòng, tài sản hư hỏng..." labels={['Trạng thái xử lý', 'Loại tài sản', 'Mức chi phí']} />
+      <article className="ql-table-card">
+        <div className="ql-table-head"><div><h2>Yêu cầu sửa chữa đang phụ trách</h2><p>Các yêu cầu được phân công cho nhân viên quản lý.</p></div><Button primary>Tạo yêu cầu nội bộ</Button></div>
+        <div className="ql-table-wrap">
+          <table>
+            <thead><tr><th>Mã yêu cầu</th><th>Phòng</th><th>Tài sản</th><th>Mô tả</th><th>Chi phí</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <tbody>
+              {maintenance.map((item) => (
+                <tr key={item.id}>
+                  <td><strong>{item.id}</strong></td>
+                  <td><span className="ql-room-pill">{item.room}</span></td>
+                  <td>{item.asset}</td>
+                  <td>{item.issue}</td>
+                  <td>{item.cost}</td>
+                  <td><Status tone={item.tone}>{item.status}</Status></td>
+                  <td><Button>Cập nhật</Button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  );
+}
+
+function ReturnChecks() {
+  return (
+    <section className="ql-stack">
+      <article className="ql-table-card">
+        <div className="ql-table-head"><div><h2>Danh sách kiểm tra trả phòng</h2><p>Biên bản kiểm tra đang được nhân viên quản lý xử lý.</p></div><Button primary>Lập lịch kiểm tra</Button></div>
+        <div className="ql-table-wrap">
+          <table>
+            <thead><tr><th>Biên bản</th><th>Phiếu trả</th><th>Phòng</th><th>Ngày kiểm tra</th><th>Tình trạng</th><th>Chi phí</th><th>Thao tác</th></tr></thead>
+            <tbody>
+              {returnChecks.map((item) => (
+                <tr key={item.id}>
+                  <td><strong>{item.id}</strong></td>
+                  <td>{item.request}</td>
+                  <td><span className="ql-room-pill">{item.room}</span></td>
+                  <td>{item.date}</td>
+                  <td>{item.condition}</td>
+                  <td><Status tone="danger">{item.cost}</Status></td>
+                  <td><Button>Chi tiết</Button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <div className="ql-three-col">
+        <article className="ql-card"><h2>Kiểm tra phòng</h2><p>Đối chiếu điện nước, vệ sinh, khóa cửa và nội thất cố định.</p></article>
+        <article className="ql-card"><h2>Đối chiếu tài sản</h2><p>So với biên bản bàn giao để xác định thiếu hoặc hư hỏng.</p></article>
+        <article className="ql-card"><h2>Ghi nhận chi phí</h2><p>Ghi chi phí sửa chữa phục vụ bước đối soát hoàn cọc.</p></article>
+      </div>
+    </section>
+  );
+}
+
+function Rooms() {
+  return (
+    <section className="ql-room-grid">
+      {rooms.map((room) => (
+        <article className="ql-room-card" key={room.id}>
+          <Status tone={room.tone}>{room.status}</Status>
+          <h2>Phòng {room.id}</h2>
+          <p>{room.note}</p>
+          <div><span>Loại phòng<strong>{room.type}</strong></span><span>Mã phòng<strong>{room.id}</strong></span></div>
+          <Button primary>Xem tài sản</Button>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+function Assets() {
+  return (
+    <article className="ql-table-card">
+      <div className="ql-table-head"><div><h2>Danh sách tài sản cần theo dõi</h2><p>Dữ liệu tài sản xuất hiện trong bàn giao và kiểm tra trả phòng.</p></div><Button primary>Thêm tài sản</Button></div>
+      <div className="ql-table-wrap">
+        <table>
+          <thead><tr><th>Mã tài sản</th><th>Tên tài sản</th><th>Phòng</th><th>Tình trạng</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
+          <tbody>
+            {assets.map((asset, index) => (
+              <tr key={`${asset.id}-${asset.room}-${index}`}>
+                <td><strong>{asset.id}</strong></td>
+                <td>{asset.name}</td>
+                <td><span className="ql-room-pill">{asset.room}</span></td>
+                <td><Status tone={asset.tone}>{asset.status}</Status></td>
+                <td>{asset.note}</td>
+                <td><Button>Cập nhật</Button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  );
+}
+
+function FilterBar({ search, labels }) {
+  return (
+    <div className="ql-filters">
+      <label>Tìm kiếm<input placeholder={search} /></label>
+      {labels.map((label) => (
+        <label key={label}>{label}<select><option>Tất cả</option><option>Đang xử lý</option><option>Hoàn tất</option></select></label>
+      ))}
+    </div>
+  );
+}

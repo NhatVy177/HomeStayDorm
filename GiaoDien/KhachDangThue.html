@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Homestay Dorm - Cổng khách hàng</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --green:#2fb7a4;
+      --green-dark:#16796f;
+      --green-soft:#eaf7f5;
+      --brick:#e86f51;
+      --brick-dark:#bf4c32;
+      --brick-soft:#fff1ed;
+      --bg:#f8f9fa;
+      --surface:#ffffff;
+      --surface-soft:#f8fafb;
+      --text:#222222;
+      --heading:#1a1a1a;
+      --muted:#555555;
+      --subtle:#717171;
+      --line:#e9ecef;
+      --line-strong:#dde4e8;
+      --white:#ffffff;
+      --warning:#d9902f;
+      --warning-soft:#fff7e8;
+      --danger:#c9504b;
+      --danger-soft:#fff0ef;
+      --success:#2d9f7f;
+      --success-soft:#eaf8f3;
+      --shadow:0 18px 42px rgba(30,41,59,.10);
+      --shadow-soft:0 10px 24px rgba(30,41,59,.06);
+      --radius-xl:30px;
+      --radius-lg:22px;
+      --radius-md:16px;
+      --radius-sm:12px;
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{
+      min-height:100vh;
+      font-family:"Inter","Be Vietnam Pro","Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.6;
+    }
+    a{text-decoration:none;color:inherit;}
+    button,input,select,textarea{font:inherit;}
+    button{cursor:pointer;}
+    img{max-width:100%;display:block;}
+
+    .container{width:min(1180px,calc(100% - 40px));margin:0 auto;}
+
+    .site-header{
+      position:sticky;top:0;z-index:50;
+      background:rgba(255,255,255,.98);
+      backdrop-filter:blur(18px);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar{
+      min-height:82px;
+      display:flex;align-items:center;gap:18px;
+    }
+    .brand{display:flex;align-items:center;gap:12px;min-width:max-content;}
+    .brand-icon{
+      width:46px;height:46px;border-radius:17px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--green-soft),#fff);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-soft);
+      color:var(--green-dark);
+    }
+    .brand-icon svg{width:24px;height:24px;}
+    .brand-text{line-height:1.15;}
+    .brand-name{font-family:"Be Vietnam Pro",sans-serif;font-size:17px;font-weight:800;letter-spacing:-.02em;}
+    .brand-note{font-size:12px;font-weight:600;color:var(--muted);margin-top:2px;}
+
+    .nav-tabs{
+      margin-left:auto;
+      display:flex;align-items:center;justify-content:flex-end;gap:6px;
+      flex-wrap:wrap;
+    }
+    .nav-tab{
+      border:1px solid transparent;
+      background:transparent;
+      color:var(--muted);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:13.5px;
+      font-weight:700;
+      transition:.18s ease;
+      white-space:nowrap;
+    }
+    .nav-tab:hover{background:var(--green-soft);color:var(--green-dark);}
+    .nav-tab.active{
+      background:var(--surface);
+      border-color:var(--line-strong);
+      color:var(--green-dark);
+      box-shadow:var(--shadow-soft);
+    }
+
+
+    /* Header gọn theo nhóm chức năng */
+    .nav-group{position:relative;display:flex;align-items:center;}
+    .nav-group > .nav-tab::after{content:"⌄";font-size:12px;margin-left:6px;opacity:.68;}
+    .nav-dropdown{
+      position:absolute;top:calc(100% + 10px);left:0;min-width:245px;
+      background:var(--surface);border:1px solid var(--line);border-radius:20px;
+      box-shadow:var(--shadow);padding:8px;display:none;z-index:80;
+    }
+    .nav-group:hover .nav-dropdown,
+    .nav-group:focus-within .nav-dropdown{display:grid;gap:4px;}
+    .dropdown-item{
+      width:100%;border:0;background:transparent;text-align:left;
+      padding:10px 12px;border-radius:13px;color:var(--text);font-weight:750;
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+    }
+    .dropdown-item:hover{background:var(--green-soft);color:var(--green-dark);}
+    .dropdown-item.active{background:var(--green-soft);color:var(--green-dark);}
+    .dropdown-item span{font-size:12px;color:var(--muted);font-weight:700;}
+    .page-local-nav{
+      display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 18px;
+      padding:8px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.86);
+      width:fit-content;max-width:100%;
+    }
+    .local-link{
+      border:0;background:transparent;color:var(--muted);font-weight:800;
+      padding:8px 11px;border-radius:999px;font-size:13px;
+    }
+    .local-link:hover,.local-link.active{background:var(--green-soft);color:var(--green-dark);}
+
+
+
+    .header-context{
+      margin-left:auto;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      color:var(--subtle);
+      font-size:12px;
+      line-height:1.25;
+      padding-right:4px;
+    }
+    .header-context strong{
+      color:var(--heading);
+      font-size:14px;
+      margin-top:2px;
+    }
+
+    .app-shell{
+      width:min(1360px,calc(100% - 40px));
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:292px minmax(0,1fr);
+      gap:24px;
+      align-items:start;
+    }
+    .sidebar{
+      position:sticky;
+      top:100px;
+      max-height:calc(100vh - 120px);
+      overflow:auto;
+      padding:18px;
+      margin:30px 0 54px;
+      background:rgba(255,255,255,.98);
+      border:1px solid var(--line);
+      border-radius:28px;
+      box-shadow:var(--shadow-soft);
+    }
+    .sidebar::-webkit-scrollbar{width:6px;}
+    .sidebar::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:999px;}
+    .sidebar-card{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:13px;
+      border-radius:20px;
+      background:var(--surface-soft);
+      border:1px solid var(--line);
+      margin-bottom:18px;
+    }
+    .sidebar-avatar{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg,var(--brick),var(--brick-dark));
+      color:#fff;
+      font-weight:900;
+      font-size:13px;
+      flex-shrink:0;
+    }
+    .user-summary strong{display:block;color:var(--heading);font-size:14px;}
+    .user-summary span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;}
+    .side-nav{display:grid;gap:18px;}
+    .side-label{
+      margin:0 0 8px 8px;
+      color:var(--subtle);
+      font-size:11.5px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .side-group{display:grid;gap:6px;}
+    .side-link{
+      width:100%;
+      border:1px solid transparent;
+      background:transparent;
+      color:var(--text);
+      border-radius:18px;
+      padding:11px;
+      display:grid;
+      grid-template-columns:34px 1fr;
+      gap:10px;
+      align-items:start;
+      text-align:left;
+      transition:.18s ease;
+    }
+    .side-link > span{
+      width:34px;
+      height:34px;
+      border-radius:13px;
+      display:grid;
+      place-items:center;
+      background:#f3f5f6;
+      border:1px solid var(--line);
+      font-size:15px;
+    }
+    .side-link strong{
+      display:block;
+      color:var(--heading);
+      font-size:13.5px;
+      line-height:1.25;
+    }
+    .side-link small{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      margin-top:2px;
+      font-weight:650;
+    }
+    .side-link:hover{
+      background:var(--surface-soft);
+      border-color:var(--line);
+      transform:translateX(2px);
+    }
+    .side-link.active{
+      background:var(--green-soft);
+      border-color:#cdebe5;
+      box-shadow:0 10px 20px rgba(47,183,164,.10);
+    }
+    .side-link.active > span{
+      background:#fff;
+      color:var(--green-dark);
+      border-color:#cdebe5;
+    }
+    .side-link.active strong{color:var(--green-dark);}
+    .sidebar-help{
+      margin-top:18px;
+      padding:14px;
+      border-radius:20px;
+      background:var(--brick-soft);
+      border:1px solid #ffe0d7;
+    }
+    .sidebar-help strong{display:block;color:var(--brick-dark);font-size:13.5px;}
+    .sidebar-help p{color:var(--muted);font-size:12.5px;margin-top:4px;}
+
+
+
+    .customer-state-switch{
+      margin:-6px 0 18px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:#fff;
+    }
+    .customer-state-switch p{
+      color:var(--subtle);
+      font-size:11.5px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin:0 0 8px;
+    }
+    .state-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .state-btn{
+      border:1px solid var(--line);
+      background:var(--surface-soft);
+      color:var(--muted);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      font-weight:850;
+      transition:.18s ease;
+    }
+    .state-btn.active{
+      background:var(--green-soft);
+      border-color:#cdebe5;
+      color:var(--green-dark);
+      box-shadow:0 8px 16px rgba(47,183,164,.10);
+    }
+    body[data-customer-state="new"] .state-renter-only{display:none !important;}
+    body[data-customer-state="renter"] .state-new-only{display:none !important;}
+    body[data-customer-state="new"] .side-link.requires-contract{
+      opacity:.56;
+      cursor:not-allowed;
+      background:#f6f7f8;
+      border-color:var(--line);
+      filter:grayscale(.15);
+    }
+    body[data-customer-state="new"] .side-link.requires-contract:hover{
+      transform:none;
+      background:#f6f7f8;
+    }
+    body[data-customer-state="new"] .side-link.requires-contract > span{
+      background:#fff;
+      color:var(--subtle);
+    }
+    .lock-copy{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      color:var(--subtle) !important;
+    }
+
+
+    .stepper-menu{
+      position:relative;
+      gap:8px;
+    }
+    .stepper-menu::before{
+      content:"";
+      position:absolute;
+      left:27px;
+      top:48px;
+      bottom:14px;
+      width:2px;
+      background:linear-gradient(180deg,#cdebe5 0%,#e5e7eb 78%);
+      border-radius:999px;
+      pointer-events:none;
+    }
+    .step-link{
+      position:relative;
+      z-index:1;
+      grid-template-columns:36px minmax(0,1fr) auto;
+      align-items:center;
+      padding:12px 10px;
+    }
+    .step-link > span.step-number{
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      background:#ffffff;
+      color:var(--green-dark);
+      border:2px solid #cdebe5;
+      font-size:13px;
+      font-weight:900;
+      box-shadow:0 8px 16px rgba(47,183,164,.08);
+    }
+    .step-link strong{
+      font-size:13.5px;
+    }
+    .step-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:max-content;
+      border-radius:999px;
+      padding:5px 8px;
+      background:var(--green-soft);
+      color:var(--green-dark);
+      font-size:10.5px;
+      font-style:normal;
+      font-weight:900;
+      letter-spacing:-.01em;
+    }
+    .step-badge.next{
+      background:var(--brick-soft);
+      color:var(--brick-dark);
+    }
+    .step-badge.locked{
+      background:#f1f3f5;
+      color:#9aa4ad;
+    }
+    .step-link.available:hover{
+      border-color:#cdebe5;
+      background:#fbfffd;
+    }
+    body[data-customer-state="new"] .side-link.step-locked{
+      opacity:.48;
+      cursor:not-allowed;
+      background:#f7f8f9;
+      border-color:var(--line);
+      filter:grayscale(.24);
+    }
+    body[data-customer-state="new"] .side-link.step-locked:hover{
+      transform:none;
+      background:#f7f8f9;
+      border-color:var(--line);
+    }
+    body[data-customer-state="new"] .side-link.step-locked strong{
+      color:#89939d;
+    }
+    body[data-customer-state="new"] .side-link.step-locked small{
+      color:#9aa4ad;
+    }
+    body[data-customer-state="new"] .side-link.step-locked > span.step-number{
+      background:#fff;
+      color:#a3adb7;
+      border-color:#e5e7eb;
+      box-shadow:none;
+    }
+    body[data-customer-state="new"] .side-link.step-locked .step-badge.locked{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      color:#8f98a3;
+    }
+    body[data-customer-state="renter"] .step-badge.locked{
+      background:var(--green-soft);
+      color:var(--green-dark);
+    }
+
+    body[data-customer-state="new"] .side-group.state-renter-only,
+    body[data-customer-state="new"] .sidebar-help.state-renter-only{
+      display:none !important;
+    }
+    body[data-customer-state="new"] .step-badge.locked{
+      gap:4px;
+    }
+
+    .onboarding-hero{
+      position:relative;
+      overflow:hidden;
+      border-radius:30px;
+      padding:28px;
+      background:
+        radial-gradient(circle at 8% 12%, rgba(47,183,164,.11), transparent 34%),
+        radial-gradient(circle at 96% 10%, rgba(232,111,81,.10), transparent 30%),
+        #fff;
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-soft);
+      margin-bottom:18px;
+    }
+    .onboarding-hero h1{max-width:720px;}
+    .onboarding-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
+    .journey-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;}
+    .checklist{display:grid;gap:12px;counter-reset:step;}
+    .check-item{
+      display:grid;
+      grid-template-columns:42px 1fr auto;
+      gap:12px;
+      align-items:start;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:var(--surface-soft);
+    }
+    .check-index{
+      width:42px;height:42px;border-radius:16px;
+      display:grid;place-items:center;
+      background:#fff;
+      border:1px solid var(--line);
+      color:var(--green-dark);
+      font-weight:900;
+    }
+    .check-item strong{display:block;color:var(--heading);font-size:14.5px;}
+    .check-item p{color:var(--muted);font-size:13px;margin-top:3px;}
+    .check-item.current{background:var(--green-soft);border-color:#cdebe5;}
+    .check-item.locked{opacity:.72;}
+    .mini-badge{
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:6px 9px;
+      background:#fff;
+      border:1px solid var(--line);
+      color:var(--subtle);
+      font-size:12px;
+      font-weight:850;
+      white-space:nowrap;
+    }
+    .mini-badge.hot{color:var(--brick-dark);background:var(--brick-soft);border-color:#ffe0d7;}
+    .new-customer-panel{
+      display:grid;
+      gap:12px;
+    }
+    .empty-state{
+      padding:18px;
+      border:1px dashed var(--line-strong);
+      border-radius:20px;
+      background:#fff;
+    }
+    .empty-state strong{display:block;color:var(--heading);font-size:15px;}
+    .empty-state p{color:var(--muted);font-size:13.5px;margin-top:5px;}
+    .lock-list{display:grid;gap:10px;margin-top:12px;}
+    .lock-row{
+      display:flex;justify-content:space-between;gap:12px;align-items:center;
+      padding:11px 12px;border-radius:15px;background:var(--surface-soft);border:1px solid var(--line);
+      color:var(--muted);font-size:13px;font-weight:700;
+    }
+    .lock-row span:last-child{color:var(--subtle);font-size:12px;white-space:nowrap;}
+
+    .page-local-nav{display:none;}
+
+    .account-area{position:relative;flex-shrink:0;}
+    .account-btn{
+      border:1px solid var(--line);
+      background:var(--surface);
+      border-radius:999px;
+      padding:8px 12px 8px 8px;
+      display:flex;align-items:center;gap:9px;
+      font-weight:700;color:var(--text);
+      box-shadow:0 8px 18px rgba(30,41,59,.05);
+    }
+    .avatar{
+      width:34px;height:34px;border-radius:50%;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--brick),var(--brick-dark));
+      color:white;font-weight:800;font-size:13px;
+    }
+    .account-menu{
+      position:absolute;right:0;top:calc(100% + 10px);
+      width:240px;
+      background:var(--surface);
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:10px;
+      display:none;
+    }
+    .account-menu.show{display:block;}
+    .account-menu .profile-mini{
+      padding:10px 10px 12px;
+      border-bottom:1px solid var(--line);
+      margin-bottom:8px;
+    }
+    .profile-mini strong{display:block;font-size:14px;}
+    .profile-mini span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;}
+    .menu-item{
+      width:100%;border:0;background:transparent;text-align:left;
+      padding:10px;border-radius:12px;color:var(--text);font-weight:650;
+    }
+    .menu-item:hover{background:var(--green-soft);}
+    .menu-item.logout{color:var(--brick-dark);}
+
+    .main{padding:30px 0 54px;}
+    .page{display:none;animation:fade .18s ease;}
+    .page.active{display:block;}
+    @keyframes fade{from{opacity:.55;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+    .page-head{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
+      margin:8px 0 22px;
+    }
+    .page-title{max-width:720px;}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 12px;border-radius:999px;
+      background:var(--green-soft);color:var(--green-dark);
+      font-size:13px;font-weight:800;margin-bottom:12px;
+    }
+    h1,h2,h3{font-family:"Be Vietnam Pro",sans-serif;color:var(--heading);line-height:1.2;letter-spacing:-.02em;}
+    h1{font-size:clamp(28px,4vw,42px);font-weight:800;}
+    h2{font-size:clamp(22px,3vw,30px);font-weight:800;}
+    h3{font-size:18px;font-weight:800;}
+    .subtext{color:var(--muted);margin-top:8px;font-size:15px;max-width:680px;}
+
+    .grid{display:grid;gap:18px;}
+    .grid-2{grid-template-columns:1.1fr .9fr;}
+    .grid-3{grid-template-columns:repeat(3,1fr);}
+    .grid-4{grid-template-columns:repeat(4,1fr);}
+    .card{
+      background:rgba(255,255,255,.98);
+      border:1px solid var(--line);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-soft);
+      padding:20px;
+    }
+    .card.compact{padding:16px;}
+    .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;}
+    .muted{color:var(--muted);}
+    .small{font-size:13px;}
+    .strong{font-weight:800;}
+    .divider{height:1px;background:var(--line);margin:16px 0;}
+
+    .btn{
+      border:0;border-radius:999px;padding:11px 16px;
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      font-weight:800;transition:.18s ease;white-space:nowrap;
+    }
+    .btn-primary{background:linear-gradient(135deg,var(--brick),var(--brick-dark));color:white;box-shadow:0 12px 24px rgba(232,111,81,.20);}
+    .btn-primary:hover{transform:translateY(-1px);filter:saturate(1.03);}
+    .btn-secondary{background:var(--surface);color:var(--green-dark);border:1px solid var(--line-strong);}
+    .btn-secondary:hover{background:var(--green-soft);}
+    .btn-ghost{background:transparent;color:var(--green-dark);border:1px solid transparent;}
+    .btn-ghost:hover{background:var(--green-soft);}
+    .btn-danger{background:var(--danger-soft);color:var(--danger);border:1px solid #ffd2d0;}
+    .btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
+    .metric{
+      display:flex;align-items:flex-start;gap:12px;
+    }
+    .metric-icon{
+      width:44px;height:44px;border-radius:16px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--green-soft),#fff);
+      color:var(--green-dark);
+      border:1px solid var(--line);
+      flex-shrink:0;
+    }
+    .metric strong{display:block;font-size:20px;line-height:1.25;font-family:"Be Vietnam Pro",sans-serif;}
+    .metric span{display:block;font-size:13px;color:var(--muted);margin-top:3px;}
+
+    .status{
+      display:inline-flex;align-items:center;gap:6px;
+      border-radius:999px;padding:7px 10px;
+      font-size:12px;font-weight:800;white-space:nowrap;
+      background:var(--green-soft);color:var(--green-dark);
+    }
+    .status.warn{background:var(--warning-soft);color:#a96b16;}
+    .status.danger{background:var(--danger-soft);color:var(--danger);}
+    .status.done{background:var(--success-soft);color:var(--success);}
+    .status.neutral{background:#eef4f3;color:#536663;}
+
+    .info-list{display:grid;gap:10px;}
+    .info-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);}
+    .info-row:last-child{border-bottom:0;padding-bottom:0;}
+    .info-row span:first-child{color:var(--muted);font-size:13.5px;font-weight:650;}
+    .info-row span:last-child{text-align:right;font-weight:800;}
+
+    .notice-list{display:grid;gap:10px;}
+    .notice{
+      display:flex;align-items:flex-start;gap:10px;
+      padding:12px;border-radius:16px;background:var(--surface-soft);border:1px solid var(--line);
+    }
+    .notice-dot{width:9px;height:9px;border-radius:50%;background:var(--green);margin-top:8px;flex-shrink:0;}
+    .notice p{font-size:14px;}
+    .notice span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+    .filter-bar{
+      display:grid;grid-template-columns:repeat(4,1fr) auto;gap:12px;align-items:end;
+      margin-bottom:18px;
+    }
+    .field label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin-bottom:7px;}
+    .field input,.field select,.field textarea{
+      width:100%;border:1px solid var(--line);background:var(--surface-soft);
+      border-radius:15px;padding:12px 13px;color:var(--text);outline:none;
+      transition:.16s ease;font-weight:600;
+    }
+    .field textarea{min-height:96px;resize:vertical;}
+    .field input:focus,.field select:focus,.field textarea:focus{
+      border-color:var(--green);
+      box-shadow:0 0 0 4px rgba(47,183,164,.10);
+    }
+
+    .room-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+    .room-card{
+      position:relative;background:var(--surface);border:1px solid var(--line);
+      border-radius:24px;overflow:hidden;box-shadow:var(--shadow-soft);
+      transition:.18s ease;
+    }
+    .room-card:hover{transform:translateY(-3px);}
+    .room-card.selected{border-color:var(--green);box-shadow:0 16px 32px rgba(47,183,164,.15);}
+    .room-photo{height:154px;background-size:cover;background-position:center;position:relative;}
+    .room-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(30,41,59,.03),rgba(30,41,59,.46));}
+    .photo-a{background-image:url("https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80");}
+    .photo-b{background-image:url("https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80");}
+    .photo-c{background-image:url("https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80");}
+    .photo-d{background-image:url("https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80");}
+    .select-badge{
+      position:absolute;top:12px;right:12px;z-index:2;
+      display:flex;align-items:center;gap:7px;
+      background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.8);
+      border-radius:999px;padding:7px 9px;font-size:12px;font-weight:800;color:var(--text);
+    }
+    .room-body{padding:17px;}
+    .room-meta{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;align-items:center;}
+    .room-type{font-size:13px;color:var(--green-dark);font-weight:800;}
+    .room-price{font-size:13px;color:var(--brick-dark);font-weight:800;}
+    .room-body p{font-size:14px;color:var(--muted);margin:7px 0 12px;}
+    .pill-row{display:flex;flex-wrap:wrap;gap:7px;}
+    .pill{display:inline-flex;border-radius:999px;padding:6px 9px;background:var(--green-soft);color:var(--green-dark);font-size:12px;font-weight:800;}
+    .pill.brick{background:var(--brick-soft);color:var(--brick-dark);}
+    .sticky-action{
+      position:sticky;bottom:18px;z-index:9;
+      margin-top:18px;padding:14px 16px;border-radius:22px;
+      display:flex;align-items:center;justify-content:space-between;gap:14px;
+      background:rgba(255,255,255,.98);border:1px solid var(--line);box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+    }
+
+    .timeline{display:grid;gap:12px;}
+    .timeline-step{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;}
+    .step-dot{
+      width:34px;height:34px;border-radius:14px;display:grid;place-items:center;
+      background:var(--green-soft);color:var(--green-dark);border:1px solid var(--line);font-weight:800;
+    }
+    .timeline-step.done .step-dot{background:var(--green);color:white;}
+    .timeline-step.wait .step-dot{background:var(--warning-soft);color:#a96b16;}
+    .step-box{padding-bottom:10px;border-bottom:1px solid var(--line);}
+    .timeline-step:last-child .step-box{border-bottom:0;padding-bottom:0;}
+    .step-box strong{display:block;font-size:14px;}
+    .step-box span{display:block;font-size:13px;color:var(--muted);margin-top:2px;}
+
+    .simple-table{display:grid;gap:10px;}
+    .table-card{
+      display:grid;grid-template-columns:1.25fr .8fr .8fr .7fr auto;gap:12px;align-items:center;
+      padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface-soft);
+    }
+    .table-card strong{font-size:14px;}
+    .table-card span{font-size:13px;color:var(--muted);}
+    .table-card .amount{font-weight:850;color:var(--text);font-size:14px;}
+
+    .asset-list{display:grid;gap:9px;}
+    .asset-item{display:flex;justify-content:space-between;gap:12px;padding:11px 12px;border-radius:14px;background:var(--surface-soft);border:1px solid var(--line);}
+    .asset-item span:first-child{font-weight:800;}
+    .asset-item span:last-child{color:var(--muted);font-size:13px;}
+
+    .empty-soft{
+      border:1px dashed var(--line-strong);border-radius:18px;padding:16px;
+      color:var(--muted);background:rgba(255,255,255,.88);font-weight:650;
+    }
+
+    .modal-backdrop{
+      position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+      padding:20px;background:rgba(30,41,59,.48);
+    }
+    .modal-backdrop.show{display:flex;}
+    .modal{
+      width:min(620px,100%);max-height:88vh;overflow:auto;
+      background:var(--surface);border-radius:26px;padding:22px;box-shadow:0 26px 70px rgba(30,41,59,.18);
+    }
+    .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px;}
+    .modal-close{
+      width:40px;height:40px;border:0;border-radius:14px;background:var(--green-soft);color:var(--green-dark);font-size:22px;
+    }
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+    .form-grid .full{grid-column:1/-1;}
+    .toast{
+      position:fixed;right:24px;bottom:24px;z-index:130;
+      background:#1e293b;color:white;padding:14px 17px;border-radius:16px;
+      box-shadow:var(--shadow);font-weight:750;font-size:14px;
+      transform:translateY(16px);opacity:0;pointer-events:none;transition:.22s ease;
+    }
+    .toast.show{transform:translateY(0);opacity:1;}
+
+    @media (max-width:1120px){
+      .journey-grid{grid-template-columns:1fr;}
+      .check-item{grid-template-columns:38px 1fr;}
+      .check-item .mini-badge{grid-column:2;justify-self:start;}
+      .customer-state-switch{display:none;}
+
+      .app-shell{grid-template-columns:1fr;width:min(1180px,calc(100% - 40px));gap:0;}
+      .sidebar{
+        position:static;
+        max-height:none;
+        margin:18px 0 0;
+        padding:12px;
+        border-radius:24px;
+      }
+      .user-summary,.sidebar-help{display:none;}
+      .side-nav{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;}
+      .side-group{display:flex;gap:8px;flex:0 0 auto;}
+      .side-label{display:none;}
+      .side-link{min-width:205px;}
+      .side-link:hover{transform:none;}
+      .main{padding-top:20px;}
+      .header-context{display:none;}
+      .topbar{align-items:center;padding:14px 0;flex-wrap:wrap;}
+      .nav-tabs{order:3;width:100%;margin-left:0;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;}
+      .grid-4,.grid-3,.room-grid{grid-template-columns:repeat(2,1fr);}
+      .grid-2{grid-template-columns:1fr;}
+      .filter-bar{grid-template-columns:repeat(2,1fr);}
+      .table-card{grid-template-columns:1fr 1fr;}
+      .table-card .btn{justify-self:start;}
+    }
+    @media (max-width:720px){
+
+      .app-shell{width:min(100% - 28px,1180px);}
+      .sidebar{margin-top:14px;border-radius:22px;}
+      .side-link{min-width:188px;grid-template-columns:30px 1fr;padding:10px;}
+      .side-link > span{width:30px;height:30px;}
+      .side-link small{display:none;}
+      .main{padding-top:16px;}
+      .container{width:min(100% - 28px,1180px);}
+      .brand-note,.account-btn span:not(.avatar){display:none;}
+      .page-head,.sticky-action{flex-direction:column;align-items:stretch;}
+      .filter-bar,.grid-4,.grid-3,.room-grid,.form-grid{grid-template-columns:1fr;}
+      .table-card{grid-template-columns:1fr;}
+      .info-row{display:grid;grid-template-columns:1fr;gap:3px;}
+      .info-row span:last-child{text-align:left;}
+      .toast{left:16px;right:16px;text-align:center;}
+    }
+
+    /* =========================================================
+       RENTER VERSION — canh khung giống trang chủ căn lề vừa phải
+       ========================================================= */
+    .container-wide{
+      width:min(1180px,calc(100% - 40px));
+      margin-left:auto;
+      margin-right:auto;
+    }
+
+    .site-header{
+      background:rgba(255,255,255,.92);
+      box-shadow:0 8px 24px rgba(15,23,42,.035);
+    }
+
+    .site-header .topbar{
+      min-height:84px;
+      display:flex;
+      align-items:center;
+      gap:18px;
+    }
+
+    .site-header .brand-icon{
+      width:48px;
+      height:48px;
+      border-radius:50%;
+      background:#ffffff;
+      color:var(--green-dark);
+      border-color:var(--line);
+      box-shadow:0 8px 18px rgba(15,23,42,.055);
+    }
+
+    .site-header .brand-name{
+      font-size:18px;
+      font-weight:800;
+      color:#1a1a1a;
+    }
+
+    .account-btn{
+      min-width:176px;
+    }
+    .account-identity{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      line-height:1.15;
+      min-width:0;
+    }
+    .account-name{
+      color:var(--heading);
+      font-size:13.5px;
+      font-weight:850;
+      white-space:nowrap;
+    }
+    .account-status{
+      color:var(--green-dark);
+      font-size:11.2px;
+      font-weight:750;
+      margin-top:3px;
+      white-space:nowrap;
+    }
+    .account-chevron{color:var(--subtle);font-size:13px;margin-left:auto;}
+
+    body[data-customer-state="renter"] .customer-state-switch{
+      display:none;
+    }
+
+    body[data-customer-state="renter"] .sidebar{
+      max-height:none;
+      overflow:visible;
+    }
+
+    body[data-customer-state="renter"] .sidebar-card{
+      margin-bottom:18px;
+    }
+
+    .customer-footer{
+      background:#1e293b;
+      color:#ffffff;
+      padding:52px 0 28px;
+      margin-top:28px;
+    }
+    .footer-grid{
+      display:grid;
+      grid-template-columns:1.2fr .8fr .8fr;
+      gap:28px;
+      padding-bottom:28px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+    .footer-brand{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+    .footer-brand-icon{
+      width:48px;height:48px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      display:grid;place-items:center;color:#ffffff;flex-shrink:0;
+    }
+    .footer-brand-icon svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+    .footer-brand-name{color:#ffffff;font-family:"Be Vietnam Pro",sans-serif;font-size:18px;font-weight:850;letter-spacing:-.02em;}
+    .footer-brand-name strong{color:#7dd8ca;font-weight:900;}
+    .customer-footer h3{color:#ffffff;margin-bottom:14px;font-size:18px;}
+    .customer-footer p,.customer-footer a{color:rgba(255,255,255,.74);font-size:14px;}
+    .customer-footer a:hover{color:#ffffff;}
+    .footer-links{display:grid;gap:10px;}
+    .copyright{margin-top:20px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:rgba(255,255,255,.55);font-size:13px;}
+
+    @media (min-width:721px){
+      .container,
+      .container-wide,
+      .app-shell,
+      .customer-footer > .container{
+        width:min(1440px,calc(100% - 120px));
+        max-width:1440px;
+        margin-left:auto;
+        margin-right:auto;
+      }
+      .app-shell{
+        grid-template-columns:248px minmax(0,1fr);
+        gap:24px;
+      }
+      .footer-grid > div:nth-child(3){
+        padding-left:36px;
+      }
+    }
+
+    @media (min-width:1600px){
+      .container,
+      .container-wide,
+      .app-shell,
+      .customer-footer > .container{
+        width:min(1480px,calc(100% - 180px));
+        max-width:1480px;
+      }
+      .footer-grid > div:nth-child(3){
+        padding-left:52px;
+      }
+    }
+
+    @media (max-width:1120px){
+      .footer-grid{grid-template-columns:1fr 1fr;}
+    }
+
+    @media (max-width:720px){
+      .container-wide{width:min(100% - 28px,1180px);}
+      .account-btn{min-width:auto;}
+      .footer-grid{grid-template-columns:1fr;}
+      .footer-grid > div:nth-child(3){padding-left:0;}
+    }
+
+
+    /* =========================================================
+       RENTER SIDEBAR FIX — đồng bộ kiểu với khách mới, bỏ thẻ Minh Anh,
+       không dùng thanh cuộn trong sidebar.
+       ========================================================= */
+    .sidebar{
+      max-height:none !important;
+      overflow:visible !important;
+      padding:14px !important;
+      border-radius:26px !important;
+    }
+    .sidebar::-webkit-scrollbar{display:none;}
+    .side-nav{gap:12px !important;}
+    .side-group{gap:5px !important;}
+    .side-label{
+      margin:0 0 6px 8px !important;
+      font-size:10.8px !important;
+      letter-spacing:.075em !important;
+    }
+    .side-link{
+      min-height:auto !important;
+      padding:9px 10px !important;
+      border-radius:16px !important;
+      grid-template-columns:32px 1fr !important;
+      gap:9px !important;
+    }
+    .side-link > span{
+      width:32px !important;
+      height:32px !important;
+      border-radius:12px !important;
+      font-size:14px !important;
+    }
+    .side-link strong{
+      font-size:13px !important;
+      line-height:1.2 !important;
+    }
+    .side-link small{
+      font-size:11.35px !important;
+      line-height:1.28 !important;
+      margin-top:1px !important;
+    }
+    @media (min-width:721px){
+      .app-shell{grid-template-columns:248px minmax(0,1fr) !important;}
+    }
+
+  </style>
+</head>
+<body data-customer-state="renter">
+  <header class="site-header">
+    <div class="container-wide topbar">
+      <a class="brand" href="#tong-quan" data-route="tong-quan">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11.5 12 4l9 7.5"></path><path d="M5 10.5V20h14v-9.5"></path><path d="M9 20v-6h6v6"></path>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">Homestay Dorm</span>
+          <span class="brand-note">Cổng khách hàng</span>
+        </span>
+      </a>
+
+      <div class="header-context" aria-label="Ngữ cảnh trang">
+        <span>Cổng khách hàng</span>
+        <strong>Quản lý thuê phòng</strong>
+      </div>
+
+      <div class="account-area">
+        <button class="account-btn" id="accountBtn" type="button" aria-label="Mở tài khoản">
+          <span class="avatar">MA</span>
+          <span class="account-identity">
+            <span class="account-name">Minh Anh</span>
+            <span class="account-status">Đang thuê</span>
+          </span>
+          <span class="account-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="account-menu" id="accountMenu">
+          <div class="profile-mini">
+            <strong>Nguyễn Minh Anh</strong>
+            <span>khachhang@gmail.com</span>
+            <span>Khách hàng</span>
+          </div>
+          <button class="menu-item" data-page="tong-quan" type="button">Thông tin tài khoản</button>
+          <button class="menu-item logout" type="button" id="logoutBtn">Đăng xuất</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Menu chức năng khách hàng">
+      <nav class="side-nav">
+        <div class="side-group">
+          <p class="side-label">Menu chính</p>
+          <button class="side-link active" data-page="tong-quan" data-group="tong-quan" type="button"><span>🏠</span><div><strong>Tổng quan</strong><small>Việc cần chú ý hôm nay</small></div></button>
+          <button class="side-link" data-page="hop-dong" data-group="thue-phong" type="button"><span>📄</span><div><strong>Phòng / Hợp đồng</strong><small>Thông tin lưu trú hiện tại</small></div></button>
+          <button class="side-link" data-page="hoa-don" data-group="thanh-toan" type="button"><span>💳</span><div><strong>Hóa đơn / Thanh toán</strong><small>Hạn đóng và biên nhận</small></div></button>
+        </div>
+
+        <div class="side-group">
+          <p class="side-label">Hỗ trợ</p>
+          <button class="side-link" data-page="bao-tri" data-group="ho-tro" type="button"><span>🛠</span><div><strong>Bảo trì / Sửa chữa</strong><small>Gửi yêu cầu hỗ trợ</small></div></button>
+          <button class="side-link" data-page="tra-phong" data-group="ho-tro" type="button"><span>🚪</span><div><strong>Trả phòng</strong><small>Lịch trả phòng, quyết toán</small></div></button>
+        </div>
+
+        <div class="side-group">
+          <p class="side-label">Khác</p>
+          <button class="side-link" data-page="tim-phong" data-group="thue-phong" type="button"><span>🔎</span><div><strong>Tìm phòng</strong><small>Xem phòng nếu muốn đổi</small></div></button>
+          <button class="side-link" data-page="dang-ky-xem-phong" data-group="thue-phong" type="button"><span>📅</span><div><strong>Hồ sơ / Lịch xem</strong><small>Lịch hẹn và hồ sơ cũ</small></div></button>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+
+    <!-- Tổng quan -->
+    <section class="page active" id="page-tong-quan">
+      <div class="state-new-only">
+        <div class="onboarding-hero">
+          <span class="eyebrow">Khách mới</span>
+          <h1>Chào Minh Anh, bắt đầu bằng việc tìm phòng và gửi đăng ký xem phòng</h1>
+          <p class="subtext">Vì tài khoản chưa có yêu cầu thuê được duyệt nên hệ thống tập trung vào bước tìm phòng và theo dõi hồ sơ. Đặt cọc, hợp đồng và các dịch vụ sau thuê sẽ mở theo đúng tiến trình.</p>
+          <div class="onboarding-actions">
+            <button class="btn btn-primary" data-page="tim-phong" type="button">Tìm phòng ngay</button>
+            <button class="btn btn-secondary" data-page="dang-ky-xem-phong" type="button">Xem hồ sơ đăng ký</button>
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="card compact metric"><div class="metric-icon">🔎</div><div><strong>Chưa chọn phòng</strong><span>Bước hiện tại: tìm phòng / giường phù hợp</span></div></div>
+          <div class="card compact metric"><div class="metric-icon">🗓</div><div><strong>Chưa có lịch xem</strong><span>Gửi đăng ký để sale hỗ trợ lên lịch</span></div></div>
+          <div class="card compact metric"><div class="metric-icon">🔒</div><div><strong>Chưa có hợp đồng</strong><span>Đặt cọc, hợp đồng và dịch vụ sau thuê đang tạm khóa</span></div></div>
+        </div>
+
+        <div class="journey-grid" style="margin-top:18px;">
+          <div class="card">
+            <div class="card-head"><div><h3>Lộ trình thuê phòng</h3><p class="small muted">Hiển thị như checklist để khách mới biết nên làm gì tiếp theo.</p></div></div>
+            <div class="checklist">
+              <div class="check-item current">
+                <div class="check-index">1</div>
+                <div><strong>Tìm và chọn phòng/giường trống</strong><p>Xem danh sách phòng khả dụng, giá thuê, sức chứa và khu vực.</p></div>
+                <span class="mini-badge hot">Đang thực hiện</span>
+              </div>
+              <div class="check-item">
+                <div class="check-index">2</div>
+                <div><strong>Theo dõi hồ sơ &amp; yêu cầu thuê</strong><p>Sau khi gửi nhu cầu, khách theo dõi trạng thái duyệt và lịch xem phòng tại đây.</p></div>
+                <span class="mini-badge">Tiếp theo</span>
+              </div>
+              <div class="check-item locked">
+                <div class="check-index">3</div>
+                <div><strong>Đặt cọc giữ chỗ</strong><p>Sau khi chọn được phòng phù hợp, khách cập nhật minh chứng đặt cọc.</p></div>
+                <span class="mini-badge">Sau khi duyệt</span>
+              </div>
+              <div class="check-item locked">
+                <div class="check-index">4</div>
+                <div><strong>Ký hợp đồng & nhận phòng</strong><p>Hoàn tất hợp đồng, thanh toán đầu kỳ và nhận bàn giao tài sản.</p></div>
+                <span class="mini-badge">Cuối luồng</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="new-customer-panel">
+            <div class="card">
+              <div class="card-head"><div><h3>Mục đang tạm khóa</h3><p class="small muted">Các bước chưa tới lượt sẽ bị làm mờ để khách không bị rối.</p></div><span class="status neutral">Chưa thuê</span></div>
+              <div class="lock-list">
+                <div class="lock-row"><strong>Đặt cọc</strong><span>Sau khi yêu cầu thuê được duyệt</span></div>
+                <div class="lock-row"><strong>Hợp đồng / Nhận phòng</strong><span>Sau khi đặt cọc được xác nhận</span></div>
+                <div class="lock-row"><strong>Hóa đơn / Bảo trì / Trả phòng</strong><span>Sau khi có hợp đồng</span></div>
+              </div>
+            </div>
+            <div class="empty-state">
+              <strong>Không để màn hình trống</strong>
+              <p>Nếu khách mới cố mở mục bị khóa, hệ thống sẽ nhắc lý do và điều hướng về bước Tìm phòng thay vì hiện bảng rỗng.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="state-renter-only">
+        <div class="page-head">
+          <div class="page-title">
+            <span class="eyebrow">Tổng quan khách hàng</span>
+            <h1>Chào Minh Anh, đây là các việc cần chú ý hôm nay</h1>
+            <p class="subtext">Trang này chỉ tóm tắt những thông tin gần nhất: phòng đang thuê, hợp đồng, hóa đơn, bảo trì, lịch hẹn và thông báo hệ thống.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-4">
+          <div class="card compact metric"><div class="metric-icon">🏠</div><div><strong>Dorm Studio 204</strong><span>Giường A2 · Đang thuê</span></div></div>
+          <div class="card compact metric"><div class="metric-icon">📄</div><div><strong>Đang thuê</strong><span>Hợp đồng HD-2026-018</span></div></div>
+          <div class="card compact metric"><div class="metric-icon">💳</div><div><strong>1 hóa đơn</strong><span>Chưa thanh toán gần nhất</span></div></div>
+          <div class="card compact metric"><div class="metric-icon">🛠</div><div><strong>Đang xử lý</strong><span>Yêu cầu bảo trì mới nhất</span></div></div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:18px;">
+          <div class="card">
+            <div class="card-head"><div><h3>Thông tin lưu trú hiện tại</h3><p class="small muted">Hiển thị ngắn gọn, không dùng bảng dài.</p></div><span class="status done">Đang thuê</span></div>
+            <div class="info-list">
+              <div class="info-row"><span>Phòng / giường</span><span>Dorm Studio 204 · Giường A2</span></div>
+              <div class="info-row"><span>Ngày bắt đầu thuê</span><span>01/05/2026</span></div>
+              <div class="info-row"><span>Hợp đồng</span><span>HD-2026-018</span></div>
+              <div class="info-row"><span>Lịch gần nhất</span><span>Trả phòng dự kiến · 30/06/2026</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div><h3>Cần xử lý</h3><p class="small muted">Các mục gần nhất khách cần xem.</p></div></div>
+            <div class="notice-list">
+              <div class="notice"><span class="notice-dot"></span><div><p><strong>Hóa đơn điện nước tháng 05</strong> còn hạn đến 05/06/2026.</p><span>Trạng thái: Chưa thanh toán</span></div></div>
+              <div class="notice"><span class="notice-dot"></span><div><p><strong>Yêu cầu sửa máy lạnh</strong> đang được quản lý xử lý.</p><span>Gửi lúc 24/05/2026</span></div></div>
+              <div class="notice"><span class="notice-dot"></span><div><p>Hệ thống nhắc cập nhật thông tin cư trú nếu có thay đổi.</p><span>Thông báo hệ thống</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tìm phòng -->
+    <section class="page" id="page-tim-phong">
+      <div class="page-head">
+        <div class="page-title">
+          <span class="eyebrow">Tìm phòng</span>
+          <h1>Danh sách phòng / giường khả dụng</h1>
+          <p class="subtext">Khách có thể chọn một hoặc nhiều phòng/giường muốn xem. Chỉ khi bấm đăng ký nhu cầu thuê thì form mới mở ra.</p>
+        </div>
+      </div>
+
+      <div class="page-local-nav" aria-label="Điều hướng thuê phòng">
+        <button class="local-link" data-page="tim-phong" type="button">Tìm phòng</button>
+        <button class="local-link" data-page="dang-ky-xem-phong" type="button">Hồ sơ &amp; Yêu cầu thuê</button>
+        <button class="local-link" data-page="dat-coc" type="button">Đặt cọc</button>
+        <button class="local-link" data-page="hop-dong" type="button">Hợp đồng / Nhận phòng</button>
+      </div>
+
+
+
+      <div class="card">
+        <div class="filter-bar">
+          <div class="field"><label>Khu vực</label><select><option>Tất cả khu vực</option><option>Hải Châu</option><option>Thanh Khê</option><option>Ngũ Hành Sơn</option></select></div>
+          <div class="field"><label>Loại phòng</label><select><option>Tất cả loại phòng</option><option>Giường dorm</option><option>Phòng riêng</option><option>Phòng đôi</option></select></div>
+          <div class="field"><label>Khoảng giá</label><select><option>Tất cả mức giá</option><option>Dưới 2 triệu</option><option>2 - 3 triệu</option><option>3 - 5 triệu</option></select></div>
+          <div class="field"><label>Sức chứa</label><select><option>Tất cả</option><option>1 người</option><option>2 người</option><option>4 người</option></select></div>
+          <button class="btn btn-secondary" type="button">Lọc</button>
+        </div>
+
+        <div class="room-grid">
+          <article class="room-card" data-room="Dorm Studio 204 - Giường A2">
+            <div class="room-photo photo-a"><label class="select-badge"><input type="checkbox" class="room-check"> Chọn</label></div>
+            <div class="room-body">
+              <div class="room-meta"><span class="room-type">Giường dorm</span><span class="room-price">2.800.000đ/tháng</span></div>
+              <h3>Dorm Studio 204</h3>
+              <p>Phù hợp sinh viên, có tủ cá nhân, wifi và khu sinh hoạt chung.</p>
+              <div class="pill-row"><span class="pill">Sức chứa 4</span><span class="pill">Trống 2 giường</span><span class="pill brick">Hải Châu</span></div>
+            </div>
+          </article>
+
+          <article class="room-card" data-room="Phòng riêng Garden 101">
+            <div class="room-photo photo-b"><label class="select-badge"><input type="checkbox" class="room-check"> Chọn</label></div>
+            <div class="room-body">
+              <div class="room-meta"><span class="room-type">Phòng riêng</span><span class="room-price">4.500.000đ/tháng</span></div>
+              <h3>Garden 101</h3>
+              <p>Cửa sổ lớn, WC riêng, phù hợp người muốn không gian riêng.</p>
+              <div class="pill-row"><span class="pill">Sức chứa 1</span><span class="pill">Trống 1 phòng</span><span class="pill brick">Thanh Khê</span></div>
+            </div>
+          </article>
+
+          <article class="room-card" data-room="Phòng đôi Cozy 302">
+            <div class="room-photo photo-c"><label class="select-badge"><input type="checkbox" class="room-check"> Chọn</label></div>
+            <div class="room-body">
+              <div class="room-meta"><span class="room-type">Phòng đôi</span><span class="room-price">3.600.000đ/tháng</span></div>
+              <h3>Cozy 302</h3>
+              <p>Phòng dành cho 2 người, đủ nội thất cơ bản và máy lạnh.</p>
+              <div class="pill-row"><span class="pill">Sức chứa 2</span><span class="pill">Trống 1 phòng</span><span class="pill brick">Ngũ Hành Sơn</span></div>
+            </div>
+          </article>
+
+          <article class="room-card" data-room="Dorm Green 305 - Giường B1">
+            <div class="room-photo photo-d"><label class="select-badge"><input type="checkbox" class="room-check"> Chọn</label></div>
+            <div class="room-body">
+              <div class="room-meta"><span class="room-type">Giường dorm</span><span class="room-price">2.200.000đ/tháng</span></div>
+              <h3>Dorm Green 305</h3>
+              <p>Không gian yên tĩnh, gần trạm xe buýt và khu ăn uống.</p>
+              <div class="pill-row"><span class="pill">Sức chứa 6</span><span class="pill">Trống 3 giường</span><span class="pill brick">Hải Châu</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="sticky-action">
+        <div><strong id="selectedCount">Chưa chọn phòng/giường nào</strong><p class="small muted">Chọn phòng muốn xem rồi gửi phiếu đăng ký nhu cầu thuê.</p></div>
+        <button class="btn btn-primary" id="openRentForm" type="button">Đăng ký nhu cầu thuê</button>
+      </div>
+    </section>
+
+    <!-- Hồ sơ &amp; Yêu cầu thuê -->
+    <section class="page" id="page-dang-ky-xem-phong">
+      <div class="page-head">
+        <div class="page-title">
+          <span class="eyebrow">Hồ sơ &amp; Yêu cầu thuê</span>
+          <h1>Trạng thái đăng ký thuê và lịch xem phòng</h1>
+          <p class="subtext">Khách xem lại yêu cầu đã gửi, trạng thái xử lý và lịch xem phòng nếu có. Không hiện chi tiết xử lý nội bộ của sale.</p>
+        </div>
+        <button class="btn btn-primary" data-open-modal="rentModal" type="button">Gửi đăng ký thuê</button>
+      </div>
+
+      <div class="page-local-nav" aria-label="Điều hướng thuê phòng">
+        <button class="local-link" data-page="tim-phong" type="button">Tìm phòng</button>
+        <button class="local-link" data-page="dang-ky-xem-phong" type="button">Hồ sơ &amp; Yêu cầu thuê</button>
+        <button class="local-link" data-page="dat-coc" type="button">Đặt cọc</button>
+        <button class="local-link" data-page="hop-dong" type="button">Hợp đồng / Nhận phòng</button>
+      </div>
+
+
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><div><h3>Hồ sơ đăng ký thuê</h3><p class="small muted">Mã hồ sơ: DK-2026-041</p></div><span class="status warn">Chờ lên lịch xem phòng</span></div>
+          <div class="info-list">
+            <div class="info-row"><span>Loại phòng mong muốn</span><span>Giường dorm / Phòng đôi</span></div>
+            <div class="info-row"><span>Ngày muốn thuê</span><span>01/06/2026</span></div>
+            <div class="info-row"><span>Số người</span><span>2 người</span></div>
+            <div class="info-row"><span>Ghi chú</span><span>Ưu tiên gần trung tâm, có máy lạnh</span></div>
+            <div class="info-row"><span>Trạng thái</span><span>Phù hợp · Chờ lên lịch xem phòng</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h3>Lịch xem phòng</h3><p class="small muted">Hiện lịch nếu nhân viên sale đã sắp xếp.</p></div><span class="status done">Đã lên lịch</span></div>
+          <div class="info-list">
+            <div class="info-row"><span>Thời gian</span><span>29/05/2026 · 09:30</span></div>
+            <div class="info-row"><span>Phòng / giường</span><span>Dorm Studio 204, Cozy 302</span></div>
+            <div class="info-row"><span>Trạng thái lịch</span><span>Đã lên lịch</span></div>
+          </div>
+          <div class="divider"></div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" data-open-modal="scheduleModal" type="button">Yêu cầu đổi lịch</button>
+            <button class="btn btn-danger" type="button" id="cancelScheduleBtn">Hủy lịch xem phòng</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Đặt cọc -->
+    <section class="page" id="page-dat-coc">
+      <div class="page-head">
+        <div class="page-title">
+          <span class="eyebrow">Đặt cọc</span>
+          <h1>Theo dõi yêu cầu đặt cọc</h1>
+          <p class="subtext">Khách chỉ xem thông tin cọc, hạn 24 giờ, trạng thái và cập nhật minh chứng thanh toán. Không có nút của quản lý/kế toán.</p>
+        </div>
+      </div>
+
+      <div class="page-local-nav" aria-label="Điều hướng thuê phòng">
+        <button class="local-link" data-page="tim-phong" type="button">Tìm phòng</button>
+        <button class="local-link" data-page="dang-ky-xem-phong" type="button">Hồ sơ &amp; Yêu cầu thuê</button>
+        <button class="local-link" data-page="dat-coc" type="button">Đặt cọc</button>
+        <button class="local-link" data-page="hop-dong" type="button">Hợp đồng / Nhận phòng</button>
+      </div>
+
+
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><div><h3>Phiếu đặt cọc DC-2026-012</h3><p class="small muted">Phòng/giường được yêu cầu đặt cọc.</p></div><span class="status warn">Chờ thanh toán cọc</span></div>
+          <div class="info-list">
+            <div class="info-row"><span>Phòng / giường</span><span>Dorm Studio 204 · Giường A2</span></div>
+            <div class="info-row"><span>Số tiền cọc</span><span>2.800.000đ</span></div>
+            <div class="info-row"><span>Hạn thanh toán 24 giờ</span><span>28/05/2026 · 18:00</span></div>
+            <div class="info-row"><span>Trạng thái</span><span>Chờ thanh toán cọc</span></div>
+          </div>
+          <div class="divider"></div>
+          <div class="card compact" style="background:var(--surface-soft);box-shadow:none;">
+            <strong>Thông tin chuyển khoản</strong>
+            <p class="small muted" style="margin-top:6px;">Ngân hàng: MB Bank · STK: 0123456789 · Nội dung: DC-2026-012 Nguyen Minh Anh</p>
+          </div>
+          <div class="btn-row" style="margin-top:14px;"><button class="btn btn-primary" data-open-modal="proofModal" type="button">Cập nhật minh chứng thanh toán</button></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h3>Trạng thái cọc</h3><p class="small muted">Các trạng thái khách cần biết.</p></div></div>
+          <div class="timeline">
+            <div class="timeline-step done"><div class="step-dot">1</div><div class="step-box"><strong>Chờ xác nhận nhận cọc</strong><span>Quản lý đã xác nhận có thể nhận cọc.</span></div></div>
+            <div class="timeline-step wait"><div class="step-dot">2</div><div class="step-box"><strong>Chờ thanh toán cọc</strong><span>Khách cần chuyển khoản và cập nhật minh chứng.</span></div></div>
+            <div class="timeline-step"><div class="step-dot">3</div><div class="step-box"><strong>Chờ xác nhận thanh toán</strong><span>Sau khi gửi minh chứng, hệ thống chờ đối chiếu.</span></div></div>
+            <div class="timeline-step"><div class="step-dot">4</div><div class="step-box"><strong>Đã thanh toán cọc</strong><span>Phòng/giường sẽ được cập nhật đã đặt cọc.</span></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hợp đồng -->
+    <section class="page" id="page-hop-dong">
+      <div class="page-head">
+        <div class="page-title">
+          <span class="eyebrow">Hợp đồng / Nhận phòng</span>
+          <h1>Thông tin hợp đồng và bàn giao phòng</h1>
+          <p class="subtext">Trang này chủ yếu để khách xem hợp đồng, thanh toán đầu kỳ, trạng thái bàn giao và tài sản được bàn giao.</p>
+        </div>
+      </div>
+
+      <div class="page-local-nav" aria-label="Điều hướng thuê phòng">
+        <button class="local-link" data-page="tim-phong" type="button">Tìm phòng</button>
+        <button class="local-link" data-page="dang-ky-xem-phong" type="button">Hồ sơ &amp; Yêu cầu thuê</button>
+        <button class="local-link" data-page="dat-coc" type="button">Đặt cọc</button>
+        <button class="local-link" data-page="hop-dong" type="button">Hợp đồng / Nhận phòng</button>
+      </div>
+
+
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><div><h3>Hợp đồng thuê HD-2026-018</h3><p class="small muted">Khách chỉ xem thông tin chính, không sửa nhiều.</p></div><span class="status done">Đã ký</span></div>
+          <div class="info-list">
+            <div class="info-row"><span>Ngày bắt đầu thuê</span><span>01/05/2026</span></div>
+            <div class="info-row"><span>Phòng / giường thuê</span><span>Dorm Studio 204 · Giường A2</span></div>
+            <div class="info-row"><span>Tiền cần thanh toán đầu kỳ</span><span>5.600.000đ</span></div>
+            <div class="info-row"><span>Trạng thái thanh toán đầu kỳ</span><span>Đã thanh toán</span></div>
+            <div class="info-row"><span>Trạng thái bàn giao</span><span>Đã bàn giao phòng</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h3>Tài sản bàn giao</h3><p class="small muted">Danh sách tài sản khách nhận khi vào ở.</p></div></div>
+          <div class="asset-list">
+            <div class="asset-item"><span>Giường tầng A2</span><span>Tình trạng tốt</span></div>
+            <div class="asset-item"><span>Tủ cá nhân A2</span><span>Có khóa</span></div>
+            <div class="asset-item"><span>Máy lạnh phòng 204</span><span>Hoạt động bình thường</span></div>
+            <div class="asset-item"><span>Thẻ giữ xe</span><span>Đã bàn giao</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hóa đơn -->
+    <section class="page" id="page-hoa-don">
+      <div class="page-head">
+        <div class="page-title">
+          <span class="eyebrow">Hóa đơn / Thanh toán</span>
+          <h1>Danh sách hóa đơn của khách</h1>
+          <p class="subtext">Theo dõi loại hóa đơn, số tiền, hạn thanh toán, trạng thái và cập nhật minh chứng nếu cần.</p>
+        </div>
+      </div>
+
+      <div class="page-local-nav" aria-label="Điều hướng thanh toán">
+        <button class="local-link" data-page="hoa-don" type="button">Hóa đơn / Thanh toán</button>
+      </div>
+
+
+
+      <div class="card">
+        <div class="card-head"><div><h3>Hóa đơn gần đây</h3><p class="small muted">Không dùng bảng quá dày, mỗi hóa đơn là một dòng card.</p></div></div>
+        <div class="simple-table">
+          <div class="table-card"><div><strong>HDV-05-2026</strong><span>Điện nước tháng 05</span></div><div><span>Loại hóa đơn</span><strong>Điện nước</strong></div><div><span>Hạn thanh toán</span><strong>05/06/2026</strong></div><div class="amount">480.000đ</div><span class="status danger">Chưa thanh toán</span><button class="btn btn-secondary" data-open-modal="proofModal" type="button">Cập nhật minh chứng</button></div>
+          <div class="table-card"><div><strong>HDT-06-2026</strong><span>Tiền thuê tháng 06</span></div><div><span>Loại hóa đơn</span><strong>Tiền thuê</strong></div><div><span>Hạn thanh toán</span><strong>03/06/2026</strong></div><div class="amount">2.800.000đ</div><span class="status warn">Chờ xác nhận</span><button class="btn btn-ghost" type="button">Xem chi tiết</button></div>
+          <div class="table-card"><div><strong>DC-2026-012</strong><span>Tiền cọc phòng</span></div><div><span>Loại hóa đơn</span><strong>Cọc</strong></div><div><span>Hạn thanh toán</span><strong>28/05/2026</strong></div><div class="amount">2.800.000đ</div><span class="status done">Đã thanh toán</span><button class="btn btn-ghost" type="button">Xem biên nhận</button></div>
+          <div class="table-card"><div><strong>PS-2026-004</strong><span>Phí phát sinh sửa khóa</span></div><div><span>Loại hóa đơn</span><strong>Phí phát sinh</strong></div><div><span>Hạn thanh toán</span><strong>20/05/2026</strong></div><div class="amount">120.000đ</div><span class="status done">Đã thanh toán</span><button class="btn btn-ghost" type="button">Xem chi tiết</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bảo trì -->
+    <section class="page" id="page-bao-tri">
+      <div class="page-head">
+        <div class="page-title">
+          <span class="eyebrow">Bảo trì / Sửa chữa</span>
+          <h1>Yêu cầu sửa chữa của khách</h1>
+          <p class="subtext">Khách xem yêu cầu đã gửi, trạng thái xử lý, ghi chú từ quản lý và chi phí nếu có.</p>
+        </div>
+        <button class="btn btn-primary" data-open-modal="repairModal" type="button">Gửi yêu cầu sửa chữa</button>
+      </div>
+
+      <div class="page-local-nav" aria-label="Điều hướng hỗ trợ">
+        <button class="local-link" data-page="bao-tri" type="button">Bảo trì / Sửa chữa</button>
+        <button class="local-link" data-page="tra-phong" type="button">Trả phòng</button>
+      </div>
+
+
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><div><h3>YC-2026-033 · Máy lạnh yếu</h3><p class="small muted">Ngày gửi: 24/05/2026</p></div><span class="status warn">Đang xử lý</span></div>
+          <div class="info-list">
+            <div class="info-row"><span>Loại sự cố</span><span>Thiết bị trong phòng</span></div>
+            <div class="info-row"><span>Mô tả hư hỏng</span><span>Máy lạnh không đủ mát, có tiếng ồn nhẹ</span></div>
+            <div class="info-row"><span>Hình ảnh minh chứng</span><span>2 ảnh đã tải lên</span></div>
+            <div class="info-row"><span>Ghi chú xử lý</span><span>Quản lý đã tiếp nhận, chờ kỹ thuật kiểm tra</span></div>
+            <div class="info-row"><span>Chi phí sửa chữa</span><span>Chưa xác định</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h3>YC-2026-021 · Hỏng khóa tủ</h3><p class="small muted">Ngày gửi: 14/05/2026</p></div><span class="status done">Hoàn tất</span></div>
+          <div class="info-list">
+            <div class="info-row"><span>Loại sự cố</span><span>Tài sản bàn giao</span></div>
+            <div class="info-row"><span>Mô tả hư hỏng</span><span>Khóa tủ cá nhân bị kẹt</span></div>
+            <div class="info-row"><span>Hình ảnh minh chứng</span><span>1 ảnh đã tải lên</span></div>
+            <div class="info-row"><span>Ghi chú xử lý</span><span>Đã thay khóa mới</span></div>
+            <div class="info-row"><span>Chi phí sửa chữa</span><span>120.000đ</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trả phòng -->
+    <section class="page" id="page-tra-phong">
+      <div class="page-head">
+        <div class="page-title">
+          <span class="eyebrow">Trả phòng</span>
+          <h1>Yêu cầu trả phòng và quyết toán</h1>
+          <p class="subtext">Theo dõi lịch trả phòng, kiểm tra phòng, quyết toán, hoàn cọc hoặc khoản cần thanh toán thêm.</p>
+        </div>
+        <button class="btn btn-primary" data-open-modal="checkoutModal" type="button">Gửi yêu cầu trả phòng</button>
+      </div>
+
+      <div class="page-local-nav" aria-label="Điều hướng hỗ trợ">
+        <button class="local-link" data-page="bao-tri" type="button">Bảo trì / Sửa chữa</button>
+        <button class="local-link" data-page="tra-phong" type="button">Trả phòng</button>
+      </div>
+
+
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><div><h3>Yêu cầu trả phòng TP-2026-007</h3><p class="small muted">Ngày muốn trả phòng: 30/06/2026</p></div><span class="status warn">Đã lên lịch trả phòng</span></div>
+          <div class="timeline">
+            <div class="timeline-step done"><div class="step-dot">1</div><div class="step-box"><strong>Chờ xử lý</strong><span>Yêu cầu đã được gửi lên hệ thống.</span></div></div>
+            <div class="timeline-step wait"><div class="step-dot">2</div><div class="step-box"><strong>Đã lên lịch trả phòng</strong><span>Quản lý hẹn kiểm tra phòng lúc 09:00 ngày 30/06/2026.</span></div></div>
+            <div class="timeline-step"><div class="step-dot">3</div><div class="step-box"><strong>Đã kiểm tra phòng</strong><span>Chưa đến ngày kiểm tra.</span></div></div>
+            <div class="timeline-step"><div class="step-dot">4</div><div class="step-box"><strong>Chờ quyết toán</strong><span>Kế toán tính hoàn cọc / khấu trừ sau kiểm tra.</span></div></div>
+            <div class="timeline-step"><div class="step-dot">5</div><div class="step-box"><strong>Đã thanh lý</strong><span>Kết thúc hợp đồng và cập nhật phòng trống.</span></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h3>Kết quả kiểm tra / quyết toán</h3><p class="small muted">Chỉ hiện khi quản lý và kế toán đã xử lý.</p></div></div>
+          <div class="info-list">
+            <div class="info-row"><span>Kết quả kiểm tra phòng</span><span>Chưa kiểm tra</span></div>
+            <div class="info-row"><span>Khoản hoàn cọc dự kiến</span><span>2.800.000đ</span></div>
+            <div class="info-row"><span>Khấu trừ</span><span>Chưa xác định</span></div>
+            <div class="info-row"><span>Cần thanh toán thêm</span><span>0đ</span></div>
+          </div>
+          <div class="divider"></div>
+          <button class="btn btn-secondary" data-open-modal="proofModal" type="button">Cập nhật minh chứng thanh toán thêm</button>
+        </div>
+      </div>
+    </section>
+    </main>
+  </div>
+
+  <footer class="customer-footer" id="contact">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <span class="footer-brand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3.5 11.2 12 4l8.5 7.2" />
+                <path d="M5.5 10.4V20h13v-9.6" />
+                <path d="M9.5 20v-5.8h5V20" />
+              </svg>
+            </span>
+            <span class="footer-brand-name">Homestay <strong>Dorm</strong></span>
+          </div>
+          <p>Cổng khách hàng giúp người đang thuê theo dõi phòng, hợp đồng, hóa đơn, bảo trì và trả phòng trong một giao diện rõ ràng.</p>
+        </div>
+
+        <div>
+          <h3>Liên hệ</h3>
+          <div class="footer-links">
+            <p>📍 123 Nguyễn Văn Linh, Đà Nẵng</p>
+            <p>☎ 0905 123 456</p>
+            <p>✉ hello@homestaydorm.vn</p>
+          </div>
+        </div>
+
+        <div>
+          <h3>Hỗ trợ khách hàng</h3>
+          <div class="footer-links">
+            <a href="#tong-quan" data-page="tong-quan">Tổng quan</a>
+            <a href="#hoa-don" data-page="hoa-don">Hóa đơn / Thanh toán</a>
+            <a href="#bao-tri" data-page="bao-tri">Bảo trì / Sửa chữa</a>
+            <a href="#tra-phong" data-page="tra-phong">Trả phòng</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="copyright">
+        <span>© 2026 Homestay Dorm. Giao diện mẫu phục vụ đồ án.</span>
+        <span>Homestay & Dorm Management System</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modals -->
+  <div class="modal-backdrop" id="rentModal">
+    <div class="modal">
+      <div class="modal-head"><div><h2>Phiếu đăng ký nhu cầu thuê</h2><p class="subtext" id="selectedRoomsText">Chọn phòng ở trang Tìm phòng để tự động điền danh sách.</p></div><button class="modal-close" data-close-modal type="button">×</button></div>
+      <form class="form-grid">
+        <div class="field"><label>Loại phòng mong muốn</label><select><option>Giường dorm</option><option>Phòng riêng</option><option>Phòng đôi</option></select></div>
+        <div class="field"><label>Ngày muốn thuê</label><input type="date" value="2026-06-01"></div>
+        <div class="field"><label>Số người</label><input type="number" min="1" value="2"></div>
+        <div class="field"><label>SĐT liên hệ</label><input type="tel" value="0905123456"></div>
+        <div class="field full"><label>Ghi chú nhu cầu</label><textarea placeholder="VD: muốn xem phòng gần trung tâm, có máy lạnh, ưu tiên giường tầng dưới..."></textarea></div>
+        <div class="full btn-row"><button class="btn btn-primary" type="submit">Gửi phiếu đăng ký</button><button class="btn btn-secondary" data-close-modal type="button">Đóng</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="scheduleModal">
+    <div class="modal">
+      <div class="modal-head"><div><h2>Yêu cầu đổi lịch xem phòng</h2><p class="subtext">Chọn thời gian mới hoặc ghi lý do cần điều chỉnh.</p></div><button class="modal-close" data-close-modal type="button">×</button></div>
+      <form class="form-grid">
+        <div class="field"><label>Thời gian mới</label><input type="datetime-local" value="2026-05-29T14:00"></div>
+        <div class="field"><label>Loại yêu cầu</label><select><option>Dời lịch</option><option>Hủy lịch</option></select></div>
+        <div class="field full"><label>Lý do / ghi chú</label><textarea placeholder="Nhập lý do cần đổi hoặc hủy lịch xem phòng..."></textarea></div>
+        <div class="full btn-row"><button class="btn btn-primary" type="submit">Gửi yêu cầu</button><button class="btn btn-secondary" data-close-modal type="button">Đóng</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="proofModal">
+    <div class="modal">
+      <div class="modal-head"><div><h2>Cập nhật minh chứng thanh toán</h2><p class="subtext">Dùng cho tiền cọc, hóa đơn hoặc khoản thanh toán thêm khi trả phòng.</p></div><button class="modal-close" data-close-modal type="button">×</button></div>
+      <form class="form-grid">
+        <div class="field"><label>Mã hóa đơn / phiếu</label><input type="text" value="HDV-05-2026"></div>
+        <div class="field"><label>Số tiền đã chuyển</label><input type="text" value="480.000đ"></div>
+        <div class="field"><label>Thời gian giao dịch</label><input type="datetime-local" value="2026-05-27T09:30"></div>
+        <div class="field"><label>Ảnh minh chứng</label><input type="file"></div>
+        <div class="field full"><label>Ghi chú</label><textarea placeholder="Nhập mã giao dịch hoặc ghi chú nếu có..."></textarea></div>
+        <div class="full btn-row"><button class="btn btn-primary" type="submit">Lưu minh chứng</button><button class="btn btn-secondary" data-close-modal type="button">Đóng</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="repairModal">
+    <div class="modal">
+      <div class="modal-head"><div><h2>Gửi yêu cầu sửa chữa</h2><p class="subtext">Chọn phòng/giường hoặc dịch vụ cần báo lỗi.</p></div><button class="modal-close" data-close-modal type="button">×</button></div>
+      <form class="form-grid">
+        <div class="field"><label>Phòng / giường</label><select><option>Dorm Studio 204 · Giường A2</option><option>Khu sinh hoạt chung</option></select></div>
+        <div class="field"><label>Loại sự cố</label><select><option>Thiết bị trong phòng</option><option>Điện / nước</option><option>Tài sản bàn giao</option><option>Dịch vụ chung</option></select></div>
+        <div class="field full"><label>Mô tả hư hỏng</label><textarea placeholder="Mô tả ngắn gọn sự cố cần sửa chữa..."></textarea></div>
+        <div class="field full"><label>Hình ảnh minh chứng</label><input type="file" multiple></div>
+        <div class="full btn-row"><button class="btn btn-primary" type="submit">Gửi yêu cầu</button><button class="btn btn-secondary" data-close-modal type="button">Đóng</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="checkoutModal">
+    <div class="modal">
+      <div class="modal-head"><div><h2>Gửi yêu cầu trả phòng</h2><p class="subtext">Khách chọn hợp đồng/phòng đang thuê và ngày muốn trả phòng.</p></div><button class="modal-close" data-close-modal type="button">×</button></div>
+      <form class="form-grid">
+        <div class="field"><label>Hợp đồng / phòng</label><select><option>HD-2026-018 · Dorm Studio 204 · Giường A2</option></select></div>
+        <div class="field"><label>Ngày muốn trả phòng</label><input type="date" value="2026-06-30"></div>
+        <div class="field full"><label>Ghi chú</label><textarea placeholder="VD: muốn trả phòng buổi sáng, cần nhân viên hỗ trợ kiểm tra..."></textarea></div>
+        <div class="full btn-row"><button class="btn btn-primary" type="submit">Gửi yêu cầu trả phòng</button><button class="btn btn-secondary" data-close-modal type="button">Đóng</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Đã xử lý thao tác mẫu.</div>
+
+  <script>
+    const tabs = document.querySelectorAll('[data-page], [data-route]');
+    const pages = document.querySelectorAll('.page');
+    const accountBtn = document.getElementById('accountBtn');
+    const accountMenu = document.getElementById('accountMenu');
+    const toast = document.getElementById('toast');
+    const roomChecks = document.querySelectorAll('.room-check');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectedRoomsText = document.getElementById('selectedRoomsText');
+    const stateButtons = document.querySelectorAll('[data-customer-state-switch]');
+    const pagesRequireContract = new Set(['dat-coc','hop-dong','hoa-don','bao-tri','tra-phong']);
+
+    function showToast(message){
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    const pageGroups = {
+      'tong-quan': 'tong-quan',
+      'tim-phong': 'thue-phong',
+      'dang-ky-xem-phong': 'thue-phong',
+      'dat-coc': 'thue-phong',
+      'hop-dong': 'thue-phong',
+      'hoa-don': 'thanh-toan',
+      'bao-tri': 'ho-tro',
+      'tra-phong': 'ho-tro'
+    };
+
+    function openPage(pageId, pushHash = true){
+      if(document.body.dataset.customerState === 'new' && pagesRequireContract.has(pageId)){
+        return;
+      }
+      pages.forEach(page => page.classList.toggle('active', page.id === `page-${pageId}`));
+      const activeGroup = pageGroups[pageId] || pageId;
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.group === activeGroup || tab.dataset.page === pageId);
+      });
+      document.querySelectorAll('.dropdown-item, .local-link, .side-link').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === pageId);
+      });
+      if(pushHash) history.replaceState(null, '', `#${pageId}`);
+      accountMenu.classList.remove('show');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function setCustomerState(state){
+      document.body.dataset.customerState = state;
+      stateButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.customerStateSwitch === state));
+      if(state === 'new'){
+        const activePage = location.hash.replace('#','') || 'tong-quan';
+        if(pagesRequireContract.has(activePage)) openPage('tong-quan', false);
+      }
+    }
+
+    stateButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setCustomerState(btn.dataset.customerStateSwitch);
+        openPage('tong-quan');
+        showToast(btn.dataset.customerStateSwitch === 'new' ? 'Đang xem giao diện khách mới.' : 'Đang xem giao diện khách đang thuê.');
+      });
+    });
+
+    tabs.forEach(el => {
+      el.addEventListener('click', (e) => {
+        const id = el.dataset.page || el.dataset.route;
+        if(id){ e.preventDefault(); openPage(id); }
+      });
+    });
+
+    setCustomerState('renter');
+    const initialPage = location.hash.replace('#','') || 'tong-quan';
+    if(document.getElementById(`page-${initialPage}`)) openPage(initialPage, false);
+
+    accountBtn.addEventListener('click', () => accountMenu.classList.toggle('show'));
+    document.addEventListener('click', (e) => {
+      if(!e.target.closest('.account-area')) accountMenu.classList.remove('show');
+    });
+    document.getElementById('logoutBtn').addEventListener('click', () => showToast('Đăng xuất mẫu thành công.'));
+
+    function selectedRooms(){
+      return Array.from(roomChecks)
+        .filter(check => check.checked)
+        .map(check => check.closest('.room-card').dataset.room);
+    }
+
+    function updateSelectedRooms(){
+      const rooms = selectedRooms();
+      roomChecks.forEach(check => check.closest('.room-card').classList.toggle('selected', check.checked));
+      selectedCount.textContent = rooms.length ? `Đã chọn ${rooms.length} phòng/giường` : 'Chưa chọn phòng/giường nào';
+      selectedRoomsText.textContent = rooms.length ? `Phòng/giường muốn xem: ${rooms.join(', ')}` : 'Chọn phòng ở trang Tìm phòng để tự động điền danh sách.';
+    }
+
+    roomChecks.forEach(check => check.addEventListener('change', updateSelectedRooms));
+
+    document.querySelectorAll('.room-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if(e.target.tagName.toLowerCase() === 'input') return;
+        const check = card.querySelector('.room-check');
+        check.checked = !check.checked;
+        updateSelectedRooms();
+      });
+    });
+
+    document.getElementById('openRentForm').addEventListener('click', () => {
+      if(selectedRooms().length === 0){
+        showToast('Chọn ít nhất 1 phòng/giường trước khi đăng ký.');
+        return;
+      }
+      openModal('rentModal');
+    });
+
+    function openModal(id){
+      document.getElementById(id).classList.add('show');
+    }
+    function closeModals(){
+      document.querySelectorAll('.modal-backdrop').forEach(modal => modal.classList.remove('show'));
+    }
+
+    document.querySelectorAll('[data-open-modal]').forEach(btn => {
+      btn.addEventListener('click', () => openModal(btn.dataset.openModal));
+    });
+    document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeModals));
+    document.querySelectorAll('.modal-backdrop').forEach(modal => {
+      modal.addEventListener('click', (e) => { if(e.target === modal) closeModals(); });
+    });
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        closeModals();
+        showToast('Đã lưu thao tác mẫu.');
+      });
+    });
+    document.getElementById('cancelScheduleBtn').addEventListener('click', () => showToast('Đã gửi yêu cầu hủy lịch xem phòng mẫu.'));
+  </script>
+</body>
+</html>

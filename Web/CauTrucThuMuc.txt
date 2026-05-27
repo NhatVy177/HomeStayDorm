@@ -1,0 +1,55 @@
+happyroom-skeleton/
+├─ happyroom-backend/
+│  ├─ controllers/
+│  │  ├─ auth.controller.js
+│  │  ├─ dangKyThue.controller.js
+│  │  ├─ lichXemPhong.controller.js
+│  │  ├─ datCoc.controller.js
+│  │  ├─ nhanPhong.controller.js
+│  │  ├─ traPhong.controller.js
+│  │  └─ suaChuaBaoTri.controller.js
+│  ├─ database/
+│  │  ├─ connection.js       # ket noi SQL Server va goi stored procedure
+│  │  └─ sql/
+│  │     ├─ app.sql          # database va cac bang
+│  │     └─ auth.sql         # SP_DangKy va SP_DangNhap, chay bang SQL Server
+│  ├─ middleware/
+│  ├─ routes/
+│  │  ├─ auth.routes.js
+│  │  ├─ dangKyThue.routes.js
+│  │  ├─ lichXemPhong.routes.js
+│  │  ├─ datCoc.routes.js
+│  │  ├─ nhanPhong.routes.js
+│  │  ├─ traPhong.routes.js
+│  │  └─ suaChuaBaoTri.routes.js
+│  ├─ services/
+│  │  ├─ auth.service.js
+│  │  ├─ dangKyThue.service.js
+│  │  ├─ lichXemPhong.service.js
+│  │  ├─ datCoc.service.js
+│  │  ├─ nhanPhong.service.js
+│  │  ├─ traPhong.service.js
+│  │  └─ suaChuaBaoTri.service.js
+│  ├─ index.js
+│  └─ package.json
+│
+├─ happyroom-frontend/
+│  ├─ public/
+│  ├─ src/
+│  │  ├─ api/
+│  │  ├─ components/common/
+│  │  ├─ constants/
+│  │  ├─ layouts/
+│  │  ├─ pages/
+│  │  │  ├─ dashboard/
+│  │  │  ├─ dangKyThue/
+│  │  │  ├─ lichXemPhong/
+│  │  │  ├─ datCoc/
+│  │  │  ├─ nhanPhong/
+│  │  │  ├─ traPhong/
+│  │  │  └─ suaChuaBaoTri/
+│  │  └─ styles/
+│  ├─ index.html
+│  └─ package.json
+│
+└─ HuongDanChay.txt

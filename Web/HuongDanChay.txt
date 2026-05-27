@@ -1,0 +1,36 @@
+HUONG DAN CHAY PROJECT HAPPYROOM
+
+1) Chay backend
+   cd happyroom-backend
+   npm install
+   cp .env.example .env   # Windows co the tu tao file .env roi copy noi dung .env.example
+   # Dien AUTH_SECRET va DB_SERVER, DB_INSTANCE (neu co), DB_PORT, DB_USER, DB_PASS, DB_NAME theo may
+   # Chi dung DB_INSTANCE hoac DB_PORT, khong dien ca hai
+   # Chay database/sql/app.sql trong SQL Server de tao database va bang (lan dau)
+   # Chay database/sql/auth.sql trong SQL Server de tao/cap nhat SP_DangKy va SP_DangNhap
+   # Backend chi goi cac SP da co, khong tu tao SP
+   npm run dev
+
+   Backend mac dinh chay o: http://localhost:5000
+   Test nhanh: http://localhost:5000/api/health
+
+2) Chay frontend
+   cd happyroom-frontend
+   npm install
+   npm run dev
+
+   Frontend mac dinh chay o: http://localhost:5173
+
+3) Quy uoc lam viec nhom
+   - Moi ban chi code trong module cua minh.
+   - Uu tien route/service nay goi database/SQL Server thay vi tao du lieu gia lap trong code.
+   - Trang thai database phai dung theo rang buoc trong database/sql/app.sql.
+   - API dung theo routes co san, neu them route moi thi them vao dung module.
+
+4) Phan chia luong nghiep vu
+   - dangKyThue: Dang ky nhu cau thue + tra cuu phong/giuong + kiem tra dieu kien.
+   - lichXemPhong: Lap lich xem phong + doi/huy lich xem phong.
+   - datCoc: Lap yeu cau dat coc + thanh toan coc + xac nhan coc.
+   - nhanPhong: Cap nhat cu tru + hop dong + thu dau ky + ban giao.
+   - traPhong: Dang ky tra phong + kiem tra hien trang + quyet toan + thanh ly.
+   - suaChuaBaoTri: Gui/tiep nhan/xu ly yeu cau sua chua, ghi nhan chi phi neu co.

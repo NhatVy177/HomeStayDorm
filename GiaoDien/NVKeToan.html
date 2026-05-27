@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Homestay Dorm - Nhân viên kế toán</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --surface:#ffffff;
+      --bg:#f8f9fa;
+      --surface-soft:#f9fafb;
+      --text:#222222;
+      --heading-text:#1a1a1a;
+      --muted:#555555;
+      --muted-2:#7b8794;
+      --line:#e9ecef;
+      --green:#2fb7a4;
+      --green-dark:#16796f;
+      --green-soft:#eaf7f5;
+      --orange:#e86f51;
+      --orange-dark:#bf4c32;
+      --orange-soft:#fff1ed;
+      --footer-bg:#1e293b;
+      --white:#ffffff;
+      --yellow:#f59f00;
+      --yellow-soft:#fff6df;
+      --blue:#3b82f6;
+      --blue-soft:#eef5ff;
+      --red:#ef4444;
+      --red-soft:#fff1f1;
+      --shadow:0 14px 34px rgba(15,23,42,0.075);
+      --shadow-header:0 8px 24px rgba(15,23,42,0.035);
+      --shadow-control:0 8px 18px rgba(15,23,42,0.035);
+      --shadow-cta:0 12px 24px rgba(232,111,81,0.24);
+      --radius-sm:12px;
+      --radius-md:16px;
+      --radius-icon:18px;
+      --radius-card:28px;
+      --radius-xl:30px;
+      --radius-pill:999px;
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(47,183,164,.055), transparent 30%),
+        radial-gradient(circle at 92% 4%, rgba(232,111,81,.05), transparent 24%),
+        var(--bg);
+      color:var(--text);
+      font-family:"Inter","Be Vietnam Pro","Segoe UI",Arial,sans-serif;
+      line-height:1.55;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    a{text-decoration:none;color:inherit}
+
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:60;
+      background:rgba(255,255,255,.92);
+      backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);
+      box-shadow:var(--shadow-header);
+    }
+
+    .header-shell,
+    .workspace-shell{
+      width:min(1750px, calc(100% - 150px));
+      margin:0 auto;
+    }
+
+    .header-shell{
+      min-height:84px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:max-content;
+    }
+
+    .brand-icon{
+      width:48px;
+      height:48px;
+      border-radius:50%;
+      background:#fff;
+      border:1px solid var(--line);
+      color:var(--green-dark);
+      display:grid;
+      place-items:center;
+      box-shadow:0 8px 18px rgba(15,23,42,.055);
+      flex:0 0 auto;
+    }
+
+    .brand-icon svg,
+    .nav-icon svg,
+    .icon-box svg,
+    .mini-icon svg,
+    .money-icon svg,
+    .evidence-icon svg{
+      width:22px;
+      height:22px;
+      stroke:currentColor;
+      stroke-width:1.9;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    .brand-name{
+      font-family:"Be Vietnam Pro","Inter",sans-serif;
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:-.018em;
+      color:var(--heading-text);
+      white-space:nowrap;
+    }
+    .brand-name strong{color:var(--green-dark);font-weight:800}
+
+    .header-right{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:24px;
+      margin-left:auto;
+    }
+
+    .header-context{
+      text-align:right;
+      line-height:1.35;
+    }
+    .header-context span{
+      display:block;
+      color:#777;
+      font-size:13px;
+      font-weight:500;
+    }
+    .header-context strong{
+      display:block;
+      color:var(--heading-text);
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:-.018em;
+    }
+
+    .account-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:var(--radius-pill);
+      padding:9px 18px 9px 9px;
+      color:var(--text);
+      font-weight:700;
+      white-space:nowrap;
+      box-shadow:var(--shadow-control);
+    }
+    .avatar{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      color:#fff;
+      background:var(--orange);
+      font-weight:800;
+      font-size:16px;
+    }
+    .account-pill small{
+      display:block;
+      color:var(--green-dark);
+      font-size:12px;
+      font-weight:800;
+      margin-top:-2px;
+    }
+
+    .workspace-shell{
+      min-height:calc(100vh - 84px);
+      display:grid;
+      grid-template-columns:310px minmax(0,1fr);
+      gap:30px;
+      align-items:start;
+      padding:38px 0 42px;
+    }
+
+    .sidebar{
+      position:sticky;
+      top:112px;
+      padding:22px 18px;
+      background:rgba(255,255,255,.96);
+      border:1px solid var(--line);
+      border-radius:30px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      z-index:20;
+      overflow:visible;
+    }
+
+    .side-label{
+      color:var(--muted-2);
+      font-size:12px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      padding:0 14px;
+    }
+
+    .nav-menu{display:grid;gap:7px}
+    .nav-item{
+      width:100%;
+      border:1px solid transparent;
+      background:transparent;
+      color:#333;
+      border-radius:var(--radius-pill);
+      padding:9px 12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:14.5px;
+      font-weight:600;
+      letter-spacing:-.012em;
+      transition:.2s ease;
+      text-align:left;
+    }
+    .nav-item:hover{background:var(--green-soft);color:var(--green-dark)}
+    .nav-item.active{
+      background:#fff;
+      color:var(--green-dark);
+      border-color:var(--line);
+      box-shadow:0 8px 20px rgba(15,23,42,.06);
+    }
+    .nav-icon{
+      width:36px;
+      height:36px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      color:inherit;
+      background:#f9fafb;
+      border:1px solid var(--line);
+      flex:0 0 auto;
+    }
+    .nav-item.active .nav-icon{background:var(--green-soft);border-color:rgba(47,183,164,.18)}
+
+    .side-note{
+      display:none;
+    }
+
+    .main{min-width:0}
+
+    .page-hero{
+      margin-bottom:24px;
+      padding:4px 0 2px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+    }
+
+    .mobile-open{
+      display:none;
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      background:#fff;
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-control);
+      color:var(--green-dark);
+    }
+
+    .page-title h1{
+      font-family:"Be Vietnam Pro","Inter",sans-serif;
+      font-size:clamp(24px,3vw,34px);
+      line-height:1.15;
+      letter-spacing:-.03em;
+      color:var(--heading-text);
+    }
+    .page-title p{margin-top:6px;color:var(--muted);font-size:14px}
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .search-mini{
+      width:300px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:var(--radius-pill);
+      padding:10px 14px;
+      box-shadow:var(--shadow-control);
+      color:var(--muted);
+    }
+    .search-mini input{border:0;outline:0;width:100%;color:var(--text);background:transparent;font-size:14px}
+
+    .btn{
+      border:0;
+      border-radius:var(--radius-pill);
+      padding:11px 16px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      font-weight:700;
+      font-size:14px;
+      letter-spacing:-.012em;
+      transition:.22s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{transform:translateY(-2px)}
+    .btn-primary{background:linear-gradient(135deg,var(--orange),var(--orange-dark));color:#fff;box-shadow:var(--shadow-cta)}
+    .btn-secondary{background:#fff;color:#333;border:1px solid var(--line);box-shadow:var(--shadow-control)}
+    .btn-secondary:hover{color:var(--green-dark);background:#f9fafb}
+    .btn-ghost{background:transparent;color:var(--green-dark);border:1px solid var(--line)}
+    .btn-danger{background:#fff;color:var(--red);border:1px solid rgba(239,68,68,.22)}
+    .btn-compact{padding:8px 11px;font-size:12.5px}
+
+    .view{display:none;animation:fadeIn .2s ease}
+    .view.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    .dashboard-grid{display:grid;gap:20px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+    .stat-card,.card,.table-card,.profile-card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:var(--radius-card);
+      box-shadow:var(--shadow);
+    }
+    .stat-card{
+      padding:18px;
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      min-height:124px;
+    }
+    .icon-box{
+      width:52px;
+      height:52px;
+      border-radius:18px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg,var(--green-soft),#fff);
+      color:var(--green-dark);
+      border:1px solid var(--line);
+      flex:0 0 auto;
+    }
+    .stat-card .number{font-size:30px;line-height:1;font-weight:800;color:var(--heading-text);letter-spacing:-.04em}
+    .stat-card .label{margin-top:6px;font-size:13px;color:var(--muted);font-weight:600}
+    .stat-card .trend{margin-top:10px;font-size:12px;font-weight:800;color:var(--green-dark)}
+
+    .two-col{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(360px,.8fr);gap:20px;align-items:start}
+    .three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+
+    .card{padding:22px}
+    .card-head,.table-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .card-title h2,.table-head h2{
+      font-family:"Be Vietnam Pro","Inter",sans-serif;
+      font-size:22px;
+      color:var(--heading-text);
+      letter-spacing:-.022em;
+      line-height:1.2;
+    }
+    .card-title p,.table-head p{color:var(--muted);font-size:14px;margin-top:6px}
+
+    .pipeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:4px}
+    .pipe-step{
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:14px;
+      background:var(--surface-soft);
+      position:relative;
+      overflow:hidden;
+    }
+    .pipe-step::after{content:"";position:absolute;right:-20px;top:-20px;width:70px;height:70px;background:rgba(47,183,164,.08);border-radius:50%}
+    .pipe-step strong{display:block;font-size:18px;color:var(--heading-text);letter-spacing:-.025em}
+    .pipe-step span{font-size:12.5px;color:var(--muted);font-weight:700}
+
+    .filter-bar{
+      display:grid;
+      grid-template-columns:1.1fr repeat(3,minmax(145px,.55fr));
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .field{display:grid;gap:7px}
+    .field label{font-size:13px;font-weight:700;color:var(--muted)}
+    .field input,.field select,.field textarea{
+      width:100%;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:16px;
+      padding:12px 13px;
+      color:var(--text);
+      outline:none;
+      font-weight:600;
+      transition:.2s ease;
+    }
+    .field textarea{min-height:98px;resize:vertical}
+    .field input:focus,.field select:focus,.field textarea:focus{
+      border-color:var(--green);
+      box-shadow:0 0 0 4px rgba(47,183,164,.12);
+    }
+
+    .table-card{overflow:hidden}
+    .table-head{padding:22px 22px 0}
+    .table-scroll{overflow:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1050px}
+    th,td{padding:14px 16px;text-align:left;border-top:1px solid var(--line);vertical-align:middle}
+    th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:#fbfbfc;font-weight:800}
+    td{font-size:14px;color:#333}
+    tbody tr{transition:.16s ease}
+    tbody tr:hover{background:#fcfdfd}
+    .person{display:flex;align-items:center;gap:10px}
+    .person .mini-avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--green-soft);color:var(--green-dark);font-weight:800;border:1px solid rgba(47,183,164,.18)}
+    .person strong{display:block;color:var(--heading-text);line-height:1.2}
+    .person small{color:var(--muted);font-size:12px;font-weight:600}
+    .muted{color:var(--muted)!important}
+    .room-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12.5px;font-weight:800;color:var(--green-dark);white-space:nowrap}
+    .money-pill{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(232,111,81,.18);background:var(--orange-soft);color:var(--orange-dark);border-radius:999px;padding:7px 10px;font-size:12.5px;font-weight:800;white-space:nowrap}
+    .status-pill{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:800;white-space:nowrap;border:1px solid transparent}
+    .st-new{background:var(--blue-soft);color:#1d4ed8;border-color:rgba(59,130,246,.18)}
+    .st-processing{background:var(--yellow-soft);color:#b56d00;border-color:rgba(245,159,0,.2)}
+    .st-good{background:var(--green-soft);color:var(--green-dark);border-color:rgba(47,183,164,.18)}
+    .st-danger{background:var(--red-soft);color:var(--red);border-color:rgba(239,68,68,.18)}
+    .st-neutral{background:#f1f3f5;color:#4a5568;border-color:#e9ecef}
+    .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+    .mini-list{display:grid;gap:10px}
+    .mini-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:20px;padding:13px;background:#fff}
+    .mini-left{display:flex;align-items:center;gap:10px}
+    .mini-icon{width:40px;height:40px;border-radius:16px;display:grid;place-items:center;background:var(--green-soft);color:var(--green-dark);border:1px solid rgba(47,183,164,.18)}
+    .mini-row strong{display:block;font-size:14px;color:var(--heading-text)}
+    .mini-row small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+
+    .money-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .money-card{border:1px solid var(--line);border-radius:26px;padding:18px;background:#fff;box-shadow:var(--shadow);display:grid;gap:12px}
+    .money-card h3{font-size:17px;color:var(--heading-text)}
+    .money-card p{font-size:13px;color:var(--muted);font-weight:600}
+    .money-value{font-size:26px;font-weight:800;color:var(--heading-text);letter-spacing:-.035em}
+    .money-icon{width:46px;height:46px;border-radius:18px;display:grid;place-items:center;background:var(--green-soft);color:var(--green-dark);border:1px solid rgba(47,183,164,.18)}
+
+    .evidence{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:7px 10px;
+      color:var(--muted);
+      font-weight:800;
+      font-size:12.5px;
+      white-space:nowrap;
+    }
+    .evidence-icon{width:26px;height:26px;border-radius:50%;background:var(--green-soft);color:var(--green-dark);display:grid;place-items:center}
+    .evidence-icon svg{width:15px;height:15px}
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      z-index:80;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(15,23,42,.52);
+    }
+    .modal-backdrop.show{display:flex}
+    .modal{
+      width:min(760px,100%);
+      background:#fff;
+      border-radius:28px;
+      box-shadow:0 24px 60px rgba(47,111,159,.16);
+      border:1px solid var(--line);
+      overflow:hidden;
+      animation:pop .22s ease;
+    }
+    @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 24px;border-bottom:1px solid var(--line);background:#fbfbfc}
+    .modal-head h2{font-family:"Be Vietnam Pro","Inter",sans-serif;font-size:23px;color:var(--heading-text);letter-spacing:-.025em}
+    .modal-head p{color:var(--muted);font-size:14px;margin-top:5px}
+    .modal-close{width:40px;height:40px;border:0;border-radius:14px;background:#f1f3f5;color:#333;font-size:22px}
+    .modal-body{padding:22px 24px;display:grid;gap:16px}
+    .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .info-box{border:1px solid var(--line);border-radius:18px;padding:13px;background:#fff}
+    .info-box small{display:block;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.035em;margin-bottom:4px}
+    .info-box strong{font-size:14px;color:var(--heading-text)}
+    .modal-footer{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:0 24px 24px}
+
+    .toast{
+      position:fixed;
+      right:24px;
+      bottom:24px;
+      z-index:100;
+      background:var(--footer-bg);
+      color:#fff;
+      padding:15px 18px;
+      border-radius:18px;
+      box-shadow:0 14px 30px rgba(15,23,42,.16);
+      font-size:14px;
+      font-weight:700;
+      opacity:0;
+      transform:translateY(18px);
+      pointer-events:none;
+      transition:.25s ease;
+    }
+    .toast.show{opacity:1;transform:translateY(0)}
+
+    @media (max-width:1180px){
+      .header-shell,
+      .workspace-shell{width:calc(100% - 48px)}
+      .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .two-col{grid-template-columns:1fr}
+      .money-grid,.three-col{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .filter-bar{grid-template-columns:1fr 1fr}
+      .search-mini{display:none}
+    }
+
+    @media (max-width:860px){
+      .header-shell,
+      .workspace-shell{width:calc(100% - 28px)}
+      .header-shell{min-height:auto;padding:14px 0}
+      .header-context{display:none}
+      .workspace-shell{grid-template-columns:1fr;display:block;padding:22px 0 30px}
+      .sidebar{
+        position:fixed;
+        left:0;
+        top:0;
+        bottom:0;
+        width:min(292px,86vw);
+        transform:translateX(-105%);
+        transition:.24s ease;
+        overflow-y:auto;
+      }
+      body.sidebar-open .sidebar{transform:translateX(0)}
+      body.sidebar-open::after{content:"";position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:18}
+      .mobile-open{display:grid;place-items:center}
+      .main{padding:0}
+      .page-hero{margin-bottom:20px;padding:0;align-items:center}
+      .page-title h1{font-size:24px}
+      .account-pill{padding-right:10px}
+      .account-pill span:last-child{display:none}
+      .stats-grid,.filter-bar,.money-grid,.three-col,.pipeline,.modal-grid{grid-template-columns:1fr}
+      .card-head,.table-head{flex-direction:column;align-items:stretch}
+      .toast{left:16px;right:16px;text-align:center}
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-shell">
+      <a href="#" class="brand" data-view-link="overview">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 10.4V20h13v-9.6"/><path d="M9.5 20v-5.8h5V20"/></svg>
+        </span>
+        <span class="brand-name">Homestay <strong>Dorm</strong></span>
+      </a>
+
+      <div class="header-right">
+        <div class="header-context">
+          <span>Cổng nhân viên</span>
+          <strong>Kế toán thuê phòng</strong>
+        </div>
+        <div class="account-pill">
+          <span class="avatar">KT</span>
+          <span>Kế toán Hạnh<small>Nhân viên kế toán</small></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace-shell">
+    <aside class="sidebar" aria-label="Sidebar nhân viên kế toán">
+      <span class="side-label">Menu chính</span>
+      <nav class="nav-menu">
+        <button class="nav-item active" data-view-link="overview" type="button">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 13h7V4H4v9Z"/><path d="M13 20h7v-9h-7v9Z"/><path d="M4 20h7v-5H4v5Z"/><path d="M13 9h7V4h-7v5Z"/></svg></span>Tổng quan
+        </button>
+        <button class="nav-item" data-view-link="deposit-payment" type="button">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4z"/><path d="M7 11h10"/><path d="M8 15h4"/><path d="M16 15h1"/></svg></span>Thanh toán cọc
+        </button>
+        <button class="nav-item" data-view-link="movein-collection" type="button">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6"/><path d="M9 17h4"/></svg></span>Thu nhận phòng
+        </button>
+        <button class="nav-item" data-view-link="invoices" type="button">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1V3Z"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg></span>Hóa đơn
+        </button>
+        <button class="nav-item" data-view-link="return-settlement" type="button">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h3v16H5V5h3l1-2Z"/><path d="M9 12h6"/><path d="M9 16h4"/><path d="m15 10 2 2 4-4"/></svg></span>Quyết toán trả phòng
+        </button>
+        <button class="nav-item" data-view-link="refund-deposit" type="button">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v6h-6"/><path d="M12 8v8"/><path d="M9.5 10.5h3.4a1.6 1.6 0 1 1 0 3.2H11"/></svg></span>Hoàn cọc
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="page-hero">
+        <button class="mobile-open" type="button" aria-label="Mở sidebar">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="page-title">
+          <h1 id="pageTitle">Tổng quan kế toán</h1>
+          <p id="pageSubtitle">Theo dõi tiền cọc, thu nhận phòng, hóa đơn, quyết toán trả phòng và hoàn cọc.</p>
+        </div>
+        <div class="top-actions">
+          <label class="search-mini">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="search" placeholder="Tìm khách, hóa đơn, phiếu thu..." />
+          </label>
+          <button class="btn btn-secondary js-action" type="button">Xuất báo cáo</button>
+        </div>
+      </section>
+
+      <section class="view active" id="overview" data-title="Tổng quan kế toán" data-subtitle="Theo dõi tiền cọc, thu nhận phòng, hóa đơn, quyết toán trả phòng và hoàn cọc.">
+        <div class="dashboard-grid">
+          <div class="stats-grid">
+            <article class="stat-card">
+              <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4z"/><path d="M7 11h10"/><path d="M8 15h4"/></svg></span>
+              <div><div class="number">08</div><div class="label">Phiếu cọc chờ phát hành</div><div class="trend">Đã được quản lý duyệt</div></div>
+            </article>
+            <article class="stat-card">
+              <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6"/></svg></span>
+              <div><div class="number">05</div><div class="label">Khoản thu nhận phòng</div><div class="trend">2 khách nhận phòng hôm nay</div></div>
+            </article>
+            <article class="stat-card">
+              <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1V3Z"/><path d="M9 8h6"/><path d="M9 12h6"/></svg></span>
+              <div><div class="number">21</div><div class="label">Hóa đơn chờ thanh toán</div><div class="trend">Tổng 84.500.000đ</div></div>
+            </article>
+            <article class="stat-card">
+              <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h3v16H5V5h3l1-2Z"/><path d="M9 12h6"/><path d="m15 10 2 2 4-4"/></svg></span>
+              <div><div class="number">04</div><div class="label">Quyết toán trả phòng</div><div class="trend">1 hồ sơ cần hoàn cọc</div></div>
+            </article>
+          </div>
+
+          <section class="card">
+            <div class="card-head">
+              <div class="card-title"><h2>Luồng tiền kế toán cần theo dõi</h2><p>Màn hình chỉ tập trung vào phần tiền, hóa đơn, thanh toán và quyết toán.</p></div>
+            </div>
+            <div class="pipeline">
+              <div class="pipe-step"><strong>01</strong><span>Phiếu cọc được duyệt</span></div>
+              <div class="pipe-step"><strong>02</strong><span>Phát hành yêu cầu thanh toán</span></div>
+              <div class="pipe-step"><strong>03</strong><span>Thu tiền nhận phòng / hóa đơn</span></div>
+              <div class="pipe-step"><strong>04</strong><span>Quyết toán và hoàn cọc</span></div>
+            </div>
+          </section>
+
+          <div class="two-col">
+            <section class="card">
+              <div class="card-head"><div class="card-title"><h2>Cần xử lý hôm nay</h2><p>Các khoản tiền cần kế toán kiểm tra trước.</p></div></div>
+              <div class="mini-list">
+                <div class="mini-row"><div class="mini-left"><span class="mini-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4z"/><path d="M7 11h10"/></svg></span><span><strong>Phát hành yêu cầu cọc cho Minh Anh</strong><small>Dorm Studio 204 · Hạn thanh toán 28/05</small></span></div><span class="status-pill st-new">Chờ phát hành</span></div>
+                <div class="mini-row"><div class="mini-left"><span class="mini-icon"><svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1V3Z"/><path d="M9 12h6"/></svg></span><span><strong>Ghi nhận hóa đơn HĐ-0526</strong><small>Khách đã chuyển khoản, cần đối chiếu</small></span></div><span class="status-pill st-processing">Cần kiểm tra</span></div>
+                <div class="mini-row"><div class="mini-left"><span class="mini-icon"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v6h-6"/></svg></span><span><strong>Hoàn cọc cho Ngọc Phúc</strong><small>Tiền cần hoàn 2.200.000đ</small></span></div><span class="status-pill st-good">Đủ điều kiện</span></div>
+              </div>
+            </section>
+
+            <aside class="card">
+              <div class="card-head"><div class="card-title"><h2>Tổng tiền tháng này</h2><p>Số liệu demo để chụp giao diện.</p></div></div>
+              <div class="money-grid" style="grid-template-columns:1fr;">
+                <div class="money-card"><span class="money-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4z"/><path d="M7 11h10"/></svg></span><div><h3>Tiền cọc đã thu</h3><div class="money-value">42.000.000đ</div><p>14 phiếu cọc trong tháng</p></div></div>
+                <div class="money-card"><span class="money-icon"><svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1V3Z"/><path d="M9 8h6"/></svg></span><div><h3>Hóa đơn đã thanh toán</h3><div class="money-value">118.500.000đ</div><p>Tiền phòng và phụ phí</p></div></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="deposit-payment" data-title="Thanh toán cọc" data-subtitle="Theo dõi phiếu cọc đã được quản lý duyệt, số tiền cọc, hạn thanh toán và trạng thái thanh toán.">
+        <div class="dashboard-grid">
+          <div class="filter-bar">
+            <div class="field"><label>Tìm phiếu cọc</label><input type="text" placeholder="Mã phiếu, khách hàng, phòng/giường..." /></div>
+            <div class="field"><label>Trạng thái thanh toán</label><select><option>Tất cả</option><option>Chờ phát hành</option><option>Đã phát hành</option><option>Đã thanh toán</option><option>Quá hạn</option></select></div>
+            <div class="field"><label>Hạn thanh toán</label><select><option>Tất cả</option><option>Hôm nay</option><option>3 ngày tới</option><option>Quá hạn</option></select></div>
+            <div class="field"><label>Loại phòng</label><select><option>Tất cả</option><option>Phòng riêng</option><option>Giường dorm</option><option>Phòng đôi</option></select></div>
+          </div>
+
+          <section class="table-card">
+            <div class="table-head">
+              <div><h2>Phiếu cọc đã được quản lý duyệt</h2><p>Kế toán phát hành yêu cầu thanh toán và ghi nhận thanh toán khi cần đối chiếu thủ công.</p></div>
+              <button class="btn btn-primary js-action" type="button">Phát hành hàng loạt</button>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Mã phiếu cọc</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Số tiền cọc</th><th>Hạn thanh toán</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><strong>PC-2401</strong></td>
+                    <td><div class="person"><span class="mini-avatar">MA</span><span><strong>Minh Anh</strong><small>Đã được quản lý duyệt</small></span></div></td>
+                    <td><span class="room-pill">Dorm Studio 204 · A2</span></td>
+                    <td><span class="money-pill">3.000.000đ</span></td>
+                    <td>28/05/2026</td>
+                    <td><span class="status-pill st-new">Chờ phát hành</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Phát hành yêu cầu thanh toán</button><button class="btn btn-secondary btn-compact js-action" type="button">Ghi nhận thanh toán</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>PC-2402</strong></td>
+                    <td><div class="person"><span class="mini-avatar">HL</span><span><strong>Hoài Linh</strong><small>Có minh chứng chuyển khoản</small></span></div></td>
+                    <td><span class="room-pill">Cozy 302</span></td>
+                    <td><span class="money-pill">4.000.000đ</span></td>
+                    <td>Hôm nay · 23:59</td>
+                    <td><span class="status-pill st-processing">Đã phát hành</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Ghi nhận thanh toán nếu cần</button><button class="btn btn-secondary btn-compact js-action" type="button">Xem minh chứng</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>PC-2403</strong></td>
+                    <td><div class="person"><span class="mini-avatar">QT</span><span><strong>Quang Trí</strong><small>Thanh toán qua chuyển khoản</small></span></div></td>
+                    <td><span class="room-pill">Garden 101</span></td>
+                    <td><span class="money-pill">5.000.000đ</span></td>
+                    <td>Đã thanh toán 26/05</td>
+                    <td><span class="status-pill st-good">Đã thanh toán</span></td>
+                    <td><div class="actions"><button class="btn btn-secondary btn-compact js-action" type="button">Xem phiếu thu</button><button class="btn btn-secondary btn-compact js-action" type="button">Xuất biên nhận</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>PC-2404</strong></td>
+                    <td><div class="person"><span class="mini-avatar">KL</span><span><strong>Khánh Linh</strong><small>Chờ khách thanh toán</small></span></div></td>
+                    <td><span class="room-pill">Dorm Studio 202 · B1</span></td>
+                    <td><span class="money-pill">2.500.000đ</span></td>
+                    <td>Quá hạn 1 ngày</td>
+                    <td><span class="status-pill st-danger">Quá hạn</span></td>
+                    <td><div class="actions"><button class="btn btn-secondary btn-compact js-action" type="button">Gửi nhắc thanh toán</button><button class="btn btn-danger btn-compact js-action" type="button">Báo sale xử lý</button></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="movein-collection" data-title="Thu nhận phòng" data-subtitle="Ghi nhận các khoản cần thu khi khách chuẩn bị nhận phòng như tiền phòng đầu kỳ, phụ phí hoặc khoản còn thiếu.">
+        <div class="dashboard-grid">
+          <section class="table-card">
+            <div class="table-head">
+              <div><h2>Khoản thu khi nhận phòng</h2><p>Kế toán chỉ theo dõi tiền cần thu, trạng thái thanh toán và biên nhận.</p></div>
+              <button class="btn btn-primary js-action" type="button">Tạo phiếu thu nhận phòng</button>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Mã thu</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Khoản cần thu</th><th>Đã cọc</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><strong>TN-1201</strong></td>
+                    <td><div class="person"><span class="mini-avatar">MA</span><span><strong>Minh Anh</strong><small>Nhận phòng 29/05</small></span></div></td>
+                    <td><span class="room-pill">Dorm Studio 204 · A2</span></td>
+                    <td><span class="money-pill">2.800.000đ</span></td>
+                    <td>3.000.000đ</td>
+                    <td><span class="status-pill st-new">Chưa thu</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Ghi nhận thu</button><button class="btn btn-secondary btn-compact js-action" type="button">Xuất biên nhận</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>TN-1202</strong></td>
+                    <td><div class="person"><span class="mini-avatar">HL</span><span><strong>Hoài Linh</strong><small>Nhận phòng hôm nay</small></span></div></td>
+                    <td><span class="room-pill">Cozy 302</span></td>
+                    <td><span class="money-pill">4.500.000đ</span></td>
+                    <td>4.000.000đ</td>
+                    <td><span class="status-pill st-processing">Chờ đối chiếu</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Xác nhận đã thu</button><button class="btn btn-secondary btn-compact js-action" type="button">Xem minh chứng</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>TN-1203</strong></td>
+                    <td><div class="person"><span class="mini-avatar">QT</span><span><strong>Quang Trí</strong><small>Đã hoàn tất nhận phòng</small></span></div></td>
+                    <td><span class="room-pill">Garden 101</span></td>
+                    <td><span class="money-pill">5.200.000đ</span></td>
+                    <td>5.000.000đ</td>
+                    <td><span class="status-pill st-good">Đã thu</span></td>
+                    <td><div class="actions"><button class="btn btn-secondary btn-compact js-action" type="button">Xem phiếu thu</button><button class="btn btn-secondary btn-compact js-action" type="button">In biên nhận</button></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="invoices" data-title="Hóa đơn" data-subtitle="Quản lý hóa đơn tiền phòng, điện nước, phụ phí và trạng thái thanh toán của khách.">
+        <div class="dashboard-grid">
+          <div class="filter-bar">
+            <div class="field"><label>Tìm hóa đơn</label><input type="text" placeholder="Mã hóa đơn, khách hàng, phòng..." /></div>
+            <div class="field"><label>Kỳ hóa đơn</label><select><option>Tháng 05/2026</option><option>Tháng 04/2026</option><option>Tháng 03/2026</option></select></div>
+            <div class="field"><label>Trạng thái</label><select><option>Tất cả</option><option>Nháp</option><option>Đã phát hành</option><option>Đã thanh toán</option><option>Quá hạn</option></select></div>
+            <div class="field"><label>Loại khoản thu</label><select><option>Tất cả</option><option>Tiền phòng</option><option>Điện nước</option><option>Phụ phí</option></select></div>
+          </div>
+
+          <section class="table-card">
+            <div class="table-head">
+              <div><h2>Danh sách hóa đơn</h2><p>Kế toán phát hành hóa đơn, ghi nhận thanh toán và nhắc khách khi quá hạn.</p></div>
+              <button class="btn btn-primary js-action" type="button">Tạo hóa đơn tháng</button>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Mã hóa đơn</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Kỳ</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><strong>HD-0526-01</strong></td>
+                    <td><div class="person"><span class="mini-avatar">HL</span><span><strong>Hoài Linh</strong><small>Hóa đơn tiền phòng</small></span></div></td>
+                    <td><span class="room-pill">Cozy 302</span></td>
+                    <td>05/2026</td>
+                    <td><span class="money-pill">4.850.000đ</span></td>
+                    <td><span class="status-pill st-processing">Đã phát hành</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Ghi nhận thanh toán</button><button class="btn btn-secondary btn-compact js-action" type="button">Gửi nhắc</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>HD-0526-02</strong></td>
+                    <td><div class="person"><span class="mini-avatar">QT</span><span><strong>Quang Trí</strong><small>Đã thanh toán</small></span></div></td>
+                    <td><span class="room-pill">Garden 101</span></td>
+                    <td>05/2026</td>
+                    <td><span class="money-pill">5.420.000đ</span></td>
+                    <td><span class="status-pill st-good">Đã thanh toán</span></td>
+                    <td><div class="actions"><button class="btn btn-secondary btn-compact js-action" type="button">Xem hóa đơn</button><button class="btn btn-secondary btn-compact js-action" type="button">Xuất PDF</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>HD-0526-03</strong></td>
+                    <td><div class="person"><span class="mini-avatar">NP</span><span><strong>Ngọc Phúc</strong><small>Quá hạn thanh toán</small></span></div></td>
+                    <td><span class="room-pill">Room 305</span></td>
+                    <td>05/2026</td>
+                    <td><span class="money-pill">3.780.000đ</span></td>
+                    <td><span class="status-pill st-danger">Quá hạn</span></td>
+                    <td><div class="actions"><button class="btn btn-secondary btn-compact js-action" type="button">Gửi nhắc</button><button class="btn btn-primary btn-compact js-action" type="button">Ghi nhận thanh toán</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>HD-0526-04</strong></td>
+                    <td><div class="person"><span class="mini-avatar">KL</span><span><strong>Khánh Linh</strong><small>Đang soạn hóa đơn</small></span></div></td>
+                    <td><span class="room-pill">Dorm Studio 202 · B1</span></td>
+                    <td>05/2026</td>
+                    <td><span class="money-pill">2.920.000đ</span></td>
+                    <td><span class="status-pill st-new">Nháp</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Phát hành hóa đơn</button><button class="btn btn-secondary btn-compact js-action" type="button">Chỉnh sửa</button></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="return-settlement" data-title="Quyết toán trả phòng" data-subtitle="Lập phiếu quyết toán từ biên bản kiểm tra trả phòng, tính tiền hoàn cọc hoặc tiền cần thu thêm.">
+        <div class="dashboard-grid">
+          <div class="money-grid">
+            <article class="money-card"><span class="money-icon"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h3v16H5V5h3l1-2Z"/><path d="M9 12h6"/></svg></span><div><h3>Chờ lập quyết toán</h3><div class="money-value">04 hồ sơ</div><p>Đã có biên bản kiểm tra trả phòng</p></div></article>
+            <article class="money-card"><span class="money-icon"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v6h-6"/></svg></span><div><h3>Tiền cần hoàn</h3><div class="money-value">8.700.000đ</div><p>Sau khi trừ chi phí phát sinh</p></div></article>
+            <article class="money-card"><span class="money-icon"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span><div><h3>Tiền cần thu thêm</h3><div class="money-value">1.300.000đ</div><p>Các hồ sơ có phát sinh vượt cọc</p></div></article>
+          </div>
+
+          <section class="table-card">
+            <div class="table-head">
+              <div><h2>Biên bản kiểm tra trả phòng</h2><p>Hiển thị tiền cọc ban đầu, chi phí khấu trừ, tiền cần hoàn và tiền cần thu thêm nếu có.</p></div>
+              <button class="btn btn-primary js-action" type="button">Lập phiếu quyết toán</button>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Biên bản</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Tiền cọc ban đầu</th><th>Chi phí khấu trừ</th><th>Cần hoàn / Thu thêm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><strong>BB-3101</strong></td>
+                    <td><div class="person"><span class="mini-avatar">NP</span><span><strong>Ngọc Phúc</strong><small>Đã kiểm tra trả phòng</small></span></div></td>
+                    <td><span class="room-pill">Room 305</span></td>
+                    <td>3.000.000đ</td>
+                    <td>800.000đ</td>
+                    <td><span class="money-pill">Hoàn 2.200.000đ</span></td>
+                    <td><span class="status-pill st-new">Chờ quyết toán</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Lập phiếu quyết toán</button><button class="btn btn-secondary btn-compact js-action" type="button">Ghi nhận hoàn cọc</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>BB-3102</strong></td>
+                    <td><div class="person"><span class="mini-avatar">TQ</span><span><strong>Tuấn Quang</strong><small>Hư hỏng vượt cọc</small></span></div></td>
+                    <td><span class="room-pill">Room 206</span></td>
+                    <td>2.500.000đ</td>
+                    <td>3.800.000đ</td>
+                    <td><span class="money-pill">Thu thêm 1.300.000đ</span></td>
+                    <td><span class="status-pill st-processing">Chờ thu thêm</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Xác nhận thu thêm</button><button class="btn btn-secondary btn-compact js-action" type="button">Xem chi phí</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>BB-3103</strong></td>
+                    <td><div class="person"><span class="mini-avatar">KL</span><span><strong>Khánh Linh</strong><small>Không phát sinh</small></span></div></td>
+                    <td><span class="room-pill">Dorm Studio 202 · B1</span></td>
+                    <td>2.500.000đ</td>
+                    <td>0đ</td>
+                    <td><span class="money-pill">Hoàn 2.500.000đ</span></td>
+                    <td><span class="status-pill st-good">Đã quyết toán</span></td>
+                    <td><div class="actions"><button class="btn btn-secondary btn-compact js-action" type="button">Xem phiếu</button><button class="btn btn-secondary btn-compact js-action" type="button">Ghi nhận hoàn cọc</button></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="refund-deposit" data-title="Hoàn cọc" data-subtitle="Theo dõi các phiếu hoàn cọc sau quyết toán trả phòng và xác nhận trạng thái đã hoàn.">
+        <div class="dashboard-grid">
+          <section class="table-card">
+            <div class="table-head">
+              <div><h2>Danh sách hoàn cọc</h2><p>Kế toán ghi nhận hoàn cọc theo phiếu quyết toán đã lập.</p></div>
+              <button class="btn btn-primary js-action" type="button">Tạo lệnh hoàn cọc</button>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Mã hoàn cọc</th><th>Khách hàng</th><th>Phiếu quyết toán</th><th>Số tiền hoàn</th><th>Thông tin nhận tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><strong>HC-0901</strong></td>
+                    <td><div class="person"><span class="mini-avatar">NP</span><span><strong>Ngọc Phúc</strong><small>Room 305</small></span></div></td>
+                    <td>QT-3101</td>
+                    <td><span class="money-pill">2.200.000đ</span></td>
+                    <td>MB Bank · **** 9123</td>
+                    <td><span class="status-pill st-new">Chờ hoàn</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Ghi nhận hoàn cọc</button><button class="btn btn-secondary btn-compact js-action" type="button">Xem quyết toán</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>HC-0902</strong></td>
+                    <td><div class="person"><span class="mini-avatar">KL</span><span><strong>Khánh Linh</strong><small>Dorm Studio 202 · B1</small></span></div></td>
+                    <td>QT-3103</td>
+                    <td><span class="money-pill">2.500.000đ</span></td>
+                    <td>Vietcombank · **** 5520</td>
+                    <td><span class="status-pill st-processing">Đang xử lý</span></td>
+                    <td><div class="actions"><button class="btn btn-primary btn-compact js-action" type="button">Xác nhận đã hoàn</button><button class="btn btn-secondary btn-compact js-action" type="button">Tải minh chứng</button></div></td>
+                  </tr>
+                  <tr>
+                    <td><strong>HC-0903</strong></td>
+                    <td><div class="person"><span class="mini-avatar">PT</span><span><strong>Phương Thảo</strong><small>Garden 203</small></span></div></td>
+                    <td>QT-3099</td>
+                    <td><span class="money-pill">1.800.000đ</span></td>
+                    <td>Tiền mặt tại quầy</td>
+                    <td><span class="status-pill st-good">Đã hoàn</span></td>
+                    <td><div class="actions"><button class="btn btn-secondary btn-compact js-action" type="button">Xem phiếu chi</button><button class="btn btn-secondary btn-compact js-action" type="button">In biên nhận</button></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="actionModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="modalTitle">Xác nhận thao tác</h2>
+          <p>Đây là popup demo để thể hiện luồng thao tác của nhân viên kế toán.</p>
+        </div>
+        <button class="modal-close" type="button" aria-label="Đóng">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="info-box"><small>Người thao tác</small><strong>Kế toán Hạnh</strong></div>
+          <div class="info-box"><small>Thời gian</small><strong>Hôm nay · 14:30</strong></div>
+          <div class="info-box"><small>Loại nghiệp vụ</small><strong id="modalActionName">Ghi nhận thanh toán</strong></div>
+          <div class="info-box"><small>Trạng thái sau xử lý</small><strong>Chờ bước tiếp theo</strong></div>
+        </div>
+        <div class="field">
+          <label>Ghi chú kế toán</label>
+          <textarea placeholder="Nhập ghi chú, mã giao dịch hoặc lý do điều chỉnh..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel" type="button">Hủy</button>
+        <button class="btn btn-primary modal-submit" type="button">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Đã cập nhật giao diện demo.</div>
+
+  <script>
+    const body = document.body;
+    const navLinks = document.querySelectorAll('[data-view-link]');
+    const views = document.querySelectorAll('.view');
+    const pageTitle = document.getElementById('pageTitle');
+    const pageSubtitle = document.getElementById('pageSubtitle');
+    const mobileOpen = document.querySelector('.mobile-open');
+    const modal = document.getElementById('actionModal');
+    const modalActionName = document.getElementById('modalActionName');
+    const toast = document.getElementById('toast');
+
+    function showView(id){
+      const target = document.getElementById(id);
+      if(!target) return;
+      views.forEach(view => view.classList.toggle('active', view.id === id));
+      navLinks.forEach(link => link.classList.toggle('active', link.dataset.viewLink === id));
+      pageTitle.textContent = target.dataset.title || 'Homestay Dorm';
+      pageSubtitle.textContent = target.dataset.subtitle || '';
+      body.classList.remove('sidebar-open');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    navLinks.forEach(link => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        showView(link.dataset.viewLink);
+      });
+    });
+
+    mobileOpen?.addEventListener('click', () => body.classList.add('sidebar-open'));
+    document.addEventListener('click', (event) => {
+      if(body.classList.contains('sidebar-open') && !event.target.closest('.sidebar') && !event.target.closest('.mobile-open')){
+        body.classList.remove('sidebar-open');
+      }
+    });
+
+    document.querySelectorAll('.js-action').forEach(button => {
+      button.addEventListener('click', () => {
+        modalActionName.textContent = button.textContent.trim();
+        modal.classList.add('show');
+      });
+    });
+
+    function closeModal(){ modal.classList.remove('show'); }
+    document.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.querySelector('.modal-cancel').addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => { if(event.target === modal) closeModal(); });
+    document.querySelector('.modal-submit').addEventListener('click', () => {
+      closeModal();
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    });
+  </script>
+</body>
+</html>

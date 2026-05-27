@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Homestay Dorm - Clean White Preview</title>
+
+  <!-- Font Việt hóa rõ ràng: Inter cho phần thân, Be Vietnam Pro cho header/headline -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --green: #4f9fd1;
+      --green-dark: #23658d;
+      --green-soft: #eaf6ff;
+      --orange: #ff7a59;
+      --orange-dark: #e15635;
+      --orange-soft: #fff0eb;
+      --cta: #ff7a59;
+      --cta-dark: #e15635;
+      --cta-rgb: 255, 122, 89;
+      --bg: #f7fbff;
+      --surface: #ffffff;
+      --surface-soft: #fbfdff;
+      --text: #263544;
+      --muted: #66788a;
+      --line: #dbeaf5;
+      --white: #ffffff;
+      --hero-start: #f8fcff;
+      --hero-end: #f7fbff;
+      --hero-glow: rgba(79, 159, 209, 0.16);
+      --hero-glow-2: rgba(255, 122, 89, 0.12);
+      --footer-bg: #243f56;
+      --shadow: 0 14px 35px rgba(47, 111, 159, 0.09);
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+    }
+
+    body[data-theme="sky-coral"]{
+      --green: #4f9fd1;
+      --green-dark: #23658d;
+      --green-soft: #eaf6ff;
+      --orange: #ff7a59;
+      --orange-dark: #e15635;
+      --orange-soft: #fff0eb;
+      --cta: #ff7a59;
+      --cta-dark: #e15635;
+      --cta-rgb: 255, 122, 89;
+      --bg: #f7fbff;
+      --surface: #ffffff;
+      --surface-soft: #fbfdff;
+      --text: #263544;
+      --muted: #66788a;
+      --line: #dbeaf5;
+      --hero-start: #f8fcff;
+      --hero-end: #f7fbff;
+      --hero-glow: rgba(79, 159, 209, 0.16);
+      --hero-glow-2: rgba(255, 122, 89, 0.12);
+      --footer-bg: #243f56;
+      --shadow: 0 14px 35px rgba(47, 111, 159, 0.09);
+    }
+
+    body[data-theme="mint-terracotta"]{
+      --green: #2fb7a4;
+      --green-dark: #16796f;
+      --green-soft: #e8fbf7;
+      --orange: #e86f51;
+      --orange-dark: #bf4c32;
+      --orange-soft: #fff1ed;
+      --cta: #e86f51;
+      --cta-dark: #bf4c32;
+      --cta-rgb: 232, 111, 81;
+      --bg: #f4fbf8;
+      --surface: #ffffff;
+      --surface-soft: #fbfffd;
+      --text: #243b3a;
+      --muted: #667b78;
+      --line: #d7eee9;
+      --hero-start: #f8fffc;
+      --hero-end: #f4fbf8;
+      --hero-glow: rgba(47, 183, 164, 0.16);
+      --hero-glow-2: rgba(232, 111, 81, 0.13);
+      --footer-bg: #203f3b;
+      --shadow: 0 14px 35px rgba(22, 121, 111, 0.10);
+    }
+
+    body[data-theme="cream-navy"]{
+      --green: #2f6f9f;
+      --green-dark: #183b5b;
+      --green-soft: #e9f2f8;
+      --orange: #f59f00;
+      --orange-dark: #d47f00;
+      --orange-soft: #fff6df;
+      --cta: #f59f00;
+      --cta-dark: #d47f00;
+      --cta-rgb: 245, 159, 0;
+      --bg: #fffaf0;
+      --surface: #ffffff;
+      --surface-soft: #fffcf5;
+      --text: #1f3349;
+      --muted: #69788a;
+      --line: #eadfcb;
+      --hero-start: #fffdf7;
+      --hero-end: #fff7e6;
+      --hero-glow: rgba(47, 111, 159, 0.14);
+      --hero-glow-2: rgba(245, 159, 0, 0.16);
+      --footer-bg: #1d334d;
+      --shadow: 0 14px 35px rgba(31, 51, 73, 0.10);
+    }
+
+    body[data-theme="lavender-peach"]{
+      --green: #7c6ee6;
+      --green-dark: #5045b8;
+      --green-soft: #f0eeff;
+      --orange: #ff9566;
+      --orange-dark: #e66f3d;
+      --orange-soft: #fff2eb;
+      --cta: #ff9566;
+      --cta-dark: #e66f3d;
+      --cta-rgb: 255, 149, 102;
+      --bg: #faf8ff;
+      --surface: #ffffff;
+      --surface-soft: #fefcff;
+      --text: #312f45;
+      --muted: #756f88;
+      --line: #e4def7;
+      --hero-start: #fcfbff;
+      --hero-end: #faf8ff;
+      --hero-glow: rgba(124, 110, 230, 0.16);
+      --hero-glow-2: rgba(255, 149, 102, 0.13);
+      --footer-bg: #332b59;
+      --shadow: 0 14px 35px rgba(80, 69, 184, 0.10);
+    }
+
+    body[data-theme="sage-gold"]{
+      --green: #6f8f72;
+      --green-dark: #425f45;
+      --green-soft: #eef6ee;
+      --orange: #d99a2b;
+      --orange-dark: #b87912;
+      --orange-soft: #fff4df;
+      --cta: #d99a2b;
+      --cta-dark: #b87912;
+      --cta-rgb: 217, 154, 43;
+      --bg: #f8faf2;
+      --surface: #ffffff;
+      --surface-soft: #fcfdf8;
+      --text: #2f3b2f;
+      --muted: #6d7869;
+      --line: #dfe8d8;
+      --hero-start: #fcfff8;
+      --hero-end: #f8faf2;
+      --hero-glow: rgba(111, 143, 114, 0.18);
+      --hero-glow-2: rgba(217, 154, 43, 0.15);
+      --footer-bg: #344735;
+      --shadow: 0 14px 35px rgba(66, 95, 69, 0.10);
+    }
+
+    body[data-theme="rose-teal"]{
+      --green: #1f9c95;
+      --green-dark: #126864;
+      --green-soft: #e7fbf9;
+      --orange: #e85d75;
+      --orange-dark: #c73a54;
+      --orange-soft: #fff0f3;
+      --cta: #e85d75;
+      --cta-dark: #c73a54;
+      --cta-rgb: 232, 93, 117;
+      --bg: #f7fcfb;
+      --surface: #ffffff;
+      --surface-soft: #fbfffe;
+      --text: #233d3d;
+      --muted: #687b7b;
+      --line: #d6eeec;
+      --hero-start: #f9fffe;
+      --hero-end: #f7fcfb;
+      --hero-glow: rgba(31, 156, 149, 0.16);
+      --hero-glow-2: rgba(232, 93, 117, 0.13);
+      --footer-bg: #203f41;
+      --shadow: 0 14px 35px rgba(18, 104, 100, 0.10);
+    }
+
+    body[data-theme="sand-brown"]{
+      --green: #9b7653;
+      --green-dark: #604229;
+      --green-soft: #f4eee7;
+      --orange: #c85c3a;
+      --orange-dark: #9c3e23;
+      --orange-soft: #fff0e9;
+      --cta: #c85c3a;
+      --cta-dark: #9c3e23;
+      --cta-rgb: 200, 92, 58;
+      --bg: #fbf6ee;
+      --surface: #ffffff;
+      --surface-soft: #fffaf3;
+      --text: #3d3028;
+      --muted: #7d6f66;
+      --line: #eadfce;
+      --hero-start: #fffaf2;
+      --hero-end: #fbf6ee;
+      --hero-glow: rgba(155, 118, 83, 0.18);
+      --hero-glow-2: rgba(200, 92, 58, 0.14);
+      --footer-bg: #3c3028;
+      --shadow: 0 14px 35px rgba(96, 66, 41, 0.10);
+    }
+
+    body[data-theme="mono-amber"]{
+      --green: #556070;
+      --green-dark: #2f3947;
+      --green-soft: #eef1f5;
+      --orange: #ffb703;
+      --orange-dark: #d89000;
+      --orange-soft: #fff5d9;
+      --cta: #ffb703;
+      --cta-dark: #d89000;
+      --cta-rgb: 255, 183, 3;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #fbfcfd;
+      --text: #252b33;
+      --muted: #68717c;
+      --line: #dde3ea;
+      --hero-start: #ffffff;
+      --hero-end: #f7f8fa;
+      --hero-glow: rgba(85, 96, 112, 0.14);
+      --hero-glow-2: rgba(255, 183, 3, 0.15);
+      --footer-bg: #252b33;
+      --shadow: 0 14px 35px rgba(47, 57, 71, 0.10);
+    }
+
+    *{
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html{
+      scroll-behavior: smooth;
+    }
+
+    body{
+      font-family: "Inter", "Be Vietnam Pro", "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    a{
+      text-decoration: none;
+      color: inherit;
+    }
+
+    button, input, select{
+      font: inherit;
+    }
+
+    .container{
+      width: min(1140px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .container-wide{
+      width: calc(100% - 48px);
+      margin: 0 auto;
+    }
+
+    .section{
+      padding: 74px 0;
+    }
+
+    h1, h2, h3{
+      line-height: 1.18;
+      color: var(--text);
+    }
+
+    h1{
+      font-family: "Be Vietnam Pro", "Inter", "Segoe UI", sans-serif;
+      font-size: clamp(38px, 5vw, 62px);
+      font-weight: 600;
+      letter-spacing: -0.045em;
+      line-height: 1.08;
+    }
+
+    h2{
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    h3{
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .subtext{
+      color: var(--muted);
+      font-size: 16px;
+      margin-top: 14px;
+    }
+
+    .eyebrow{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .section-title{
+      margin-bottom: 30px;
+      max-width: 720px;
+    }
+
+    .section-title.center{
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn{
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.22s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary{
+      background: linear-gradient(135deg, var(--cta), var(--cta-dark));
+      color: var(--white);
+      box-shadow: 0 12px 26px rgba(var(--cta-rgb), 0.30);
+    }
+
+    .btn-primary:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 16px 30px rgba(var(--cta-rgb), 0.36);
+      filter: saturate(1.04);
+    }
+
+    .btn-secondary{
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn-secondary:hover{
+      border-color: var(--line);
+      transform: translateY(-2px);
+    }
+
+    /* Header */
+    .site-header,
+    .site-header *,
+    .palette-strip,
+    .palette-strip *{
+      font-family: "Be Vietnam Pro", "Inter", "Segoe UI", sans-serif;
+    }
+
+    .site-header{
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      background: color-mix(in srgb, var(--bg) 92%, white 8%);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar{
+      height: 84px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .brand{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: max-content;
+    }
+
+    .brand-icon{
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--surface), var(--green-soft));
+      display: grid;
+      place-items: center;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+
+    .brand-icon svg{
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .brand-text{
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      letter-spacing: -0.018em;
+    }
+
+    .brand-text strong{
+      color: var(--green);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-center{
+      margin-left: auto;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-link{
+      color: var(--text);
+      font-size: 14.5px;
+      font-weight: 500;
+      letter-spacing: -0.012em;
+      padding: 10px 13px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-link:hover{
+      background: var(--green-soft);
+    }
+
+    .nav-link.active{
+      background: var(--surface);
+      color: var(--green-dark);
+      border-color: var(--line);
+      box-shadow: 0 10px 24px rgba(22, 121, 111, 0.08);
+    }
+
+    .header-actions{
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .site-header .btn,
+    .logout-btn,
+    .account-pill{
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.012em;
+    }
+
+    .site-header .btn{
+      min-height: 42px;
+      padding: 10px 17px;
+    }
+
+    .account-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--green-soft);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 18px 10px 10px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .avatar-circle{
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: var(--white);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .logout-btn{
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--green-dark);
+      border-radius: 999px;
+      padding: 11px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.22s ease;
+    }
+
+    .logout-btn:hover{
+      transform: translateY(-2px);
+      border-color: var(--line);
+    }
+
+    .mobile-menu{
+      display: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      cursor: pointer;
+      align-content: center;
+      justify-items: center;
+      gap: 4px;
+    }
+
+    .mobile-menu span{
+      width: 18px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--green-dark);
+      display: block;
+    }
+
+
+    /* Palette switcher */
+    .palette-strip{
+      background: color-mix(in srgb, var(--surface) 86%, var(--bg) 14%);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 0;
+    }
+
+    .palette-row{
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .palette-title{
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .palette-btn{
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+      box-shadow: 0 8px 20px rgba(31, 51, 73, 0.04);
+    }
+
+    .palette-btn:hover,
+    .palette-btn.active{
+      border-color: var(--green);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(31, 51, 73, 0.08);
+    }
+
+    .palette-dots{
+      display: inline-flex;
+      overflow: hidden;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.75);
+    }
+
+    .palette-dots i{
+      width: 13px;
+      height: 13px;
+      display: block;
+    }
+
+    .dot-bg{ background: var(--dot-bg); }
+    .dot-main{ background: var(--dot-main); }
+    .dot-cta{ background: var(--dot-cta); }
+
+    /* Hero */
+    .hero{
+      padding: 68px 0 44px;
+      background:
+        radial-gradient(circle at 10% 12%, var(--hero-glow), transparent 32%),
+        radial-gradient(circle at 88% 10%, var(--hero-glow-2), transparent 26%),
+        linear-gradient(180deg, var(--hero-start) 0%, var(--hero-end) 100%);
+    }
+
+    .hero-grid{
+      display: grid;
+      grid-template-columns: 1fr 0.95fr;
+      gap: 44px;
+      align-items: center;
+    }
+
+    .hero-copy{
+      max-width: 620px;
+    }
+
+    .hero-actions{
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .hero-features{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .hero-features span{
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .hero-visual{
+      position: relative;
+      min-height: 500px;
+    }
+
+    .hero-image{
+      position: absolute;
+      inset: 0 0 85px 30px;
+      border-radius: 38px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, transparent 40%, rgba(45, 52, 47, 0.75)),
+        url("https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80") center/cover;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-stat{
+      position: absolute;
+      top: 24px;
+      right: 18px;
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      min-width: 180px;
+    }
+
+    .hero-stat strong{
+      display: block;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--green-dark);
+    }
+
+    .hero-stat span{
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .floating-card{
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: min(410px, 92%);
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      border: 1px solid rgba(255,255,255,0.88);
+      border-radius: 28px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .floating-card-head{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .floating-card h3{
+      font-size: 18px;
+    }
+
+    .floating-card p{
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .price-tag{
+      background: var(--orange-soft);
+      color: var(--orange);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mini-tags{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .mini-tags span{
+      background: var(--green-soft);
+      color: var(--muted);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Search */
+    .search-panel{
+      margin-top: -12px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .search-box{
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field label{
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    .field input,
+    .field select{
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      border-radius: 16px;
+      padding: 13px 14px;
+      color: var(--text);
+      outline: none;
+      font-weight: 500;
+      transition: 0.2s ease;
+    }
+
+    .field input:focus,
+    .field select:focus{
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 18%, transparent);
+    }
+
+    /* Cards */
+    .rooms-grid{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .room-card{
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: 0.22s ease;
+    }
+
+    .room-card:hover{
+      transform: translateY(-6px);
+    }
+
+    .room-photo{
+      height: 220px;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+
+    .room-photo::after{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 45%, rgba(45, 52, 47, 0.62));
+    }
+
+    .photo-1{ background-image: url("https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80"); }
+    .photo-2{ background-image: url("https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80"); }
+    .photo-3{ background-image: url("https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80"); }
+
+    .status{
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 1;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status.available{ background: var(--green); }
+    .status.soon{ background: var(--green-dark); }
+
+    .room-price{
+      position: absolute;
+      right: 14px;
+      bottom: 14px;
+      z-index: 1;
+      background: var(--surface);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .room-content{
+      padding: 20px;
+    }
+
+    .room-meta{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .room-type{
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .rating{
+      color: var(--orange);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .room-content p{
+      color: var(--muted);
+      font-size: 14px;
+      margin: 9px 0 15px;
+    }
+
+    .tags{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .tags span{
+      background: var(--green-soft);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .room-footer{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .room-link{
+      color: var(--green-dark);
+      font-weight: 700;
+    }
+
+    .room-link:hover{
+      color: var(--green);
+    }
+
+    /* Benefits / Process */
+    .benefits{
+      background: var(--surface);
+    }
+
+    .benefit-grid,
+    .process-grid{
+      display: grid;
+      gap: 18px;
+    }
+
+    .benefit-grid{
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .process-grid{
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .benefit-card,
+    .step-card{
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .benefit-icon,
+    .step-number{
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--green-soft), var(--surface));
+      color: var(--green);
+      font-size: 22px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+    }
+
+    .benefit-card p,
+    .step-card p{
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    /* Footer */
+    footer{
+      background: var(--footer-bg);
+      color: var(--white);
+      padding: 52px 0 28px;
+      margin-top: 28px;
+    }
+
+    .footer-grid{
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 0.8fr;
+      gap: 28px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+
+    footer h3{
+      color: var(--white);
+      margin-bottom: 14px;
+      font-size: 18px;
+    }
+
+    footer p,
+    footer a{
+      color: rgba(255,255,255,0.74);
+      font-size: 14px;
+    }
+
+    .footer-links{
+      display: grid;
+      gap: 10px;
+    }
+
+    .copyright{
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      color: rgba(255,255,255,0.55);
+      font-size: 13px;
+    }
+
+    /* Modal + toast */
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(36, 63, 86, 0.56);
+    }
+
+    .modal-backdrop.show{
+      display: flex;
+    }
+
+    .modal{
+      width: min(470px, 100%);
+      background: var(--surface);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(47,111,159,0.16);
+      animation: pop 0.22s ease;
+    }
+
+    @keyframes pop{
+      from{ opacity: 0; transform: translateY(12px) scale(0.98);}
+      to{ opacity: 1; transform: translateY(0) scale(1);}
+    }
+
+    .modal-head{
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .modal-head p{
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 6px;
+    }
+
+    .modal-close{
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--green-soft);
+      color: var(--text);
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .form-grid{
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-note{
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .form-note a{
+      color: var(--green);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .toast{
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 120;
+      background: var(--footer-bg);
+      color: var(--white);
+      padding: 15px 18px;
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(47,111,159,0.16);
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(18px);
+      pointer-events: none;
+      transition: 0.25s ease;
+    }
+
+    .toast.show{
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1100px){
+      .topbar{
+        height: auto;
+        padding: 14px 0;
+        justify-content: space-between;
+      }
+
+      .nav-center{
+        display: none;
+      }
+
+      .mobile-menu{
+        display: inline-grid;
+        place-items: center;
+      }
+
+      .hero-grid{
+        grid-template-columns: 1fr;
+      }
+
+      .hero-visual{
+        min-height: 460px;
+      }
+
+      .search-box{
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .search-box .btn{
+        grid-column: span 2;
+      }
+
+      .rooms-grid,
+      .benefit-grid,
+      .process-grid{
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .footer-grid{
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 720px){
+      .container{
+        width: min(100% - 28px, 1140px);
+      }
+
+      .container-wide{
+        width: calc(100% - 28px);
+      }
+
+      .section{
+        padding: 58px 0;
+      }
+
+      .palette-row{
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
+      }
+
+      .palette-title,
+      .palette-btn{
+        flex: 0 0 auto;
+      }
+
+      .palette-btn{
+        font-size: 11.5px;
+      }
+
+      .topbar{
+        height: auto;
+        padding: 14px 0;
+        gap: 12px;
+      }
+
+      .brand-text{
+        font-size: 16px;
+      }
+
+      .header-actions .account-pill,
+      .header-actions .logout-btn{
+        display: none;
+      }
+
+      .hero{
+        padding-top: 52px;
+      }
+
+      .hero-visual{
+        min-height: 420px;
+      }
+
+      .hero-image{
+        inset: 0 0 96px 0;
+        border-radius: 30px;
+      }
+
+      .floating-card{
+        width: 94%;
+        left: 3%;
+      }
+
+      .hero-stat{
+        display: none;
+      }
+
+      .search-box,
+      .rooms-grid,
+      .benefit-grid,
+      .process-grid,
+      .footer-grid{
+        grid-template-columns: 1fr;
+      }
+
+      .search-box .btn{
+        grid-column: auto;
+      }
+
+      .toast{
+        left: 16px;
+        right: 16px;
+        text-align: center;
+      }
+    }
+  
+    /* =========================================================
+       Clean white refinement: giảm ám xanh, nền trắng/xám nhẹ,
+       chữ charcoal/navy, xanh chỉ làm điểm nhấn, CTA cam đất.
+       ========================================================= */
+    :root,
+    body,
+    body[data-theme]{
+      --green: #2fb7a4;
+      --green-dark: #16796f;
+      --green-soft: #eaf7f5;
+
+      --orange: #e86f51;
+      --orange-dark: #bf4c32;
+      --orange-soft: #fff1ed;
+      --cta: #e86f51;
+      --cta-dark: #bf4c32;
+      --cta-rgb: 232, 111, 81;
+
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --surface-soft: #f9fafb;
+      --text: #222222;
+      --muted: #555555;
+      --line: #e9ecef;
+      --white: #ffffff;
+
+      --hero-start: #ffffff;
+      --hero-end: #f8f9fa;
+      --hero-glow: rgba(47, 183, 164, 0.055);
+      --hero-glow-2: rgba(232, 111, 81, 0.05);
+      --footer-bg: #1e293b;
+      --shadow: 0 14px 34px rgba(15, 23, 42, 0.075);
+    }
+
+    body{
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .site-header{
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom-color: var(--line);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.035);
+    }
+
+    .palette-strip{
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    h1, h2, h3{
+      color: #1a1a1a;
+    }
+
+    .subtext,
+    .field label,
+    .floating-card p,
+    .benefit-card p,
+    .step-card p,
+    .hero-features span,
+    .tags span,
+    .mini-tags span,
+    .room-footer span,
+    .modal-head p,
+    .form-note{
+      color: #555555;
+    }
+
+    .brand-text{
+      color: #1a1a1a;
+    }
+
+    .brand-text strong{
+      color: var(--green-dark);
+    }
+
+    .brand-icon{
+      background: #ffffff;
+      color: var(--green-dark);
+      border-color: var(--line);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.055);
+    }
+
+    .nav-link{
+      color: #333333;
+    }
+
+    .nav-link:hover{
+      background: var(--green-soft);
+      color: var(--green-dark);
+    }
+
+    .nav-link.active{
+      background: #ffffff;
+      color: var(--green-dark);
+      border-color: var(--line);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .btn-secondary,
+    .logout-btn{
+      background: #ffffff;
+      color: #333333;
+      border-color: var(--line);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.035);
+    }
+
+    .btn-secondary:hover,
+    .logout-btn:hover{
+      background: #f9fafb;
+      color: var(--green-dark);
+      border-color: #dfe5eb;
+    }
+
+    .btn-primary{
+      background: linear-gradient(135deg, var(--cta), var(--cta-dark));
+      box-shadow: 0 12px 24px rgba(var(--cta-rgb), 0.24);
+    }
+
+    .btn-primary:hover{
+      box-shadow: 0 16px 30px rgba(var(--cta-rgb), 0.30);
+    }
+
+    .hero{
+      background:
+        radial-gradient(circle at 10% 12%, var(--hero-glow), transparent 30%),
+        radial-gradient(circle at 88% 10%, var(--hero-glow-2), transparent 24%),
+        linear-gradient(180deg, var(--hero-start) 0%, var(--hero-end) 100%);
+    }
+
+    .eyebrow{
+      background: var(--green-soft);
+      color: var(--green-dark);
+      border: 1px solid rgba(47, 183, 164, 0.13);
+    }
+
+    .hero-features span,
+    .tags span,
+    .mini-tags span{
+      background: #f1f3f5;
+      border: 1px solid #e9ecef;
+    }
+
+    .search-box,
+    .room-card,
+    .benefit-card,
+    .step-card,
+    .floating-card,
+    .hero-stat,
+    .modal{
+      background: #ffffff;
+      border-color: var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .field input,
+    .field select{
+      background: #ffffff;
+      border-color: var(--line);
+      color: #222222;
+    }
+
+    .field input:focus,
+    .field select:focus{
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(47, 183, 164, 0.12);
+    }
+
+    .room-type,
+    .room-link{
+      color: var(--green-dark);
+    }
+
+    .room-link:hover{
+      color: var(--green);
+    }
+
+    .room-content p{
+      color: #555555;
+    }
+
+    .status.available{
+      background: var(--green);
+      color: #ffffff;
+    }
+
+    .status.soon{
+      background: #4a5568;
+      color: #ffffff;
+    }
+
+    .room-price,
+    .price-tag{
+      background: #ffffff;
+      color: #222222;
+      border: 1px solid var(--line);
+    }
+
+    .price-tag{
+      background: var(--orange-soft);
+      color: var(--orange-dark);
+      border-color: rgba(232, 111, 81, 0.18);
+    }
+
+    .rating{
+      color: var(--orange-dark);
+    }
+
+    .benefits{
+      background: #ffffff;
+    }
+
+    .benefit-icon,
+    .step-number{
+      background: #ffffff;
+      color: var(--green-dark);
+      border-color: var(--line);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    .modal-backdrop{
+      background: rgba(15, 23, 42, 0.52);
+    }
+
+    .modal-close{
+      background: #f1f3f5;
+      color: #333333;
+    }
+
+    .toast{
+      background: #1e293b;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+    }
+
+    footer{
+      background: var(--footer-bg);
+    }
+
+
+
+    /* =========================================================
+       LAYOUT OPTION 3 — BALANCED WIDE
+       Không kéo sát mép như bản wide, nhưng cũng không bó hẹp như bản cũ.
+       Header + nội dung dùng cùng một khung rộng vừa phải để nhìn thoáng hơn.
+       Desktop lớn: tối đa 1440px.
+       Desktop vừa: chừa hai bên khoảng 60px.
+       Mobile: giữ layout responsive cũ.
+       ========================================================= */
+    @media (min-width: 721px){
+      .container,
+      .container-wide{
+        width: min(1440px, calc(100% - 120px));
+        max-width: 1440px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-grid{
+        grid-template-columns: minmax(500px, 0.95fr) minmax(520px, 1fr);
+        gap: clamp(36px, 4vw, 68px);
+      }
+
+      .hero-copy{
+        max-width: 670px;
+      }
+
+      .hero-visual{
+        min-height: 505px;
+      }
+
+      .hero-image{
+        inset: 0 0 85px 18px;
+      }
+
+      .hero-stat{
+        right: 34px;
+      }
+
+      .floating-card{
+        left: 0;
+      }
+    }
+
+    @media (min-width: 1600px){
+      .container,
+      .container-wide{
+        width: min(1480px, calc(100% - 180px));
+        max-width: 1480px;
+      }
+    }
+
+  </style>
+</head>
+<body data-theme="mint-terracotta">
+  <header class="site-header">
+    <div class="container-wide topbar">
+      <a href="#home" class="brand">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3.5 11.2 12 4l8.5 7.2" />
+            <path d="M5.5 10.4V20h13v-9.6" />
+            <path d="M9.5 20v-5.8h5V20" />
+          </svg>
+        </span>
+        <span class="brand-text">Homestay <strong>Dorm</strong></span>
+      </a>
+
+      <nav class="nav-center">
+        <a href="#home" class="nav-link active">Trang chủ</a>
+        <a href="#rooms" class="nav-link">Phòng trống</a>
+        <a href="#process" class="nav-link">Quy trình</a>
+        <a href="#contact" class="nav-link">Liên hệ</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="btn btn-secondary js-open-login" type="button">Đăng nhập</button>
+        <button class="btn btn-primary js-open-register" type="button">Đăng ký</button>
+        <button class="mobile-menu" type="button" aria-label="Mở menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+
+  <main>
+    <section class="hero" id="home">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">🏠 Homestay & Dorm tại Đà Nẵng</span>
+          <h1>Tìm phòng sạch, tiện nghi và dễ quản lý chi phí</h1>
+          <p class="subtext">
+            Homestay Dorm giúp bạn xem phòng trống, tạo tài khoản, gửi đăng ký thuê
+            và theo dõi thông tin thuê phòng trong một giao diện đơn giản, rõ ràng.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#rooms" class="btn btn-primary">Xem phòng trống</a>
+            <button class="btn btn-secondary js-open-register" type="button">Đăng ký thuê</button>
+          </div>
+
+          <div class="hero-features">
+            <span>✓ Giá minh bạch</span>
+            <span>✓ Quy trình nhanh</span>
+            <span>✓ Hỗ trợ bảo trì</span>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-image"></div>
+
+          <div class="hero-stat">
+            <strong>12</strong>
+            <span>phòng / giường đang còn trống</span>
+          </div>
+
+          <div class="floating-card">
+            <div class="floating-card-head">
+              <div>
+                <h3>Dorm Studio 204</h3>
+                <p>Gần trung tâm, phù hợp sinh viên</p>
+              </div>
+              <span class="price-tag">2.8tr/tháng</span>
+            </div>
+
+            <div class="mini-tags">
+              <span>Wifi</span>
+              <span>Máy lạnh</span>
+              <span>Giữ xe</span>
+              <span>Còn trống</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="search-panel" id="search">
+      <div class="container">
+        <form class="search-box" id="searchForm">
+          <div class="field">
+            <label for="area">Khu vực</label>
+            <select id="area">
+              <option value="">Tất cả khu vực</option>
+              <option>Hải Châu</option>
+              <option>Thanh Khê</option>
+              <option>Ngũ Hành Sơn</option>
+              <option>Gần trường đại học</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="type">Loại phòng</label>
+            <select id="type">
+              <option value="">Tất cả loại phòng</option>
+              <option>Phòng riêng</option>
+              <option>Giường dorm</option>
+              <option>Phòng đôi</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="price">Khoảng giá</label>
+            <select id="price">
+              <option value="">Tất cả mức giá</option>
+              <option>Dưới 2 triệu</option>
+              <option>2 - 3 triệu</option>
+              <option>3 - 5 triệu</option>
+              <option>Trên 5 triệu</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Tìm phòng</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="section" id="rooms">
+      <div class="container">
+        <div class="section-title">
+          <span class="eyebrow">Phòng nổi bật</span>
+          <h2>Một số lựa chọn đang được quan tâm</h2>
+          <p class="subtext">
+            Trang chủ chỉ giữ lại vài phòng nổi bật để giao diện thoáng hơn và dễ nhìn hơn.
+          </p>
+        </div>
+
+        <div class="rooms-grid">
+          <article class="room-card" data-room="Dorm Studio 204" data-type="Giường dorm" data-price="2.800.000đ/tháng" data-status="Còn trống">
+            <div class="room-photo photo-1">
+              <span class="status available">Còn trống</span>
+              <span class="room-price">2.8tr/tháng</span>
+            </div>
+            <div class="room-content">
+              <div class="room-meta">
+                <span class="room-type">Giường dorm</span>
+                <span class="rating">★ 4.8</span>
+              </div>
+              <h3>Dorm Studio 204</h3>
+              <p>Phù hợp sinh viên, có tủ cá nhân, wifi và khu sinh hoạt chung.</p>
+              <div class="tags">
+                <span>Wifi</span><span>Máy lạnh</span><span>Giữ xe</span>
+              </div>
+              <div class="room-footer">
+                <a href="#" class="room-link js-room-detail">Xem chi tiết →</a>
+                <span>Hải Châu</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="room-card" data-room="Phòng riêng Garden 101" data-type="Phòng riêng" data-price="4.500.000đ/tháng" data-status="Sắp trống">
+            <div class="room-photo photo-2">
+              <span class="status soon">Sắp trống</span>
+              <span class="room-price">4.5tr/tháng</span>
+            </div>
+            <div class="room-content">
+              <div class="room-meta">
+                <span class="room-type">Phòng riêng</span>
+                <span class="rating">★ 4.9</span>
+              </div>
+              <h3>Phòng riêng Garden 101</h3>
+              <p>Có cửa sổ lớn, bàn học, khu bếp chung và lối đi riêng.</p>
+              <div class="tags">
+                <span>WC riêng</span><span>Bếp chung</span><span>Cửa sổ</span>
+              </div>
+              <div class="room-footer">
+                <a href="#" class="room-link js-room-detail">Xem chi tiết →</a>
+                <span>Thanh Khê</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="room-card" data-room="Phòng đôi Cozy 302" data-type="Phòng đôi" data-price="3.600.000đ/tháng" data-status="Còn trống">
+            <div class="room-photo photo-3">
+              <span class="status available">Còn trống</span>
+              <span class="room-price">3.6tr/tháng</span>
+            </div>
+            <div class="room-content">
+              <div class="room-meta">
+                <span class="room-type">Phòng đôi</span>
+                <span class="rating">★ 4.7</span>
+              </div>
+              <h3>Phòng đôi Cozy 302</h3>
+              <p>Phòng dành cho 2 người, đầy đủ nội thất cơ bản và máy lạnh.</p>
+              <div class="tags">
+                <span>Nội thất</span><span>Máy lạnh</span><span>Bảo trì</span>
+              </div>
+              <div class="room-footer">
+                <a href="#" class="room-link js-room-detail">Xem chi tiết →</a>
+                <span>Ngũ Hành Sơn</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section benefits">
+      <div class="container">
+        <div class="section-title center">
+          <span class="eyebrow">Lý do lựa chọn</span>
+          <h2>Giao diện rõ ràng, tập trung vào nhu cầu thuê phòng</h2>
+        </div>
+
+        <div class="benefit-grid">
+          <div class="benefit-card">
+            <div class="benefit-icon">🔎</div>
+            <h3>Dễ tìm phòng</h3>
+            <p>Lọc nhanh theo khu vực, loại phòng và khoảng giá phù hợp.</p>
+          </div>
+
+          <div class="benefit-card">
+            <div class="benefit-icon">💳</div>
+            <h3>Chi phí minh bạch</h3>
+            <p>Giá thuê, dịch vụ và trạng thái thanh toán được trình bày rõ ràng.</p>
+          </div>
+
+          <div class="benefit-card">
+            <div class="benefit-icon">🛠</div>
+            <h3>Hỗ trợ sau thuê</h3>
+            <p>Khách thuê có thể gửi yêu cầu bảo trì hoặc sửa chữa khi cần.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="process">
+      <div class="container">
+        <div class="section-title center">
+          <span class="eyebrow">Quy trình thuê</span>
+          <h2>4 bước chính, ngắn gọn và dễ hiểu</h2>
+        </div>
+
+        <div class="process-grid">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Đăng ký</h3>
+            <p>Khách hàng tạo tài khoản và gửi nhu cầu thuê phòng.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Xem phòng</h3>
+            <p>Xem thông tin phòng, giá thuê, tiện ích và tình trạng còn trống.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Đặt cọc</h3>
+            <p>Nhân viên xác nhận thông tin và hướng dẫn khách hoàn tất đặt cọc.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">4</div>
+            <h3>Nhận phòng</h3>
+            <p>Khách được bàn giao phòng, giường và bắt đầu quá trình thuê.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contact">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand" style="margin-bottom:12px;">
+            <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3.5 11.2 12 4l8.5 7.2" />
+            <path d="M5.5 10.4V20h13v-9.6" />
+            <path d="M9.5 20v-5.8h5V20" />
+          </svg>
+        </span>
+            <span class="brand-text" style="color:#fff;">Homestay <strong>Dorm</strong></span>
+          </div>
+          <p>Website mẫu cho hệ thống quản lý homestay/dorm, tập trung vào tìm phòng, đăng ký thuê và quản lý thông tin khách thuê.</p>
+        </div>
+
+        <div>
+          <h3>Liên hệ</h3>
+          <div class="footer-links">
+            <p>📍 123 Nguyễn Văn Linh, Đà Nẵng</p>
+            <p>☎ 0905 123 456</p>
+            <p>✉ hello@homestaydorm.vn</p>
+          </div>
+        </div>
+
+        <div>
+          <h3>Tài khoản</h3>
+          <div class="footer-links">
+            <a href="#" class="js-open-login">Đăng nhập</a>
+            <a href="#" class="js-open-register">Đăng ký tài khoản</a>
+            <a href="#rooms">Xem phòng trống</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="copyright">
+        <span>© 2026 Homestay Dorm. Giao diện mẫu phục vụ đồ án.</span>
+        <span>Homestay & Dorm Management System</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Login modal -->
+  <div class="modal-backdrop" id="loginModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2>Đăng nhập</h2>
+          <p>Truy cập tài khoản khách thuê hoặc nhân viên.</p>
+        </div>
+        <button class="modal-close js-close-modal" type="button">×</button>
+      </div>
+
+      <form class="form-grid" id="loginForm">
+        <div class="field">
+          <label for="loginRole">Vai trò</label>
+          <select id="loginRole">
+            <option>Khách thuê</option>
+            <option>Nhân viên sale</option>
+            <option>Nhân viên quản lý</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="loginEmail">Email hoặc số điện thoại</label>
+          <input id="loginEmail" type="text" placeholder="VD: khachhang@gmail.com" required />
+        </div>
+
+        <div class="field">
+          <label for="loginPassword">Mật khẩu</label>
+          <input id="loginPassword" type="password" placeholder="Nhập mật khẩu" required />
+        </div>
+
+        <button class="btn btn-primary" type="submit">Đăng nhập</button>
+      </form>
+
+      <p class="form-note">Chưa có tài khoản? <a class="js-switch-register">Đăng ký ngay</a></p>
+    </div>
+  </div>
+
+  <!-- Register modal -->
+  <div class="modal-backdrop" id="registerModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2>Đăng ký tài khoản</h2>
+          <p>Tạo tài khoản để gửi đăng ký thuê phòng.</p>
+        </div>
+        <button class="modal-close js-close-modal" type="button">×</button>
+      </div>
+
+      <form class="form-grid" id="registerForm">
+        <div class="field">
+          <label for="fullName">Họ và tên</label>
+          <input id="fullName" type="text" placeholder="VD: Nguyễn Minh Anh" required />
+        </div>
+
+        <div class="field">
+          <label for="phone">Số điện thoại</label>
+          <input id="phone" type="tel" placeholder="VD: 0905123456" required />
+        </div>
+
+        <div class="field">
+          <label for="registerEmail">Email</label>
+          <input id="registerEmail" type="email" placeholder="VD: minh@gmail.com" required />
+        </div>
+
+        <div class="field">
+          <label for="needType">Nhu cầu thuê</label>
+          <select id="needType">
+            <option>Giường dorm</option>
+            <option>Phòng riêng</option>
+            <option>Phòng đôi</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Tạo tài khoản</button>
+      </form>
+
+      <p class="form-note">Đã có tài khoản? <a class="js-switch-login">Đăng nhập</a></p>
+    </div>
+  </div>
+
+  <!-- Room modal -->
+  <div class="modal-backdrop" id="roomModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2 id="roomModalName">Chi tiết phòng</h2>
+          <p>Thông tin mẫu để mô phỏng thao tác xem chi tiết phòng.</p>
+        </div>
+        <button class="modal-close js-close-modal" type="button">×</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Loại phòng</label>
+          <input id="roomModalType" type="text" readonly />
+        </div>
+
+        <div class="field">
+          <label>Giá thuê</label>
+          <input id="roomModalPrice" type="text" readonly />
+        </div>
+
+        <div class="field">
+          <label>Trạng thái</label>
+          <input id="roomModalStatus" type="text" readonly />
+        </div>
+
+        <button class="btn btn-primary js-open-register" type="button">Đăng ký thuê phòng này</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Đang xử lý...</div>
+
+  <script>
+    const loginModal = document.getElementById("loginModal");
+    const registerModal = document.getElementById("registerModal");
+    const roomModal = document.getElementById("roomModal");
+    const toast = document.getElementById("toast");
+
+    const paletteButtons = document.querySelectorAll(".palette-btn");
+    const savedTheme = localStorage.getItem("homestayDormThemeV2") || "mint-terracotta";
+
+    function setTheme(theme, save = true){
+      document.body.dataset.theme = theme;
+      paletteButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.theme === theme));
+      if(save) localStorage.setItem("homestayDormThemeV2", theme);
+    }
+
+    setTheme(savedTheme, false);
+
+    paletteButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        setTheme(btn.dataset.theme);
+        showToast(`Đã đổi sang bảng màu: ${btn.textContent.trim()}`);
+      });
+    });
+
+
+    function showToast(message){
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function closeAllModals(){
+      document.querySelectorAll(".modal-backdrop").forEach(modal => modal.classList.remove("show"));
+    }
+
+    function openModal(modal){
+      closeAllModals();
+      modal.classList.add("show");
+    }
+
+    document.querySelectorAll(".js-open-login").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal(loginModal);
+      });
+    });
+
+    document.querySelectorAll(".js-open-register").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal(registerModal);
+      });
+    });
+
+    document.querySelectorAll(".js-close-modal").forEach(btn => {
+      btn.addEventListener("click", closeAllModals);
+    });
+
+    document.querySelectorAll(".modal-backdrop").forEach(modal => {
+      modal.addEventListener("click", (e) => {
+        if(e.target === modal) closeAllModals();
+      });
+    });
+
+    document.querySelector(".js-switch-register").addEventListener("click", () => openModal(registerModal));
+    document.querySelector(".js-switch-login").addEventListener("click", () => openModal(loginModal));
+
+    document.getElementById("searchForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      showToast("Đang lọc phòng phù hợp...");
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      closeAllModals();
+      showToast("Đăng nhập mẫu thành công.");
+    });
+
+    document.getElementById("registerForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      closeAllModals();
+      showToast("Đã tạo tài khoản mẫu.");
+    });
+
+    document.querySelectorAll(".js-room-detail").forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const card = e.target.closest(".room-card");
+        document.getElementById("roomModalName").textContent = card.dataset.room;
+        document.getElementById("roomModalType").value = card.dataset.type;
+        document.getElementById("roomModalPrice").value = card.dataset.price;
+        document.getElementById("roomModalStatus").value = card.dataset.status;
+        openModal(roomModal);
+      });
+    });
+
+    const mobileMenu = document.querySelector(".mobile-menu");
+    if(mobileMenu){
+      mobileMenu.addEventListener("click", () => {
+        showToast("Header mobile có thể mở rộng thêm menu dạng drawer nếu cần.");
+      });
+    }
+  </script>
+</body>
+</html>

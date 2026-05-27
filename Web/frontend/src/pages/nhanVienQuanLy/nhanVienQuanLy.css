@@ -1,0 +1,801 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap");
+
+.ql-page {
+  --ql-green: #2fb7a4;
+  --ql-green-dark: #16796f;
+  --ql-green-soft: #eaf7f5;
+  --ql-orange: #e86f51;
+  --ql-orange-dark: #bf4c32;
+  --ql-bg: #f8f9fa;
+  --ql-text: #222;
+  --ql-heading: #1a1a1a;
+  --ql-muted: #555;
+  --ql-subtle: #7b8794;
+  --ql-line: #e9ecef;
+  --ql-warn: #fff6df;
+  --ql-danger: #ef4444;
+  --ql-danger-soft: #fff1f1;
+  --ql-shadow: 0 14px 34px rgba(15, 23, 42, 0.075);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(47, 183, 164, 0.055), transparent 30%),
+    radial-gradient(circle at 92% 4%, rgba(232, 111, 81, 0.05), transparent 24%),
+    var(--ql-bg);
+  color: var(--ql-text);
+  font-family: "Inter", "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+.ql-page *,
+.ql-page *::before,
+.ql-page *::after {
+  box-sizing: border-box;
+}
+
+.ql-page h1,
+.ql-page h2,
+.ql-page p {
+  margin: 0;
+}
+
+.ql-page button,
+.ql-page input,
+.ql-page select {
+  font: inherit;
+}
+
+.ql-page button {
+  cursor: pointer;
+}
+
+.ql-frame {
+  margin: 0 auto;
+  width: min(1750px, calc(100% - 150px));
+}
+
+.ql-header {
+  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid var(--ql-line);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.035);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+.ql-header-row {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  height: 84px;
+  justify-content: space-between;
+}
+
+.ql-brand-button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.ql-brand,
+.ql-header-right,
+.ql-account {
+  align-items: center;
+  display: flex;
+}
+
+.ql-brand {
+  gap: 12px;
+}
+
+.ql-brand-icon {
+  background: #fff;
+  border: 1px solid var(--ql-line);
+  border-radius: 50%;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.055);
+  color: var(--ql-green-dark);
+  display: grid;
+  height: 48px;
+  place-items: center;
+  width: 48px;
+}
+
+.ql-brand-icon .portal-icon {
+  height: 23px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+  width: 23px;
+}
+
+.ql-brand-name {
+  color: var(--ql-heading);
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ql-brand-name strong {
+  color: var(--ql-green-dark);
+}
+
+.ql-header-right {
+  gap: 24px;
+}
+
+.ql-context {
+  line-height: 1.35;
+  text-align: right;
+}
+
+.ql-context span {
+  color: #777;
+  display: block;
+  font-size: 13px;
+}
+
+.ql-context strong {
+  color: var(--ql-heading);
+  display: block;
+  font-size: 16px;
+}
+
+.ql-account {
+  background: #fff;
+  border: 1px solid var(--ql-line);
+  border-radius: 999px;
+  gap: 10px;
+  min-width: 205px;
+  padding: 8px 16px 8px 8px;
+}
+
+.ql-avatar {
+  background: linear-gradient(135deg, var(--ql-orange), var(--ql-orange-dark));
+  border-radius: 50%;
+  color: #fff;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  height: 42px;
+  place-items: center;
+  width: 42px;
+}
+
+.ql-account strong,
+.ql-account small {
+  display: block;
+}
+
+.ql-account strong {
+  color: var(--ql-heading);
+  font-size: 14px;
+}
+
+.ql-account small {
+  color: var(--ql-green-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ql-shell {
+  align-items: start;
+  display: grid;
+  gap: 30px;
+  grid-template-columns: 310px minmax(0, 1fr);
+  min-height: calc(100vh - 84px);
+  padding: 38px 0 42px;
+}
+
+.ql-sidebar {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--ql-line);
+  border-radius: 30px;
+  box-shadow: var(--ql-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: calc(100vh - 132px);
+  overflow: auto;
+  padding: 22px 18px;
+  position: sticky;
+  top: 112px;
+}
+
+.ql-side-label {
+  color: var(--ql-subtle);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0 14px;
+  text-transform: uppercase;
+}
+
+.ql-nav {
+  display: grid;
+  gap: 7px;
+}
+
+.ql-nav-item {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #333;
+  display: flex;
+  font-size: 14.5px;
+  font-weight: 600;
+  gap: 10px;
+  padding: 9px 12px;
+  text-align: left;
+  transition: 0.2s ease;
+  width: 100%;
+}
+
+.ql-nav-item:hover {
+  background: var(--ql-green-soft);
+  color: var(--ql-green-dark);
+}
+
+.ql-nav-item.active {
+  background: #fff;
+  border-color: var(--ql-line);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  color: var(--ql-green-dark);
+}
+
+.ql-nav-item > span {
+  background: #f9fafb;
+  border: 1px solid var(--ql-line);
+  border-radius: 14px;
+  display: grid;
+  height: 36px;
+  place-items: center;
+  width: 36px;
+}
+
+.ql-nav-item.active > span {
+  background: var(--ql-green-soft);
+  border-color: rgba(47, 183, 164, 0.18);
+}
+
+.ql-nav-item .portal-icon,
+.ql-stat .portal-icon,
+.ql-checklist .portal-icon {
+  height: 22px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+  width: 22px;
+}
+
+.ql-side-note {
+  background: linear-gradient(180deg, #fff, #f9fafb);
+  border: 1px solid var(--ql-line);
+  border-radius: 24px;
+  margin-top: auto;
+  padding: 15px;
+}
+
+.ql-side-note strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.ql-side-note p {
+  color: var(--ql-muted);
+  font-size: 13px;
+}
+
+.ql-side-note div {
+  background: #f1f3f5;
+  border-radius: 999px;
+  height: 9px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.ql-side-note div span {
+  background: linear-gradient(135deg, var(--ql-green), var(--ql-green-dark));
+  display: block;
+  height: 100%;
+  width: 74%;
+}
+
+.ql-main {
+  min-width: 0;
+}
+
+.ql-page-head {
+  align-items: start;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.ql-page-head h1 {
+  color: var(--ql-heading);
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: clamp(27px, 3vw, 34px);
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.ql-page-head p {
+  color: var(--ql-muted);
+  font-size: 14px;
+  margin-top: 7px;
+}
+
+.ql-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.ql-search {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--ql-line);
+  border-radius: 999px;
+  color: var(--ql-muted);
+  display: flex;
+  gap: 8px;
+  padding: 0 14px;
+}
+
+.ql-search .portal-icon {
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  width: 18px;
+}
+
+.ql-search input {
+  background: transparent;
+  border: 0;
+  outline: 0;
+  padding: 11px 0;
+  width: 215px;
+}
+
+.ql-btn {
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.ql-btn.primary {
+  background: linear-gradient(135deg, var(--ql-orange), var(--ql-orange-dark));
+  border: 0;
+  box-shadow: 0 12px 24px rgba(232, 111, 81, 0.2);
+  color: #fff;
+}
+
+.ql-btn.secondary {
+  background: #fff;
+  border: 1px solid #dde4e8;
+  color: var(--ql-green-dark);
+}
+
+.ql-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.ql-stats,
+.ql-three-col {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ql-three-col {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ql-stat,
+.ql-card,
+.ql-table-card,
+.ql-room-card {
+  background: #fff;
+  border: 1px solid var(--ql-line);
+  border-radius: 28px;
+  box-shadow: var(--ql-shadow);
+}
+
+.ql-stat {
+  align-items: start;
+  display: flex;
+  gap: 14px;
+  min-height: 124px;
+  padding: 18px;
+}
+
+.ql-stat > span {
+  background: var(--ql-green-soft);
+  border-radius: 18px;
+  color: var(--ql-green-dark);
+  display: grid;
+  flex: 0 0 auto;
+  height: 52px;
+  place-items: center;
+  width: 52px;
+}
+
+.ql-stat strong {
+  color: var(--ql-heading);
+  display: block;
+  font-size: 29px;
+  line-height: 1;
+}
+
+.ql-stat p {
+  color: var(--ql-muted);
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.ql-stat small {
+  color: var(--ql-green-dark);
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 7px;
+}
+
+.ql-card,
+.ql-table-card {
+  padding: 22px;
+}
+
+.ql-card-head,
+.ql-table-head {
+  align-items: start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.ql-card h2,
+.ql-table-card h2,
+.ql-room-card h2 {
+  color: var(--ql-heading);
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 19px;
+  letter-spacing: -0.025em;
+}
+
+.ql-card p,
+.ql-table-head p {
+  color: var(--ql-muted);
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.ql-pipeline {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.ql-pipeline div {
+  background: #f9fafb;
+  border: 1px solid var(--ql-line);
+  border-radius: 20px;
+  padding: 15px;
+}
+
+.ql-pipeline strong {
+  color: var(--ql-heading);
+  display: block;
+  font-size: 25px;
+}
+
+.ql-pipeline span {
+  color: var(--ql-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ql-two-col {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(570px, 1.55fr) minmax(310px, 0.85fr);
+}
+
+.ql-table-wrap {
+  overflow-x: auto;
+}
+
+.ql-table-wrap table {
+  border-collapse: collapse;
+  min-width: 670px;
+  width: 100%;
+}
+
+.ql-table-wrap th {
+  color: var(--ql-subtle);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  padding: 0 11px 12px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.ql-table-wrap td {
+  border-top: 1px solid var(--ql-line);
+  font-size: 13.5px;
+  padding: 13px 11px;
+  vertical-align: middle;
+}
+
+.ql-person {
+  align-items: center;
+  display: flex;
+  gap: 9px;
+}
+
+.ql-person > span {
+  background: var(--ql-green-soft);
+  border-radius: 50%;
+  color: var(--ql-green-dark);
+  display: grid;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  height: 35px;
+  place-items: center;
+  width: 35px;
+}
+
+.ql-person strong,
+.ql-person small {
+  display: block;
+}
+
+.ql-person small {
+  color: var(--ql-muted);
+  font-size: 12px;
+}
+
+.ql-room-pill {
+  background: var(--ql-green-soft);
+  border-radius: 999px;
+  color: var(--ql-green-dark);
+  display: inline-flex;
+  font-size: 12.5px;
+  font-weight: 750;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.ql-status {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 750;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.ql-status.good {
+  background: var(--ql-green-soft);
+  color: var(--ql-green-dark);
+}
+
+.ql-status.wait {
+  background: var(--ql-warn);
+  color: #b56d00;
+}
+
+.ql-status.neutral {
+  background: #f1f3f5;
+  color: #4a5568;
+}
+
+.ql-status.danger {
+  background: var(--ql-danger-soft);
+  color: var(--ql-danger);
+}
+
+.ql-todos,
+.ql-checklist {
+  display: grid;
+  gap: 11px;
+}
+
+.ql-todos > div,
+.ql-checklist > div {
+  background: #f9fafb;
+  border: 1px solid var(--ql-line);
+  border-radius: 18px;
+  padding: 13px;
+}
+
+.ql-todos strong {
+  display: block;
+  font-size: 14px;
+  margin: 9px 0 3px;
+}
+
+.ql-checklist > div {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 32px 1fr auto;
+}
+
+.ql-checklist .portal-icon {
+  color: var(--ql-green-dark);
+}
+
+.ql-checklist strong,
+.ql-checklist small {
+  display: block;
+}
+
+.ql-checklist small {
+  color: var(--ql-muted);
+  font-size: 12px;
+}
+
+.ql-filters {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1.2fr repeat(3, 0.75fr);
+}
+
+.ql-filters label {
+  color: var(--ql-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ql-filters input,
+.ql-filters select {
+  background: #fff;
+  border: 1px solid var(--ql-line);
+  border-radius: 14px;
+  color: var(--ql-text);
+  display: block;
+  margin-top: 7px;
+  outline: none;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+.ql-filters input:focus,
+.ql-filters select:focus {
+  border-color: var(--ql-green);
+  box-shadow: 0 0 0 4px rgba(47, 183, 164, 0.12);
+}
+
+.ql-room-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ql-room-card {
+  padding: 20px;
+}
+
+.ql-room-card h2 {
+  margin-top: 16px;
+}
+
+.ql-room-card p {
+  color: var(--ql-muted);
+  font-size: 13px;
+  margin: 6px 0 16px;
+}
+
+.ql-room-card > div {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.ql-room-card > div span {
+  color: var(--ql-muted);
+  display: flex;
+  font-size: 13px;
+  justify-content: space-between;
+}
+
+.ql-room-card strong {
+  color: var(--ql-heading);
+}
+
+@media (max-width: 1280px) {
+  .ql-frame {
+    width: min(100% - 40px, 1280px);
+  }
+
+  .ql-shell {
+    gap: 20px;
+    grid-template-columns: 255px minmax(0, 1fr);
+  }
+
+  .ql-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ql-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .ql-header-row,
+  .ql-page-head {
+    height: auto;
+    padding: 14px 0;
+  }
+
+  .ql-page-head {
+    flex-direction: column;
+  }
+
+  .ql-shell {
+    display: block;
+    padding-top: 18px;
+  }
+
+  .ql-sidebar {
+    margin-bottom: 20px;
+    max-height: none;
+    position: static;
+  }
+
+  .ql-nav {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .ql-nav-item {
+    flex: 0 0 195px;
+  }
+
+  .ql-filters,
+  .ql-room-grid,
+  .ql-three-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .ql-frame {
+    width: min(100% - 28px, 1280px);
+  }
+
+  .ql-context,
+  .ql-account div {
+    display: none;
+  }
+
+  .ql-account {
+    min-width: auto;
+  }
+
+  .ql-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ql-stats,
+  .ql-pipeline {
+    grid-template-columns: 1fr;
+  }
+}
