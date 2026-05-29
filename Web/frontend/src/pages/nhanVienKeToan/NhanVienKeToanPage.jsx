@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
+import { datCocApi } from '../datCoc/datCoc.api.js';
 import { EmployeeAccountMenu, EmployeeAccountView } from '../../components/common/EmployeeAccount.jsx';
 import PortalIcon from '../../components/common/PortalIcon.jsx';
 import '../nhanVienQuanLy/nhanVienQuanLy.css';
@@ -77,6 +78,17 @@ const settlements = [
   { id: 'DS0001', request: 'PT0003', customer: 'Võ Gia Hân', contract: 'HD0006', method: 'Chuyển khoản', status: 'Đã hoàn cọc', tone: 'good' }
 ];
 
+function formatVND(amount) {
+  if (!amount && amount !== 0) return '—';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+}
+
+function defaultDeadline() {
+  const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function initials(name = '') {
   return name
     .split(' ')
@@ -100,8 +112,8 @@ function Status({ tone = 'neutral', children }) {
   return <span className={`ql-status ${tone}`}>{children}</span>;
 }
 
-function Button({ primary = false, children }) {
-  return <button className={`ql-btn ${primary ? 'primary' : 'secondary'}`} type="button">{children}</button>;
+function Button({ primary = false, onClick, disabled = false, children }) {
+  return <button className={`ql-btn ${primary ? 'primary' : 'secondary'}`} type="button" onClick={onClick} disabled={disabled}>{children}</button>;
 }
 
 function Person({ name, detail }) {
@@ -232,13 +244,226 @@ function Overview() {
 }
 
 function DepositPayments() {
+  const { user } = useAuth();
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState(null); // row
+  const [form, setForm] = useState({ soTienCoc: '', phuongThucThanhToan: 'Chuyển khoản' });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(null); // created phieu
+
+  useEffect(() => {
+    setLoading(true);
+    datCocApi.getDanhSachChoLapPhieu()
+      .then(({ data }) => setList(Array.isArray(data) ? data : []))
+      .catch(() => setList([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function openModal(row) {
+    setModal(row);
+    setForm({
+      soTienCoc: row.giaThue != null ? String(row.giaThue) : '',
+      phuongThucThanhToan: 'Chuyển khoản'
+    });
+    setError('');
+    setSuccess(null);
+  }
+
+  function closeModal() {
+    setModal(null);
+    setSuccess(null);
+  }
+
+  async function handleSubmit() {
+    if (!modal) return;
+    const amount = Number(form.soTienCoc);
+    if (!amount || amount <= 0) {
+      setError('Vui lòng nhập số tiền cọc hợp lệ.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      const { data: created } = await datCocApi.create({
+        maDangKy: modal.maDangKy,
+        maNhanVienKeToan: user.maNguoiDung,
+        soTienCoc: amount,
+        phuongThucThanhToan: form.phuongThucThanhToan,
+        thoiHanThanhToan: null
+      });
+      setSuccess(created);
+      const { data } = await datCocApi.getDanhSachChoLapPhieu();
+      setList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <section className="ql-stack">
-      <FilterBar search="Mã phiếu, khách hàng, phòng/giường..." labels={['Trạng thái thanh toán', 'Phương thức', 'Trạng thái cọc']} />
       <article className="ql-table-card">
-        <div className="ql-table-head"><div><h2>Danh sách thanh toán cọc</h2><p>Sườn thao tác ghi nhận thanh toán và theo dõi phiếu cọc.</p></div><Button primary>Phát hành yêu cầu</Button></div>
-        <DepositTable />
+        <div className="ql-table-head">
+          <div>
+            <h2>Hồ sơ chờ lập phiếu đặt cọc</h2>
+            <p>Danh sách hồ sơ đã được quản lý chấp nhận, kế toán lập phiếu và xác nhận số tiền cọc.</p>
+          </div>
+        </div>
+        {loading ? (
+          <div className="ql-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hồ sơ</th><th>Khách hàng</th><th>Hình thức</th>
+                  <th>Phòng / Giường</th><th>Giá thuê</th><th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[0, 1, 2].map((i) => (
+                  <tr key={i}>
+                    <td><div className="kt-skel" style={{ width: 62 }} /></td>
+                    <td>
+                      <div className="ql-person">
+                        <div className="kt-skel" style={{ borderRadius: '50%', width: 35, height: 35, flexShrink: 0 }} />
+                        <div style={{ flex: 1, display: 'grid', gap: 5 }}>
+                          <div className="kt-skel" />
+                          <div className="kt-skel" style={{ width: '65%' }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td><div className="kt-skel" style={{ width: 82 }} /></td>
+                    <td><div className="kt-skel" style={{ width: 96, borderRadius: 999 }} /></td>
+                    <td><div className="kt-skel" style={{ width: 80 }} /></td>
+                    <td><div className="kt-skel kt-skel--btn" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : list.length === 0 ? (
+          <div className="kt-empty-state">
+            <PortalIcon name="deposit" />
+            <p>Không có hồ sơ nào đang chờ lập phiếu.</p>
+            <small>Hồ sơ được quản lý chấp nhận sẽ xuất hiện tại đây.</small>
+          </div>
+        ) : (
+          <div className="ql-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hồ sơ</th><th>Khách hàng</th><th>Hình thức</th>
+                  <th>Phòng / Giường</th><th>Giá thuê</th><th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((row) => (
+                  <tr key={row.maDangKy}>
+                    <td><strong>{row.maDangKy}</strong></td>
+                    <td>
+                      <div className="ql-person">
+                        <span>{initials(row.hoTen)}</span>
+                        <div><strong>{row.hoTen}</strong><small>{row.soDienThoai}</small></div>
+                      </div>
+                    </td>
+                    <td>{row.hinhThucThue}</td>
+                    <td>
+                      {row.maPhong
+                        ? <span className="ql-room-pill">{row.maGiuong ? `${row.maPhong} · ${row.maGiuong}` : row.maPhong}</span>
+                        : <span className="ql-muted">—</span>}
+                    </td>
+                    <td className="kt-amount">{formatVND(row.giaThue)}</td>
+                    <td>
+                      <Button primary onClick={() => openModal(row)}>Lập phiếu</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </article>
+
+      {modal && (
+        <div
+          className="ql-modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
+        >
+          <div className="ql-modal kt-deposit-modal">
+            <button className="kt-modal-close" type="button" onClick={closeModal} aria-label="Đóng">&#x2715;</button>
+            {success ? (
+              <>
+                <div className="kt-receipt-header">
+                  <div className="kt-receipt-icon"><PortalIcon name="deposit" /></div>
+                  <div>
+                    <h3>Lập phiếu thành công</h3>
+                    <p className="kt-receipt-id">{success.maPhieuDatCoc}</p>
+                  </div>
+                </div>
+                <div className="ql-modal-info">
+                  <div><span>Khách hàng</span><strong>{success.hoTen}</strong></div>
+                  <div><span>Số tiền cọc</span><strong className="kt-amount">{formatVND(success.soTienCoc)}</strong></div>
+                  <div><span>Phương thức</span><strong>{success.phuongThucThanhToan}</strong></div>
+                  <div><span>Hạn thanh toán</span><strong>{new Date(success.thoiHanThanhToan).toLocaleString('vi-VN')}</strong></div>
+                  <div><span>Trạng thái</span><strong><Status tone="wait">{success.trangThaiThanhToan}</Status></strong></div>
+                </div>
+                <div className="ql-modal-actions">
+                  <Button primary onClick={closeModal}>Đóng</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="kt-form-header">
+                  <h3>Lập phiếu đặt cọc</h3>
+                  <p>Xác nhận thông tin và điền số tiền cọc, phương thức thanh toán.</p>
+                </div>
+                <div className="ql-modal-info">
+                  <div><span>Hồ sơ</span><strong>{modal.maDangKy}</strong></div>
+                  <div><span>Khách hàng</span><strong>{modal.hoTen}</strong></div>
+                  <div>
+                    <span>Phòng / Giường</span>
+                    <strong>{modal.maGiuong ? `${modal.maPhong} · ${modal.maGiuong}` : (modal.maPhong || '—')}</strong>
+                  </div>
+                  <div><span>Hình thức thuê</span><strong>{modal.hinhThucThue}</strong></div>
+                  <div><span>Giá thuê tham khảo</span><strong>{formatVND(modal.giaThue)}</strong></div>
+                  <div><span>Hạn thanh toán</span><strong>24 giờ kể từ khi lập phiếu</strong></div>
+                </div>
+                <div className="kt-form-group">
+                  <label>Số tiền cọc (VNĐ)</label>
+                  <input
+                    className="kt-input"
+                    type="number"
+                    min="1"
+                    step="100000"
+                    value={form.soTienCoc}
+                    onChange={(e) => setForm((f) => ({ ...f, soTienCoc: e.target.value }))}
+                  />
+                </div>
+                <div className="kt-form-group">
+                  <label>Phương thức thanh toán</label>
+                  <select
+                    className="kt-input"
+                    value={form.phuongThucThanhToan}
+                    onChange={(e) => setForm((f) => ({ ...f, phuongThucThanhToan: e.target.value }))}
+                  >
+                    <option>Chuyển khoản</option>
+                    <option>Tiền mặt</option>
+                  </select>
+                </div>
+                {error && <p className="ql-modal-error">{error}</p>}
+                <div className="ql-modal-actions">
+                  <Button onClick={closeModal}>Hủy</Button>
+                  <Button primary onClick={handleSubmit} disabled={submitting}>
+                    {submitting ? 'Đang xử lý...' : 'Xác nhận lập phiếu'}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

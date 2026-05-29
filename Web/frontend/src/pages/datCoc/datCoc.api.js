@@ -6,5 +6,8 @@ export const datCocApi = {
   xacNhanKhaNang: (id, data) => httpClient.put(`/dat-coc/${id}/xac-nhan-kha-nang-nhan-coc`, data),
   phatHanhThanhToan: (id, data) => httpClient.put(`/dat-coc/${id}/phat-hanh-thanh-toan`, data),
   capNhatMinhChung: (id, data) => httpClient.put(`/dat-coc/${id}/minh-chung-thanh-toan`, data),
-  xacNhanThanhToan: (id, data) => httpClient.put(`/dat-coc/${id}/xac-nhan-thanh-toan`, data)
+  xacNhanThanhToan: (id, data) => httpClient.put(`/dat-coc/${id}/xac-nhan-thanh-toan`, data),
+  guiYeuCauDatCoc: (data) => httpClient.post('/dat-coc/gui-yeu-cau', data),
+  getDanhSachChoXacNhan: () => httpClient.get('/dat-coc/cho-xac-nhan'),
+  getDanhSachChoLapPhieu: () => httpClient.get('/dat-coc/cho-lap-phieu')
 };

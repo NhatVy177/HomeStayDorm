@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { EmployeeAccountMenu, EmployeeAccountView } from '../../components/common/EmployeeAccount.jsx';
 import PortalIcon from '../../components/common/PortalIcon.jsx';
 import './nhanVienSale.css';
+import { datCocApi } from '../datCoc/datCoc.api.js';
 
 const views = [
   { id: 'overview', icon: 'dashboard', label: 'Tổng quan', title: 'Tổng quan nhân viên sale', subtitle: 'Theo dõi hồ sơ thuê, lịch xem phòng, đặt cọc và nhận phòng trong một màn hình.' },
@@ -89,13 +90,60 @@ function Person({ name, phone }) {
   );
 }
 
-function StaticButton({ primary = false, children }) {
-  return <button className={`sale-btn ${primary ? 'primary' : 'secondary'}`} type="button">{children}</button>;
+function StaticButton({ primary = false, onClick, disabled = false, children }) {
+  return <button className={`sale-btn ${primary ? 'primary' : 'secondary'}`} type="button" onClick={onClick} disabled={disabled}>{children}</button>;
+}
+
+function getDepositRowStatus(row) {
+  if (row.maPhieuDatCoc) {
+    if (row.trangThaiCoc === 'Đã lập HĐ') return { label: 'Đã lập HĐ', tone: 'good' };
+    if (row.trangThaiThanhToan === 'Đã TT') return { label: 'Đã thanh toán cọc', tone: 'good' };
+    return { label: 'Chờ thanh toán', tone: 'wait' };
+  }
+  if (row.trangThaiDangKy === 'Chấp nhận') return { label: 'Chờ lập phiếu', tone: 'neutral' };
+  if (row.trangThaiDangKy === 'Chờ xác nhận cọc') return { label: 'Chờ xác nhận cọc', tone: 'wait' };
+  return { label: 'Chờ tiếp nhận', tone: 'neutral' };
 }
 
 export default function NhanVienSalePage() {
   const { user, dangXuat } = useAuth();
   const [activeView, setActiveView] = useState('overview');
+
+  const [depositList, setDepositList] = useState([]);
+  const [depositLoading, setDepositLoading] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const depositStats = useMemo(() => ({
+    choXacNhan: depositList.filter((r) => r.trangThaiDangKy === 'Chờ xác nhận cọc').length,
+    daTT: depositList.filter((r) => r.trangThaiThanhToan === 'Đã TT').length,
+    daLapHD: depositList.filter((r) => r.trangThaiCoc === 'Đã lập HĐ').length,
+  }), [depositList]);
+
+  useEffect(() => {
+    if (activeView !== 'deposit') return;
+    setDepositLoading(true);
+    datCocApi.getAll()
+      .then(({ data }) => setDepositList(Array.isArray(data) ? data : []))
+      .catch(() => setDepositList([]))
+      .finally(() => setDepositLoading(false));
+  }, [activeView]);
+
+  async function handleGuiYeuCau() {
+    if (!confirmModal) return;
+    setSubmitting(true);
+    try {
+      await datCocApi.guiYeuCauDatCoc({ maDangKy: confirmModal.maDangKy, maNhanVienSale: user.maNguoiDung });
+      setConfirmModal(null);
+      const { data } = await datCocApi.getAll();
+      setDepositList(Array.isArray(data) ? data : []);
+    } catch {
+      // giữ modal mở để user thấy lỗi
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const currentView = activeView === 'account'
     ? { title: 'Thông tin tài khoản', subtitle: 'Xem thông tin tài khoản nhân viên đang đăng nhập.' }
     : views.find((view) => view.id === activeView) || views[0];
@@ -262,23 +310,106 @@ export default function NhanVienSalePage() {
           {activeView === 'deposit' && (
             <section className="sale-stack">
               <div className="sale-three-col">
-                <article className="sale-stat"><span><PortalIcon name="deposit" /></span><div><strong>01</strong><p>Chờ xác nhận cọc</p><small>DK0018</small></div></article>
-                <article className="sale-stat"><span><PortalIcon name="payment" /></span><div><strong>02</strong><p>Đã thanh toán cọc</p><small>PC0006, PC0012</small></div></article>
-                <article className="sale-stat"><span><PortalIcon name="contract" /></span><div><strong>02</strong><p>Đã lập hợp đồng</p><small>HD0006, HD0012</small></div></article>
+                <article className="sale-stat">
+                  <span><PortalIcon name="deposit" /></span>
+                  <div>
+                    <strong>{depositStats.choXacNhan}</strong>
+                    <p>Chờ xác nhận cọc</p>
+                  </div>
+                </article>
+                <article className="sale-stat">
+                  <span><PortalIcon name="payment" /></span>
+                  <div>
+                    <strong>{depositStats.daTT}</strong>
+                    <p>Đã thanh toán cọc</p>
+                  </div>
+                </article>
+                <article className="sale-stat">
+                  <span><PortalIcon name="contract" /></span>
+                  <div>
+                    <strong>{depositStats.daLapHD}</strong>
+                    <p>Đã lập hợp đồng</p>
+                  </div>
+                </article>
               </div>
               <article className="sale-table-card">
-                <div className="sale-table-head"><div><h2>Danh sách đặt cọc</h2><p>Sườn theo dõi khách đã đến giai đoạn cọc.</p></div></div>
-                <div className="sale-table-wrap">
-                  <table>
-                    <thead><tr><th>Hồ sơ</th><th>Khách hàng</th><th>Phòng / Giường</th><th>Phiếu cọc</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-                    <tbody>
-                      <tr><td>DK0018</td><td>Dương Anh Khoa</td><td>P304 · G02</td><td>Chưa lập</td><td><Status tone="wait">Chờ xác nhận cọc</Status></td><td><StaticButton primary>Lập phiếu cọc</StaticButton></td></tr>
-                      <tr><td>DK0006</td><td>Võ Gia Hân</td><td>P202 · G02</td><td>PC0006</td><td><Status tone="good">Đã lập HĐ</Status></td><td><StaticButton>Chi tiết</StaticButton></td></tr>
-                      <tr><td>DK0012</td><td>Đinh Đức Quang</td><td>P301 · G01</td><td>PC0012</td><td><Status tone="good">Đã lập HĐ</Status></td><td><StaticButton>Chi tiết</StaticButton></td></tr>
-                    </tbody>
-                  </table>
+                <div className="sale-table-head">
+                  <div>
+                    <h2>Danh sách đặt cọc</h2>
+                    <p>Hồ sơ ở giai đoạn cọc. Nhấn "Gửi yêu cầu cọc" để chuyển hồ sơ sang bước xác nhận.</p>
+                  </div>
                 </div>
+                {depositLoading ? (
+                  <div className="sale-empty">Đang tải...</div>
+                ) : depositList.length === 0 ? (
+                  <div className="sale-empty">Chưa có hồ sơ nào ở giai đoạn đặt cọc.</div>
+                ) : (
+                  <div className="sale-table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Hồ sơ</th><th>Khách hàng</th><th>Phòng / Giường</th>
+                          <th>Phiếu cọc</th><th>Trạng thái</th><th>Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {depositList.map((row) => {
+                          const status = getDepositRowStatus(row);
+                          const phong = row.maGiuong
+                            ? `${row.maPhong} · ${row.maGiuong}`
+                            : (row.maPhong || '—');
+                          const phieu = row.maPhieuDatCoc
+                            || (row.trangThaiDangKy === 'Chấp nhận' ? 'Chưa lập' : '—');
+                          return (
+                            <tr key={row.maDangKy}>
+                              <td><strong>{row.maDangKy}</strong></td>
+                              <td>{row.hoTen}</td>
+                              <td><span className="sale-room-pill">{phong}</span></td>
+                              <td>{phieu}</td>
+                              <td><Status tone={status.tone}>{status.label}</Status></td>
+                              <td>
+                                <div className="sale-row-actions">
+                                  {row.trangThaiDangKy === 'Chờ tiếp nhận' && (
+                                    <StaticButton primary onClick={() => setConfirmModal(row)}>
+                                      Gửi yêu cầu cọc
+                                    </StaticButton>
+                                  )}
+                                  {row.maPhieuDatCoc && (
+                                    <StaticButton>Chi tiết</StaticButton>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </article>
+
+              {confirmModal && (
+                <div
+                  className="sale-modal-overlay"
+                  onClick={(e) => { if (e.target === e.currentTarget) setConfirmModal(null); }}
+                >
+                  <div className="sale-modal">
+                    <h3>Gửi yêu cầu đặt cọc</h3>
+                    <p>Xác nhận gửi yêu cầu đặt cọc cho hồ sơ dưới đây đến nhân viên quản lý?</p>
+                    <div className="sale-modal-info">
+                      <div><span>Hồ sơ</span><strong>{confirmModal.maDangKy}</strong></div>
+                      <div><span>Khách hàng</span><strong>{confirmModal.hoTen}</strong></div>
+                      <div><span>Hình thức thuê</span><strong>{confirmModal.hinhThucThue}</strong></div>
+                    </div>
+                    <div className="sale-modal-actions">
+                      <StaticButton onClick={() => setConfirmModal(null)}>Hủy</StaticButton>
+                      <StaticButton primary onClick={handleGuiYeuCau} disabled={submitting}>
+                        {submitting ? 'Đang gửi...' : 'Xác nhận gửi'}
+                      </StaticButton>
+                    </div>
+                  </div>
+                </div>
+              )}
             </section>
           )}
 

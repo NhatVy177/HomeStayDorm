@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
+import { datCocApi } from '../datCoc/datCoc.api.js';
 import { EmployeeAccountMenu, EmployeeAccountView } from '../../components/common/EmployeeAccount.jsx';
 import PortalIcon from '../../components/common/PortalIcon.jsx';
 import './nhanVienQuanLy.css';
@@ -112,8 +113,19 @@ function Status({ tone = 'neutral', children }) {
   return <span className={`ql-status ${tone}`}>{children}</span>;
 }
 
-function Button({ primary = false, children }) {
-  return <button className={`ql-btn ${primary ? 'primary' : 'secondary'}`} type="button">{children}</button>;
+function Button({ primary = false, onClick, disabled = false, children }) {
+  return <button className={`ql-btn ${primary ? 'primary' : 'secondary'}`} type="button" onClick={onClick} disabled={disabled}>{children}</button>;
+}
+
+function roomTone(tinh) {
+  if (tinh === 'Trống' || tinh === 'Còn chỗ') return 'good';
+  return 'danger';
+}
+
+function canAccept(row) {
+  if (!row.maPhong) return false;
+  if (row.maGiuong) return row.tinhTrangGiuong === 'Trống';
+  return row.tinhTrangPhong === 'Trống' || row.tinhTrangPhong === 'Còn chỗ';
 }
 
 function Person({ name, detail }) {
@@ -269,29 +281,180 @@ function Overview() {
 }
 
 function Deposits() {
+  const { user } = useAuth();
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState(null); // { row, action: 'chap-nhan' | 'tu-choi' }
+  const [lyDo, setLyDo] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setLoading(true);
+    datCocApi.getDanhSachChoXacNhan()
+      .then(({ data }) => setList(Array.isArray(data) ? data : []))
+      .catch(() => setList([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function openModal(row, action) {
+    setModal({ row, action });
+    setLyDo('');
+    setError('');
+  }
+
+  async function handleAction() {
+    if (!modal) return;
+    const { row, action } = modal;
+    if (action === 'tu-choi' && !lyDo.trim()) {
+      setError('Vui lòng nhập lý do từ chối.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      await datCocApi.xacNhanKhaNang(row.maDangKy, {
+        maQuanLy: user.maNguoiDung,
+        duocNhanCoc: action === 'chap-nhan',
+        lyDo: action === 'tu-choi' ? lyDo.trim() : null
+      });
+      setModal(null);
+      setLyDo('');
+      const { data } = await datCocApi.getDanhSachChoXacNhan();
+      setList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <section className="ql-stack">
-      <FilterBar search="Mã phiếu, tên khách, phòng/giường..." labels={['Trạng thái phiếu', 'Trạng thái phòng', 'Chi nhánh']} />
       <article className="ql-table-card">
-        <div className="ql-table-head"><div><h2>Phiếu cọc của hợp đồng quản lý</h2><p>Sườn kiểm tra thông tin cọc trước bước bàn giao phòng.</p></div><Button primary>Xác nhận cọc</Button></div>
-        <div className="ql-table-wrap">
-          <table>
-            <thead><tr><th>Phiếu cọc</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Hợp đồng</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-            <tbody>
-              {contracts.map((contract) => (
-                <tr key={contract.deposit}>
-                  <td><strong>{contract.deposit}</strong></td>
-                  <td>{contract.customer}</td>
-                  <td><span className="ql-room-pill">{contract.room}</span></td>
-                  <td>{contract.id}</td>
-                  <td><Status tone={contract.tone}>{contract.status}</Status></td>
-                  <td><Button>Kiểm tra</Button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="ql-table-head">
+          <div>
+            <h2>Yêu cầu đặt cọc chờ xác nhận</h2>
+            <p>Kiểm tra tình trạng phòng/giường thực tế rồi chấp nhận hoặc từ chối.</p>
+          </div>
         </div>
+        {loading ? (
+          <div className="ql-empty">Đang tải...</div>
+        ) : list.length === 0 ? (
+          <div className="ql-empty">Không có yêu cầu nào đang chờ xác nhận.</div>
+        ) : (
+          <div className="ql-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hồ sơ</th><th>Khách hàng</th><th>Phòng / Giường</th>
+                  <th>TT Phòng</th><th>TT Giường</th><th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((row) => {
+                  const phong = row.maGiuong
+                    ? `${row.maPhong} · ${row.maGiuong}`
+                    : (row.maPhong || '—');
+                  return (
+                    <tr key={row.maDangKy}>
+                      <td><strong>{row.maDangKy}</strong></td>
+                      <td>
+                        <div className="ql-person">
+                          <span>{initials(row.hoTen)}</span>
+                          <div><strong>{row.hoTen}</strong><small>{row.hinhThucThue}</small></div>
+                        </div>
+                      </td>
+                      <td>{row.maPhong ? <span className="ql-room-pill">{phong}</span> : '—'}</td>
+                      <td>
+                        {row.tinhTrangPhong
+                          ? <Status tone={roomTone(row.tinhTrangPhong)}>{row.tinhTrangPhong}</Status>
+                          : <span className="ql-muted">—</span>}
+                      </td>
+                      <td>
+                        {row.maGiuong
+                          ? <Status tone={roomTone(row.tinhTrangGiuong)}>{row.tinhTrangGiuong || '—'}</Status>
+                          : <span className="ql-muted">—</span>}
+                      </td>
+                      <td>
+                        <div className="ql-row-actions">
+                          <Button primary onClick={() => openModal(row, 'chap-nhan')} disabled={!canAccept(row)}>Chấp nhận</Button>
+                          <Button onClick={() => openModal(row, 'tu-choi')}>Từ chối</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </article>
+
+      {modal && (
+        <div
+          className="ql-modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setModal(null); }}
+        >
+          <div className="ql-modal">
+            {modal.action === 'chap-nhan' ? (
+              <>
+                <h3>Xác nhận chấp nhận đặt cọc</h3>
+                <p>Kiểm tra tình trạng phòng/giường trước khi xác nhận.</p>
+              </>
+            ) : (
+              <>
+                <h3>Từ chối yêu cầu đặt cọc</h3>
+                <p>Nhập lý do để thông báo đến nhân viên sale phụ trách.</p>
+              </>
+            )}
+            <div className="ql-modal-info">
+              <div><span>Hồ sơ</span><strong>{modal.row.maDangKy}</strong></div>
+              <div><span>Khách hàng</span><strong>{modal.row.hoTen}</strong></div>
+              <div>
+                <span>Phòng / Giường</span>
+                <strong>
+                  {modal.row.maGiuong
+                    ? `${modal.row.maPhong} · ${modal.row.maGiuong}`
+                    : (modal.row.maPhong || '—')}
+                </strong>
+              </div>
+              <div>
+                <span>Tình trạng phòng</span>
+                {modal.row.tinhTrangPhong
+                  ? <Status tone={roomTone(modal.row.tinhTrangPhong)}>{modal.row.tinhTrangPhong}</Status>
+                  : <span className="ql-muted">—</span>}
+              </div>
+              {modal.row.maGiuong && (
+                <div>
+                  <span>Tình trạng giường</span>
+                  {modal.row.tinhTrangGiuong
+                    ? <Status tone={roomTone(modal.row.tinhTrangGiuong)}>{modal.row.tinhTrangGiuong}</Status>
+                    : <span className="ql-muted">—</span>}
+                </div>
+              )}
+            </div>
+            {modal.action === 'tu-choi' && (
+              <textarea
+                className="ql-textarea"
+                placeholder="Nhập lý do từ chối..."
+                value={lyDo}
+                onChange={(e) => setLyDo(e.target.value)}
+                rows={3}
+              />
+            )}
+            {error && <p className="ql-modal-error">{error}</p>}
+            <div className="ql-modal-actions">
+              <Button onClick={() => setModal(null)}>Hủy</Button>
+              <Button primary onClick={handleAction} disabled={submitting}>
+                {submitting
+                  ? 'Đang xử lý...'
+                  : modal.action === 'chap-nhan' ? 'Đồng ý nhận cọc' : 'Xác nhận từ chối'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -383,6 +383,15 @@
   color: var(--ql-green-dark);
 }
 
+.ql-btn:disabled {
+  background: #e4e7eb;
+  border-color: #e4e7eb;
+  color: #9aa3ae;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
 .ql-stack {
   display: grid;
   gap: 20px;
@@ -798,4 +807,104 @@
   .ql-pipeline {
     grid-template-columns: 1fr;
   }
+}
+
+/* ---- Utilities ---- */
+.ql-page .ql-muted { color: #7b8794; }
+
+.ql-page .ql-empty {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: #7b8794;
+  font-size: 0.875rem;
+}
+
+.ql-page .ql-row-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ---- Modal ---- */
+.ql-page .ql-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ql-page .ql-modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 2rem;
+  width: min(480px, 90vw);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+}
+
+.ql-page .ql-modal h3 {
+  margin: 0 0 0.375rem;
+  font-size: 1.05rem;
+}
+
+.ql-page .ql-modal > p {
+  margin: 0 0 1.25rem;
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.ql-page .ql-modal-info {
+  background: #f9fafb;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ql-page .ql-modal-info > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.ql-page .ql-modal-info span { opacity: 0.6; }
+
+.ql-page .ql-textarea {
+  width: 100%;
+  border: 1px solid #dde4e8;
+  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+  resize: vertical;
+  margin-bottom: 0.75rem;
+  outline: none;
+}
+
+.ql-page .ql-textarea:focus { border-color: #2fb7a4; }
+
+.ql-page .ql-modal-warn {
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.82rem;
+  color: #7a4800;
+  background: #fff8e6;
+  border: 1px solid #f5c76a;
+  border-radius: 6px;
+}
+
+.ql-page .ql-modal-error {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: #c9504b;
+}
+
+.ql-page .ql-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
 }
