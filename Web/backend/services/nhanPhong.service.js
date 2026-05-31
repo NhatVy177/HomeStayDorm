@@ -15,19 +15,28 @@ function serializeJsonValue(value) {
   return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
+export async function getDanhSachChoNhanPhong(maNhanVienSale) {
+  try {
+    const result = await executeProcedure('dbo.SP_DanhSachChoNhanPhong', [
+      { name: 'MaNhanVienSale', type: sql.VarChar(6), value: String(maNhanVienSale || '').trim() || null }
+    ]);
+    return result.recordset;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
 export async function capNhatThongTinCuTru(data = {}) {
   const khachHangId = String(data.khachHangId || '').trim();
-  if (!khachHangId || !data.cccd || !data.diaChiThuongTru || !data.ngayBatDauCuTru) {
-    throw createServiceError('Vui long nhap du thong tin cu tru');
+  if (!khachHangId || !data.cccd) {
+    throw createServiceError('Vui lòng nhập đầy đủ thông tin cư trú');
   }
 
   try {
     const result = await executeProcedure('dbo.SP_CapNhatThongTinCuTru', [
       { name: 'KhachHangId', type: sql.NVarChar(20), value: khachHangId },
       { name: 'Cccd', type: sql.NVarChar(20), value: data.cccd },
-      { name: 'DiaChiThuongTru', type: sql.NVarChar(200), value: data.diaChiThuongTru },
-      { name: 'NgayBatDauCuTru', type: sql.Date, value: data.ngayBatDauCuTru },
-      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || null }
+      { name: 'QuocTich', type: sql.NVarChar(50), value: data.quocTich || null }
     ]);
 
     return result.recordset[0] || null;
@@ -50,7 +59,10 @@ export async function lapHopDongThue(data = {}) {
       { name: 'NgayBatDau', type: sql.Date, value: data.ngayBatDau },
       { name: 'NgayKetThucDuKien', type: sql.Date, value: data.ngayKetThucDuKien },
       { name: 'TienThue', type: sql.Decimal(18, 2), value: Number(data.tienThue || 0) },
-      { name: 'TienCoc', type: sql.Decimal(18, 2), value: Number(data.tienCoc || 0) }
+      { name: 'TienCoc', type: sql.Decimal(18, 2), value: Number(data.tienCoc || 0) },
+      { name: 'KyThanhToan', type: sql.NVarChar(20), value: data.kyThanhToan || 'Hàng tháng' },
+      { name: 'DanhSachThanhVien', type: sql.NVarChar(sql.MAX), value: serializeJsonValue(data.danhSachThanhVien) },
+      { name: 'DanhSachDichVu', type: sql.NVarChar(sql.MAX), value: serializeJsonValue(data.danhSachDichVu) }
     ]);
 
     return result.recordset[0] || null;

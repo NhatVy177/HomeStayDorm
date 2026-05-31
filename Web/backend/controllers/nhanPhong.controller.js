@@ -1,5 +1,9 @@
 import * as service from '../services/nhanPhong.service.js';
 
+export async function getDanhSachChoNhanPhong(req, res, next) {
+  try { res.json(await service.getDanhSachChoNhanPhong(req.user.maNguoiDung)); } catch (err) { next(err); }
+}
+
 export async function capNhatThongTinCuTru(req, res, next) {
   try { res.status(201).json(await service.capNhatThongTinCuTru(req.body)); } catch (err) { next(err); }
 }

@@ -3,6 +3,7 @@ import * as controller from '../controllers/nhanPhong.controller.js';
 
 const router = Router();
 
+router.get('/danh-sach', controller.getDanhSachChoNhanPhong);
 router.post('/thong-tin-cu-tru', controller.capNhatThongTinCuTru);
 router.post('/hop-dong', controller.lapHopDongThue);
 router.post('/thu-dau-ky', controller.ghiNhanKhoanThuNhanPhong);

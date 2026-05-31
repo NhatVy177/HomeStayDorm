@@ -15,3 +15,27 @@ build/
 # OS / editor
 .DS_Store
 .vscode/
+
+#custom files
+# dependencies
+node_modules/
+
+# env
+.env
+
+# logs
+*.log
+npm-debug.log*
+
+# build
+dist/
+build/
+
+# OS / editor
+.DS_Store
+.vscode/
+
+#custom files
+logic_tinh_tien*.md
+uc_*.md
+de_cuong*.md
