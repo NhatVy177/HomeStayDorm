@@ -113,6 +113,7 @@ IF OBJECT_ID(N'dbo.SP_KhachMoi_DanhSachPhong', N'P') IS NULL
 GO
 
 CREATE OR ALTER PROCEDURE dbo.SP_KhachMoi_DanhSachPhong
+    @TenPhong NVARCHAR(100) = NULL,
     @LoaiPhong NVARCHAR(100) = NULL,
     @KhuVuc NVARCHAR(100) = NULL,
     @MucGiaToiDa DECIMAL(15, 2) = NULL
@@ -138,6 +139,13 @@ BEGIN
     INNER JOIN dbo.Giuong AS g ON g.MaPhong = p.MaPhong
     WHERE p.TinhTrang IN (N'Trống', N'Còn chỗ')
       AND g.TinhTrang = N'Trống'
+      AND (
+          @TenPhong IS NULL
+          OR p.TenPhong LIKE N'%' + @TenPhong + N'%'
+          OR cn.TenChiNhanh LIKE N'%' + @TenPhong + N'%'
+          OR cn.DiaChi LIKE N'%' + @TenPhong + N'%'
+          OR lp.TenLoaiPhong LIKE N'%' + @TenPhong + N'%'
+      )
       AND (@LoaiPhong IS NULL OR lp.TenLoaiPhong = @LoaiPhong)
       AND (@KhuVuc IS NULL OR cn.DiaChi LIKE N'%' + @KhuVuc + N'%')
       AND (@MucGiaToiDa IS NULL OR COALESCE(lp.GiaThueTheoGiuong, lp.GiaThueNguyenPhong) <= @MucGiaToiDa)
@@ -167,6 +175,7 @@ BEGIN
         pdk.MucGia AS mucGia,
         pdk.SoNguoiDuKienO AS soNguoiO,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
+        pdk.ThoiHanThue AS thoiHanThue,
         pdk.YeuCauKhac AS ghiChu,
         pdk.TrangThai AS trangThai,
         lich.STTLich AS sttLich,
@@ -227,6 +236,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_KhachMoi_TaoHoSo
     @MucGia DECIMAL(15, 2) = NULL,
     @SoNguoiO INT,
     @NgayDuKienVaoO DATE,
+    @ThoiHanThue INT = NULL,
     @PhongQuanTam NVARCHAR(400) = NULL,
     @GhiChu NVARCHAR(MAX) = NULL
 AS
@@ -279,12 +289,12 @@ BEGIN
         INSERT INTO dbo.PhieuDangKy (
             MaDangKy, NgayDangKy, SoNguoiDuKienO, GioiTinh, HinhThucThue,
             KhuVucMongMuon, LoaiPhongYeuCau, MucGia, ThoiGianDuKienVaoO,
-            YeuCauKhac, TrangThai, MaKhachHang
+            ThoiHanThue, YeuCauKhac, TrangThai, MaKhachHang
         )
         VALUES (
             @MaDangKy, CAST(GETDATE() AS DATE), @SoNguoiO, @GioiTinh, @HinhThucThue,
             NULLIF(@KhuVucMongMuon, N''), NULLIF(@LoaiPhongYeuCau, N''), @MucGia,
-            @NgayDuKienVaoO, NULLIF(@YeuCauKhac, N''), N'Chờ tiếp nhận', @KhachHangId
+            @NgayDuKienVaoO, @ThoiHanThue, NULLIF(@YeuCauKhac, N''), N'Chờ tiếp nhận', @KhachHangId
         );
 
         COMMIT TRANSACTION;
