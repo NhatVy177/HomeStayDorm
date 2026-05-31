@@ -8,19 +8,41 @@ function handleDatabaseError(error) {
   });
 }
 
+// UC: Gửi thông tin đăng ký thuê
+// khachHangId lấy từ req.user (tài khoản đang đăng nhập), KHÔNG từ body
 export async function createHoSoDangKy(data = {}) {
   const khachHangId = String(data.khachHangId || '').trim();
+
   if (!khachHangId) {
-    throw createServiceError('Vui long chon khach hang');
+    throw createServiceError('Không thể xác định thông tin khách hàng. Vui lòng đăng nhập lại.', 401);
+  }
+
+  // Kiểm tra thông tin bắt buộc phía service (A4 trong UC)
+  const hinhThucThue = String(data.hinhThucThue || '').trim();
+  const soNguoiO    = Number(data.soNguoiO);
+  const ngayDuKienVaoO = data.ngayDuKienVaoO || null;
+
+  if (!hinhThucThue) {
+    throw createServiceError('Vui lòng chọn hình thức thuê.');
+  }
+  if (!soNguoiO || soNguoiO < 1) {
+    throw createServiceError('Vui lòng nhập số người dự kiến ở (tối thiểu 1 người).');
+  }
+  if (!ngayDuKienVaoO) {
+    throw createServiceError('Vui lòng nhập thời gian dự kiến vào ở.');
   }
 
   try {
     const result = await executeProcedure('dbo.SP_TaoHoSoDangKy', [
-      { name: 'KhachHangId', type: sql.NVarChar(20), value: khachHangId },
-      { name: 'NhuCau', type: sql.NVarChar(200), value: data.nhuCau || null },
-      { name: 'SoNguoiO', type: sql.Int, value: Number(data.soNguoiO || 1) },
-      { name: 'NgayDuKienVaoO', type: sql.Date, value: data.ngayDuKienVaoO || null },
-      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || null }
+      { name: 'KhachHangId',     type: sql.NVarChar(20),       value: khachHangId },
+      { name: 'NhuCau',          type: sql.NVarChar(200),      value: hinhThucThue },
+      { name: 'SoNguoiO',        type: sql.Int,                value: soNguoiO },
+      { name: 'NgayDuKienVaoO',  type: sql.Date,               value: ngayDuKienVaoO },
+      { name: 'GhiChu',          type: sql.NVarChar(sql.MAX),  value: data.ghiChu || null },
+      { name: 'KhuVucMongMuon',  type: sql.NVarChar(100),      value: data.khuVucMongMuon || null },
+      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50),       value: data.loaiPhongYeuCau || null },
+      { name: 'MucGia',          type: sql.Decimal(15, 2),     value: data.mucGia ? Number(data.mucGia) : null },
+      { name: 'ThoiHanThue',     type: sql.Int,                value: data.thoiHanThue ? Number(data.thoiHanThue) : null }
     ]);
 
     return result.recordset[0] || null;
@@ -56,10 +78,10 @@ export async function kiemTraDieuKienThue(hoSoId) {
 export async function capNhatKetQuaXuLy(hoSoId, data = {}) {
   try {
     const result = await executeProcedure('dbo.SP_CapNhatKetQuaXuLyHoSo', [
-      { name: 'HoSoId', type: sql.NVarChar(30), value: String(hoSoId || '').trim() },
-      { name: 'TrangThai', type: sql.NVarChar(50), value: data.trangThai || null },
-      { name: 'GhiChuXuLy', type: sql.NVarChar(sql.MAX), value: data.ghiChuXuLy || null },
-      { name: 'NhanVienSaleId', type: sql.NVarChar(20), value: data.nhanVienSaleId || null }
+      { name: 'HoSoId',          type: sql.NVarChar(30),       value: String(hoSoId || '').trim() },
+      { name: 'TrangThai',       type: sql.NVarChar(50),       value: data.trangThai || null },
+      { name: 'GhiChuXuLy',     type: sql.NVarChar(sql.MAX),  value: data.ghiChuXuLy || null },
+      { name: 'NhanVienSaleId',  type: sql.NVarChar(20),       value: data.nhanVienSaleId || null }
     ]);
 
     return result.recordset[0] || null;

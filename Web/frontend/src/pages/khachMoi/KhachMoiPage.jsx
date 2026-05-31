@@ -12,14 +12,15 @@ const tabs = [
   { id: 'ho-tro', icon: 'support', title: 'Hỗ trợ', note: 'Liên hệ khi cần tư vấn' }
 ];
 
-const initialFilters = { khuVuc: '', loaiPhong: '', mucGiaToiDa: '' };
+const initialFilters = { tuKhoa: '', khuVuc: '', loaiPhong: '', mucGiaToiDa: '' };
 const initialRentForm = {
   hinhThucThue: 'Ghép',
-  khuVucMongMuon: 'Hải Châu',
+  khuVucMongMuon: 'Quận 1',
   loaiPhongYeuCau: 'Giường dorm',
   mucGia: '3000000',
   soNguoiO: '1',
   ngayDuKienVaoO: '2026-06-01',
+  thoiHanThue: '',
   ghiChu: ''
 };
 
@@ -33,6 +34,21 @@ function formatDate(value, withTime = false) {
   return new Intl.DateTimeFormat('vi-VN', withTime
     ? { dateStyle: 'short', timeStyle: 'short' }
     : { dateStyle: 'short' }).format(date);
+}
+
+function getRoomArea(room = {}) {
+  const addressParts = String(room.diaChi || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (addressParts.length >= 3) return addressParts[addressParts.length - 2];
+  if (addressParts.length >= 2) return addressParts[addressParts.length - 1];
+
+  return String(room.chiNhanh || '')
+    .replace(/^HomeDorm\s+/i, '')
+    .replace(/^Homestay Dorm\s+/i, '')
+    .trim() || 'Chưa cập nhật';
 }
 
 function initials(name = '') {
@@ -82,6 +98,7 @@ export default function KhachMoiPage() {
   const [rooms, setRooms] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [detailModal, setDetailModal] = useState(null);
   const [rentForm, setRentForm] = useState(initialRentForm);
   const [rentModal, setRentModal] = useState(false);
   const [scheduleModal, setScheduleModal] = useState(null);
@@ -117,7 +134,7 @@ export default function KhachMoiPage() {
 
   useEffect(() => {
     if (!toast) return undefined;
-    const timeout = setTimeout(() => setToast(''), 2400);
+    const timeout = setTimeout(() => setToast(''), 3500);
     return () => clearTimeout(timeout);
   }, [toast]);
 
@@ -138,6 +155,11 @@ export default function KhachMoiPage() {
     setSelectedIds((current) => current.includes(id)
       ? current.filter((selectedId) => selectedId !== id)
       : [...current, id]);
+  }
+
+  function openDetail(roomId) {
+    const room = rooms.find((r) => r.id === roomId);
+    if (room) setDetailModal(room);
   }
 
   function openRentForm() {
@@ -176,9 +198,9 @@ export default function KhachMoiPage() {
       });
       setRentModal(false);
       setSelectedIds([]);
-      setToast('Đã gửi hồ sơ nhu cầu thuê.');
       setActiveTab('ho-so');
-      await loadPortal();
+      await loadPortal();           // load xong mới show toast để không bị che
+      setToast('Gửi hồ sơ đăng ký thuê thành công!');
     } catch (requestError) {
       setToast(requestError.response?.data?.message || 'Không thể gửi hồ sơ lúc này.');
     } finally {
@@ -356,48 +378,59 @@ export default function KhachMoiPage() {
               <div className="km-page-head">
                 <span className="km-eyebrow">Tìm phòng</span>
                 <h1>Danh sách phòng / giường khả dụng</h1>
-                <p>Chọn phòng quan tâm rồi gửi hồ sơ nhu cầu thuê. Việc đặt cọc chưa mở cho tài khoản mới.</p>
+                <p>Nhập tiêu chí tra cứu để tìm phòng phù hợp. Chọn phòng quan tâm rồi gửi hồ sơ nhu cầu thuê.</p>
               </div>
               <div className="km-card">
-                <form className="km-filter" onSubmit={applyFilters}>
-                  <label>Khu vực
-                    <select value={filters.khuVuc} onChange={(event) => setFilters({ ...filters, khuVuc: event.target.value })}>
-                      <option value="">Tất cả khu vực</option>
-                      <option>Hải Châu</option>
-                      <option>Thanh Khê</option>
-                      <option>Ngũ Hành Sơn</option>
-                    </select>
+                <form className="km-room-search" onSubmit={applyFilters}>
+                  <label className="km-keyword-search">
+                    <span className="km-filter-label">Tìm kiếm</span>
+                    <span className="km-keyword-input">
+                      <PortalIcon name="search" />
+                      <input
+                        type="search"
+                        placeholder="Nhập tên phòng, chi nhánh, khu vực hoặc loại phòng..."
+                        value={filters.tuKhoa}
+                        onChange={(event) => setFilters({ ...filters, tuKhoa: event.target.value })}
+                      />
+                    </span>
                   </label>
-                  <label>Loại phòng
-                    <select value={filters.loaiPhong} onChange={(event) => setFilters({ ...filters, loaiPhong: event.target.value })}>
-                      <option value="">Tất cả loại phòng</option>
-                      <option>Giường dorm</option>
-                      <option>Phòng riêng</option>
-                      <option>Phòng đôi</option>
-                    </select>
-                  </label>
-                  <label>Mức giá tối đa
-                    <select value={filters.mucGiaToiDa} onChange={(event) => setFilters({ ...filters, mucGiaToiDa: event.target.value })}>
-                      <option value="">Tất cả mức giá</option>
-                      <option value="2500000">Dưới 2,5 triệu</option>
-                      <option value="3000000">Dưới 3 triệu</option>
-                      <option value="5000000">Dưới 5 triệu</option>
-                    </select>
-                  </label>
-                  <button className="km-btn secondary" type="submit">Lọc phòng</button>
+                  <div className="km-filter">
+                    <label>
+                      <span className="km-filter-label">Khu vực</span>
+                      <select value={filters.khuVuc} onChange={(event) => setFilters({ ...filters, khuVuc: event.target.value })}>
+                        <option value="">Tất cả khu vực</option>
+                        <option value="Quận 1">Quận 1, TP.HCM</option>
+                        <option value="Bình Thạnh">Bình Thạnh, TP.HCM</option>
+                        <option value="Thủ Đức">Thủ Đức, TP.HCM</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span className="km-filter-label">Loại phòng</span>
+                      <select value={filters.loaiPhong} onChange={(event) => setFilters({ ...filters, loaiPhong: event.target.value })}>
+                        <option value="">Tất cả loại phòng</option>
+                        <option value="Phòng 2 người">Phòng 2 người</option>
+                        <option value="Phòng 4 người">Phòng 4 người</option>
+                        <option value="Phòng 6 người">Phòng 6 người</option>
+                        <option value="Phòng VIP 2 người">Phòng VIP 2 người</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span className="km-filter-label">Mức giá tối đa</span>
+                      <select value={filters.mucGiaToiDa} onChange={(event) => setFilters({ ...filters, mucGiaToiDa: event.target.value })}>
+                        <option value="">Tất cả mức giá</option>
+                        <option value="2500000">Dưới 2,5 triệu</option>
+                        <option value="3000000">Dưới 3 triệu</option>
+                        <option value="5000000">Dưới 5 triệu</option>
+                      </select>
+                    </label>
+                    <button className="km-btn secondary km-search-btn" type="submit">Tra cứu</button>
+                  </div>
                 </form>
                 <div className="km-room-grid">
                   {rooms.map((room) => (
                     <article className={`km-room ${selectedIds.includes(room.id) ? 'selected' : ''}`} key={room.id}>
                       <div className="km-room-photo">
                         <img src={room.urlImg} alt={room.tenPhong} />
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.includes(room.id)}
-                            onChange={() => toggleRoom(room.id)}
-                          /> Chọn
-                        </label>
                       </div>
                       <div className="km-room-body">
                         <div className="km-room-meta"><span>{room.loaiPhong}</span><strong>{formatMoney(room.giaThue)}</strong></div>
@@ -406,13 +439,25 @@ export default function KhachMoiPage() {
                         <div className="km-pills">
                           <span>Sức chứa {room.sucChua}</span>
                           <span>Còn {room.soChoTrong} chỗ</span>
-                          <span className="brick">Đà Nẵng</span>
+                          <span className="brick">{getRoomArea(room)}</span>
+                        </div>
+                        <div className="km-room-actions">
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(room.id)}
+                              onChange={() => toggleRoom(room.id)}
+                            /> Chọn
+                          </label>
+                          <button className="km-detail-btn" type="button" onClick={() => openDetail(room.id)}>
+                            Xem chi tiết
+                          </button>
                         </div>
                       </div>
                     </article>
                   ))}
                 </div>
-                {!rooms.length && <EmptyPanel title="Không có phòng phù hợp">Thử thay đổi điều kiện lọc để xem thêm lựa chọn.</EmptyPanel>}
+                {!rooms.length && <EmptyPanel title="Không có phòng phù hợp">Vui lòng điều chỉnh tiêu chí (khu vực, giá...) để tìm được phòng phù hợp.</EmptyPanel>}
               </div>
               <div className="km-sticky-action">
                 <span>{selectedRooms.length ? `Đã chọn ${selectedRooms.length} phòng` : 'Chưa chọn phòng nào'}</span>
@@ -448,6 +493,7 @@ export default function KhachMoiPage() {
                       <div><span>Loại phòng mong muốn</span><strong>{profile.loaiPhongYeuCau || 'Chưa ghi rõ'}</strong></div>
                       <div><span>Số người</span><strong>{profile.soNguoiO} người</strong></div>
                       <div><span>Ngày dự kiến vào ở</span><strong>{formatDate(profile.ngayDuKienVaoO)}</strong></div>
+                      {profile.thoiHanThue && <div><span>Thời hạn thuê</span><strong>{profile.thoiHanThue} tháng</strong></div>}
                       <div><span>Ghi chú</span><strong>{profile.ghiChu || 'Không có'}</strong></div>
                     </div>
                   </article>
@@ -479,7 +525,7 @@ export default function KhachMoiPage() {
                   <div className="km-info-list">
                     <div><span>Thời gian</span><strong>{formatDate(schedule.thoiGianHen, true)}</strong></div>
                     <div><span>Phòng sẽ xem</span><strong>{schedule.phongXem || 'Đang cập nhật'}</strong></div>
-                    <div><span>Địa điểm</span><strong>123 Nguyễn Văn Linh, Đà Nẵng</strong></div>
+                    <div><span>Địa điểm</span><strong>Theo chi nhánh phòng xem</strong></div>
                   </div>
                   <div className="km-buttons km-top-gap">
                     <button className="km-btn secondary" type="button" onClick={() => setScheduleModal(schedule)}>Yêu cầu đổi lịch</button>
@@ -539,7 +585,7 @@ export default function KhachMoiPage() {
                   <h3>Kênh liên hệ nhanh</h3>
                   <div><span>☎</span><p><strong>Gọi nhân viên tư vấn</strong>0905 123 456</p></div>
                   <div><span>✉</span><p><strong>Gửi email</strong>hello@homestaydorm.vn</p></div>
-                  <div><span>📍</span><p><strong>Địa chỉ</strong>123 Nguyễn Văn Linh, Đà Nẵng</p></div>
+                  <div><span>📍</span><p><strong>Địa chỉ</strong>12 Nguyễn Trãi, Quận 1, TP.HCM</p></div>
                 </div>
                 <div className="km-card">
                   <h3>Thông tin dành cho khách mới</h3>
@@ -558,7 +604,7 @@ export default function KhachMoiPage() {
       <footer className="km-footer">
         <div className="km-frame km-footer-grid">
           <div><Brand /><p>Cổng khách hàng giúp bạn tìm phòng, theo dõi hồ sơ và lịch xem trong một giao diện rõ ràng.</p></div>
-          <div><h3>Liên hệ</h3><p>123 Nguyễn Văn Linh, Đà Nẵng</p><p>0905 123 456</p><p>hello@homestaydorm.vn</p></div>
+          <div><h3>Liên hệ</h3><p>12 Nguyễn Trãi, Quận 1, TP.HCM</p><p>0905 123 456</p><p>hello@homestaydorm.vn</p></div>
           <div><h3>Hỗ trợ khách hàng</h3><button type="button" onClick={() => goTo('tong-quan')}>Tổng quan</button><button type="button" onClick={() => goTo('tim-phong')}>Tìm phòng</button><button type="button" onClick={() => goTo('lich-xem')}>Lịch xem phòng</button></div>
         </div>
         <div className="km-frame km-copyright">© 2026 Homestay Dorm. Cổng khách hàng mới.</div>
@@ -594,6 +640,9 @@ export default function KhachMoiPage() {
               <label>Ngân sách tối đa
                 <input type="number" min="0" value={rentForm.mucGia} onChange={(event) => setRentForm({ ...rentForm, mucGia: event.target.value })} />
               </label>
+              <label>Thời hạn thuê (tháng)
+                <input type="number" min="1" placeholder="VD: 6" value={rentForm.thoiHanThue} onChange={(event) => setRentForm({ ...rentForm, thoiHanThue: event.target.value })} />
+              </label>
               <label className="full">Ghi chú nhu cầu
                 <textarea value={rentForm.ghiChu} onChange={(event) => setRentForm({ ...rentForm, ghiChu: event.target.value })} placeholder="Ưu tiên vị trí, tiện ích hoặc thời gian liên hệ..." />
               </label>
@@ -618,6 +667,61 @@ export default function KhachMoiPage() {
             </label>
             <button className="km-btn primary km-top-gap" type="submit" disabled={submitting}>Gửi yêu cầu</button>
           </form>
+        </div>
+      )}
+
+      {detailModal && (
+        <div className="km-modal-backdrop" onMouseDown={() => setDetailModal(null)}>
+          <div className="km-modal large" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="km-modal-head">
+              <div><h2>{detailModal.tenPhong}</h2><p>{detailModal.moTa}</p></div>
+              <button type="button" onClick={() => setDetailModal(null)}>×</button>
+            </div>
+            <div className="km-detail-content">
+              <div className="km-detail-photo">
+                <img src={detailModal.urlImg} alt={detailModal.tenPhong} />
+              </div>
+              <div className="km-detail-info">
+                <div className="km-info-row">
+                  <span>Loại phòng</span>
+                  <strong>{detailModal.loaiPhong}</strong>
+                </div>
+                <div className="km-info-row">
+                  <span>Giá thuê</span>
+                  <strong className="brick">{formatMoney(detailModal.giaThue)}</strong>
+                </div>
+                <div className="km-info-row">
+                  <span>Sức chứa</span>
+                  <strong>{detailModal.sucChua} người</strong>
+                </div>
+                <div className="km-info-row">
+                  <span>Chỗ trống</span>
+                  <strong>{detailModal.soChoTrong} giường</strong>
+                </div>
+                <div className="km-info-row">
+                  <span>Tình trạng</span>
+                  <strong style={{ color: 'var(--success)' }}>Còn trống</strong>
+                </div>
+                <div className="km-info-row">
+                  <span>Chi nhánh</span>
+                  <strong>{detailModal.chiNhanh}</strong>
+                </div>
+                <div className="km-info-row">
+                  <span>Tầng</span>
+                  <strong>Tầng {detailModal.tenPhong.match(/\d/)?.[0] || '1'}</strong>
+                </div>
+                <div className="km-info-row full">
+                  <span>Mô tả chi tiết</span>
+                  <p>{detailModal.moTa}</p>
+                </div>
+                <div className="km-buttons km-top-gap">
+                  <button className="km-btn primary" type="button" onClick={() => { toggleRoom(detailModal.id); setDetailModal(null); }}>
+                    {selectedIds.includes(detailModal.id) ? 'Bỏ chọn phòng' : 'Chọn phòng này'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

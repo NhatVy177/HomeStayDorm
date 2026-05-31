@@ -1,8 +1,14 @@
 import * as service from '../services/dangKyThue.service.js';
 
+// UC: Gửi thông tin đăng ký thuê
+// khachHangId lấy từ req.user (middleware requireAuth đã xác thực), KHÔNG nhận từ body
 export async function createHoSoDangKy(req, res, next) {
   try {
-    res.status(201).json(await service.createHoSoDangKy(req.body));
+    const data = {
+      ...req.body,
+      khachHangId: req.user?.maNguoiDung  // lấy từ tài khoản đang đăng nhập
+    };
+    res.status(201).json(await service.createHoSoDangKy(data));
   } catch (err) {
     next(err);
   }

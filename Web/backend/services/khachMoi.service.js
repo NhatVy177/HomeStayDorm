@@ -58,9 +58,30 @@ async function getSchedules(khachHangId) {
   return result.recordset;
 }
 
+function normalizeKeyword(value) {
+  return String(value || '')
+    .toLocaleLowerCase('vi-VN')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function roomMatchesKeyword(room, keyword) {
+  if (!keyword) return true;
+  return normalizeKeyword([
+    room.tenPhong,
+    room.maPhong,
+    room.chiNhanh,
+    room.diaChi,
+    room.loaiPhong
+  ].join(' ')).includes(keyword);
+}
+
 async function getAvailableRooms(filter = {}) {
   const maxPrice = filter.mucGiaToiDa ? Number(filter.mucGiaToiDa) : null;
+  const keyword = String(filter.tuKhoa || filter.tenPhong || '').trim();
   const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachPhong', [
+    { name: 'TenPhong', type: sql.NVarChar(100), value: null },
     { name: 'LoaiPhong', type: sql.NVarChar(100), value: filter.loaiPhong || null },
     { name: 'KhuVuc', type: sql.NVarChar(100), value: filter.khuVuc || null },
     {
@@ -69,7 +90,8 @@ async function getAvailableRooms(filter = {}) {
       value: Number.isFinite(maxPrice) ? maxPrice : null
     }
   ]);
-  return result.recordset;
+  const normalizedKeyword = normalizeKeyword(keyword);
+  return result.recordset.filter((room) => roomMatchesKeyword(room, normalizedKeyword));
 }
 
 export async function getTongQuan(user) {
@@ -117,6 +139,7 @@ export async function createHoSo(user, data = {}) {
       },
       { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
       { name: 'NgayDuKienVaoO', type: sql.Date, value: ngayDuKienVaoO },
+      { name: 'ThoiHanThue', type: sql.Int, value: data.thoiHanThue ? Number(data.thoiHanThue) : null },
       { name: 'PhongQuanTam', type: sql.NVarChar(400), value: data.phongQuanTam || null },
       { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || null }
     ]);

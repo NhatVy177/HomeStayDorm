@@ -738,9 +738,30 @@
     .notice p{font-size:14px;}
     .notice span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
 
-    .filter-bar{
-      display:grid;grid-template-columns:repeat(4,1fr) auto;gap:12px;align-items:end;
+    .room-search-panel{
+      display:grid;
+      gap:12px;
       margin-bottom:18px;
+    }
+    .room-keyword-search{display:grid;gap:7px;}
+    .room-keyword-search > span{font-size:13px;font-weight:800;color:var(--muted);}
+    .room-keyword-input{
+      display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center;
+      background:#fff;border:1px solid var(--line);border-radius:18px;
+      box-shadow:0 4px 20px rgba(0,0,0,.045);padding:12px 14px;
+    }
+    .room-keyword-input input{
+      width:100%;border:0;background:transparent;color:var(--text);
+      outline:0;font-weight:650;font-size:15px;
+    }
+    .room-keyword-input:focus-within{
+      border-color:var(--green);
+      box-shadow:0 0 0 4px rgba(47,183,164,.10);
+    }
+    .room-search-empty{display:none;margin-top:14px;}
+    .room-search-empty.show{display:block;}
+    .filter-bar{
+      display:grid;grid-template-columns:repeat(3,1fr) auto;gap:12px;align-items:end;
     }
     .field label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin-bottom:7px;}
     .field input,.field select,.field textarea{
@@ -1209,7 +1230,7 @@
               <div class="suggest-body">
                 <h3>Dorm Studio 204</h3>
                 <p>Phù hợp sinh viên, gần trung tâm, còn 2 giường.</p>
-                <div class="suggest-meta"><span class="suggest-place">Hải Châu</span><span class="suggest-price">2.8tr/tháng</span></div>
+                <div class="suggest-meta"><span class="suggest-place">Quận 1</span><span class="suggest-price">2.8tr/tháng</span></div>
               </div>
             </article>
             <article class="suggest-card">
@@ -1217,7 +1238,7 @@
               <div class="suggest-body">
                 <h3>Phòng đôi Cozy 302</h3>
                 <p>Phòng 2 người, đủ nội thất cơ bản và máy lạnh.</p>
-                <div class="suggest-meta"><span class="suggest-place">Ngũ Hành Sơn</span><span class="suggest-price">3.6tr/tháng</span></div>
+                <div class="suggest-meta"><span class="suggest-place">Thủ Đức</span><span class="suggest-price">3.6tr/tháng</span></div>
               </div>
             </article>
             <article class="suggest-card">
@@ -1225,7 +1246,7 @@
               <div class="suggest-body">
                 <h3>Dorm Green 305</h3>
                 <p>Không gian yên tĩnh, gần trạm xe buýt, trống 3 giường.</p>
-                <div class="suggest-meta"><span class="suggest-place">Hải Châu</span><span class="suggest-price">2.2tr/tháng</span></div>
+                <div class="suggest-meta"><span class="suggest-place">Quận 1</span><span class="suggest-price">2.2tr/tháng</span></div>
               </div>
             </article>
           </div>
@@ -1287,7 +1308,7 @@
           <div class="support-list">
             <div class="support-row"><span>☎</span><div><strong>Gọi nhân viên tư vấn</strong><p>0905 123 456 · Hỗ trợ thông tin phòng trống và lịch xem phòng.</p></div></div>
             <div class="support-row"><span>✉</span><div><strong>Gửi email</strong><p>hello@homestaydorm.vn · Phù hợp khi cần gửi thông tin chi tiết.</p></div></div>
-            <div class="support-row"><span>📍</span><div><strong>Địa chỉ</strong><p>123 Nguyễn Văn Linh, Đà Nẵng · Có thể hẹn lịch xem phòng trước khi đến.</p></div></div>
+            <div class="support-row"><span>📍</span><div><strong>Địa chỉ</strong><p>12 Nguyễn Trãi, Quận 1, TP.HCM · Có thể hẹn lịch xem phòng trước khi đến.</p></div></div>
           </div>
         </div>
 
@@ -1326,55 +1347,61 @@
 
 
       <div class="card">
-        <div class="filter-bar">
-          <div class="field"><label>Khu vực</label><select><option>Tất cả khu vực</option><option>Hải Châu</option><option>Thanh Khê</option><option>Ngũ Hành Sơn</option></select></div>
-          <div class="field"><label>Loại phòng</label><select><option>Tất cả loại phòng</option><option>Giường dorm</option><option>Phòng riêng</option><option>Phòng đôi</option></select></div>
-          <div class="field"><label>Khoảng giá</label><select><option>Tất cả mức giá</option><option>Dưới 2 triệu</option><option>2 - 3 triệu</option><option>3 - 5 triệu</option></select></div>
-          <div class="field"><label>Sức chứa</label><select><option>Tất cả</option><option>1 người</option><option>2 người</option><option>4 người</option></select></div>
-          <button class="btn btn-secondary" type="button">Lọc</button>
+        <div class="room-search-panel">
+          <label class="room-keyword-search" for="roomKeyword">
+            <span>Tìm kiếm</span>
+            <div class="room-keyword-input"><span aria-hidden="true">🔎</span><input id="roomKeyword" type="search" placeholder="Nhập tên phòng, chi nhánh, khu vực hoặc loại phòng..."></div>
+          </label>
+          <div class="filter-bar">
+            <div class="field"><label>Khu vực</label><select><option>Tất cả khu vực</option><option>Quận 1</option><option>Bình Thạnh</option><option>Thủ Đức</option></select></div>
+            <div class="field"><label>Loại phòng</label><select><option>Tất cả loại phòng</option><option>Giường dorm</option><option>Phòng riêng</option><option>Phòng đôi</option></select></div>
+            <div class="field"><label>Mức giá tối đa</label><select><option value="">Tất cả mức giá</option><option value="2500000">Dưới 2,5 triệu</option><option value="3000000">Dưới 3 triệu</option><option value="5000000">Dưới 5 triệu</option></select></div>
+            <button class="btn btn-secondary" id="roomSearchButton" type="button">Lọc</button>
+          </div>
         </div>
 
         <div class="room-grid">
-          <article class="room-card" data-room="Dorm Studio 204 - Giường A2">
+          <article class="room-card" data-room="Dorm Studio 204 - Giường A2" data-keywords="Dorm Studio 204 Giường dorm HomeDorm Quận 1 TP.HCM">
             <div class="room-photo photo-a"><label class="select-badge"><input type="checkbox" class="room-check"> Chọn</label></div>
             <div class="room-body">
               <div class="room-meta"><span class="room-type">Giường dorm</span><span class="room-price">2.800.000đ/tháng</span></div>
               <h3>Dorm Studio 204</h3>
               <p>Phù hợp sinh viên, có tủ cá nhân, wifi và khu sinh hoạt chung.</p>
-              <div class="pill-row"><span class="pill">Sức chứa 4</span><span class="pill">Trống 2 giường</span><span class="pill brick">Hải Châu</span></div>
+              <div class="pill-row"><span class="pill">Sức chứa 4</span><span class="pill">Trống 2 giường</span><span class="pill brick">Quận 1</span></div>
             </div>
           </article>
 
-          <article class="room-card" data-room="Phòng riêng Garden 101">
+          <article class="room-card" data-room="Phòng riêng Garden 101" data-keywords="Garden 101 Phòng riêng HomeDorm Bình Thạnh TP.HCM">
             <div class="room-photo photo-b"><label class="select-badge"><input type="checkbox" class="room-check"> Chọn</label></div>
             <div class="room-body">
               <div class="room-meta"><span class="room-type">Phòng riêng</span><span class="room-price">4.500.000đ/tháng</span></div>
               <h3>Garden 101</h3>
               <p>Cửa sổ lớn, WC riêng, phù hợp người muốn không gian riêng.</p>
-              <div class="pill-row"><span class="pill">Sức chứa 1</span><span class="pill">Trống 1 phòng</span><span class="pill brick">Thanh Khê</span></div>
+              <div class="pill-row"><span class="pill">Sức chứa 1</span><span class="pill">Trống 1 phòng</span><span class="pill brick">Bình Thạnh</span></div>
             </div>
           </article>
 
-          <article class="room-card" data-room="Phòng đôi Cozy 302">
+          <article class="room-card" data-room="Phòng đôi Cozy 302" data-keywords="Cozy 302 Phòng đôi HomeDorm Thủ Đức TP.HCM">
             <div class="room-photo photo-c"><label class="select-badge"><input type="checkbox" class="room-check"> Chọn</label></div>
             <div class="room-body">
               <div class="room-meta"><span class="room-type">Phòng đôi</span><span class="room-price">3.600.000đ/tháng</span></div>
               <h3>Cozy 302</h3>
               <p>Phòng dành cho 2 người, đủ nội thất cơ bản và máy lạnh.</p>
-              <div class="pill-row"><span class="pill">Sức chứa 2</span><span class="pill">Trống 1 phòng</span><span class="pill brick">Ngũ Hành Sơn</span></div>
+              <div class="pill-row"><span class="pill">Sức chứa 2</span><span class="pill">Trống 1 phòng</span><span class="pill brick">Thủ Đức</span></div>
             </div>
           </article>
 
-          <article class="room-card" data-room="Dorm Green 305 - Giường B1">
+          <article class="room-card" data-room="Dorm Green 305 - Giường B1" data-keywords="Dorm Green 305 Giường dorm HomeDorm Quận 1 TP.HCM">
             <div class="room-photo photo-d"><label class="select-badge"><input type="checkbox" class="room-check"> Chọn</label></div>
             <div class="room-body">
               <div class="room-meta"><span class="room-type">Giường dorm</span><span class="room-price">2.200.000đ/tháng</span></div>
               <h3>Dorm Green 305</h3>
               <p>Không gian yên tĩnh, gần trạm xe buýt và khu ăn uống.</p>
-              <div class="pill-row"><span class="pill">Sức chứa 6</span><span class="pill">Trống 3 giường</span><span class="pill brick">Hải Châu</span></div>
+              <div class="pill-row"><span class="pill">Sức chứa 6</span><span class="pill">Trống 3 giường</span><span class="pill brick">Quận 1</span></div>
             </div>
           </article>
         </div>
+        <div class="empty-state room-search-empty" id="roomSearchEmpty"><strong>Không có phòng phù hợp</strong><p>Thử đổi từ khóa, khu vực, loại phòng hoặc mức giá tối đa.</p></div>
       </div>
 
       <div class="sticky-action">
@@ -1455,7 +1482,7 @@
           </div>
           <div class="info-list">
             <div class="info-row"><span>Thời gian</span><span>29/05/2026 · 09:30</span></div>
-            <div class="info-row"><span>Địa điểm</span><span>123 Nguyễn Văn Linh, Đà Nẵng</span></div>
+            <div class="info-row"><span>Địa điểm</span><span>Theo chi nhánh phòng xem</span></div>
             <div class="info-row"><span>Phòng / giường sẽ xem</span><span>Dorm Studio 204, Cozy 302</span></div>
             <div class="info-row"><span>Nhân viên phụ trách</span><span>Sale · Nguyễn Hoàng</span></div>
             <div class="info-row"><span>Trạng thái</span><span>Đã lên lịch</span></div>
@@ -1717,7 +1744,7 @@
         <div>
           <h3>Liên hệ</h3>
           <div class="footer-links">
-            <p>📍 123 Nguyễn Văn Linh, Đà Nẵng</p>
+            <p>📍 12 Nguyễn Trãi, Quận 1, TP.HCM</p>
             <p>☎ 0905 123 456</p>
             <p>✉ hello@homestaydorm.vn</p>
           </div>
@@ -1817,6 +1844,11 @@
     const accountMenu = document.getElementById('accountMenu');
     const toast = document.getElementById('toast');
     const roomChecks = document.querySelectorAll('.room-check');
+    const roomCards = document.querySelectorAll('.room-card');
+    const roomKeyword = document.getElementById('roomKeyword');
+    const roomFilterSelects = document.querySelectorAll('#page-tim-phong .filter-bar select');
+    const roomSearchButton = document.getElementById('roomSearchButton');
+    const roomSearchEmpty = document.getElementById('roomSearchEmpty');
     const selectedCount = document.getElementById('selectedCount');
     const selectedRoomsText = document.getElementById('selectedRoomsText');
     const stateButtons = document.querySelectorAll('[data-customer-state-switch]');
@@ -1894,7 +1926,7 @@
 
     function selectedRooms(){
       return Array.from(roomChecks)
-        .filter(check => check.checked)
+        .filter(check => check.checked && !check.closest('.room-card').hidden)
         .map(check => check.closest('.room-card').dataset.room);
     }
 
@@ -1905,9 +1937,48 @@
       selectedRoomsText.textContent = rooms.length ? `Phòng/giường muốn xem: ${rooms.join(', ')}` : 'Chọn phòng ở trang Tìm phòng để tự động điền danh sách.';
     }
 
+    function normalizeText(value){
+      return String(value || '').toLocaleLowerCase('vi-VN').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function roomPrice(card){
+      return Number((card.querySelector('.room-price')?.textContent || '').replace(/\D/g, '')) || 0;
+    }
+
+    function isAllOption(value){
+      return !value || value.startsWith('Tất cả');
+    }
+
+    function applyRoomSearch(){
+      const keyword = normalizeText(roomKeyword?.value);
+      const [areaSelect, typeSelect, priceSelect] = roomFilterSelects;
+      const area = areaSelect?.value || '';
+      const type = typeSelect?.value || '';
+      const maxPrice = Number(priceSelect?.value || 0);
+      let visibleCount = 0;
+
+      roomCards.forEach(card => {
+        const areaText = card.querySelector('.pill.brick')?.textContent || '';
+        const typeText = card.querySelector('.room-type')?.textContent || '';
+        const haystack = normalizeText([card.dataset.room, card.dataset.keywords, card.textContent].join(' '));
+        const visible =
+          (!keyword || haystack.includes(keyword)) &&
+          (isAllOption(area) || normalizeText(areaText).includes(normalizeText(area))) &&
+          (isAllOption(type) || normalizeText(typeText).includes(normalizeText(type))) &&
+          (!maxPrice || roomPrice(card) <= maxPrice);
+
+        card.hidden = !visible;
+        if (!visible) card.querySelector('.room-check').checked = false;
+        if (visible) visibleCount += 1;
+      });
+
+      roomSearchEmpty?.classList.toggle('show', visibleCount === 0);
+      updateSelectedRooms();
+    }
+
     roomChecks.forEach(check => check.addEventListener('change', updateSelectedRooms));
 
-    document.querySelectorAll('.room-card').forEach(card => {
+    roomCards.forEach(card => {
       card.addEventListener('click', (e) => {
         if(e.target.tagName.toLowerCase() === 'input') return;
         const check = card.querySelector('.room-check');
@@ -1915,6 +1986,10 @@
         updateSelectedRooms();
       });
     });
+
+    roomKeyword?.addEventListener('input', applyRoomSearch);
+    roomFilterSelects.forEach(select => select.addEventListener('change', applyRoomSearch));
+    roomSearchButton?.addEventListener('click', applyRoomSearch);
 
     document.getElementById('openRentForm').addEventListener('click', () => {
       if(selectedRooms().length === 0){
