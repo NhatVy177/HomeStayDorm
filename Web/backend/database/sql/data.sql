@@ -845,6 +845,32 @@ INSERT INTO YeuCauSuaChua (MaYeuCau, NgayYeuCau, MoTaHuHong, HinhAnhMinhChung, T
 GO
 
 
+/* ===== DỮ LIỆU TEST CHO KH0001 ĐỂ TEST TÌM KIẾM PHÒNG/GIƯỜNG ===== */
+INSERT INTO PhieuDatCoc (MaPhieuDatCoc, ThoiDiemDatCoc, ThoiHanThanhToan, SoTienCoc, PhuongThucThanhToan, TrangThaiThanhToan, ThoiGianXacNhanTT, ChungTuThanhToan, ThoiGianNhanPhong, HinhThucThue, TrangThaiCoc, MaPhieuYeuCauDangKy, MaKhachHang, MaNhanVienKeToan) VALUES
+    (N'PC0017', N'2026-05-01 10:00:00', N'2026-05-02 10:00:00', NULL, N'Chuyển khoản', N'Đã TT', N'2026-05-01 15:00:00', NULL, N'2026-06-01 08:00:00', N'Ghép giường', N'Đã lập HĐ', N'DK0017', N'KH0001', N'NV0008'),
+    (N'PC0018', N'2026-06-01 10:00:00', N'2026-06-02 10:00:00', NULL, N'Chuyển khoản', N'Đã TT', N'2026-06-01 15:00:00', NULL, N'2026-07-01 08:00:00', N'Ghép giường', N'Đã lập HĐ', N'DK0018', N'KH0001', N'NV0012');
+GO
+
+INSERT INTO ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue) VALUES
+    (N'CD0017', N'PC0017', N'P305', N'G01', 1800000),
+    (N'CD0018', N'PC0018', N'P304', N'G02', 1800000);
+GO
+
+INSERT INTO HopDongThue (MaHopDong, NgayKyHD, NgayBatDau, NgayKetThuc, SoGiuongThue, GiaThue, KyThanhToan, TrangThai, MaPhieuCoc, MaKhachHang, MaNhanVienQuanLy) VALUES
+    (N'HD0013', N'2026-05-05', N'2026-06-01', N'2027-05-31', 1, 1800000, N'Hàng tháng', N'Hiệu lực', N'PC0017', N'KH0001', N'NV0007'),
+    (N'HD0014', N'2026-06-05', N'2026-07-01', N'2027-06-30', 1, 1800000, N'Hàng tháng', N'Hiệu lực', N'PC0018', N'KH0001', N'NV0011');
+GO
+
+INSERT INTO ThanhVienHopDong (MaThanhVien, HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email, QuocTich, TrangThai, MaHopDong) VALUES
+    (N'TV0021', N'Nguyễn Văn An', N'1996-01-01', N'Nam', N'079200000001', N'091200001', N'kh0001@mail.com', N'Việt Nam', N'Đang ở', N'HD0013'),
+    (N'TV0022', N'Nguyễn Văn An', N'1996-01-01', N'Nam', N'079200000001', N'091200001', N'kh0001@mail.com', N'Việt Nam', N'Đang ở', N'HD0014');
+GO
+
+INSERT INTO PhieuTraPhong (MaPhieuTra, NgayDangKyTra, NgayDuKienTra, NgayTraThucTe, TrangThai, MaHopDong, MaPhieuDatCoc) VALUES
+    (N'PT0009', N'2026-05-30', N'2026-06-10', NULL, N'Chờ xử lý', N'HD0013', NULL),
+    (N'PT0010', N'2026-05-31', N'2026-06-15', NULL, N'Chờ xử lý', N'HD0014', NULL);
+GO
+
 /* ===== QUERY CHECK NHANH SAU KHI CHẠY =====
 SELECT MaNguoiDung, HoTen, GioiTinh FROM NguoiDung WHERE GioiTinh NOT IN (N'Nam', N'Nữ');
 SELECT MaPhong, GioiTinhChoPhep FROM Phong WHERE GioiTinhChoPhep NOT IN (N'Nam', N'Nữ');
