@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { datCocApi } from '../datCoc/datCoc.api.js';
 import { nhanPhongApi } from '../nhanPhong/nhanPhong.api.js';
@@ -150,6 +150,12 @@ function Brand() {
 export default function NhanVienQuanLyPage() {
   const { user, dangXuat } = useAuth();
   const [activeView, setActiveView] = useState('overview');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setSearchQuery('');
+  }, [activeView]);
+
   const currentView = activeView === 'account'
     ? { title: 'Thông tin tài khoản', subtitle: 'Xem thông tin tài khoản nhân viên đang đăng nhập.' }
     : views.find((view) => view.id === activeView) || views[0];
@@ -208,15 +214,20 @@ export default function NhanVienQuanLyPage() {
             {activeView !== 'account' && <div className="ql-actions">
               <label className="ql-search">
                 <PortalIcon name="search" />
-                <input type="search" placeholder="Tìm khách, phòng, yêu cầu..." />
+                <input
+                  type="search"
+                  placeholder="Tìm khách, phòng, yêu cầu..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </label>
             </div>}
           </section>
 
           {activeView === 'account' && <EmployeeAccountView user={user} positionLabel="Nhân viên quản lý" />}
           {activeView === 'overview' && <Overview />}
-          {activeView === 'deposits' && <Deposits />}
-          {activeView === 'handover' && <Handovers />}
+          {activeView === 'deposits' && <Deposits searchQuery={searchQuery} />}
+          {activeView === 'handover' && <Handovers searchQuery={searchQuery} />}
           {activeView === 'maintenance' && <Maintenance />}
           {activeView === 'returns' && <ReturnChecks />}
           {activeView === 'rooms' && <Rooms />}
@@ -281,7 +292,7 @@ function Overview() {
   );
 }
 
-function Deposits() {
+function Deposits({ searchQuery }) {
   const { user } = useAuth();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -297,6 +308,17 @@ function Deposits() {
       .catch(() => setList([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const filteredList = useMemo(() => {
+    if (!searchQuery?.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(row => 
+      (row.maDangKy && row.maDangKy.toLowerCase().includes(q)) ||
+      (row.hoTen && row.hoTen.toLowerCase().includes(q)) ||
+      (row.maPhong && row.maPhong.toLowerCase().includes(q)) ||
+      (row.maGiuong && row.maGiuong.toLowerCase().includes(q))
+    );
+  }, [list, searchQuery]);
 
   function openModal(row, action) {
     setModal({ row, action });
@@ -341,8 +363,10 @@ function Deposits() {
         </div>
         {loading ? (
           <div className="ql-empty">Đang tải...</div>
-        ) : list.length === 0 ? (
-          <div className="ql-empty">Không có yêu cầu nào đang chờ xác nhận.</div>
+        ) : filteredList.length === 0 ? (
+          <div className="ql-empty">
+            {searchQuery ? 'Không tìm thấy kết quả phù hợp.' : 'Không có yêu cầu nào đang chờ xác nhận.'}
+          </div>
         ) : (
           <div className="ql-table-wrap">
             <table>
@@ -353,7 +377,7 @@ function Deposits() {
                 </tr>
               </thead>
               <tbody>
-                {list.map((row) => {
+                {filteredList.map((row) => {
                   const phong = row.maGiuong
                     ? `${row.maPhong} · ${row.maGiuong}`
                     : (row.maPhong || '—');
@@ -460,7 +484,7 @@ function Deposits() {
   );
 }
 
-function Handovers() {
+function Handovers({ searchQuery }) {
   const { user } = useAuth();
 
   // ── View state: 'list' | 'form' | 'success' ──────────────────────────────
@@ -500,6 +524,18 @@ function Handovers() {
       .catch(() => setList([]))
       .finally(() => setLoadingList(false));
   }, []);
+
+  const filteredList = useMemo(() => {
+    if (!searchQuery?.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(row => 
+      (row.maHopDong && row.maHopDong.toLowerCase().includes(q)) ||
+      (row.hoTen && row.hoTen.toLowerCase().includes(q)) ||
+      (row.maPhong && row.maPhong.toLowerCase().includes(q)) ||
+      (row.maGiuong && row.maGiuong.toLowerCase().includes(q)) ||
+      (row.soDienThoai && row.soDienThoai.toLowerCase().includes(q))
+    );
+  }, [list, searchQuery]);
 
   // ── Select a contract → load its assets ───────────────────────────────────
   async function handleSelectContract(row) {
@@ -857,8 +893,10 @@ function Handovers() {
 
         {loadingList ? (
           <div className="ql-empty">Đang tải danh sách...</div>
-        ) : list.length === 0 ? (
-          <div className="ql-empty">Không có hợp đồng nào đang chờ bàn giao.</div>
+        ) : filteredList.length === 0 ? (
+          <div className="ql-empty">
+            {searchQuery ? 'Không tìm thấy kết quả phù hợp.' : 'Không có hợp đồng nào đang chờ bàn giao.'}
+          </div>
         ) : (
           <div className="ql-table-wrap">
             <table>
@@ -873,7 +911,7 @@ function Handovers() {
                 </tr>
               </thead>
               <tbody>
-                {list.map((row) => {
+                {filteredList.map((row) => {
                   const paid = row.daDongTienDauKy === 1;
                   const bedOk = row.tinhTrangGiuongHopLe === 1;
                   const canHandover = paid && bedOk;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { datCocApi } from '../datCoc/datCoc.api.js';
 import { nhanPhongApi } from '../nhanPhong/nhanPhong.api.js';
@@ -129,6 +129,12 @@ function Person({ name, detail }) {
 export default function NhanVienKeToanPage() {
   const { user, dangXuat } = useAuth();
   const [activeView, setActiveView] = useState('overview');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setSearchQuery('');
+  }, [activeView]);
+
   const currentView = activeView === 'account'
     ? { title: 'Thông tin tài khoản', subtitle: 'Xem thông tin tài khoản nhân viên đang đăng nhập.' }
     : views.find((view) => view.id === activeView) || views[0];
@@ -187,15 +193,20 @@ export default function NhanVienKeToanPage() {
             {activeView !== 'account' && <div className="ql-actions">
               <label className="ql-search">
                 <PortalIcon name="search" />
-                <input type="search" placeholder="Tìm hóa đơn, phiếu cọc..." />
+                <input
+                  type="search"
+                  placeholder="Tìm hóa đơn, phiếu cọc..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </label>
             </div>}
           </section>
 
           {activeView === 'account' && <EmployeeAccountView user={user} positionLabel="Nhân viên kế toán" />}
           {activeView === 'overview' && <Overview />}
-          {activeView === 'deposits' && <DepositPayments />}
-          {activeView === 'movein' && <MoveinCollections />}
+          {activeView === 'deposits' && <DepositPayments searchQuery={searchQuery} />}
+          {activeView === 'movein' && <MoveinCollections searchQuery={searchQuery} />}
           {activeView === 'invoices' && <Invoices />}
           {activeView === 'settlements' && <Settlements />}
           {activeView === 'refunds' && <Refunds />}
@@ -244,7 +255,7 @@ function Overview() {
   );
 }
 
-function DepositPayments() {
+function DepositPayments({ searchQuery }) {
   const { user } = useAuth();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -261,6 +272,18 @@ function DepositPayments() {
       .catch(() => setList([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const filteredList = useMemo(() => {
+    if (!searchQuery?.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(row => 
+      (row.maDangKy && row.maDangKy.toLowerCase().includes(q)) ||
+      (row.hoTen && row.hoTen.toLowerCase().includes(q)) ||
+      (row.maPhong && row.maPhong.toLowerCase().includes(q)) ||
+      (row.maGiuong && row.maGiuong.toLowerCase().includes(q)) ||
+      (row.soDienThoai && row.soDienThoai.toLowerCase().includes(q))
+    );
+  }, [list, searchQuery]);
 
   function openModal(row) {
     setModal(row);
@@ -344,11 +367,11 @@ function DepositPayments() {
               </tbody>
             </table>
           </div>
-        ) : list.length === 0 ? (
+        ) : filteredList.length === 0 ? (
           <div className="kt-empty-state">
             <PortalIcon name="deposit" />
-            <p>Không có hồ sơ nào đang chờ lập phiếu.</p>
-            <small>Hồ sơ được quản lý chấp nhận sẽ xuất hiện tại đây.</small>
+            <p>{searchQuery ? 'Không tìm thấy kết quả phù hợp.' : 'Không có hồ sơ nào đang chờ lập phiếu.'}</p>
+            <small>{searchQuery ? 'Thử tìm kiếm với từ khóa khác.' : 'Hồ sơ được quản lý chấp nhận sẽ xuất hiện tại đây.'}</small>
           </div>
         ) : (
           <div className="ql-table-wrap">
@@ -360,7 +383,7 @@ function DepositPayments() {
                 </tr>
               </thead>
               <tbody>
-                {list.map((row) => (
+                {filteredList.map((row) => (
                   <tr key={row.maDangKy}>
                     <td><strong>{row.maDangKy}</strong></td>
                     <td>
@@ -469,7 +492,7 @@ function DepositPayments() {
   );
 }
 
-function MoveinCollections() {
+function MoveinCollections({ searchQuery }) {
   const { user } = useAuth();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -486,6 +509,18 @@ function MoveinCollections() {
       .catch(() => setList([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const filteredList = useMemo(() => {
+    if (!searchQuery?.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(row => 
+      (row.maHopDong && row.maHopDong.toLowerCase().includes(q)) ||
+      (row.hoTen && row.hoTen.toLowerCase().includes(q)) ||
+      (row.maPhong && row.maPhong.toLowerCase().includes(q)) ||
+      (row.maGiuong && row.maGiuong.toLowerCase().includes(q)) ||
+      (row.soDienThoai && row.soDienThoai.toLowerCase().includes(q))
+    );
+  }, [list, searchQuery]);
 
   function calcBilling(row) {
     if (!row) return { soThang: 1, tienThue: 0, tongDichVu: 0, tongTien: 0 };
@@ -836,11 +871,11 @@ function MoveinCollections() {
             <PortalIcon name="payment" />
             <p>Đang tải danh sách...</p>
           </div>
-        ) : list.length === 0 ? (
+        ) : filteredList.length === 0 ? (
           <div className="kt-empty-state">
             <PortalIcon name="contract" />
-            <p>Không có hợp đồng nào chờ thu tiền kỳ đầu.</p>
-            <small>Các hợp đồng Hiệu lực chưa ghi nhận thu sẽ xuất hiện tại đây.</small>
+            <p>{searchQuery ? 'Không tìm thấy kết quả phù hợp.' : 'Không có hợp đồng nào chờ thu tiền kỳ đầu.'}</p>
+            <small>{searchQuery ? 'Thử tìm kiếm với từ khóa khác.' : 'Các hợp đồng Hiệu lực chưa ghi nhận thu sẽ xuất hiện tại đây.'}</small>
           </div>
         ) : (
           <div className="ql-table-wrap">
@@ -857,7 +892,7 @@ function MoveinCollections() {
                 </tr>
               </thead>
               <tbody>
-                {list.map((row) => (
+                {filteredList.map((row) => (
                   <tr key={row.maHopDong}>
                     <td><strong>{row.maHopDong}</strong></td>
                     <td>

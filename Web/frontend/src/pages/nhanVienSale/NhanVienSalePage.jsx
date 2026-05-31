@@ -116,6 +116,35 @@ export default function NhanVienSalePage() {
   const [handoverLoading, setHandoverLoading] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Clear search on active view switch
+  useEffect(() => {
+    setSearchQuery('');
+  }, [activeView]);
+
+  const filteredHandoverList = useMemo(() => {
+    if (!searchQuery.trim()) return handoverList;
+    const q = searchQuery.toLowerCase();
+    return handoverList.filter(row => 
+      (row.maPhieuDatCoc && row.maPhieuDatCoc.toLowerCase().includes(q)) ||
+      (row.hoTen && row.hoTen.toLowerCase().includes(q)) ||
+      (row.maPhong && row.maPhong.toLowerCase().includes(q)) ||
+      (row.maGiuong && row.maGiuong.toLowerCase().includes(q))
+    );
+  }, [handoverList, searchQuery]);
+
+  const filteredDepositList = useMemo(() => {
+    if (!searchQuery.trim()) return depositList;
+    const q = searchQuery.toLowerCase();
+    return depositList.filter(row => 
+      (row.maDangKy && row.maDangKy.toLowerCase().includes(q)) ||
+      (row.hoTen && row.hoTen.toLowerCase().includes(q)) ||
+      (row.maPhong && row.maPhong.toLowerCase().includes(q)) ||
+      (row.maGiuong && row.maGiuong.toLowerCase().includes(q)) ||
+      (row.maPhieuDatCoc && row.maPhieuDatCoc.toLowerCase().includes(q))
+    );
+  }, [depositList, searchQuery]);
 
   // States cho Lập hợp đồng thuê & Lưu trú
   const [selectedDepositForContract, setSelectedDepositForContract] = useState(null);
@@ -320,7 +349,12 @@ export default function NhanVienSalePage() {
             {activeView !== 'account' && <div className="sale-actions">
               <label className="sale-search">
                 <PortalIcon name="search" />
-                <input type="search" placeholder="Tìm khách, phòng, SĐT..." />
+                <input
+                  type="search"
+                  placeholder="Tìm khách, phòng, SĐT..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </label>
             </div>}
           </section>
@@ -459,8 +493,10 @@ export default function NhanVienSalePage() {
                 </div>
                 {depositLoading ? (
                   <div className="sale-empty">Đang tải...</div>
-                ) : depositList.length === 0 ? (
-                  <div className="sale-empty">Chưa có hồ sơ nào ở giai đoạn đặt cọc.</div>
+                ) : filteredDepositList.length === 0 ? (
+                  <div className="sale-empty">
+                    {searchQuery ? 'Không tìm thấy kết quả phù hợp.' : 'Chưa có hồ sơ nào ở giai đoạn đặt cọc.'}
+                  </div>
                 ) : (
                   <div className="sale-table-wrap">
                     <table>
@@ -471,7 +507,7 @@ export default function NhanVienSalePage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {depositList.map((row) => {
+                        {filteredDepositList.map((row) => {
                           const status = getDepositRowStatus(row);
                           const phong = row.maGiuong
                             ? `${row.maPhong} · ${row.maGiuong}`
@@ -543,8 +579,10 @@ export default function NhanVienSalePage() {
                   </div>
                   {handoverLoading ? (
                     <div className="sale-empty">Đang tải...</div>
-                  ) : handoverList.length === 0 ? (
-                    <div className="sale-empty">Không có cọc chờ nhận phòng.</div>
+                  ) : filteredHandoverList.length === 0 ? (
+                    <div className="sale-empty">
+                      {searchQuery ? 'Không tìm thấy kết quả phù hợp.' : 'Không có cọc chờ nhận phòng.'}
+                    </div>
                   ) : (
                     <div className="sale-table-wrap">
                       <table>
@@ -555,7 +593,7 @@ export default function NhanVienSalePage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {handoverList.map((row) => (
+                          {filteredHandoverList.map((row) => (
                             <tr key={row.maPhieuDatCoc}>
                               <td><strong>{row.maPhieuDatCoc}</strong></td>
                               <td>{row.hoTen}</td>
