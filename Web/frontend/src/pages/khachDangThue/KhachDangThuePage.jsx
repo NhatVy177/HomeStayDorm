@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import PortalIcon from '../../components/common/PortalIcon.jsx';
+import YeuCauTraPhong from '../traPhong/YeuCauTraPhong.jsx';
 import './khachDangThue.css';
 
 const navigationGroups = [
@@ -345,34 +346,7 @@ export default function KhachDangThuePage() {
           )}
 
           {activeTab === 'tra-phong' && (
-            <section>
-              <PageHead
-                eyebrow="Trả phòng"
-                title="Yêu cầu trả phòng và quyết toán"
-                action={<button className="rt-btn primary" type="button">Gửi yêu cầu trả phòng</button>}
-              >
-                Theo dữ liệu hiện tại, hợp đồng HD0001 chưa có phiếu trả phòng được ghi nhận.
-              </PageHead>
-              <div className="rt-columns">
-                <article className="rt-card rt-empty">
-                  <strong>Chưa có yêu cầu trả phòng</strong>
-                  <p>Khi khách gửi yêu cầu, lịch kiểm tra phòng, quyết toán và trạng thái thanh lý sẽ xuất hiện tại đây.</p>
-                  <button className="rt-btn secondary" type="button">Tạo yêu cầu mới</button>
-                </article>
-                <article className="rt-card">
-                  <div className="rt-card-head">
-                    <div><h3>Thông tin đối soát dự kiến</h3><p>Hiển thị để chuẩn bị trước khi trả phòng.</p></div>
-                  </div>
-                  <InfoList rows={[
-                    ['Hợp đồng', seededRental.contractId],
-                    ['Phòng / giường', `${seededRental.room} · ${seededRental.bed}`],
-                    ['Tài sản đã nhận', '4 loại tài sản'],
-                    ['Hóa đơn chưa thanh toán', '2 hóa đơn'],
-                    ['Vi phạm đã ghi nhận', '1 biên bản · Đã xử lý']
-                  ]} />
-                </article>
-              </div>
-            </section>
+            <YeuCauTraPhong onBack={() => goTo('tong-quan')} />
           )}
 
           {activeTab === 'tai-khoan' && (

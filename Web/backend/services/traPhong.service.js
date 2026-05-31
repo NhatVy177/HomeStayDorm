@@ -95,3 +95,57 @@ export async function ghiNhanThanhLyHopDong(data = {}) {
     handleDatabaseError(error);
   }
 }
+
+// ─── Yêu cầu trả phòng – phía khách hàng ────────────────────────────────────
+
+export async function layDanhSachHopDong(maKhachHang) {
+  if (!maKhachHang) throw createServiceError('Thiếu mã khách hàng.');
+  try {
+    const result = await executeProcedure('dbo.SP_TraPhong_DanhSachHopDong', [
+      { name: 'MaKhachHang', type: sql.VarChar(6), value: maKhachHang }
+    ]);
+    return result.recordset;
+  } catch (error) {
+    handleDatabaseError(error);
+    throw error;
+  }
+}
+
+export async function layLichSu(maKhachHang) {
+  if (!maKhachHang) throw createServiceError('Thiếu mã khách hàng.');
+  try {
+    const result = await executeProcedure('dbo.SP_TraPhong_LichSu', [
+      { name: 'MaKhachHang', type: sql.VarChar(6), value: maKhachHang }
+    ]);
+    return result.recordset;
+  } catch (error) {
+    handleDatabaseError(error);
+    throw error;
+  }
+}
+
+export async function taoYeuCau(maKhachHang, body = {}) {
+  if (!maKhachHang) throw createServiceError('Thiếu mã khách hàng.');
+  if (!body.ngayDuKienTra) throw createServiceError('Vui lòng nhập ngày dự kiến trả phòng.');
+  if (!body.maHopDong && !body.maPhieuDatCoc) {
+    throw createServiceError('Vui lòng chọn hợp đồng hoặc phiếu đặt cọc.');
+  }
+  if (body.maHopDong && body.maPhieuDatCoc) {
+    throw createServiceError('Chỉ được chọn một trong hợp đồng hoặc phiếu đặt cọc.');
+  }
+
+  try {
+    const result = await executeProcedure('dbo.SP_TraPhong_TaoYeuCau', [
+      { name: 'MaKhachHang',   type: sql.VarChar(6), value: maKhachHang },
+      { name: 'MaHopDong',     type: sql.VarChar(6), value: body.maHopDong     || null },
+      { name: 'MaPhieuDatCoc', type: sql.VarChar(6), value: body.maPhieuDatCoc || null },
+      { name: 'NgayDuKienTra', type: sql.Date,        value: new Date(body.ngayDuKienTra) }
+    ]);
+    return result.recordset[0] || null;
+  } catch (error) {
+    const msg = error?.originalError?.info?.message || error?.message || '';
+    if (msg) throw createServiceError(msg, 400);
+    handleDatabaseError(error);
+    throw error;
+  }
+}
