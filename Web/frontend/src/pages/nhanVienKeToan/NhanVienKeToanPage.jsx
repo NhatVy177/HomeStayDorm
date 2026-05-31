@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { datCocApi } from '../datCoc/datCoc.api.js';
+import { nhanPhongApi } from '../nhanPhong/nhanPhong.api.js';
 import { EmployeeAccountMenu, EmployeeAccountView } from '../../components/common/EmployeeAccount.jsx';
 import PortalIcon from '../../components/common/PortalIcon.jsx';
 import '../nhanVienQuanLy/nhanVienQuanLy.css';
@@ -112,8 +113,8 @@ function Status({ tone = 'neutral', children }) {
   return <span className={`ql-status ${tone}`}>{children}</span>;
 }
 
-function Button({ primary = false, onClick, disabled = false, children }) {
-  return <button className={`ql-btn ${primary ? 'primary' : 'secondary'}`} type="button" onClick={onClick} disabled={disabled}>{children}</button>;
+function Button({ primary = false, type = 'button', onClick, disabled = false, children }) {
+  return <button className={`ql-btn ${primary ? 'primary' : 'secondary'}`} type={type} onClick={onClick} disabled={disabled}>{children}</button>;
 }
 
 function Person({ name, detail }) {
@@ -469,28 +470,389 @@ function DepositPayments() {
 }
 
 function MoveinCollections() {
+  const { user } = useAuth();
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedContract, setSelectedContract] = useState(null); // row from list
+  const [form, setForm] = useState({ soTienThucNop: '', phuongThucTT: 'Chuyển khoản' });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [receipt, setReceipt] = useState(null); // hóa đơn vừa tạo
+
+  useEffect(() => {
+    setLoading(true);
+    nhanPhongApi.getDanhSachChoThuDauKy()
+      .then(({ data }) => setList(Array.isArray(data) ? data : []))
+      .catch(() => setList([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function calcBilling(row) {
+    if (!row) return { soThang: 1, tienThue: 0, tongDichVu: 0, tongTien: 0 };
+    const soThang = row.soThangKyDau || 1;
+    const tienThue = (row.giaThue || 0) * soThang;
+    const tongDichVu = (row.tongDonGiaDichVuThang || 0) * soThang;
+    return { soThang, tienThue, tongDichVu, tongTien: tienThue + tongDichVu };
+  }
+
+  function handleSelectContract(row) {
+    const { tongTien } = calcBilling(row);
+    setSelectedContract(row);
+    setForm({ soTienThucNop: String(tongTien), phuongThucTT: 'Chuyển khoản' });
+    setError('');
+    setReceipt(null);
+  }
+
+  function handleCancel(e) {
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (window.confirm("Hủy bỏ thao tác ghi nhận khoản thu?")) {
+      setSelectedContract(null);
+      setReceipt(null);
+      setError('');
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!selectedContract) return;
+    const soTien = Number(form.soTienThucNop);
+    if (soTien === null || isNaN(soTien) || soTien <= 0) {
+      setError('Vui lòng nhập số tiền hợp lệ.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      const { data } = await nhanPhongApi.ghiNhanThuDauKy({
+        maHopDong: selectedContract.maHopDong,
+        soTienThucNop: soTien,
+        phuongThucTT: form.phuongThucTT,
+      });
+      setReceipt(data);
+      // Reload list - remove the contract that now has Đã TT
+      const { data: fresh } = await nhanPhongApi.getDanhSachChoThuDauKy();
+      setList(Array.isArray(fresh) ? fresh : []);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const billing = calcBilling(selectedContract);
+  const paid = Number(form.soTienThucNop) || 0;
+  const isSufficient = paid >= billing.tongTien && billing.tongTien > 0;
+
+  // Parse services list from JSON string returned by procedure
+  let activeServices = [];
+  if (selectedContract && selectedContract.danhSachDichVuStr) {
+    try {
+      activeServices = JSON.parse(selectedContract.danhSachDichVuStr);
+    } catch (e) {
+      console.error("Failed to parse services list:", e);
+    }
+  }
+
+  // ── Receipt overlay (after success) ──────────────────────────────────────
+  if (receipt) {
+    return (
+      <section className="ql-stack">
+        <article className="ql-card" style={{ maxWidth: 580, margin: '0 auto', textAlign: 'center', padding: '40px' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{
+              width: 68, height: 68, borderRadius: '50%',
+              background: '#eaf7f5', border: '1px solid rgba(47,183,164,.25)', margin: '0 auto 1.25rem',
+              display: 'grid', placeItems: 'center', color: 'var(--ql-green-dark, #16796f)'
+            }}>
+              <PortalIcon name="contract" />
+            </div>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--ql-heading, #1a1a1a)', marginBottom: '0.35rem' }}>
+              Ghi nhận khoản thu thành công!
+            </h2>
+            <p style={{ color: 'var(--ql-muted, #555)', fontSize: '0.92rem' }}>
+              Hóa đơn kỳ đầu đã được lưu và cập nhật trạng thái.{' '}
+              <Status tone={receipt.trangThai === 'Đã TT' ? 'good' : 'wait'}>{receipt.trangThai}</Status>
+            </p>
+          </div>
+
+          <div className="ql-modal-info" style={{ textAlign: 'left', marginBottom: '1.5rem', background: '#f8f9fa', padding: '20px', borderRadius: '16px', border: '1px solid var(--ql-line, #e9ecef)' }}>
+            <div><span>Mã hóa đơn</span><strong>{receipt.maHoaDon}</strong></div>
+            <div><span>Hợp đồng</span><strong>{receipt.maHopDong}</strong></div>
+            <div><span>Tổng tiền</span><strong className="kt-amount">{formatVND(receipt.tongTien)}</strong></div>
+            <div><span>Phương thức</span><strong>{receipt.phuongThucThanhToan}</strong></div>
+            <div><span>Ngày lập</span><strong>{receipt.ngayLap ? new Date(receipt.ngayLap).toLocaleDateString('vi-VN') : '—'}</strong></div>
+            {receipt.trangThai === 'Đã TT' && (
+              <div style={{ gridColumn: '1/-1', background: '#eaf7f5', border: '1px solid rgba(47,183,164,.2)', borderRadius: 12, padding: '1rem', color: '#16796f', fontSize: '0.875rem', fontWeight: 600, display: 'flex', gap: '8px', alignItems: 'center', marginTop: '10px' }}>
+                <span style={{ fontSize: '1.2rem' }}>✓</span>
+                <div>Hóa đơn đủ tiền — Quản lý có thể tiến hành <strong>lập biên bản bàn giao phòng</strong>.</div>
+              </div>
+            )}
+            {receipt.trangThai !== 'Đã TT' && (
+              <div style={{ gridColumn: '1/-1', background: '#fff6df', border: '1px solid rgba(245,159,0,.22)', borderRadius: 12, padding: '1rem', color: '#9c5900', fontSize: '0.875rem', fontWeight: 600, display: 'flex', gap: '8px', alignItems: 'center', marginTop: '10px' }}>
+                <span style={{ fontSize: '1.2rem' }}>⚠</span>
+                <div>Chưa đủ tiền — Quyền bàn giao phòng bị <strong>khóa</strong> cho đến khi bổ sung đầy đủ.</div>
+              </div>
+            )}
+          </div>
+
+          <div className="ql-modal-actions">
+            <Button primary onClick={() => { setReceipt(null); setSelectedContract(null); }}>
+              Quay về danh sách
+            </Button>
+          </div>
+        </article>
+      </section>
+    );
+  }
+
+  // ── Payment form (after selecting a contract) ─────────────────────────────
+  if (selectedContract) {
+    return (
+      <section className="ql-stack">
+        {/* Back breadcrumb */}
+        <button
+          type="button"
+          onClick={handleCancel}
+          style={{ alignSelf: 'flex-start', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ql-green-dark, #16796f)', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          ← Quay lại danh sách
+        </button>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.75rem', alignItems: 'start' }}>
+
+          {/* LEFT — form */}
+          <article className="ql-card">
+            <div className="ql-card-head" style={{ marginBottom: '1.25rem' }}>
+              <div>
+                <h2>Hóa đơn và Quyết toán thu đầu kỳ</h2>
+                <p>Hợp đồng <strong>{selectedContract.maHopDong}</strong> · {selectedContract.hoTen}</p>
+              </div>
+            </div>
+
+            {/* Contract info row */}
+            <div className="ql-modal-info" style={{ marginBottom: '1.25rem' }}>
+              <div><span>Mã Hợp Đồng</span><strong>{selectedContract.maHopDong}</strong></div>
+              <div><span>Khách hàng chính</span><strong>{selectedContract.hoTen}</strong></div>
+              <div>
+                <span>Phòng / Giường</span>
+                <strong>
+                  <span className="ql-room-pill">
+                    {selectedContract.maGiuong
+                      ? `${selectedContract.maPhong} · ${selectedContract.maGiuong}`
+                      : (selectedContract.maPhong || '—')}
+                  </span>
+                </strong>
+              </div>
+              <div><span>Kỳ thanh toán</span><strong>{selectedContract.kyThanhToan}</strong></div>
+            </div>
+
+            {/* Billing preview */}
+            <div style={{ border: '1px solid var(--ql-line, #e9ecef)', borderRadius: 18, padding: '1.5rem', background: '#f9fafb', marginBottom: '1.5rem' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1a1a1a', marginBottom: '0.85rem', paddingBottom: '0.65rem', borderBottom: '1px solid var(--ql-line, #e9ecef)' }}>
+                Chi tiết hóa đơn kỳ đầu (Số tháng tính: <span style={{ color: 'var(--ql-green-dark, #16796f)', fontWeight: 800 }}>{billing.soThang}</span> tháng)
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid var(--ql-line, #e9ecef)' }}>
+                    <td style={{ padding: '8px 0', fontSize: 14 }}><strong>Tiền thuê phòng</strong></td>
+                    <td style={{ fontSize: 13, color: '#555', textAlign: 'center' }}>× {billing.soThang} tháng</td>
+                    <td style={{ fontSize: 13, color: '#555' }}>{formatVND(selectedContract.giaThue)}/tháng</td>
+                    <td style={{ fontWeight: 700, textAlign: 'right', fontSize: 14 }}>{formatVND(billing.tienThue)}</td>
+                  </tr>
+
+                  {activeServices.length > 0 ? (
+                    activeServices.map((svc, index) => (
+                      <tr key={index} style={{ borderBottom: '1px solid var(--ql-line, #e9ecef)' }}>
+                        <td style={{ padding: '8px 0', fontSize: 14 }}><strong>Dịch vụ: {svc.name}</strong></td>
+                        <td style={{ fontSize: 13, color: '#555', textAlign: 'center' }}>× {billing.soThang} tháng</td>
+                        <td style={{ fontSize: 13, color: '#555' }}>{formatVND(svc.price)}/tháng</td>
+                        <td style={{ fontWeight: 700, textAlign: 'right', fontSize: 14 }}>{formatVND(svc.price * billing.soThang)}</td>
+                      </tr>
+                    ))
+                  ) : billing.tongDichVu > 0 ? (
+                    <tr style={{ borderBottom: '1px solid var(--ql-line, #e9ecef)' }}>
+                      <td style={{ padding: '8px 0', fontSize: 14 }}><strong>Tổng phí dịch vụ</strong></td>
+                      <td style={{ fontSize: 13, color: '#555', textAlign: 'center' }}>× {billing.soThang} tháng</td>
+                      <td style={{ fontSize: 13, color: '#555' }}>{formatVND(selectedContract.tongDonGiaDichVuThang)}/tháng</td>
+                      <td style={{ fontWeight: 700, textAlign: 'right', fontSize: 14 }}>{formatVND(billing.tongDichVu)}</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+              <div style={{ borderTop: '2px solid var(--ql-line, #e9ecef)', paddingTop: '0.95rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                <span style={{ fontWeight: 700, color: '#555', fontSize: '15px' }}>TỔNG TIỀN PHẢI NỘP</span>
+                <strong style={{ fontSize: '1.45rem', color: '#bf4c32', fontWeight: 800, letterSpacing: '-0.02em' }}>{formatVND(billing.tongTien)}</strong>
+              </div>
+            </div>
+
+            {/* Payment form */}
+            <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.25rem' }}>
+              <div className="ql-two-col" style={{ gap: '1.25rem' }}>
+                <div className="kt-form-group">
+                  <label>Số tiền khách thực nộp (VNĐ) <span style={{ color: '#ef4444' }}>*</span></label>
+                  <input
+                    className="kt-input"
+                    type="number"
+                    min="1"
+                    required
+                    placeholder="Nhập số tiền thực tế..."
+                    value={form.soTienThucNop}
+                    onChange={(e) => setForm((f) => ({ ...f, soTienThucNop: e.target.value }))}
+                  />
+                </div>
+                <div className="kt-form-group">
+                  <label>Phương thức thanh toán <span style={{ color: '#ef4444' }}>*</span></label>
+                  <select
+                    className="kt-input"
+                    value={form.phuongThucTT}
+                    onChange={(e) => setForm((f) => ({ ...f, phuongThucTT: e.target.value }))}
+                  >
+                    <option value="Chuyển khoản">Chuyển khoản ngân hàng</option>
+                    <option value="Tiền mặt">Tiền mặt</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Sufficiency alert (matching mockup alert-warning and alert-success) */}
+              {form.soTienThucNop && (
+                <div style={{
+                  borderRadius: 18, padding: '18px 24px',
+                  display: 'flex', gap: 14, alignItems: 'flex-start', fontSize: '14.5px',
+                  lineHeight: '1.5',
+                  background: isSufficient ? '#eaf7f5' : '#fff6df',
+                  border: isSufficient ? '1px solid rgba(47,183,164,.2)' : '1px solid rgba(245,159,0,.22)',
+                  color: isSufficient ? 'var(--ql-green-dark, #16796f)' : '#9c5900',
+                }}>
+                  {isSufficient ? (
+                    <>
+                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <path d="m22 4-10 10.01-3-3" />
+                      </svg>
+                      <div>
+                        <strong>Đã thu đủ tiền!</strong><br />
+                        Hóa đơn sẽ được lưu ở trạng thái <strong>[Đã TT]</strong>.
+                        Cấp phép <strong>MỞ KHÓA</strong> bàn giao phòng ở màn hình của Quản lý.
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                        <path d="M12 9v4" />
+                        <path d="M12 17h.01" />
+                      </svg>
+                      <div>
+                        <strong>Số tiền đóng chưa đủ!</strong> Thừa thiếu: -{formatVND(billing.tongTien - paid)}<br />
+                        Hóa đơn sẽ được ghi nhận ở trạng thái <strong>[Chưa TT]</strong>.
+                        Hệ thống sẽ <strong>KHÓA</strong>, không cho phép Quản lý bàn giao phòng đối với hợp đồng này.
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {error && <p className="ql-modal-error">{error}</p>}
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <Button type="button" onClick={handleCancel}>Hủy thao tác</Button>
+                <Button primary type="submit" disabled={submitting}>
+                  {submitting ? 'Đang xử lý...' : 'Xác nhận nộp tiền'}
+                </Button>
+              </div>
+            </form>
+          </article>
+
+          {/* RIGHT — business rules panel */}
+          <article className="ql-card" style={{ background: '#f9fafb', border: '1px solid var(--ql-line, #e9ecef)', padding: '24px', borderRadius: '20px' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ql-heading, #1a1a1a)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--ql-green-dark, #16796f)" strokeWidth="2">
+                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                <path d="M12 9v4" />
+                <path d="M12 15h.01" />
+              </svg>
+              Quy chế thu tiền kỳ đầu
+            </h3>
+            <ul style={{ fontSize: '13px', color: 'var(--ql-muted, #555)', paddingLeft: '16px', display: 'grid', gap: '8px', lineHeight: '1.5' }}>
+              <li>Tiền phòng được nhân theo chu kỳ thanh toán hợp đồng (1 tháng hoặc 3 tháng).</li>
+              <li>Các dịch vụ đi kèm cũng tính cào bằng theo tháng nhân với chu kỳ thanh toán kỳ đầu.</li>
+              <li><strong>Dịch vụ Điện &amp; Nước kỳ đầu tính theo tháng</strong> do chưa ghi nhận chỉ số thực tế, phục vụ khởi tạo phòng.</li>
+              <li>Nếu nộp đủ: Mở khóa quyền <strong>bàn giao phòng</strong> ở màn hình Quản lý.</li>
+              <li>Nếu nộp thiếu: Trạng thái hóa đơn là <strong>Chưa TT</strong> và <strong>KHÓA</strong> quyền bàn giao phòng cho đến khi bổ sung đủ tiền.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Contract list (default view) ──────────────────────────────────────────
   return (
-    <article className="ql-table-card">
-      <div className="ql-table-head"><div><h2>Khoản thu khi nhận phòng</h2><p>Theo dõi tiền phòng đầu kỳ và biên nhận của khách.</p></div><Button primary>Tạo phiếu thu</Button></div>
-      <div className="ql-table-wrap">
-        <table>
-          <thead><tr><th>Mã thu</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Khoản cần thu</th><th>Số tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-          <tbody>
-            {collections.map((item) => (
-              <tr key={item.id}>
-                <td><strong>{item.id}</strong></td>
-                <td>{item.customer}</td>
-                <td><span className="ql-room-pill">{item.room}</span></td>
-                <td>{item.item}</td>
-                <td className="kt-amount">{item.amount}</td>
-                <td><Status tone={item.tone}>{item.status}</Status></td>
-                <td><Button>Xem biên nhận</Button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </article>
+    <section className="ql-stack">
+      <article className="ql-table-card">
+        <div className="ql-table-head">
+          <div>
+            <h2>Hợp đồng chờ ghi nhận thu đầu kỳ</h2>
+            <p>Hợp đồng Hiệu lực chưa có hóa đơn kỳ đầu thanh toán đầy đủ. Chọn để thực hiện ghi nhận thu.</p>
+          </div>
+        </div>
+        {loading ? (
+          <div className="kt-empty-state">
+            <PortalIcon name="payment" />
+            <p>Đang tải danh sách...</p>
+          </div>
+        ) : list.length === 0 ? (
+          <div className="kt-empty-state">
+            <PortalIcon name="contract" />
+            <p>Không có hợp đồng nào chờ thu tiền kỳ đầu.</p>
+            <small>Các hợp đồng Hiệu lực chưa ghi nhận thu sẽ xuất hiện tại đây.</small>
+          </div>
+        ) : (
+          <div className="ql-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã HĐ</th>
+                  <th>Khách hàng</th>
+                  <th>Phòng / Giường</th>
+                  <th>Ngày bắt đầu</th>
+                  <th>Giá thuê / tháng</th>
+                  <th>Kỳ thanh toán</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((row) => (
+                  <tr key={row.maHopDong}>
+                    <td><strong>{row.maHopDong}</strong></td>
+                    <td>
+                      <div className="ql-person">
+                        <span>{initials(row.hoTen)}</span>
+                        <div><strong>{row.hoTen}</strong><small>{row.soDienThoai}</small></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="ql-room-pill">
+                        {row.maGiuong ? `${row.maPhong} · ${row.maGiuong}` : (row.maPhong || '—')}
+                      </span>
+                    </td>
+                    <td>{row.ngayBatDau ? new Date(row.ngayBatDau).toLocaleDateString('vi-VN') : '—'}</td>
+                    <td className="kt-amount">{formatVND(row.giaThue)}</td>
+                    <td>{row.kyThanhToan} ({row.soThangKyDau || 1} tháng)</td>
+                    <td>
+                      <Button primary onClick={() => handleSelectContract(row)}>Ghi nhận thu</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </article>
+    </section>
   );
 }
 

@@ -8,5 +8,7 @@ router.post('/thong-tin-cu-tru', controller.capNhatThongTinCuTru);
 router.post('/hop-dong', controller.lapHopDongThue);
 router.post('/thu-dau-ky', controller.ghiNhanKhoanThuNhanPhong);
 router.post('/ban-giao', controller.lapBienBanBanGiao);
+router.get('/cho-thu-dau-ky', controller.getDanhSachHDChoThuDauKy);
+router.post('/ghi-nhan-thu-dau-ky', controller.ghiNhanThuDauKy);
 
 export default router;

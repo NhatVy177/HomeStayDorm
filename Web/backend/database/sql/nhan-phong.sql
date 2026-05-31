@@ -355,3 +355,231 @@ BEGIN
     END CATCH;
 END;
 GO
+-- ============================================================
+-- SP_DanhSachHDChoThuDauKy
+-- Trả về danh sách HopDongThue Hiệu lực chưa có HoaDon kỳ đầu Đã TT.
+-- Dành cho kế toán chọn để ghi nhận thu đầu kỳ.
+-- ============================================================
+IF OBJECT_ID(N'dbo.SP_DanhSachHDChoThuDauKy', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_DanhSachHDChoThuDauKy AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_DanhSachHDChoThuDauKy
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        hdt.MaHopDong           AS maHopDong,
+        hdt.NgayBatDau          AS ngayBatDau,
+        hdt.NgayKetThuc         AS ngayKetThuc,
+        hdt.GiaThue             AS giaThue,
+        hdt.KyThanhToan         AS kyThanhToan,
+        nd.HoTen                AS hoTen,
+        nd.SDT                  AS soDienThoai,
+        kh.CCCD                 AS cccd,
+        -- Phòng/Giường từ chi tiết đặt cọc (snapshot khi lập hợp đồng)
+        ctdc.MaPhong            AS maPhong,
+        ctdc.MaGiuong           AS maGiuong,
+        p.TenPhong              AS tenPhong,
+        -- Tổng tiền kỳ đầu = GiaThue * SoThang + Tổng DichVu * SoThang  (tính trước để UI preview)
+        CASE hdt.KyThanhToan WHEN N'Hàng quý' THEN 3 ELSE 1 END AS soThangKyDau,
+        -- Tổng phí dịch vụ đã snapshot trong DichVuHopDong
+        ISNULL((
+            SELECT SUM(dv.DonGia)
+            FROM dbo.DichVuHopDong dvhd
+            INNER JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+            WHERE dvhd.MaHopDong = hdt.MaHopDong
+        ), 0) AS tongDonGiaDichVuThang,
+        -- Danh sách dịch vụ dạng JSON để frontend hiển thị chi tiết
+        (
+            SELECT dv.TenDichVu AS name, dv.DonGia AS price
+            FROM dbo.DichVuHopDong dvhd
+            INNER JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+            WHERE dvhd.MaHopDong = hdt.MaHopDong
+            FOR JSON PATH
+        ) AS danhSachDichVuStr
+    FROM dbo.HopDongThue hdt
+    INNER JOIN dbo.KhachHang kh    ON kh.MaKhachHang  = hdt.MaKhachHang
+    INNER JOIN dbo.NguoiDung nd    ON nd.MaNguoiDung   = kh.MaKhachHang
+    OUTER APPLY (
+        SELECT TOP 1 ctxp.MaPhong, ctxp.MaGiuong
+        FROM dbo.ChiTietDatCoc ctxp
+        WHERE ctxp.MaPhieuDatCoc = hdt.MaPhieuCoc
+    ) ctdc
+    LEFT JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
+    WHERE hdt.TrangThai = N'Hiệu lực'
+      AND NOT EXISTS (
+          SELECT 1 FROM dbo.HoaDon hd
+          WHERE hd.MaHopDong = hdt.MaHopDong
+            AND hd.TrangThai = N'Đã TT'
+      )
+    ORDER BY hdt.NgayBatDau ASC;
+END;
+GO
+
+
+-- ============================================================
+-- SP_GhiNhanThuDauKy
+-- Tạo HoaDon kỳ đầu + các dòng ChiTietHoaDon.
+-- Tất cả logic tính tiền nằm trong SP này (không có SQL trong code web).
+--
+-- Ghi chú cho người gộp:
+--   @MaHopDong        VARCHAR(6)     — Mã hợp đồng cần thu
+--   @SoTienThucNop    DECIMAL(18,2)  — Số tiền khách thực nộp (kế toán nhập)
+--   @PhuongThucTT     NVARCHAR(20)   — 'Tiền mặt' hoặc 'Chuyển khoản'
+--   @MaNhanVienKeToan VARCHAR(6)     — Mã NV kế toán đang thực hiện
+-- Trả về: bản ghi HoaDon vừa tạo
+-- ============================================================
+IF OBJECT_ID(N'dbo.SP_GhiNhanThuDauKy', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_GhiNhanThuDauKy AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_GhiNhanThuDauKy
+    @MaHopDong          VARCHAR(6),
+    @SoTienThucNop      DECIMAL(18, 2),
+    @PhuongThucTT       NVARCHAR(20),
+    @MaNhanVienKeToan   VARCHAR(6) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    -- ── 1. Validate hợp đồng ──────────────────────────────────────────────
+    IF NOT EXISTS (SELECT 1 FROM dbo.HopDongThue WHERE MaHopDong = @MaHopDong AND TrangThai = N'Hiệu lực')
+        THROW 50400, N'Hợp đồng không tồn tại hoặc không ở trạng thái Hiệu lực.', 1;
+
+    -- BR-1: chưa có hóa đơn kỳ đầu Đã TT
+    IF EXISTS (
+        SELECT 1 FROM dbo.HoaDon
+        WHERE MaHopDong = @MaHopDong AND TrangThai = N'Đã TT'
+    )
+        THROW 50401, N'Hợp đồng này đã có hóa đơn kỳ đầu thanh toán đầy đủ.', 1;
+
+    -- ── 2. Đọc thông tin hợp đồng để tính tiền ──────────────────────────
+    DECLARE @GiaThue        DECIMAL(15,2);
+    DECLARE @KyThanhToan    NVARCHAR(20);
+    DECLARE @SoThang        INT;
+
+    SELECT @GiaThue = GiaThue, @KyThanhToan = KyThanhToan
+    FROM dbo.HopDongThue WHERE MaHopDong = @MaHopDong;
+
+    -- BR-3: GiaThue phải hợp lệ
+    IF @GiaThue IS NULL OR @GiaThue <= 0
+        THROW 50402, N'GiaThue của hợp đồng bất thường (NULL hoặc <= 0). Liên hệ nhân viên sale chỉnh sửa.', 1;
+
+    SET @SoThang = CASE @KyThanhToan WHEN N'Hàng quý' THEN 3 ELSE 1 END;
+
+    -- ── 3. Tính tổng tiền hóa đơn kỳ đầu ────────────────────────────────
+    -- 3a. Tiền thuê
+    DECLARE @TienThueKyDau DECIMAL(15,2) = @GiaThue * @SoThang;
+
+    -- 3b. Phí dịch vụ (snapshot từ DichVuHopDong JOIN DichVu)
+    DECLARE @TongDichVu DECIMAL(15,2);
+    SELECT @TongDichVu = ISNULL(SUM(dv.DonGia * @SoThang), 0)
+    FROM dbo.DichVuHopDong dvhd
+    INNER JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+    WHERE dvhd.MaHopDong = @MaHopDong
+      AND (dv.DonGia IS NOT NULL AND dv.DonGia > 0);
+
+    DECLARE @TongTien DECIMAL(15,2) = @TienThueKyDau + @TongDichVu;
+
+    -- ── 4. Xác định trạng thái hóa đơn ─────────────────────────────────
+    DECLARE @TrangThaiHD NVARCHAR(20);
+    SET @TrangThaiHD = CASE WHEN @SoTienThucNop >= @TongTien THEN N'Đã TT' ELSE N'Chưa TT' END;
+
+    DECLARE @NgayTT DATE = CASE WHEN @TrangThaiHD = N'Đã TT' THEN CAST(GETDATE() AS DATE) ELSE NULL END;
+
+    -- ── 5. Sinh mã HoaDon ────────────────────────────────────────────────
+    DECLARE @NewMaHD  VARCHAR(6);
+    DECLARE @NextHDNo INT;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        SELECT @NextHDNo = ISNULL(MAX(TRY_CAST(SUBSTRING(MaHoaDon, 3, 4) AS INT)), 0) + 1
+        FROM dbo.HoaDon WITH (UPDLOCK, HOLDLOCK);
+
+        SET @NewMaHD = 'HD' + RIGHT('0000' + CAST(@NextHDNo AS VARCHAR), 4);
+
+        -- Kỳ thanh toán dạng 'YYYY-MM' cho kỳ đầu
+        DECLARE @KyGhi VARCHAR(7) = FORMAT(GETDATE(), 'yyyy-MM');
+
+        -- Hạn thanh toán: 3 ngày kể từ ngày lập
+        DECLARE @NgayHanTT DATE = DATEADD(DAY, 3, CAST(GETDATE() AS DATE));
+
+        -- 6. Tạo HoaDon
+        INSERT INTO dbo.HoaDon (
+            MaHoaDon, KyThanhToan, NgayLap, NgayHanTT,
+            TongTien, TrangThai, NgayThanhToan,
+            PhuongThucThanhToan, MaHopDong, MaNhanVienKeToan
+        ) VALUES (
+            @NewMaHD, @KyGhi, CAST(GETDATE() AS DATE), @NgayHanTT,
+            @TongTien, @TrangThaiHD, @NgayTT,
+            @PhuongThucTT, @MaHopDong, @MaNhanVienKeToan
+        );
+
+        -- 7. Sinh mã ChiTietHoaDon
+        DECLARE @NextCTNo INT;
+        SELECT @NextCTNo = ISNULL(MAX(TRY_CAST(SUBSTRING(MaChiTietHD, 3, 4) AS INT)), 0)
+        FROM dbo.ChiTietHoaDon WITH (UPDLOCK, HOLDLOCK);
+
+        -- 7a. Dòng tiền thuê phòng (MaChiTietDVHD = cột đầu tiên trong DichVuHopDong của HĐ này)
+        -- Theo schema ChiTietHoaDon.MaChiTietDVHD NOT NULL → dùng mã DVHD đầu tiên làm đại diện dòng thuê
+        -- (Nếu sau này muốn tách riêng "dòng thuê" vs "dòng dịch vụ" thì sửa schema để cho phép NULL)
+        DECLARE @MaDVHDDauTien VARCHAR(6);
+        SELECT TOP 1 @MaDVHDDauTien = MaChiTietDVHD
+        FROM dbo.DichVuHopDong
+        WHERE MaHopDong = @MaHopDong
+        ORDER BY MaChiTietDVHD;
+
+        IF @MaDVHDDauTien IS NOT NULL
+        BEGIN
+            SET @NextCTNo = @NextCTNo + 1;
+            INSERT INTO dbo.ChiTietHoaDon (MaChiTietHD, SoLuong, DonViTinh, DonGia, ThanhTien, MaHoaDon, MaChiTietDVHD, MaPhieuGhi)
+            VALUES (
+                'CT' + RIGHT('0000' + CAST(@NextCTNo AS VARCHAR), 4),
+                @SoThang, N'tháng', @GiaThue, @TienThueKyDau,
+                @NewMaHD, @MaDVHDDauTien, NULL
+            );
+        END
+
+        -- 7b. Các dòng dịch vụ (bỏ qua dòng đầu đã dùng làm đại diện tiền thuê)
+        INSERT INTO dbo.ChiTietHoaDon (MaChiTietHD, SoLuong, DonViTinh, DonGia, ThanhTien, MaHoaDon, MaChiTietDVHD, MaPhieuGhi)
+        SELECT
+            'CT' + RIGHT('0000' + CAST(@NextCTNo + ROW_NUMBER() OVER (ORDER BY dvhd.MaChiTietDVHD) AS VARCHAR), 4),
+            @SoThang,
+            N'tháng',
+            dv.DonGia,
+            dv.DonGia * @SoThang,
+            @NewMaHD,
+            dvhd.MaChiTietDVHD,
+            NULL
+        FROM dbo.DichVuHopDong dvhd
+        INNER JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+        WHERE dvhd.MaHopDong = @MaHopDong
+          AND dvhd.MaChiTietDVHD <> ISNULL(@MaDVHDDauTien, '');
+
+        COMMIT TRANSACTION;
+
+        -- 8. Trả về hóa đơn vừa tạo
+        SELECT
+            hd.MaHoaDon         AS maHoaDon,
+            hd.KyThanhToan      AS kyThanhToan,
+            hd.NgayLap          AS ngayLap,
+            hd.TongTien         AS tongTien,
+            hd.TrangThai        AS trangThai,
+            hd.NgayThanhToan    AS ngayThanhToan,
+            hd.PhuongThucThanhToan AS phuongThucThanhToan,
+            hd.MaHopDong        AS maHopDong
+        FROM dbo.HoaDon hd
+        WHERE hd.MaHoaDon = @NewMaHD;
+
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO

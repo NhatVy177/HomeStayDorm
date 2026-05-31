@@ -16,3 +16,9 @@ export async function ghiNhanKhoanThuNhanPhong(req, res, next) {
 export async function lapBienBanBanGiao(req, res, next) {
   try { res.status(201).json(await service.lapBienBanBanGiao(req.body)); } catch (err) { next(err); }
 }
+export async function getDanhSachHDChoThuDauKy(req, res, next) {
+  try { res.json(await service.getDanhSachHDChoThuDauKy()); } catch (err) { next(err); }
+}
+export async function ghiNhanThuDauKy(req, res, next) {
+  try { res.status(201).json(await service.ghiNhanThuDauKy({ ...req.body, maNhanVienKeToan: req.user.maNguoiDung })); } catch (err) { next(err); }
+}

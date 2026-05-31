@@ -90,6 +90,34 @@ export async function ghiNhanKhoanThuNhanPhong(data = {}) {
   }
 }
 
+export async function getDanhSachHDChoThuDauKy() {
+  try {
+    const result = await executeProcedure('dbo.SP_DanhSachHDChoThuDauKy', []);
+    return result.recordset;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
+export async function ghiNhanThuDauKy(data = {}) {
+  const maHopDong = String(data.maHopDong || '').trim();
+  if (!maHopDong || data.soTienThucNop == null || !data.phuongThucTT) {
+    throw createServiceError('Vui lòng nhập đầy đủ: mã hợp đồng, số tiền thực nộp và phương thức thanh toán.');
+  }
+
+  try {
+    const result = await executeProcedure('dbo.SP_GhiNhanThuDauKy', [
+      { name: 'MaHopDong',        type: sql.VarChar(6),       value: maHopDong },
+      { name: 'SoTienThucNop',   type: sql.Decimal(18, 2),   value: Number(data.soTienThucNop) },
+      { name: 'PhuongThucTT',    type: sql.NVarChar(20),     value: data.phuongThucTT },
+      { name: 'MaNhanVienKeToan',type: sql.VarChar(6),       value: data.maNhanVienKeToan || null }
+    ]);
+    return result.recordset[0] || null;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
 export async function lapBienBanBanGiao(data = {}) {
   const hopDongId = String(data.hopDongId || '').trim();
   const phongGiuongId = String(data.phongGiuongId || '').trim();
