@@ -382,21 +382,22 @@ BEGIN
         ctdc.MaPhong            AS maPhong,
         ctdc.MaGiuong           AS maGiuong,
         p.TenPhong              AS tenPhong,
-        -- Tổng tiền kỳ đầu = GiaThue * SoThang + Tổng DichVu * SoThang  (tính trước để UI preview)
         CASE hdt.KyThanhToan WHEN N'Hàng quý' THEN 3 ELSE 1 END AS soThangKyDau,
-        -- Tổng phí dịch vụ đã snapshot trong DichVuHopDong
+        -- Tổng phí dịch vụ đã snapshot trong DichVuHopDong (loại trừ điện và nước)
         ISNULL((
             SELECT SUM(dv.DonGia)
             FROM dbo.DichVuHopDong dvhd
             INNER JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
             WHERE dvhd.MaHopDong = hdt.MaHopDong
+              AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')
         ), 0) AS tongDonGiaDichVuThang,
-        -- Danh sách dịch vụ dạng JSON để frontend hiển thị chi tiết
+        -- Danh sách dịch vụ dạng JSON để frontend hiển thị chi tiết (loại trừ điện và nước)
         (
             SELECT dv.TenDichVu AS name, dv.DonGia AS price
             FROM dbo.DichVuHopDong dvhd
             INNER JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
             WHERE dvhd.MaHopDong = hdt.MaHopDong
+              AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')
             FOR JSON PATH
         ) AS danhSachDichVuStr
     FROM dbo.HopDongThue hdt
@@ -474,13 +475,14 @@ BEGIN
     -- 3a. Tiền thuê
     DECLARE @TienThueKyDau DECIMAL(15,2) = @GiaThue * @SoThang;
 
-    -- 3b. Phí dịch vụ (snapshot từ DichVuHopDong JOIN DichVu)
+    -- 3b. Phí dịch vụ (snapshot từ DichVuHopDong JOIN DichVu) (loại trừ điện và nước)
     DECLARE @TongDichVu DECIMAL(15,2);
     SELECT @TongDichVu = ISNULL(SUM(dv.DonGia * @SoThang), 0)
     FROM dbo.DichVuHopDong dvhd
     INNER JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
     WHERE dvhd.MaHopDong = @MaHopDong
-      AND (dv.DonGia IS NOT NULL AND dv.DonGia > 0);
+      AND (dv.DonGia IS NOT NULL AND dv.DonGia > 0)
+      AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
 
     DECLARE @TongTien DECIMAL(15,2) = @TienThueKyDau + @TongDichVu;
 
@@ -544,7 +546,7 @@ BEGIN
             );
         END
 
-        -- 7b. Các dòng dịch vụ (bỏ qua dòng đầu đã dùng làm đại diện tiền thuê)
+        -- 7b. Các dòng dịch vụ (bỏ qua dòng đầu đã dùng làm đại diện tiền thuê, loại bỏ điện và nước)
         INSERT INTO dbo.ChiTietHoaDon (MaChiTietHD, SoLuong, DonViTinh, DonGia, ThanhTien, MaHoaDon, MaChiTietDVHD, MaPhieuGhi)
         SELECT
             'CT' + RIGHT('0000' + CAST(@NextCTNo + ROW_NUMBER() OVER (ORDER BY dvhd.MaChiTietDVHD) AS VARCHAR), 4),
@@ -558,7 +560,8 @@ BEGIN
         FROM dbo.DichVuHopDong dvhd
         INNER JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
         WHERE dvhd.MaHopDong = @MaHopDong
-          AND dvhd.MaChiTietDVHD <> ISNULL(@MaDVHDDauTien, '');
+          AND dvhd.MaChiTietDVHD <> ISNULL(@MaDVHDDauTien, '')
+          AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
 
         COMMIT TRANSACTION;
 

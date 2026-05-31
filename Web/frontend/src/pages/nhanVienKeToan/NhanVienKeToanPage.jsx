@@ -501,6 +501,7 @@ function MoveinCollections({ searchQuery }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [receipt, setReceipt] = useState(null); // hóa đơn vừa tạo
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -543,11 +544,7 @@ function MoveinCollections({ searchQuery }) {
       e.preventDefault();
       e.stopPropagation();
     }
-    if (window.confirm("Hủy bỏ thao tác ghi nhận khoản thu?")) {
-      setSelectedContract(null);
-      setReceipt(null);
-      setError('');
-    }
+    setConfirmCancel(true);
   }
 
   async function handleSubmit(e) {
@@ -792,7 +789,7 @@ function MoveinCollections({ searchQuery }) {
 
               {error && <p className="ql-modal-error">{error}</p>}
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px', justifyContent: 'center' }}>
                 <Button type="button" onClick={handleCancel}>Hủy thao tác</Button>
                 <Button primary type="submit" disabled={submitting}>
                   {submitting ? 'Đang xử lý...' : 'Xác nhận nộp tiền'}
@@ -814,7 +811,7 @@ function MoveinCollections({ searchQuery }) {
             <ul style={{ fontSize: '13px', color: 'var(--ql-muted, #555)', paddingLeft: '16px', display: 'grid', gap: '8px', lineHeight: '1.5' }}>
               <li>Tiền phòng được nhân theo chu kỳ thanh toán hợp đồng (1 tháng hoặc 3 tháng).</li>
               <li>Các dịch vụ đi kèm cũng tính cào bằng theo tháng nhân với chu kỳ thanh toán kỳ đầu.</li>
-              <li><strong>Dịch vụ Điện &amp; Nước kỳ đầu tính theo tháng</strong> do chưa ghi nhận chỉ số thực tế, phục vụ khởi tạo phòng.</li>
+              <li><strong>Dịch vụ Điện &amp; Nước không thu kỳ đầu</strong>, sẽ được ghi nhận chỉ số và thu riêng hàng tháng dựa trên lượng tiêu thụ thực tế.</li>
               <li>Nếu nộp đủ: Mở khóa quyền <strong>bàn giao phòng</strong> ở màn hình Quản lý.</li>
               <li>Nếu nộp thiếu: Trạng thái hóa đơn là <strong>Chưa TT</strong> và <strong>KHÓA</strong> quyền bàn giao phòng cho đến khi bổ sung đủ tiền.</li>
             </ul>
