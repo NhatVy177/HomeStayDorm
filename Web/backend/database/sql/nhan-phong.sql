@@ -583,3 +583,241 @@ BEGIN
     END CATCH;
 END;
 GO
+
+-- ============================================================
+-- SP_DanhSachChoBanGiaoVao
+-- Trả về danh sách hợp đồng đã đóng đủ tiền chờ bàn giao vào.
+-- Dành cho quản lý chọn để lập biên bản bàn giao.
+-- ============================================================
+IF OBJECT_ID(N'dbo.SP_DanhSachChoBanGiaoVao', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_DanhSachChoBanGiaoVao AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_DanhSachChoBanGiaoVao
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        hdt.MaHopDong           AS maHopDong,
+        hdt.NgayBatDau          AS ngayBatDau,
+        hdt.NgayKetThuc         AS ngayKetThuc,
+        hdt.GiaThue             AS giaThue,
+        hdt.KyThanhToan         AS kyThanhToan,
+        nd.HoTen                AS hoTen,
+        nd.SDT                  AS soDienThoai,
+        kh.CCCD                 AS cccd,
+        ctdc.MaPhong            AS maPhong,
+        ctdc.MaGiuong           AS maGiuong,
+        p.TenPhong              AS tenPhong,
+        -- Kiểm tra xem đã đóng tiền thu nhận phòng kỳ đầu chưa
+        CASE WHEN EXISTS (
+            SELECT 1 FROM dbo.HoaDon hd
+            WHERE hd.MaHopDong = hdt.MaHopDong
+              AND hd.TrangThai = N'Đã TT'
+        ) THEN 1 ELSE 0 END AS daDongTienDauKy,
+        -- Trạng thái giường để validate (phải ở trạng thái 'Đã đặt cọc')
+        g.TinhTrang             AS tinhTrangGiuong,
+        -- Trạng thái giường hợp lệ (nếu ctdc.MaGiuong IS NULL thì tất cả giường trong phòng phải 'Đã đặt cọc')
+        CASE WHEN ctdc.MaGiuong IS NOT NULL THEN
+            CASE WHEN g.TinhTrang = N'Đã đặt cọc' THEN 1 ELSE 0 END
+        ELSE
+            CASE WHEN NOT EXISTS (
+                SELECT 1 FROM dbo.Giuong g2
+                WHERE g2.MaPhong = ctdc.MaPhong
+                  AND g2.TinhTrang <> N'Đã đặt cọc'
+            ) THEN 1 ELSE 0 END
+        END AS tinhTrangGiuongHopLe
+    FROM dbo.HopDongThue hdt
+    INNER JOIN dbo.KhachHang kh    ON kh.MaKhachHang  = hdt.MaKhachHang
+    INNER JOIN dbo.NguoiDung nd    ON nd.MaNguoiDung   = kh.MaKhachHang
+    OUTER APPLY (
+        SELECT TOP 1 ctxp.MaPhong, ctxp.MaGiuong
+        FROM dbo.ChiTietDatCoc ctxp
+        WHERE ctxp.MaPhieuDatCoc = hdt.MaPhieuCoc
+    ) ctdc
+    LEFT JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
+    LEFT JOIN dbo.Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
+    WHERE hdt.TrangThai = N'Hiệu lực'
+      AND NOT EXISTS (
+          SELECT 1 FROM dbo.BienBanBanGiao bbbg
+          WHERE bbbg.MaHopDong = hdt.MaHopDong
+            AND bbbg.LoaiBanGiao = N'Bàn giao vào'
+      )
+    ORDER BY hdt.NgayBatDau ASC;
+END;
+GO
+
+-- ============================================================
+-- SP_DanhSachTaiSanBanGiao
+-- Trả về danh sách tài sản tiêu chuẩn của phòng trọ.
+-- ============================================================
+IF OBJECT_ID(N'dbo.SP_DanhSachTaiSanBanGiao', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_DanhSachTaiSanBanGiao AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_DanhSachTaiSanBanGiao
+    @MaPhong VARCHAR(4)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        ts.MaTaiSan     AS maTaiSan,
+        ts.TenTaiSan    AS tenTaiSan,
+        ts.SoLuong      AS soLuongChuan,
+        ts.DonGia       AS donGiaBoiThuong
+    FROM dbo.TaiSan ts
+    WHERE ts.MaPhong = @MaPhong;
+END;
+GO
+
+-- ============================================================
+-- SP_LapBienBanBanGiao
+-- Tạo Biên bản bàn giao vào + Chi tiết bàn giao.
+-- Cập nhật trạng thái Giường ('Đang thuê') và Phòng ('Đầy' / 'Còn chỗ').
+-- ============================================================
+IF OBJECT_ID(N'dbo.SP_LapBienBanBanGiao', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_LapBienBanBanGiao AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_LapBienBanBanGiao
+    @HopDongId          VARCHAR(6),
+    @PhongGiuongId      VARCHAR(20) = NULL,
+    @DanhSachTaiSan     NVARCHAR(MAX),
+    @GhiChu             NVARCHAR(MAX) = NULL,
+    @MaNhanVienQuanLy   VARCHAR(6) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    -- 1. Validate hợp đồng & hóa đơn kỳ đầu
+    IF NOT EXISTS (SELECT 1 FROM dbo.HopDongThue WHERE MaHopDong = @HopDongId AND TrangThai = N'Hiệu lực')
+        THROW 50500, N'Hợp đồng không tồn tại hoặc không ở trạng thái Hiệu lực.', 1;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.HoaDon hd
+        WHERE hd.MaHopDong = @HopDongId AND hd.TrangThai = N'Đã TT'
+    )
+        THROW 50501, N'Chưa hoàn tất thanh toán hóa đơn kỳ đầu cho hợp đồng này.', 1;
+
+    IF EXISTS (
+        SELECT 1 FROM dbo.BienBanBanGiao
+        WHERE MaHopDong = @HopDongId AND LoaiBanGiao = N'Bàn giao vào'
+    )
+        THROW 50502, N'Hợp đồng này đã có biên bản bàn giao vào.', 1;
+
+    -- 2. Đọc thông tin phòng / giường từ ChiTietDatCoc của hợp đồng
+    DECLARE @MaPhong  VARCHAR(4);
+    DECLARE @MaGiuong VARCHAR(3);
+
+    SELECT TOP 1 @MaPhong = ctdc.MaPhong, @MaGiuong = ctdc.MaGiuong
+    FROM dbo.HopDongThue hdt
+    INNER JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
+    WHERE hdt.MaHopDong = @HopDongId;
+
+    IF @MaPhong IS NULL
+        THROW 50503, N'Không tìm thấy thông tin phòng/giường liên kết với hợp đồng.', 1;
+
+    -- Validate giường trạng thái đặt cọc
+    IF @MaGiuong IS NOT NULL
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = @MaPhong AND MaGiuong = @MaGiuong AND TinhTrang = N'Đã đặt cọc')
+            THROW 50504, N'Giường thuê không ở trạng thái [Đã đặt cọc].', 1;
+    END
+    ELSE
+    BEGIN
+        -- Thuê nguyên phòng, kiểm tra tất cả giường trong phòng phải Đã đặt cọc
+        IF EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = @MaPhong AND TinhTrang <> N'Đã đặt cọc')
+            THROW 50505, N'Một số giường trong phòng không ở trạng thái [Đã đặt cọc].', 1;
+    END
+
+    -- 3. Tiến hành tạo biên bản bàn giao
+    DECLARE @NewMaBB  VARCHAR(6);
+    DECLARE @NextBBNo INT;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Sinh mã Biên bản bàn giao dạng BB0001
+        SELECT @NextBBNo = ISNULL(MAX(TRY_CAST(SUBSTRING(MaBienBan, 3, 4) AS INT)), 0) + 1
+        FROM dbo.BienBanBanGiao WITH (UPDLOCK, HOLDLOCK);
+
+        SET @NewMaBB = 'BB' + RIGHT('0000' + CAST(@NextBBNo AS VARCHAR), 4);
+
+        -- Thêm Biên bản bàn giao
+        INSERT INTO dbo.BienBanBanGiao (
+            MaBienBan, NgayBanGiao, LoaiBanGiao, MaHopDong, MaNhanVienQuanLy
+        ) VALUES (
+            @NewMaBB, GETDATE(), N'Bàn giao vào', @HopDongId, @MaNhanVienQuanLy
+        );
+
+        -- 4. Thêm chi tiết bàn giao từ JSON
+        DECLARE @NextBGNo INT;
+        SELECT @NextBGNo = ISNULL(MAX(TRY_CAST(SUBSTRING(MaChiTietBG, 3, 4) AS INT)), 0) FROM dbo.ChiTietBanGiao;
+
+        INSERT INTO dbo.ChiTietBanGiao (
+            MaChiTietBG, MaBienBan, MaPhong, MaTaiSan, SoLuongThucTe, GhiChu
+        )
+        SELECT
+            'BG' + RIGHT('0000' + CAST(@NextBGNo + ROW_NUMBER() OVER (ORDER BY j.MaTaiSan) AS VARCHAR), 4),
+            @NewMaBB,
+            @MaPhong,
+            j.MaTaiSan,
+            j.SoLuongThucTe,
+            j.GhiChu
+        FROM OPENJSON(@DanhSachTaiSan)
+        WITH (
+            MaTaiSan VARCHAR(6) '$.maTaiSan',
+            SoLuongThucTe INT '$.soLuongThucTe',
+            GhiChu NVARCHAR(255) '$.ghiChu'
+        ) j;
+
+        -- 5. Cập nhật trạng thái giường sang 'Đang thuê'
+        IF @MaGiuong IS NOT NULL
+        BEGIN
+            UPDATE dbo.Giuong
+            SET TinhTrang = N'Đang thuê'
+            WHERE MaPhong = @MaPhong AND MaGiuong = @MaGiuong;
+        END
+        ELSE
+        BEGIN
+            UPDATE dbo.Giuong
+            SET TinhTrang = N'Đang thuê'
+            WHERE MaPhong = @MaPhong;
+        END
+
+        -- 6. Tính lại trạng thái phòng
+        DECLARE @RoomStatus NVARCHAR(20);
+        IF EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = @MaPhong AND TinhTrang = N'Trống')
+            SET @RoomStatus = N'Còn chỗ';
+        ELSE
+            SET @RoomStatus = N'Đầy';
+
+        UPDATE dbo.Phong
+        SET TinhTrang = @RoomStatus
+        WHERE MaPhong = @MaPhong;
+
+        COMMIT TRANSACTION;
+
+        -- Trả về biên bản bàn giao vừa tạo
+        SELECT
+            bb.MaBienBan        AS maBienBan,
+            bb.NgayBanGiao      AS ngayBanGiao,
+            bb.LoaiBanGiao      AS loaiBanGiao,
+            bb.MaHopDong        AS maHopDong,
+            bb.MaNhanVienQuanLy  AS maNhanVienQuanLy,
+            @MaPhong            AS maPhong,
+            @RoomStatus         AS tinhTrangPhongMoi
+        FROM dbo.BienBanBanGiao bb
+        WHERE bb.MaBienBan = @NewMaBB;
+
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO

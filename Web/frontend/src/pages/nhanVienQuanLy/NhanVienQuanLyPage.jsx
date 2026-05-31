@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { datCocApi } from '../datCoc/datCoc.api.js';
+import { nhanPhongApi } from '../nhanPhong/nhanPhong.api.js';
 import { EmployeeAccountMenu, EmployeeAccountView } from '../../components/common/EmployeeAccount.jsx';
 import PortalIcon from '../../components/common/PortalIcon.jsx';
 import './nhanVienQuanLy.css';
@@ -460,35 +461,461 @@ function Deposits() {
 }
 
 function Handovers() {
+  const { user } = useAuth();
+
+  // ── View state: 'list' | 'form' | 'success' ──────────────────────────────
+  const [view, setView] = useState('list');
+
+  // ── List state ────────────────────────────────────────────────────────────
+  const [list, setList] = useState([]);
+  const [loadingList, setLoadingList] = useState(false);
+
+  // ── Selected contract & assets ────────────────────────────────────────────
+  const [selected, setSelected] = useState(null); // row from API
+  const [assets, setAssets] = useState([]);        // [{ maTaiSan, tenTaiSan, soLuongChuan, donGiaBoiThuong, soLuongThucTe, ghiChu }]
+  const [loadingAssets, setLoadingAssets] = useState(false);
+
+  // ── Form validation ───────────────────────────────────────────────────────
+  const [guestSigned, setGuestSigned] = useState(false);
+  const [showValidationAlert, setShowValidationAlert] = useState(false);
+
+  // ── Confirm modal ─────────────────────────────────────────────────────────
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // ── Cancel confirm modal ──────────────────────────────────────────────────
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  // ── Submission ────────────────────────────────────────────────────────────
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  // ── Success receipt ───────────────────────────────────────────────────────
+  const [receipt, setReceipt] = useState(null);
+
+  // ── Load pending-handover list on mount ───────────────────────────────────
+  useEffect(() => {
+    setLoadingList(true);
+    nhanPhongApi.getDanhSachChoBanGiao()
+      .then(({ data }) => setList(Array.isArray(data) ? data : []))
+      .catch(() => setList([]))
+      .finally(() => setLoadingList(false));
+  }, []);
+
+  // ── Select a contract → load its assets ───────────────────────────────────
+  async function handleSelectContract(row) {
+    setSelected(row);
+    setGuestSigned(false);
+    setShowValidationAlert(false);
+    setSubmitError('');
+    setLoadingAssets(true);
+    setView('form');
+    try {
+      const { data } = await nhanPhongApi.getDanhSachTaiSanBanGiao(row.maPhong);
+      const items = Array.isArray(data) ? data : [];
+      setAssets(items.map((a) => ({
+        ...a,
+        soLuongThucTe: a.soLuongChuan, // default = standard
+        ghiChu: ''
+      })));
+    } catch {
+      setAssets([]);
+    } finally {
+      setLoadingAssets(false);
+    }
+  }
+
+  // ── Update actual quantity for one asset row ──────────────────────────────
+  function handleQtyChange(maTaiSan, value) {
+    setAssets((prev) =>
+      prev.map((a) => a.maTaiSan === maTaiSan ? { ...a, soLuongThucTe: value } : a)
+    );
+  }
+
+  // ── Update note for one asset row ─────────────────────────────────────────
+  function handleNoteChange(maTaiSan, value) {
+    setAssets((prev) =>
+      prev.map((a) => a.maTaiSan === maTaiSan ? { ...a, ghiChu: value } : a)
+    );
+  }
+
+  // ── Pre-submit validation ──────────────────────────────────────────────────
+  function handleSubmitAttempt(e) {
+    e.preventDefault();
+
+    // All assets must have a numeric qty
+    const missing = assets.some((a) => a.soLuongThucTe === '' || a.soLuongThucTe == null);
+    if (missing) {
+      setShowValidationAlert(true);
+      return;
+    }
+    setShowValidationAlert(false);
+
+    if (!guestSigned) {
+      setSubmitError('Chưa xác nhận chữ ký khách hàng. Không thể lưu biên bản!');
+      return;
+    }
+
+    setSubmitError('');
+    setShowConfirmModal(true);
+  }
+
+  // ── Actual submit ─────────────────────────────────────────────────────────
+  async function handleConfirmSubmit() {
+    if (!selected) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const payload = {
+        hopDongId: selected.maHopDong,
+        phongGiuongId: selected.maGiuong
+          ? `${selected.maPhong}-${selected.maGiuong}`
+          : selected.maPhong,
+        danhSachTaiSan: assets.map((a) => ({
+          maTaiSan: a.maTaiSan,
+          soLuongThucTe: Number(a.soLuongThucTe),
+          ghiChu: a.ghiChu || null
+        }))
+      };
+      const { data } = await nhanPhongApi.lapBienBanBanGiao(payload);
+      setShowConfirmModal(false);
+      setReceipt(data);
+      setView('success');
+    } catch (err) {
+      setSubmitError(err?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // ── Reset back to list ────────────────────────────────────────────────────
+  function handleBackToList() {
+    setView('list');
+    setSelected(null);
+    setAssets([]);
+    setReceipt(null);
+    setSubmitError('');
+    setShowValidationAlert(false);
+    setGuestSigned(false);
+    // Refresh list
+    setLoadingList(true);
+    nhanPhongApi.getDanhSachChoBanGiao()
+      .then(({ data }) => setList(Array.isArray(data) ? data : []))
+      .catch(() => setList([]))
+      .finally(() => setLoadingList(false));
+  }
+
+  // ── Format currency ───────────────────────────────────────────────────────
+  function formatVND(n) {
+    return Number(n || 0).toLocaleString('vi-VN') + ' VNĐ';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER: SUCCESS RECEIPT
+  // ─────────────────────────────────────────────────────────────────────────
+  if (view === 'success') {
+    return (
+      <section className="ql-stack">
+        <article className="ql-card ql-handover-receipt">
+          <div className="ql-receipt-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="M22 4 12 14.01l-3-3" />
+            </svg>
+          </div>
+          <h2>Lập biên bản bàn giao thành công!</h2>
+          {receipt && (
+            <div className="ql-modal-info" style={{ marginTop: '1.25rem' }}>
+              <div><span>Mã biên bản</span><strong>{receipt.maBienBan}</strong></div>
+              <div><span>Hợp đồng</span><strong>{receipt.maHopDong}</strong></div>
+              <div><span>Phòng</span><strong>{receipt.maPhong}</strong></div>
+              <div><span>Loại bàn giao</span><strong>{receipt.loaiBanGiao}</strong></div>
+              <div><span>Trạng thái phòng mới</span><strong><Status tone={receipt.tinhTrangPhongMoi === 'Đầy' ? 'danger' : 'good'}>{receipt.tinhTrangPhongMoi}</Status></strong></div>
+            </div>
+          )}
+          <p style={{ color: 'var(--ql-muted)', fontSize: '13.5px', margin: '1rem 0' }}>
+            Tất cả giường trong hợp đồng đã chuyển sang trạng thái <strong>Đang thuê</strong>. Phòng đã được cập nhật trạng thái.
+          </p>
+          <Button primary onClick={handleBackToList}>← Quay về danh sách</Button>
+        </article>
+      </section>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER: HANDOVER FORM
+  // ─────────────────────────────────────────────────────────────────────────
+  if (view === 'form' && selected) {
+    const roomLabel = selected.maGiuong
+      ? `${selected.maPhong} - Giường ${selected.maGiuong}`
+      : selected.maPhong;
+
+    return (
+      <section className="ql-stack">
+        {/* Contract summary banner */}
+        <article className="ql-card">
+          <div className="ql-card-head">
+            <div>
+              <h2>Chi tiết bàn giao vào phòng trọ</h2>
+              <p>Kiểm tra số lượng tài sản thực tế rồi xác nhận bàn giao cho khách.</p>
+            </div>
+            <Button onClick={() => setShowCancelModal(true)}>Hủy bỏ</Button>
+          </div>
+
+          {/* Green info strip */}
+          <div className="ql-handover-summary">
+            <div className="ql-summary-item">
+              <span>Mã Hợp Đồng</span>
+              <strong>{selected.maHopDong}</strong>
+            </div>
+            <div className="ql-summary-item">
+              <span>Khách hàng ký nhận</span>
+              <strong>{selected.hoTen}</strong>
+            </div>
+            <div className="ql-summary-item">
+              <span>Phòng bàn giao</span>
+              <strong>{roomLabel}</strong>
+            </div>
+            <div className="ql-summary-item">
+              <span>Tên phòng</span>
+              <strong>{selected.tenPhong || '—'}</strong>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmitAttempt}>
+            <h3 className="ql-section-label">Bảng kiểm đếm tài sản phòng trọ (So sánh thực tế)</h3>
+
+            {/* Validation alert A7 */}
+            {showValidationAlert && (
+              <div className="ql-alert ql-alert-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                  <path d="M12 9v4" /><path d="M12 17h.01" />
+                </svg>
+                <div>
+                  <strong>Lỗi kiểm đếm!</strong> Còn tài sản bắt buộc chưa nhập số lượng thực tế. Vui lòng hoàn thành trước khi ký nhận!
+                </div>
+              </div>
+            )}
+
+            {loadingAssets ? (
+              <div className="ql-empty">Đang tải danh sách tài sản...</div>
+            ) : assets.length === 0 ? (
+              <div className="ql-empty">Không tìm thấy tài sản nào cho phòng này.</div>
+            ) : (
+              <div className="ql-table-wrap ql-asset-table-wrap">
+                <table className="ql-asset-input-table">
+                  <thead>
+                    <tr>
+                      <th>Mã tài sản</th>
+                      <th>Tên trang thiết bị</th>
+                      <th>Số lượng chuẩn (CSDL)</th>
+                      <th>Đơn giá bồi thường</th>
+                      <th>Số lượng thực tế <span style={{ color: 'var(--ql-danger)' }}>*</span></th>
+                      <th>Ghi chú hiện trạng chênh lệch</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assets.map((asset) => {
+                      const hasDiscrepancy =
+                        asset.soLuongThucTe !== '' &&
+                        asset.soLuongThucTe != null &&
+                        Number(asset.soLuongThucTe) !== Number(asset.soLuongChuan);
+                      return (
+                        <tr key={asset.maTaiSan}>
+                          <td><strong>{asset.maTaiSan}</strong></td>
+                          <td>{asset.tenTaiSan}</td>
+                          <td>
+                            <strong style={{ color: 'var(--ql-green-dark)' }}>
+                              {asset.soLuongChuan}
+                            </strong>
+                          </td>
+                          <td>{formatVND(asset.donGiaBoiThuong)}</td>
+                          <td>
+                            <input
+                              className={`ql-asset-qty-input${hasDiscrepancy ? ' discrepancy' : ''}`}
+                              type="number"
+                              min="0"
+                              max="99"
+                              value={asset.soLuongThucTe}
+                              required
+                              onChange={(e) => handleQtyChange(asset.maTaiSan, e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <textarea
+                              className={`ql-asset-note-input${hasDiscrepancy ? ' required-note' : ''}`}
+                              placeholder={
+                                hasDiscrepancy
+                                  ? `⚠️ BẮT BUỘC: Nhập lý do chênh lệch thực tế (${asset.soLuongThucTe}) khác tiêu chuẩn (${asset.soLuongChuan}) tại đây!`
+                                  : 'Nhập ghi chú chi tiết nếu có chênh lệch hoặc hư hỏng...'
+                              }
+                              required={hasDiscrepancy}
+                              value={asset.ghiChu}
+                              onChange={(e) => handleNoteChange(asset.maTaiSan, e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Signature section */}
+            <div className="ql-sign-section">
+              <input
+                type="checkbox"
+                id="chkGuestPresent"
+                checked={guestSigned}
+                onChange={(e) => setGuestSigned(e.target.checked)}
+              />
+              <label htmlFor="chkGuestPresent">
+                Tôi xác nhận khách hàng (<strong>{selected.hoTen}</strong>) có mặt tại hiện trường phòng trọ, trực tiếp tham gia kiểm đếm, xác thực hiện trạng chênh lệch tài sản và đã ký nhận biên bản.
+              </label>
+            </div>
+
+            {submitError && (
+              <div className="ql-alert ql-alert-error" style={{ marginTop: '12px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><path d="M12 8v4" /><path d="M12 16h.01" />
+                </svg>
+                <div>{submitError}</div>
+              </div>
+            )}
+
+            <div className="ql-form-actions">
+              <Button onClick={() => setShowCancelModal(true)}>Hủy bỏ</Button>
+              <button className="ql-btn primary" type="submit">
+                Xác nhận Lưu Biên Bản Bàn Giao
+              </button>
+            </div>
+          </form>
+        </article>
+
+        {/* ── Cancel confirmation modal ── */}
+        {showCancelModal && (
+          <div className="ql-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowCancelModal(false); }}>
+            <div className="ql-modal">
+              <h3>Hủy lập biên bản bàn giao?</h3>
+              <p>Dữ liệu kiểm đếm sẽ bị xóa. Bạn có chắc muốn quay về danh sách?</p>
+              <div className="ql-modal-actions">
+                <Button onClick={() => setShowCancelModal(false)}>Tiếp tục điền</Button>
+                <Button primary onClick={() => { setShowCancelModal(false); handleBackToList(); }}>
+                  Đồng ý hủy
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Submit confirmation modal ── */}
+        {showConfirmModal && (
+          <div className="ql-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget && !submitting) setShowConfirmModal(false); }}>
+            <div className="ql-modal">
+              <h3>Xác nhận lưu biên bản bàn giao</h3>
+              <p>Sau khi lưu, trạng thái giường sẽ chuyển sang <strong>Đang thuê</strong> và không thể hoàn tác.</p>
+              <div className="ql-modal-info">
+                <div><span>Hợp đồng</span><strong>{selected.maHopDong}</strong></div>
+                <div><span>Khách hàng</span><strong>{selected.hoTen}</strong></div>
+                <div><span>Phòng / Giường</span><strong>{roomLabel}</strong></div>
+                <div><span>Số tài sản bàn giao</span><strong>{assets.length} mục</strong></div>
+                <div>
+                  <span>Chênh lệch tài sản</span>
+                  <strong>
+                    {assets.filter((a) => Number(a.soLuongThucTe) !== Number(a.soLuongChuan)).length} mục
+                  </strong>
+                </div>
+              </div>
+              {submitError && <p className="ql-modal-error">{submitError}</p>}
+              <div className="ql-modal-actions">
+                <Button onClick={() => { if (!submitting) setShowConfirmModal(false); }} disabled={submitting}>
+                  Quay lại
+                </Button>
+                <Button primary onClick={handleConfirmSubmit} disabled={submitting}>
+                  {submitting ? 'Đang lưu...' : 'Xác nhận lưu biên bản'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER: PENDING-HANDOVER LIST
+  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <section className="ql-two-col">
+    <section className="ql-stack">
       <article className="ql-table-card">
-        <div className="ql-table-head"><div><h2>Danh sách bàn giao</h2><p>Biên bản do nhân viên quản lý lập hoặc xác nhận.</p></div><Button primary>Tạo biên bản</Button></div>
-        <div className="ql-table-wrap">
-          <table>
-            <thead><tr><th>Mã</th><th>Khách hàng</th><th>Phòng/Giường</th><th>Ngày</th><th>Loại bàn giao</th><th>Thao tác</th></tr></thead>
-            <tbody>
-              {handovers.map((item) => (
-                <tr key={item.id}>
-                  <td><strong>{item.id}</strong></td>
-                  <td>{item.customer}</td>
-                  <td><span className="ql-room-pill">{item.room}</span></td>
-                  <td>{item.date}</td>
-                  <td><Status tone={item.tone}>{item.type}</Status></td>
-                  <td><Button>Chi tiết</Button></td>
+        <div className="ql-table-head">
+          <div>
+            <h2>Hợp đồng đã đóng đủ tiền chờ bàn giao vào</h2>
+            <p>Chọn hợp đồng để lập biên bản bàn giao phòng cho khách.</p>
+          </div>
+        </div>
+
+        {loadingList ? (
+          <div className="ql-empty">Đang tải danh sách...</div>
+        ) : list.length === 0 ? (
+          <div className="ql-empty">Không có hợp đồng nào đang chờ bàn giao.</div>
+        ) : (
+          <div className="ql-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã HĐ</th>
+                  <th>Khách hàng</th>
+                  <th>Phòng / Giường</th>
+                  <th>Thu đầu kỳ</th>
+                  <th>Giường (Đặt cọc)</th>
+                  <th>Thao tác</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </article>
-      <article className="ql-card">
-        <div className="ql-card-head"><div><h2>Checklist bàn giao</h2><p>Các mục kiểm tra thực tế tại phòng.</p></div></div>
-        <div className="ql-checklist">
-          <div><PortalIcon name="building" /><span><strong>Tình trạng phòng</strong><small>Vệ sinh, điện nước, khóa cửa</small></span><Status tone="good">Bắt buộc</Status></div>
-          <div><PortalIcon name="asset" /><span><strong>Kiểm kê tài sản</strong><small>Giường, nệm, tủ, thẻ từ</small></span><Status tone="wait">Cần ảnh</Status></div>
-          <div><PortalIcon name="contract" /><span><strong>Biên bản ký nhận</strong><small>Khách xác nhận bàn giao</small></span><Status tone="neutral">Lưu hồ sơ</Status></div>
-        </div>
+              </thead>
+              <tbody>
+                {list.map((row) => {
+                  const paid = row.daDongTienDauKy === 1;
+                  const bedOk = row.tinhTrangGiuongHopLe === 1;
+                  const canHandover = paid && bedOk;
+                  const roomLabel = row.maGiuong
+                    ? `${row.maPhong} - Giường ${row.maGiuong} (${row.tenPhong || ''})`
+                    : `${row.maPhong} (${row.tenPhong || ''})`;
+                  return (
+                    <tr key={row.maHopDong}>
+                      <td><strong>{row.maHopDong}</strong></td>
+                      <td>
+                        <Person name={row.hoTen} detail={row.soDienThoai || row.cccd || ''} />
+                      </td>
+                      <td><span className="ql-room-pill">{roomLabel}</span></td>
+                      <td>
+                        {paid
+                          ? <Status tone="good">Đã TT (Thu đầu kỳ)</Status>
+                          : <Status tone="danger">Chưa TT (Bị Khóa)</Status>}
+                      </td>
+                      <td>
+                        {bedOk
+                          ? <Status tone="wait">Đã đặt cọc</Status>
+                          : <Status tone="danger">Chưa hợp lệ</Status>}
+                      </td>
+                      <td>
+                        <button
+                          className={`ql-btn ${canHandover ? 'primary' : 'secondary'}`}
+                          type="button"
+                          disabled={!canHandover}
+                          title={!paid ? 'Bị Khóa: Khách chưa hoàn tất thanh toán hóa đơn kỳ đầu!' : !bedOk ? 'Giường chưa ở trạng thái Đã đặt cọc!' : ''}
+                          style={!canHandover ? { cursor: 'not-allowed' } : {}}
+                          onClick={() => canHandover && handleSelectContract(row)}
+                        >
+                          {canHandover ? 'Lập bàn giao vào' : 'Bị Khóa'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </article>
     </section>
   );

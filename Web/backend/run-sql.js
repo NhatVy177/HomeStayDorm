@@ -37,7 +37,6 @@ async function main() {
   const sqlContent = fs.readFileSync(sqlFilePath, 'utf8');
   
   // Split sql statements by GO line
-  // We need to match GO on its own line (case-insensitive)
   const statements = sqlContent.split(/\r?\n[gG][oO]\r?\n/);
   
   console.log(`Found ${statements.length} sql batches to run.`);

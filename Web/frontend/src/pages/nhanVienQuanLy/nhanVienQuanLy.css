@@ -908,3 +908,240 @@
   gap: 0.75rem;
   justify-content: flex-end;
 }
+
+/* ======================================================
+   HANDOVER (BÀN GIAO) FEATURE – additional styles
+   ====================================================== */
+
+/* Green summary strip (mirrors .contract-summary in the HTML mockup) */
+.ql-page .ql-handover-summary {
+  background: var(--ql-green-soft);
+  border: 1px dashed rgba(47, 183, 164, 0.4);
+  border-radius: 18px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 24px;
+  padding: 18px 20px;
+}
+
+@media (max-width: 900px) {
+  .ql-page .ql-handover-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ql-page .ql-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ql-page .ql-summary-item span {
+  color: var(--ql-green-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ql-page .ql-summary-item strong {
+  color: var(--ql-heading);
+  font-size: 15px;
+}
+
+/* Section sub-label inside a form */
+.ql-page .ql-section-label {
+  color: var(--ql-heading);
+  font-size: 14.5px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+/* Asset table wrapper */
+.ql-page .ql-asset-table-wrap {
+  border: 1px solid var(--ql-line);
+  border-radius: 16px;
+  margin-bottom: 24px;
+  overflow: auto;
+}
+
+.ql-page .ql-asset-input-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ql-page .ql-asset-input-table th {
+  background: #fbfbfc;
+  color: var(--ql-subtle);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 12px 16px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.ql-page .ql-asset-input-table td {
+  border-top: 1px solid var(--ql-line);
+  font-size: 13.5px;
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
+.ql-page .ql-asset-input-table tbody tr:hover {
+  background: #fcfdfd;
+}
+
+/* Actual-qty number input */
+.ql-page .ql-asset-qty-input {
+  border: 1px solid var(--ql-line);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  outline: none;
+  padding: 6px 10px;
+  text-align: center;
+  transition: border-color 0.15s;
+  width: 80px;
+}
+
+.ql-page .ql-asset-qty-input:focus {
+  border-color: var(--ql-green);
+  box-shadow: 0 0 0 3px rgba(47, 183, 164, 0.12);
+}
+
+/* Red discrepancy state (BR-4) */
+.ql-page .ql-asset-qty-input.discrepancy {
+  background: var(--ql-danger-soft);
+  border-color: var(--ql-danger);
+  color: var(--ql-danger);
+}
+
+/* Note textarea */
+.ql-page .ql-asset-note-input {
+  border: 1px solid var(--ql-line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  height: 38px;
+  outline: none;
+  padding: 6px 10px;
+  resize: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.ql-page .ql-asset-note-input:focus {
+  border-color: var(--ql-green);
+  box-shadow: 0 0 0 3px rgba(47, 183, 164, 0.12);
+}
+
+/* Required note (when discrepancy detected) */
+.ql-page .ql-asset-note-input.required-note {
+  border-color: #e86f51;
+}
+
+.ql-page .ql-asset-note-input.required-note::placeholder {
+  color: #c05800;
+  font-weight: 600;
+}
+
+/* Signature confirmation strip */
+.ql-page .ql-sign-section {
+  align-items: flex-start;
+  background: #f9fafb;
+  border: 1px dashed var(--ql-line);
+  border-radius: 16px;
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  padding: 18px 20px;
+}
+
+.ql-page .ql-sign-section input[type="checkbox"] {
+  accent-color: var(--ql-green-dark);
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 22px;
+  margin-top: 2px;
+  width: 22px;
+}
+
+.ql-page .ql-sign-section label {
+  color: var(--ql-heading);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+/* Bottom form action row */
+.ql-page .ql-form-actions {
+  border-top: 1px solid var(--ql-line);
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 28px;
+  padding-top: 20px;
+}
+
+/* Alert / error banner */
+.ql-page .ql-alert {
+  align-items: flex-start;
+  border-radius: 14px;
+  display: flex;
+  font-size: 14px;
+  gap: 12px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+}
+
+.ql-page .ql-alert svg {
+  flex-shrink: 0;
+  height: 20px;
+  width: 20px;
+}
+
+.ql-page .ql-alert-error {
+  background: var(--ql-danger-soft);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--ql-danger);
+}
+
+/* Success receipt card */
+.ql-page .ql-handover-receipt {
+  max-width: 640px;
+  text-align: center;
+}
+
+.ql-page .ql-receipt-icon {
+  align-items: center;
+  background: var(--ql-green-soft);
+  border-radius: 50%;
+  color: var(--ql-green-dark);
+  display: inline-flex;
+  height: 72px;
+  justify-content: center;
+  margin-bottom: 1rem;
+  width: 72px;
+}
+
+.ql-page .ql-receipt-icon svg {
+  height: 36px;
+  width: 36px;
+}
+
+.ql-page .ql-handover-receipt h2 {
+  color: var(--ql-green-dark);
+  margin-bottom: 0.25rem;
+}
+
+.ql-page .ql-handover-receipt .ql-modal-info {
+  text-align: left;
+}
+
+.ql-page .ql-handover-receipt .ql-btn {
+  margin-top: 0.5rem;
+}

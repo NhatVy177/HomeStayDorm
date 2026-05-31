@@ -122,18 +122,44 @@ export async function lapBienBanBanGiao(data = {}) {
   const hopDongId = String(data.hopDongId || '').trim();
   const phongGiuongId = String(data.phongGiuongId || '').trim();
   if (!hopDongId || !phongGiuongId) {
-    throw createServiceError('Vui long nhap hop dong va phong/giuong');
+    throw createServiceError('Vui lòng nhập đầy đủ mã hợp đồng và phòng/giường');
   }
 
   try {
     const result = await executeProcedure('dbo.SP_LapBienBanBanGiao', [
-      { name: 'HopDongId', type: sql.NVarChar(30), value: hopDongId },
-      { name: 'PhongGiuongId', type: sql.NVarChar(20), value: phongGiuongId },
+      { name: 'HopDongId', type: sql.VarChar(6), value: hopDongId },
+      { name: 'PhongGiuongId', type: sql.VarChar(20), value: phongGiuongId },
       { name: 'DanhSachTaiSan', type: sql.NVarChar(sql.MAX), value: serializeJsonValue(data.danhSachTaiSan) },
-      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || null }
+      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || null },
+      { name: 'MaNhanVienQuanLy', type: sql.VarChar(6), value: data.maNhanVienQuanLy || null }
     ]);
 
     return result.recordset[0] || null;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
+export async function getDanhSachChoBanGiaoVao() {
+  try {
+    const result = await executeProcedure('dbo.SP_DanhSachChoBanGiaoVao', []);
+    return result.recordset;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
+export async function getDanhSachTaiSanBanGiao(maPhong) {
+  const cleanMaPhong = String(maPhong || '').trim();
+  if (!cleanMaPhong) {
+    throw createServiceError('Vui lòng cung cấp mã phòng để lấy danh sách tài sản.');
+  }
+
+  try {
+    const result = await executeProcedure('dbo.SP_DanhSachTaiSanBanGiao', [
+      { name: 'MaPhong', type: sql.VarChar(4), value: cleanMaPhong }
+    ]);
+    return result.recordset;
   } catch (error) {
     handleDatabaseError(error);
   }

@@ -7,5 +7,7 @@ export const nhanPhongApi = {
   ghiNhanThuDauKy: (data) => httpClient.post('/nhan-phong/ghi-nhan-thu-dau-ky', data),
   lapBienBanBanGiao: (data) => httpClient.post('/nhan-phong/ban-giao', data),
   getDanhSachChoThuDauKy: () => httpClient.get('/nhan-phong/cho-thu-dau-ky'),
+  getDanhSachChoBanGiao: () => httpClient.get('/nhan-phong/cho-ban-giao'),
+  getDanhSachTaiSanBanGiao: (maPhong) => httpClient.get('/nhan-phong/tai-san-ban-giao/' + maPhong),
 };
 

@@ -785,6 +785,38 @@ function MoveinCollections() {
             </ul>
           </article>
         </div>
+
+        {confirmCancel && (
+          <div className="ql-modal-overlay" style={{ zIndex: 1000 }} onClick={() => setConfirmCancel(false)}>
+            <div className="ql-modal" style={{ maxWidth: 420, padding: '28px', borderRadius: 24, textAlign: 'center', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+              <button className="kt-modal-close" type="button" onClick={() => setConfirmCancel(false)} aria-label="Đóng">&#x2715;</button>
+              <div style={{
+                width: 58, height: 58, borderRadius: '50%',
+                background: '#fff1f1', border: '1px solid rgba(239, 68, 68, 0.25)', margin: '0 auto 16px',
+                display: 'grid', placeItems: 'center', color: '#ef4444'
+              }}>
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--ql-heading, #1a1a1a)', marginBottom: '8px', fontFamily: '"Be Vietnam Pro", sans-serif' }}>
+                Hủy bỏ thao tác?
+              </h3>
+              <p style={{ color: 'var(--ql-muted, #555)', fontSize: '0.92rem', marginBottom: '22px', lineHeight: 1.55 }}>
+                Mọi dữ liệu thu tiền đang nhập sẽ bị hủy bỏ. Bạn có chắc chắn muốn quay lại danh sách hợp đồng?
+              </p>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <Button onClick={() => setConfirmCancel(false)}>Quay lại</Button>
+                <Button primary type="button" onClick={() => {
+                  setConfirmCancel(false);
+                  setSelectedContract(null);
+                  setReceipt(null);
+                  setError('');
+                }} style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 8px 20px rgba(239, 68, 68, 0.2)' }}>
+                  Xác nhận hủy
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     );
   }
