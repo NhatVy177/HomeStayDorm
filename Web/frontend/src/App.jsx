@@ -5,7 +5,8 @@ import { getAuthenticatedHomePath } from './auth/auth.routes.js';
 import MainLayout from './layouts/MainLayout.jsx';
 import DangNhapPage from './pages/auth/DangNhapPage.jsx';
 import DangKyPage from './pages/auth/DangKyPage.jsx';
-import HomePage from './pages/home/HomePage.jsx';
+import TrangChu from './pages/TrangChu.jsx';
+import KhamPhaPhongPage from './pages/khamPhaPhong/KhamPhaPhongPage.jsx';
 import DashboardPage from './pages/dashboard/DashboardPage.jsx';
 import DangKyThuePage from './pages/dangKyThue/DangKyThuePage.jsx';
 import LichXemPhongPage from './pages/lichXemPhong/LichXemPhongPage.jsx';
@@ -61,7 +62,8 @@ function EmployeePositionRoute({ position, children }) {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<TrangChu />} />
+      <Route path="/kham-pha-phong" element={<KhamPhaPhongPage />} />
       <Route
         path="/dang-nhap"
         element={(

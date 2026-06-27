@@ -1,0 +1,448 @@
+<html lang="vi" style=""><head></head><body class="bg-background text-on-background antialiased flex h-screen overflow-hidden">```html
+
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quyết toán trả phòng - HomestayDorm</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Montserrat:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#555e5f",
+                        "outline": "#717785",
+                        "inverse-primary": "#72d5df",
+                        "tertiary-container": "#6d7677",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#dbe4e5",
+                        "secondary": "#a43c12",
+                        "primary-container": "#00818a",
+                        "on-secondary-container": "#6b1f00",
+                        "surface-container-low": "#f3f4f5",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#380c00",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-bright": "#f8f9fa",
+                        "surface-dim": "#d9dadb",
+                        "inverse-surface": "#2e3132",
+                        "secondary-fixed-dim": "#ffb59c",
+                        "primary-fixed": "#8ff2fc",
+                        "secondary-container": "#fe7e4f",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#edeeef",
+                        "on-tertiary-fixed-variant": "#404849",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#151d1e",
+                        "on-secondary-fixed-variant": "#822800",
+                        "surface-tint": "#006970",
+                        "secondary-fixed": "#ffdbcf",
+                        "primary-fixed-dim": "#72d5df",
+                        "inverse-on-surface": "#f0f1f2",
+                        "outline-variant": "#c1c6d5",
+                        "on-primary-container": "#f5feff",
+                        "on-error": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "on-background": "#191c1d",
+                        "tertiary-fixed-dim": "#bfc8c9",
+                        "primary": "#00666d",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f8f9fa",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-primary-fixed-variant": "#004f55",
+                        "on-tertiary-container": "#f6feff",
+                        "on-surface-variant": "#414753",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#002022",
+                        "background": "#f8f9fa"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Montserrat", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        h1, h2, h3, h4, h5, h6, .font-headline { font-family: 'Montserrat', sans-serif; }
+    </style>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col z-40">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">apartment</span>
+</div>
+<div>
+<h1 class="text-lg font-headline font-bold text-primary leading-tight">Homestay Dorm</h1>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Management Portal</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 mt-4 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium text-sm">Tổng quan</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-medium text-sm">Thanh toán cọc</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">meeting_room</span>
+<span class="font-medium text-sm">Thu nhận phòng</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-medium text-sm">Hóa đơn định kỳ</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-semibold shadow-sm" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-medium text-sm">Quyết toán trả phòng</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-medium text-sm">Lịch sử thanh toán</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen overflow-hidden">
+<!-- TopNavBar -->
+<header class="h-16 bg-surface border-b border-outline-variant flex justify-between items-center px-8 z-30 shadow-sm sticky top-0">
+<div class="flex items-center gap-4 flex-1">
+<div class="flex flex-col">
+<h1 class="text-sm font-bold text-on-surface leading-tight">Chào Minh Anh</h1>
+<p class="text-[11px] text-on-surface-variant font-body">Đây là trang làm việc của bạn hôm nay</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-secondary rounded-full border-2 border-surface"></span>
+</button>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-sm font-bold text-on-surface leading-tight">Minh Anh</p>
+<span class="inline-block px-2 py-0.5 bg-primary-container text-on-primary-container text-[10px] font-bold rounded uppercase tracking-wider">KẾ TOÁN</span>
+</div>
+<img alt="Minh Anh - Nhân viên kế toán" class="w-10 h-10 rounded-full object-cover border-2 border-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb41y6IbrM3zHch9W6uvB14f4iVnr_t2lORiSlT0zCZZggx4LUPo3Vk_56d3Jdkt4ebcH9CQUg6aREe3LVX32Euf54UUkifrD5d2K5nEpa7Qw_Tpmu3ax6quRhqet5BjlUDFkO8gOk0AACJc4IDrbcxKtcNY19ZiX6KBQXz2v-u--wsgpdr6-Ajg20YjkBJNcf0FBvkU8DmoUZP6xaThT-5BAqNgpn6sdMyIwMtdLbyy7iuQBOIlNdfGmxw6OeKbGJ2IpLRCla5k5b"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto px-8 py-8 bg-surface-bright">
+<div class="max-w-7xl mx-auto space-y-8">
+<!-- Page Title -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="text-3xl font-headline font-bold text-on-surface">Quyết toán trả phòng</h2>
+<p class="text-on-surface-variant mt-1">Xử lý hoàn cọc hoặc thu thêm sau khi khách trả phòng</p>
+</div>
+</div>
+<!-- Search and Filter Toolbar (Matches SCREEN_6 Style) -->
+<section class="bg-white rounded-xl p-6 shadow-sm border border-outline-variant">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="flex flex-col gap-1">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase ml-1">Kỳ thanh toán</label>
+<select class="bg-surface-container-low border-none rounded-lg text-sm font-medium px-4 py-2 focus:ring-2 focus:ring-primary">
+<option>Tháng 10/2023</option>
+<option selected="">Tháng 11/2023</option>
+<option>Tháng 12/2023</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase ml-1">Trạng thái</label>
+<select class="bg-surface-container-low border-none rounded-lg text-sm font-medium px-4 py-2 focus:ring-2 focus:ring-primary">
+<option selected="">Tất cả trạng thái</option>
+<option>Chờ đối soát</option>
+<option>Đã quyết toán</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase ml-1">Tìm kiếm</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary" placeholder="Tìm mã phiếu, khách hàng..." type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-1 justify-end">
+<button class="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-2 rounded-lg font-semibold shadow hover:bg-primary-container transition-all active:scale-95 text-sm">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Lọc kết quả
+                    </button>
+</div>
+</div>
+</section>
+<!-- Data Table -->
+<div class="bg-white rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-widest">
+<th class="px-6 py-4">Mã phiếu</th>
+<th class="px-6 py-4">Khách hàng</th>
+<th class="px-6 py-4">Phòng</th>
+<th class="px-6 py-4">Ngày trả thực tế</th>
+<th class="px-6 py-4">Trạng thái</th>
+<th class="px-6 py-4 text-right">Hành động</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant text-sm">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5 font-bold text-on-surface">CO-202310-045</td>
+<td class="px-6 py-5">
+<p class="font-semibold">Nguyễn Văn A</p>
+<p class="text-xs text-on-surface-variant">0901234567</p>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 bg-surface-container rounded-md font-medium text-xs">P.302 - Cơ sở 1</span>
+</td>
+<td class="px-6 py-5 text-on-surface-variant">24/10/2023</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase bg-secondary/10 text-secondary border border-secondary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Chờ đối soát
+</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-container transition-colors font-bold text-xs uppercase" onclick="document.getElementById('settlement-drawer').classList.remove('translate-x-full'); document.getElementById('drawer-overlay').classList.remove('hidden');">
+                            Xử lý <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5 font-bold text-on-surface">CO-202310-048</td>
+<td class="px-6 py-5">
+<p class="font-semibold">Trần Thị B</p>
+<p class="text-xs text-on-surface-variant">0988776655</p>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 bg-surface-container rounded-md font-medium text-xs">P.105 - Cơ sở 2</span>
+</td>
+<td class="px-6 py-5 text-on-surface-variant">25/10/2023</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase bg-secondary/10 text-secondary border border-secondary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Chờ đối soát
+</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-container transition-colors font-bold text-xs uppercase" onclick="document.getElementById('settlement-drawer').classList.remove('translate-x-full'); document.getElementById('drawer-overlay').classList.remove('hidden');">
+                            Xử lý <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5 font-bold text-on-surface">CO-202310-042</td>
+<td class="px-6 py-5">
+<p class="font-semibold">Phạm Thị D</p>
+<p class="text-xs text-on-surface-variant">0987654321</p>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 bg-surface-container rounded-md font-medium text-xs">P.401 - Cơ sở 2</span>
+</td>
+<td class="px-6 py-5 text-on-surface-variant">20/10/2023</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase bg-primary/10 text-primary border border-primary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Đã quyết toán
+</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="inline-flex items-center px-4 py-2 border border-outline-variant text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors font-bold text-xs uppercase" onclick="document.getElementById('view-only-drawer').classList.remove('hidden'); document.getElementById('drawer-overlay').classList.remove('hidden');">
+                            Xem chi tiết
+                        </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-6 bg-surface-container-lowest border-t border-outline-variant flex items-center justify-between">
+<p class="text-sm text-on-surface-variant font-medium">Đang hiển thị 1-10 trên 42 kết quả</p>
+<div class="flex items-center gap-2">
+<button class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container-high disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center bg-primary text-on-primary rounded-lg font-bold">1</button>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-medium">2</button>
+<button class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container-high">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Overlay -->
+<div class="fixed inset-0 bg-inverse-surface/50 backdrop-blur-sm z-30 transition-opacity hidden" id="drawer-overlay" onclick="document.getElementById('settlement-drawer').classList.add('translate-x-full'); document.getElementById('view-only-drawer').classList.add('hidden'); this.classList.add('hidden');"></div>
+<!-- Settlement Drawer -->
+<div class="fixed top-0 right-0 h-full w-full md:w-[600px] bg-surface-container-lowest shadow-2xl z-40 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" id="settlement-drawer">
+<!-- Drawer Header -->
+<div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<div>
+<h2 class="font-headline text-xl font-bold text-on-surface">Chi tiết quyết toán</h2>
+<p class="text-sm text-on-surface-variant mt-1">Mã phiếu: CO-202310-045</p>
+</div>
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-full transition-colors" onclick="document.getElementById('settlement-drawer').classList.add('translate-x-full'); document.getElementById('drawer-overlay').classList.add('hidden');">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Drawer Content -->
+<div class="flex-1 overflow-y-auto p-6 bg-surface-bright space-y-6">
+<!-- Customer Info -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant">
+<h3 class="font-semibold text-on-surface mb-4 flex items-center gap-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-primary">person</span> Thông tin khách thuê &amp; Hợp đồng
+                </h3>
+<div class="grid grid-cols-2 gap-4 text-sm">
+<div>
+<p class="text-on-surface-variant mb-1">Khách hàng</p>
+<p class="font-medium text-on-surface">Nguyễn Văn A</p>
+</div>
+<div>
+<p class="text-on-surface-variant mb-1">Số điện thoại</p>
+<p class="font-medium text-on-surface">0901234567</p>
+</div>
+<div>
+<p class="text-on-surface-variant mb-1">Phòng</p>
+<p class="font-medium text-on-surface">P.302 - Cơ sở 1</p>
+</div>
+<div>
+<p class="text-on-surface-variant mb-1">Hợp đồng</p>
+<p class="font-medium text-on-surface text-primary hover:underline cursor-pointer">HD-202301-089</p>
+</div>
+</div>
+</div>
+<!-- Financials: Deposit -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant">
+<h3 class="font-semibold text-on-surface mb-4 flex items-center gap-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-primary">account_balance</span> Thông tin cọc
+                </h3>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Tiền cọc ban đầu</span>
+<span class="font-medium text-on-surface">5.000.000 ₫</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Tỷ lệ hoàn cọc (Theo HĐ)</span>
+<span class="font-medium text-on-surface">100%</span>
+</div>
+<div class="flex justify-between items-center pt-2 border-t border-outline-variant/50">
+<span class="font-medium text-on-surface">Số tiền cọc được hoàn</span>
+<span class="font-bold text-primary text-lg">5.000.000 ₫</span>
+</div>
+</div>
+</div>
+<!-- Deductions -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-error/30">
+<h3 class="font-semibold text-error mb-4 flex items-center gap-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined">money_off</span> Các khoản khấu trừ
+                </h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Tiền nhà còn nợ</span>
+<span class="font-medium text-on-surface">- 0 ₫</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Dịch vụ còn nợ (Điện, Nước)</span>
+<span class="font-medium text-error">- 350.000 ₫</span>
+</div>
+<div class="pt-2">
+<div class="flex justify-between items-center text-sm mb-2">
+<span class="text-on-surface-variant font-medium">Chi phí sửa chữa/mất mát</span>
+<span class="font-medium text-error">- 400.000 ₫</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg text-xs space-y-2">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">• Hư hỏng khóa cửa phòng</span>
+<span class="">250.000 ₫</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">• Mất 1 thẻ từ</span>
+<span class="">150.000 ₫</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Phạt vi phạm (nếu có)</span>
+<span class="font-medium text-on-surface">- 0 ₫</span>
+</div>
+<div class="flex justify-between items-center pt-3 border-t border-error/20">
+<span class="font-medium text-on-surface">Tổng khấu trừ</span>
+<span class="font-bold text-error">750.000 ₫</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Drawer Footer / Final Result -->
+<div class="border-t border-outline-variant bg-surface-container-lowest p-6 mt-auto">
+<div class="flex justify-between items-center mb-6 p-4 bg-tertiary-fixed rounded-xl border border-tertiary-fixed-dim">
+<span class="font-headline text-lg font-bold text-on-tertiary-fixed">Số tiền hoàn thực tế</span>
+<span class="font-headline text-2xl font-bold text-primary">4.250.000 ₫</span>
+</div>
+<div class="flex gap-4">
+<button class="flex-1 px-4 py-3 border border-outline text-on-surface font-bold rounded-lg hover:bg-surface-container-low transition-colors text-xs uppercase">
+                    In phiếu
+                </button>
+<button class="flex-[2] px-4 py-3 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary-container shadow-md shadow-primary/20 transition-all text-xs uppercase flex justify-center items-center gap-2">
+<span class="material-symbols-outlined">check_circle</span> Xác nhận quyết toán
+                </button>
+</div>
+</div>
+</div>
+<!-- View Detail Modal -->
+<div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] md:w-[600px] max-h-[90vh] bg-surface-container-lowest shadow-2xl z-40 rounded-xl flex flex-col border border-outline-variant hidden" id="view-only-drawer">
+<div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<div><h2 class="font-headline text-xl font-bold text-on-surface">Chi tiết quyết toán</h2><p class="text-sm text-on-surface-variant mt-1">Mã phiếu: CO-202310-042</p></div>
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-full transition-colors" onclick="document.getElementById('view-only-drawer').classList.add('hidden'); document.getElementById('drawer-overlay').classList.add('hidden');">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 bg-surface-bright space-y-6">
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant">
+<h3 class="font-semibold text-on-surface mb-4 flex items-center gap-2 border-b border-outline-variant pb-2"><span class="material-symbols-outlined text-primary">person</span> Thông tin khách thuê &amp; Hợp đồng</h3>
+<div class="grid grid-cols-2 gap-4 text-sm">
+<div><p class="text-on-surface-variant mb-1">Khách hàng</p><p class="font-medium text-on-surface">Phạm Thị D</p></div>
+<div><p class="text-on-surface-variant mb-1">Số điện thoại</p><p class="font-medium text-on-surface">0987654321</p></div>
+<div><p class="text-on-surface-variant mb-1">Phòng</p><p class="font-medium text-on-surface">P.401 - Cơ sở 2</p></div>
+<div><p class="text-on-surface-variant mb-1">Hợp đồng</p><p class="font-medium text-on-surface text-primary hover:underline cursor-pointer">HD-202301-102</p></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant">
+<h3 class="font-semibold text-on-surface mb-4 flex items-center gap-2 border-b border-outline-variant pb-2"><span class="material-symbols-outlined text-primary">account_balance</span> Thông tin cọc</h3>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-sm"><span class="text-on-surface-variant">Tiền cọc ban đầu</span><span class="font-medium text-on-surface">5.000.000 ₫</span></div>
+<div class="flex justify-between items-center text-sm"><span class="text-on-surface-variant">Tỷ lệ hoàn cọc (Theo HĐ)</span><span class="font-medium text-on-surface">100%</span></div>
+<div class="flex justify-between items-center pt-2 border-t border-outline-variant/50"><span class="font-medium text-on-surface">Số tiền cọc được hoàn</span><span class="font-bold text-primary text-lg">5.000.000 ₫</span></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-error/30">
+<h3 class="font-semibold text-error mb-4 flex items-center gap-2 border-b border-outline-variant pb-2"><span class="material-symbols-outlined">money_off</span> Các khoản khấu trừ</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-sm"><span class="text-on-surface-variant">Tiền nhà còn nợ</span><span class="font-medium text-on-surface">- 0 ₫</span></div>
+<div class="flex justify-between items-center text-sm"><span class="text-on-surface-variant">Dịch vụ còn nợ (Điện, Nước)</span><span class="font-medium text-error">- 0 ₫</span></div>
+<div class="flex justify-between items-center pt-3 border-t border-error/20"><span class="font-medium text-on-surface">Tổng khấu trừ</span><span class="font-bold text-error">0 ₫</span></div>
+</div>
+</div>
+</div>
+<div class="border-t border-outline-variant bg-surface-container-lowest p-6 mt-auto">
+<button class="w-full px-4 py-3 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary-container shadow-md shadow-primary/20 transition-all text-xs uppercase" onclick="document.getElementById('view-only-drawer').classList.add('hidden'); document.getElementById('drawer-overlay').classList.add('hidden');">Đóng</button>
+</div>
+</div>
+
+```</body></html>

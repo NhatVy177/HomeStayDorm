@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { dangKyThueApi } from './dangKyThue.api.js';
 
-const HINH_THUC_OPTIONS = ['Ghép', 'Nguyên căn'];
+const HINH_THUC_OPTIONS = ['Ghép nam', 'Ghép nữ', 'Nguyên căn'];
 
 const INITIAL_FORM = {
   soNguoiO: '',
@@ -55,7 +55,12 @@ export default function DangKyThuePage() {
         mucGia:          form.mucGia           ? Number(form.mucGia) : undefined,
         ngayDuKienVaoO:  form.ngayDuKienVaoO,
         thoiHanThue:     form.thoiHanThue      ? Number(form.thoiHanThue) : undefined,
-        ghiChu:          form.ghiChu           || undefined
+        ghiChu:          [
+          form.ghiChu,
+          form.hinhThucThue && form.hinhThucThue !== 'Nguyên căn'
+            ? `Hình thức mong muốn: ${form.hinhThucThue}`
+            : ''
+        ].filter(Boolean).join('\n') || undefined
       });
 
       // Bước 7 UC: Thông báo thành công

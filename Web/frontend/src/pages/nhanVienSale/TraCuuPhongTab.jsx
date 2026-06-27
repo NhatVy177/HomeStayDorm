@@ -1,0 +1,182 @@
+import React, { useState } from 'react';
+import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
+
+const rooms = [
+  { id: 'P.402', name: 'Luxury Studio - City View', subName: 'Homestay Sunside', area: 'Quận 1, Đa Kao', type: 'Nguyên phòng', price: '7.500.000đ', available: 0, capacity: 2, status: 'TRỐNG' },
+  { id: 'G.B02', name: 'Giường B2 - Dorm Nữ A', subName: 'Dorm Central Park', area: 'Bình Thạnh', type: 'Thuê giường', price: '2.200.000đ', available: 4, capacity: 8, status: 'CÒN CHỖ' },
+  { id: 'G.A01', name: 'Giường A1 - Dorm Nam', subName: 'Green Dorm House', area: 'Quận 3', type: 'Thuê giường', price: '2.500.000đ', available: 1, capacity: 6, status: 'CÒN CHỖ' }
+];
+
+export default function TraCuuPhongTab() {
+  const [viewRoom, setViewRoom] = useState(null);
+
+  return (
+    <div className="ktp-container">
+      
+      <div style={{ backgroundColor: '#eef6f6', border: '1px solid #cce3e3', borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ backgroundColor: '#2f6765', color: '#fff', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon name="info" style={{ fontSize: '18px' }} />
+        </div>
+        <div style={{ fontSize: '13px', color: '#3f494a', lineHeight: '1.5', fontWeight: '500' }}>
+          Chọn tiêu chí để kiểm tra tình trạng phòng/giường phù hợp với nhu cầu thuê. Hệ thống sẽ tự động cập nhật số lượng trống theo thời gian thực.
+        </div>
+      </div>
+
+      <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #e0e3e3', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700', color: '#3f494a' }}>
+            <Icon name="tune" style={{ color: '#2f6765' }} /> Bộ lọc tìm kiếm
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <span style={{ color: '#2f6765', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>Xóa bộ lọc</span>
+            <button style={{ padding: '10px 24px', borderRadius: '6px', border: 'none', backgroundColor: '#347a78', color: '#fff', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}>Áp dụng bộ lọc</button>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+          <div>
+            <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Khu vực</label>
+            <select className="ktp-input" style={{ backgroundColor: '#f4f7f7', border: 'none' }}><option>Tất cả khu vực</option></select>
+          </div>
+          <div>
+            <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Loại phòng</label>
+            <select className="ktp-input" style={{ backgroundColor: '#f4f7f7', border: 'none' }}><option>Tất cả loại phòng</option></select>
+          </div>
+          <div>
+            <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Hình thức thuê</label>
+            <select className="ktp-input" style={{ backgroundColor: '#f4f7f7', border: 'none' }}><option>Tất cả hình thức</option></select>
+          </div>
+          <div>
+            <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Mức giá (Triệu VNĐ)</label>
+            <select className="ktp-input" style={{ backgroundColor: '#f4f7f7', border: 'none' }}><option>Tất cả</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e0e3e3', overflow: 'hidden' }}>
+        <table className="ktp-table" style={{ margin: 0 }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f4f7f7' }}>
+              <th style={{ color: '#3f494a', fontSize: '12px' }}>Mã phòng</th>
+              <th style={{ color: '#3f494a', fontSize: '12px' }}>Tên phòng/Dorm</th>
+              <th style={{ color: '#3f494a', fontSize: '12px' }}>Khu vực</th>
+              <th style={{ color: '#3f494a', fontSize: '12px' }}>Loại / Hình thức</th>
+              <th style={{ color: '#3f494a', fontSize: '12px' }}>Giá thuê</th>
+              <th style={{ color: '#3f494a', fontSize: '12px' }}>Trống / Sức chứa</th>
+              <th style={{ color: '#3f494a', fontSize: '12px' }}>Tình trạng</th>
+              <th className="text-center" style={{ color: '#3f494a', fontSize: '12px' }}>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rooms.map(r => (
+              <tr key={r.id}>
+                <td style={{ fontWeight: '800', color: '#2f6765', fontSize: '13px' }}>{r.id}</td>
+                <td>
+                  <div style={{ fontWeight: '600', color: '#3f494a', fontSize: '13px' }}>{r.name}</div>
+                  <div style={{ color: '#6f797a', fontSize: '12px', marginTop: '4px' }}>{r.subName}</div>
+                </td>
+                <td style={{ color: '#6f797a', fontSize: '13px' }}>{r.area.split(',').map((p,i)=><div key={i}>{p.trim()}</div>)}</td>
+                <td style={{ color: '#3f494a', fontSize: '13px' }}>{r.type}</td>
+                <td style={{ fontWeight: '700', color: '#a43c12', fontSize: '13px' }}>{r.price}</td>
+                <td>
+                  <span style={{ color: '#1b6f6d', fontWeight: '700' }}>{r.available}</span>
+                  <span style={{ color: '#9eaaab' }}> / {r.capacity}</span>
+                </td>
+                <td>
+                  <span style={{ backgroundColor: '#eaf6ed', color: '#188038', padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '800' }}>{r.status}</span>
+                </td>
+                <td className="text-center">
+                  <button onClick={() => setViewRoom(r)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #bec8c9', backgroundColor: '#fff', color: '#1b6f6d', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}>Xem<br/>chi tiết</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e0e3e3' }}>
+          <span style={{ fontSize: '13px', color: '#6f797a' }}>Hiển thị 1 - 3 trên 30 kết quả</span>
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <button style={{ padding: '4px 8px', border: '1px solid #e0e3e3', backgroundColor: '#fff', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#9eaaab' }}><Icon name="chevron_left" style={{ fontSize: '14px' }}/></button>
+            <button style={{ padding: '4px 10px', border: 'none', backgroundColor: '#2f6765', color: '#fff', borderRadius: '4px', fontWeight: '700', fontSize: '12px' }}>1</button>
+            <button style={{ padding: '4px 10px', border: '1px solid #e0e3e3', backgroundColor: '#fff', borderRadius: '4px', color: '#3f494a', fontSize: '12px' }}>2</button>
+            <button style={{ padding: '4px 10px', border: '1px solid #e0e3e3', backgroundColor: '#fff', borderRadius: '4px', color: '#3f494a', fontSize: '12px' }}>3</button>
+            <button style={{ padding: '4px 8px', border: '1px solid #e0e3e3', backgroundColor: '#fff', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6f797a' }}><Icon name="chevron_right" style={{ fontSize: '14px' }}/></button>
+          </div>
+        </div>
+      </div>
+
+      {viewRoom && (
+        <div className="ktp-modal-overlay" onClick={() => setViewRoom(null)}>
+          <div className="ktp-modal" onClick={e => e.stopPropagation()} style={{ width: '800px', padding: 0 }}>
+            <div className="ktp-modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid #e0e3e3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', color: '#191c1d', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800' }}><Icon name="apartment" style={{ color: '#1b6f6d' }} /> Chi tiết phòng / giường</h3>
+              <button onClick={() => setViewRoom(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6f797a', display: 'flex', alignItems: 'center' }}><Icon name="close" /></button>
+            </div>
+            <div className="ktp-modal-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '8px', backgroundColor: '#e0e3e3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold', color: '#1b6f6d', overflow: 'hidden' }}>
+                  <Icon name="meeting_room" style={{ fontSize: '32px' }} />
+                </div>
+                <div>
+                  <h2 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: '800', color: '#191c1d' }}>{viewRoom.name}</h2>
+                  <div style={{ fontSize: '12px', color: '#1b6f6d', fontWeight: '700' }}>MÃ PHÒNG: {viewRoom.id}</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', borderTop: '1px solid #e0e3e3', borderBottom: '1px solid #e0e3e3', padding: '24px 0' }}>
+                <div><div style={{ fontSize: '10px', color: '#6f797a', fontWeight: '700', textTransform: 'uppercase', marginBottom: '6px' }}>Hình thức thuê</div><div style={{ fontSize: '13px', fontWeight: '700', color: '#191c1d' }}>{viewRoom.type}</div></div>
+                <div><div style={{ fontSize: '10px', color: '#6f797a', fontWeight: '700', textTransform: 'uppercase', marginBottom: '6px' }}>Khu vực</div><div style={{ fontSize: '13px', fontWeight: '700', color: '#191c1d' }}>{viewRoom.area}</div></div>
+                <div><div style={{ fontSize: '10px', color: '#6f797a', fontWeight: '700', textTransform: 'uppercase', marginBottom: '6px' }}>Sức chứa</div><div style={{ fontSize: '13px', fontWeight: '700', color: '#191c1d' }}>{viewRoom.capacity} Người</div></div>
+                <div><div style={{ fontSize: '10px', color: '#6f797a', fontWeight: '700', textTransform: 'uppercase', marginBottom: '6px' }}>Giá thuê</div><div style={{ fontSize: '13px', fontWeight: '700', color: '#a43c12' }}>{viewRoom.price}</div></div>
+                <div><div style={{ fontSize: '10px', color: '#6f797a', fontWeight: '700', textTransform: 'uppercase', marginBottom: '6px' }}>Tình trạng</div><div style={{ fontSize: '13px', fontWeight: '700', color: '#188038' }}>{viewRoom.status}</div></div>
+                <div><div style={{ fontSize: '10px', color: '#6f797a', fontWeight: '700', textTransform: 'uppercase', marginBottom: '6px' }}>Tòa nhà</div><div style={{ fontSize: '13px', fontWeight: '700', color: '#1b6f6d' }}>{viewRoom.subName}</div></div>
+                
+                <div style={{ gridColumn: '1/-1' }}>
+                  <div style={{ backgroundColor: '#f4f7f7', borderRadius: '8px', padding: '16px', display: 'flex', gap: '8px', border: '1px solid #e0e3e3' }}>
+                    <Icon name="edit_note" style={{ color: '#6f797a', fontSize: '18px' }} />
+                    <span style={{ fontSize: '13px', color: '#6f797a', fontWeight: '500' }}>Ghi chú: Phòng đầy đủ tiện nghi, có máy lạnh, máy nước nóng, dọn dẹp hàng tuần.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: '800', color: '#1b6f6d', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase' }}><Icon name="person" /> KHÁCH ĐANG THUÊ HIỆN TẠI</h4>
+                <div style={{ borderRadius: '8px', border: '1px solid #e0e3e3', overflow: 'hidden' }}>
+                  <table className="ktp-table" style={{ margin: 0, border: 'none' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#f4f7f7' }}>
+                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Mã KH</th>
+                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Họ tên</th>
+                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Số điện thoại</th>
+                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Thời gian thuê</th>
+                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewRoom.available < viewRoom.capacity ? (
+                        <tr>
+                          <td style={{ color: '#1b6f6d', fontWeight: '700' }}>KH-0012</td>
+                          <td style={{ color: '#3f494a', fontWeight: '500' }}>Nguyễn Văn A</td>
+                          <td style={{ color: '#6f797a', fontSize: '13px' }}>0901 234 567</td>
+                          <td style={{ color: '#6f797a', fontSize: '13px' }}>01/01/24 - 01/01/25</td>
+                          <td><span style={{ backgroundColor: '#e8f4f4', color: '#1b6f6d', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '700' }}>Đang ở</span></td>
+                        </tr>
+                      ) : (
+                        <tr>
+                          <td colSpan="5" style={{ textAlign: 'center', color: '#9eaaab', padding: '24px' }}>Chưa có khách thuê</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+            <div className="ktp-modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e0e3e3', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#f9fafa', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
+              <button onClick={() => setViewRoom(null)} style={{ padding: '10px 24px', borderRadius: '8px', border: '1px solid #bec8c9', backgroundColor: '#fff', color: '#191c1d', fontWeight: '700', cursor: 'pointer' }}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

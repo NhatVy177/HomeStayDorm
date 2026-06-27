@@ -18,11 +18,12 @@ export async function createHoSoDangKy(data = {}) {
   }
 
   // Kiểm tra thông tin bắt buộc phía service (A4 trong UC)
-  const hinhThucThue = String(data.hinhThucThue || '').trim();
+  const hinhThucThueRaw = String(data.hinhThucThue || '').trim();
+  const hinhThucThue = hinhThucThueRaw === 'Nguyên căn' ? 'Nguyên căn' : 'Ghép';
   const soNguoiO    = Number(data.soNguoiO);
   const ngayDuKienVaoO = data.ngayDuKienVaoO || null;
 
-  if (!hinhThucThue) {
+  if (!hinhThucThueRaw) {
     throw createServiceError('Vui lòng chọn hình thức thuê.');
   }
   if (!soNguoiO || soNguoiO < 1) {

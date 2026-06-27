@@ -89,6 +89,23 @@ export default function PortalIcon({ name }) {
         <path d="m21 8-9-5-9 5 9 5 9-5Z" />
         <path d="M3 8v8l9 5 9-5V8M12 13v8" />
       </>
+    ),
+    eye: (
+      <>
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </>
+    ),
+    close: (
+      <>
+        <path d="M18 6 6 18M6 6l12 12" />
+      </>
+    ),
+    chart: (
+      <>
+        <path d="M3 3v18h18" />
+        <path d="m19 9-5 5-4-4-3 3" />
+      </>
     )
   };
 

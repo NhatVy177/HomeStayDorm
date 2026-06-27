@@ -39,6 +39,9 @@ export function AuthProvider({ children }) {
     } finally {
       clearSession();
       setUser(null);
+      if (window.location.pathname !== '/') {
+        window.location.assign('/');
+      }
     }
   }
 

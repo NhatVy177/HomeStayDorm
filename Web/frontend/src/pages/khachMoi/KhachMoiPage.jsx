@@ -69,15 +69,13 @@ function statusTone(status) {
 
 function Brand() {
   return (
-    <span className="km-brand">
-      <span className="km-brand-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M3.5 11.2 12 4l8.5 7.2" />
-          <path d="M5.5 10.4V20h13v-9.6" />
-          <path d="M9.5 20v-5.8h5V20" />
-        </svg>
+    <span className="km-brand" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00666d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9.5L12 3l9 6.5V21H3V9.5z"/><path d="M9 21V12h6v9"/>
+      </svg>
+      <span style={{ fontSize: '19px', fontFamily: '"Montserrat", "Inter", sans-serif', fontWeight: '700', letterSpacing: '0' }}>
+        <span style={{ color: '#00666d' }}>Homestay</span><span style={{ color: '#a43c12' }}>Dorm</span>
       </span>
-      <span className="km-brand-name">Homestay <strong>Dorm</strong></span>
     </span>
   );
 }

@@ -14,6 +14,7 @@ import nhanPhongRoutes from './routes/nhanPhong.routes.js';
 import traPhongRoutes from './routes/traPhong.routes.js';
 import suaChuaBaoTriRoutes from './routes/suaChuaBaoTri.routes.js';
 import khachMoiRoutes from './routes/khachMoi.routes.js';
+import trangChuRoutes from './routes/trangChu.routes.js';
 
 // Load bien moi truong trong file .env
 dotenv.config();
@@ -45,6 +46,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/trang-chu', trangChuRoutes); // Public — no auth
 
 // Moi luong nghiep vu co route rieng, de nhom tach code de hon
 app.use('/api/dang-ky-thue', requireAuth, dangKyThueRoutes);
