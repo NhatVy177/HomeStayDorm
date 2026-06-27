@@ -195,170 +195,321 @@ select {
   background: #4b5563;
 }
 
-.auth-page {
-  --auth-green: #2fb7a4;
-  --auth-green-dark: #16796f;
-  --auth-green-soft: #e8fbf7;
-  --auth-orange: #e86f51;
-  --auth-orange-dark: #bf4c32;
-  --auth-text: #243b3a;
-  --auth-muted: #667b78;
-  --auth-line: #d7eee9;
-  align-items: center;
-  background:
-    radial-gradient(circle at 11% 18%, rgba(47, 183, 164, 0.17), transparent 31%),
-    radial-gradient(circle at 88% 14%, rgba(232, 111, 81, 0.13), transparent 28%),
-    linear-gradient(180deg, #f8fffc 0%, #f4fbf8 100%);
-  color: var(--auth-text);
+.auth-page-split {
+  --auth-green: #00666d;
+  --auth-green-dark: #004f55;
+  --auth-green-soft: #f0f8f8;
+  --auth-orange: #a43c12;
+  --auth-orange-dark: #8b3009;
+  --auth-text: #1c2020;
+  --auth-muted: #4e5c5d;
+  --auth-line: #cedada;
   display: flex;
-  font-family: "Inter", "Be Vietnam Pro", "Segoe UI", sans-serif;
-  justify-content: center;
   min-height: 100vh;
-  padding: 32px 20px;
+  width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  background: var(--auth-green-soft);
 }
 
-.auth-panel {
+/* ── LEFT PANEL: ART SHOWCASE ── */
+.auth-showcase-panel {
+  flex: 0 0 58%;
+  background: linear-gradient(135deg, #002c30 0%, #001214 100%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+  color: #fff;
+  border-right: 1px solid rgba(0, 102, 109, 0.1);
+}
+
+/* Glowing Sphere Animation */
+.auth-glow-sphere {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(114, 213, 223, 0.3) 0%, rgba(0, 102, 109, 0) 70%);
+  filter: blur(40px);
+  top: -150px;
+  right: -100px;
+  z-index: 1;
+  animation: tc-float-glow 12s ease-in-out infinite alternate;
+}
+
+@keyframes tc-float-glow {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 40px) scale(1.1); }
+  100% { transform: translate(20px, -20px) scale(0.95); }
+}
+
+.auth-showcase-brand, 
+.auth-showcase-center, 
+.auth-showcase-footer {
+  position: relative;
+  z-index: 2;
+}
+
+.auth-showcase-logo {
+  display: inline-flex;
   align-items: center;
-  display: grid;
-  gap: 58px;
-  grid-template-columns: minmax(280px, 430px) 400px;
-  max-width: 960px;
-  width: 100%;
-}
-
-.auth-panel.registration {
-  grid-template-columns: minmax(260px, 360px) minmax(450px, 560px);
-  max-width: 1040px;
-}
-
-.auth-logo {
-  color: var(--auth-text);
-  display: inline-block;
-  font-family: "Be Vietnam Pro", "Inter", sans-serif;
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -0.018em;
-  text-decoration: none;
-}
-
-.auth-logo strong {
-  color: var(--auth-green);
+  font-size: 24px;
   font-weight: 800;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+.auth-showcase-logo strong { color: var(--auth-orange); }
+.auth-showcase-logo-icon {
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  color: #72d5df;
+  stroke: currentColor;
 }
 
-.auth-brand h1 {
-  color: var(--auth-text);
-  font-family: "Be Vietnam Pro", "Inter", sans-serif;
-  font-size: 42px;
-  letter-spacing: -1px;
-  line-height: 1.12;
-  margin: 18px 0 14px;
+.auth-showcase-center {
+  max-width: 540px;
+  margin: auto 0;
+  padding: 40px 0;
 }
 
-.auth-brand p {
-  color: var(--auth-muted);
-  font-size: 17px;
-  line-height: 1.55;
-  margin: 0;
+.auth-showcase-title {
+  font-size: clamp(28px, 4.5vw, 42px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 16px;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+.auth-showcase-subtitle {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #9ab0b2;
+  margin: 0 0 40px;
+}
+
+/* Glassmorphism Testimonial Card */
+.showcase-glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  animation: tc-card-float 6s ease-in-out infinite;
+}
+
+@keyframes tc-card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.showcase-glass-stars {
+  color: #72d5df;
+  font-size: 18px;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+}
+
+.showcase-glass-text {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #e2ecec;
+  margin: 0 0 20px;
+  font-style: italic;
+}
+
+.showcase-glass-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.showcase-glass-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.showcase-glass-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.showcase-glass-role {
+  font-size: 12px;
+  color: #9ab0b2;
+  margin-top: 1px;
+}
+
+.auth-showcase-footer {
+  font-size: 12.5px;
+  color: #617778;
+}
+
+
+/* ── RIGHT PANEL: WORKSPACE FORM ── */
+.auth-form-panel {
+  flex: 0 0 42%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--auth-green-soft);
+}
+
+.auth-form-container {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Double Bezel for Standalone Card */
+.auth-card-outer {
+  background: rgba(0, 102, 109, 0.02);
+  border: 1px solid rgba(0, 102, 109, 0.05);
+  padding: 8px;
+  border-radius: 28px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 32, 34, 0.02);
 }
 
 .auth-card {
   background: white;
-  border: 1px solid var(--auth-line);
-  border-radius: 28px;
-  box-shadow: 0 14px 35px rgba(22, 121, 111, 0.1);
+  border: 1px solid rgba(0, 102, 109, 0.03);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
   padding: 32px;
   width: 100%;
 }
 
 .auth-card h2 {
   color: var(--auth-text);
-  font-family: "Be Vietnam Pro", "Inter", sans-serif;
-  font-size: 27px;
-  margin: 0 0 7px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
 }
 
 .auth-subtitle {
   color: var(--auth-muted);
-  margin: 0 0 22px;
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.auth-page .form-control {
+.auth-page-split .form-control {
   color: var(--auth-text);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 13.5px;
 }
 
-.auth-page .form-control input,
-.auth-page .form-control select {
-  background: #fbfffd;
-  border-color: var(--auth-line);
-  border-radius: 16px;
-  padding: 13px 14px;
+.auth-page-split .form-control input,
+.auth-page-split .form-control select {
+  background: var(--auth-green-soft);
+  border: 1px solid var(--auth-line);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  color: var(--auth-text);
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.auth-page .form-control input:focus,
-.auth-page .form-control select:focus {
+.auth-page-split .form-control input:focus,
+.auth-page-split .form-control select:focus {
   border-color: var(--auth-green);
-  box-shadow: 0 0 0 4px rgba(47, 183, 164, 0.18);
+  box-shadow: 0 0 0 3px rgba(0, 102, 109, 0.12);
+  background: #ffffff;
 }
 
-.auth-page .required-mark {
+.auth-page-split .required-mark {
   color: var(--auth-orange);
 }
 
-.auth-page .primary-button {
-  background: linear-gradient(135deg, var(--auth-orange), var(--auth-orange-dark));
+.auth-page-split .primary-button {
+  background: var(--auth-orange);
   border-radius: 999px;
-  box-shadow: 0 12px 26px rgba(232, 111, 81, 0.3);
+  box-shadow: 0 6px 16px rgba(164, 60, 18, 0.22);
   color: white;
-  transition: 0.22s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+  padding: 12px 24px;
+  font-size: 14.5px;
+  font-weight: 700;
 }
 
-.auth-page .primary-button:hover {
-  background: linear-gradient(135deg, var(--auth-orange), var(--auth-orange-dark));
-  box-shadow: 0 16px 30px rgba(232, 111, 81, 0.36);
-  transform: translateY(-2px);
+.auth-page-split .primary-button:hover {
+  background: var(--auth-orange-dark);
+  box-shadow: 0 10px 22px rgba(164, 60, 18, 0.35);
+  transform: translateY(-1.5px);
+}
+
+.auth-page-split .primary-button:active {
+  transform: scale(0.98);
 }
 
 .auth-row {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   grid-template-columns: 1fr 1fr;
 }
 
 .auth-submit {
-  margin-top: 10px;
+  margin-top: 12px;
   width: 100%;
 }
 
 .auth-switch {
   color: var(--auth-muted);
-  font-size: 14px;
-  margin: 22px 0 0;
+  font-size: 13.5px;
+  margin: 24px 0 0;
   text-align: center;
 }
 
 .auth-switch a {
-  color: var(--auth-green-dark);
-  font-weight: 600;
+  color: var(--auth-green);
+  font-weight: 700;
   text-decoration: none;
 }
 
+.auth-switch a:hover {
+  color: var(--auth-green-dark);
+  text-decoration: underline;
+}
+
 .form-message {
-  border-radius: 8px;
-  font-size: 14px;
-  margin: 0 0 16px;
-  padding: 11px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border: 1px solid transparent;
 }
 
 .form-message.error {
-  background: #fff1ed;
-  color: var(--auth-orange-dark);
+  background: #fff5f5;
+  color: #c53030;
+  border-color: #fed7d7;
 }
 
 .auth-loading {
   align-items: center;
-  color: #475569;
+  color: #4e5c5d;
   display: flex;
   justify-content: center;
   min-height: 100vh;
@@ -386,6 +537,20 @@ select {
 
   .auth-brand h1 {
     font-size: 34px;
+  }
+}
+
+@media (max-width: 960px) {
+  .auth-page-split {
+    flex-direction: column;
+  }
+  .auth-showcase-panel {
+    display: none;
+  }
+  .auth-form-panel {
+    flex: 1;
+    width: 100%;
+    padding: 32px 16px;
   }
 }
 

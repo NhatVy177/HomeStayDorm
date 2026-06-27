@@ -32,11 +32,46 @@ const TESTIMONIALS = [
 ];
 
 const PROCESS_STEPS = [
-  { step: '01', icon: '📝', title: 'Đăng ký tài khoản', desc: 'Tạo tài khoản khách hàng miễn phí và điền thông tin cá nhân cần thiết.' },
-  { step: '02', icon: '🔍', title: 'Tìm & xem phòng', desc: 'Lọc phòng theo khu vực, loại phòng, giá thuê và xem chi tiết tiện ích.' },
-  { step: '03', icon: '💰', title: 'Đặt cọc xác nhận', desc: 'Nhân viên xác nhận thông tin và hướng dẫn bạn hoàn tất đặt cọc nhanh chóng.' },
-  { step: '04', icon: '🏠', title: 'Nhận phòng & ở', desc: 'Nhận bàn giao phòng, ký hợp đồng và bắt đầu cuộc sống mới tiện nghi.' },
+  { step: '01', icon: 'register', title: 'Đăng ký tài khoản', desc: 'Tạo tài khoản khách hàng miễn phí và điền thông tin cá nhân cần thiết.' },
+  { step: '02', icon: 'search', title: 'Tìm & xem phòng', desc: 'Lọc phòng theo khu vực, loại phòng, giá thuê và xem chi tiết tiện ích.' },
+  { step: '03', icon: 'deposit', title: 'Đặt cọc xác nhận', desc: 'Nhân viên xác nhận thông tin và hướng dẫn bạn hoàn tất đặt cọc nhanh chóng.' },
+  { step: '04', icon: 'home', title: 'Nhận phòng & ở', desc: 'Nhận bàn giao phòng, ký hợp đồng và bắt đầu cuộc sống mới tiện nghi.' },
 ];
+
+function ProcessIcon({ name }) {
+  const icons = {
+    register: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="tc-step-svg">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <circle cx="9" cy="9" r="1" />
+      </svg>
+    ),
+    search: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="tc-step-svg">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        <path d="M11 8v6M8 11h6" />
+      </svg>
+    ),
+    deposit: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="tc-step-svg">
+        <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
+        <line x1="2" y1="10" x2="22" y2="10" />
+        <path d="M12 14v2M8 15h8" />
+      </svg>
+    ),
+    home: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="tc-step-svg">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    ),
+  };
+  return icons[name] || null;
+}
 
 // ────────────────────────────────────────────────────────────
 // Auth Modal (Đăng nhập / Đăng ký inline)
@@ -102,122 +137,124 @@ function AuthModal({ mode, onClose, onSwitchMode }) {
 
   return (
     <div className="tc-modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
-      <div className="tc-modal" role="dialog" aria-modal="true">
-        {/* Tabs */}
-        <div className="tc-modal-tabs">
-          <button
-            className={`tc-modal-tab ${mode === 'login' ? 'tc-modal-tab--active' : ''}`}
-            onClick={() => { setError(''); onSwitchMode('login'); }}
-            type="button"
-          >Đăng nhập</button>
-          <button
-            className={`tc-modal-tab ${mode === 'register' ? 'tc-modal-tab--active' : ''}`}
-            onClick={() => { setError(''); onSwitchMode('register'); }}
-            type="button"
-          >Đăng ký</button>
-          <button className="tc-modal-close-btn" onClick={onClose} type="button" aria-label="Đóng">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+      <div className="tc-modal-outer">
+        <div className="tc-modal tc-modal-inner" role="dialog" aria-modal="true">
+          {/* Tabs */}
+          <div className="tc-modal-tabs">
+            <button
+              className={`tc-modal-tab ${mode === 'login' ? 'tc-modal-tab--active' : ''}`}
+              onClick={() => { setError(''); onSwitchMode('login'); }}
+              type="button"
+            >Đăng nhập</button>
+            <button
+              className={`tc-modal-tab ${mode === 'register' ? 'tc-modal-tab--active' : ''}`}
+              onClick={() => { setError(''); onSwitchMode('register'); }}
+              type="button"
+            >Đăng ký</button>
+            <button className="tc-modal-close-btn" onClick={onClose} type="button" aria-label="Đóng">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Error */}
+          {error && <div className="tc-modal-error">{error}</div>}
+
+          {/* ── LOGIN ── */}
+          {mode === 'login' && (
+            <form className="tc-modal-form" onSubmit={handleLogin}>
+              <div className="tc-modal-header">
+                <span className="tc-modal-emoji">👋</span>
+                <h2>Chào mừng trở lại</h2>
+                <p>Đăng nhập để quản lý thuê phòng của bạn.</p>
+              </div>
+              <label className="tc-form-field">
+                <span>Tên đăng nhập</span>
+                <input name="tenDangNhap" value={loginForm.tenDangNhap} onChange={updateLogin}
+                  placeholder="kh0001" required autoComplete="username" />
+              </label>
+              <label className="tc-form-field">
+                <span>Mật khẩu</span>
+                <input name="matKhau" type="password" value={loginForm.matKhau} onChange={updateLogin}
+                  placeholder="••••••••" required autoComplete="current-password" />
+              </label>
+              <button className="tc-modal-submit" type="submit" disabled={loading}>
+                {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              </button>
+              <p className="tc-modal-switch">
+                Chưa có tài khoản?{' '}
+                <button type="button" onClick={() => { setError(''); onSwitchMode('register'); }}>Đăng ký ngay</button>
+              </p>
+            </form>
+          )}
+
+          {/* ── REGISTER ── */}
+          {mode === 'register' && (
+            <form className="tc-modal-form" onSubmit={handleRegister}>
+              <div className="tc-modal-header">
+                <span className="tc-modal-emoji">🏠</span>
+                <h2>Tạo tài khoản mới</h2>
+                <p>Đăng ký để tìm phòng và quản lý hợp đồng dễ dàng.</p>
+              </div>
+              <label className="tc-form-field">
+                <span>Họ và tên <span className="tc-required">*</span></span>
+                <input name="hoTen" value={regForm.hoTen} onChange={updateReg}
+                  placeholder="Nguyễn Văn An" required />
+              </label>
+              <label className="tc-form-field">
+                <span>Tên đăng nhập <span className="tc-required">*</span></span>
+                <input name="tenDangNhap" value={regForm.tenDangNhap} onChange={updateReg}
+                  placeholder="nguyenvanan" required maxLength={50} autoComplete="username" />
+              </label>
+              <div className="tc-form-row">
+                <label className="tc-form-field">
+                  <span>Giới tính <span className="tc-required">*</span></span>
+                  <select name="gioiTinh" value={regForm.gioiTinh} onChange={updateReg} required>
+                    <option value="">Chọn</option>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                  </select>
+                </label>
+                <label className="tc-form-field">
+                  <span>Ngày sinh <span className="tc-required">*</span></span>
+                  <input name="ngaySinh" type="date" value={regForm.ngaySinh} onChange={updateReg} required />
+                </label>
+              </div>
+              <div className="tc-form-row">
+                <label className="tc-form-field">
+                  <span>Email</span>
+                  <input name="email" type="email" value={regForm.email} onChange={updateReg}
+                    placeholder="ban@example.com" />
+                </label>
+                <label className="tc-form-field">
+                  <span>Số điện thoại <span className="tc-required">*</span></span>
+                  <input name="soDienThoai" type="tel" value={regForm.soDienThoai} onChange={updateReg}
+                    placeholder="0901234567" required />
+                </label>
+              </div>
+              <div className="tc-form-row">
+                <label className="tc-form-field">
+                  <span>Mật khẩu <span className="tc-required">*</span></span>
+                  <input name="matKhau" type="password" value={regForm.matKhau} onChange={updateReg}
+                    placeholder="••••••••" required autoComplete="new-password" />
+                </label>
+                <label className="tc-form-field">
+                  <span>Xác nhận mật khẩu <span className="tc-required">*</span></span>
+                  <input name="xacNhanMatKhau" type="password" value={regForm.xacNhanMatKhau} onChange={updateReg}
+                    placeholder="••••••••" required autoComplete="new-password" />
+                </label>
+              </div>
+              <button className="tc-modal-submit" type="submit" disabled={loading}>
+                {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
+              </button>
+              <p className="tc-modal-switch">
+                Đã có tài khoản?{' '}
+                <button type="button" onClick={() => { setError(''); onSwitchMode('login'); }}>Đăng nhập</button>
+              </p>
+            </form>
+          )}
         </div>
-
-        {/* Error */}
-        {error && <div className="tc-modal-error">{error}</div>}
-
-        {/* ── LOGIN ── */}
-        {mode === 'login' && (
-          <form className="tc-modal-form" onSubmit={handleLogin}>
-            <div className="tc-modal-header">
-              <span className="tc-modal-emoji">👋</span>
-              <h2>Chào mừng trở lại</h2>
-              <p>Đăng nhập để quản lý thuê phòng của bạn.</p>
-            </div>
-            <label className="tc-form-field">
-              <span>Tên đăng nhập</span>
-              <input name="tenDangNhap" value={loginForm.tenDangNhap} onChange={updateLogin}
-                placeholder="kh0001" required autoComplete="username" />
-            </label>
-            <label className="tc-form-field">
-              <span>Mật khẩu</span>
-              <input name="matKhau" type="password" value={loginForm.matKhau} onChange={updateLogin}
-                placeholder="••••••••" required autoComplete="current-password" />
-            </label>
-            <button className="tc-modal-submit" type="submit" disabled={loading}>
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-            </button>
-            <p className="tc-modal-switch">
-              Chưa có tài khoản?{' '}
-              <button type="button" onClick={() => { setError(''); onSwitchMode('register'); }}>Đăng ký ngay</button>
-            </p>
-          </form>
-        )}
-
-        {/* ── REGISTER ── */}
-        {mode === 'register' && (
-          <form className="tc-modal-form" onSubmit={handleRegister}>
-            <div className="tc-modal-header">
-              <span className="tc-modal-emoji">🏠</span>
-              <h2>Tạo tài khoản mới</h2>
-              <p>Đăng ký để tìm phòng và quản lý hợp đồng dễ dàng.</p>
-            </div>
-            <label className="tc-form-field">
-              <span>Họ và tên <span className="tc-required">*</span></span>
-              <input name="hoTen" value={regForm.hoTen} onChange={updateReg}
-                placeholder="Nguyễn Văn An" required />
-            </label>
-            <label className="tc-form-field">
-              <span>Tên đăng nhập <span className="tc-required">*</span></span>
-              <input name="tenDangNhap" value={regForm.tenDangNhap} onChange={updateReg}
-                placeholder="nguyenvanan" required maxLength={50} autoComplete="username" />
-            </label>
-            <div className="tc-form-row">
-              <label className="tc-form-field">
-                <span>Giới tính <span className="tc-required">*</span></span>
-                <select name="gioiTinh" value={regForm.gioiTinh} onChange={updateReg} required>
-                  <option value="">Chọn</option>
-                  <option value="Nam">Nam</option>
-                  <option value="Nữ">Nữ</option>
-                </select>
-              </label>
-              <label className="tc-form-field">
-                <span>Ngày sinh <span className="tc-required">*</span></span>
-                <input name="ngaySinh" type="date" value={regForm.ngaySinh} onChange={updateReg} required />
-              </label>
-            </div>
-            <div className="tc-form-row">
-              <label className="tc-form-field">
-                <span>Email</span>
-                <input name="email" type="email" value={regForm.email} onChange={updateReg}
-                  placeholder="ban@example.com" />
-              </label>
-              <label className="tc-form-field">
-                <span>Số điện thoại <span className="tc-required">*</span></span>
-                <input name="soDienThoai" type="tel" value={regForm.soDienThoai} onChange={updateReg}
-                  placeholder="0901234567" required />
-              </label>
-            </div>
-            <div className="tc-form-row">
-              <label className="tc-form-field">
-                <span>Mật khẩu <span className="tc-required">*</span></span>
-                <input name="matKhau" type="password" value={regForm.matKhau} onChange={updateReg}
-                  placeholder="••••••••" required autoComplete="new-password" />
-              </label>
-              <label className="tc-form-field">
-                <span>Xác nhận mật khẩu <span className="tc-required">*</span></span>
-                <input name="xacNhanMatKhau" type="password" value={regForm.xacNhanMatKhau} onChange={updateReg}
-                  placeholder="••••••••" required autoComplete="new-password" />
-              </label>
-            </div>
-            <button className="tc-modal-submit" type="submit" disabled={loading}>
-              {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
-            </button>
-            <p className="tc-modal-switch">
-              Đã có tài khoản?{' '}
-              <button type="button" onClick={() => { setError(''); onSwitchMode('login'); }}>Đăng nhập</button>
-            </p>
-          </form>
-        )}
       </div>
     </div>
   );
@@ -533,29 +570,31 @@ function RoomCard({ room, onOpenAuth }) {
     : room.GiaThueNguyenPhong?.toLocaleString('vi-VN') ?? '—';
 
   return (
-    <article className="tc-room-card">
-      <div className="tc-room-img-wrap">
-        <img className="tc-room-img" src={img} alt={room.TenPhong} loading="lazy" />
-        <span className="tc-room-price-badge">{gia}đ/<span>giường/tháng</span></span>
-      </div>
-      <div className="tc-room-body">
-        <div className="tc-room-meta">
-          <span className="tc-room-type">{room.TenLoaiPhong}</span>
-          <span className="tc-room-capacity">👥 {room.SucChuaToiDa} người</span>
+    <div className="tc-card-outer">
+      <article className="tc-room-card tc-card-inner">
+        <div className="tc-room-img-wrap">
+          <img className="tc-room-img" src={img} alt={room.TenPhong} loading="lazy" />
+          <span className="tc-room-price-badge">{gia}đ/<span>giường/tháng</span></span>
         </div>
-        <h3 className="tc-room-name">{room.TenPhong}</h3>
-        <p className="tc-room-area">📍 {room.TenChiNhanh}</p>
-        {room.MoTa && <p className="tc-room-desc">{room.MoTa}</p>}
-        <div className="tc-room-tags">
-          {amenities.map(a => <span key={a} className="tc-tag">{a}</span>)}
+        <div className="tc-room-body">
+          <div className="tc-room-meta">
+            <span className="tc-room-type">{room.TenLoaiPhong}</span>
+            <span className="tc-room-capacity">👥 {room.SucChuaToiDa} người</span>
+          </div>
+          <h3 className="tc-room-name">{room.TenPhong}</h3>
+          <p className="tc-room-area">📍 {room.TenChiNhanh}</p>
+          {room.MoTa && <p className="tc-room-desc">{room.MoTa}</p>}
+          <div className="tc-room-tags">
+            {amenities.map(a => <span key={a} className="tc-tag">{a}</span>)}
+          </div>
+          <div className="tc-room-footer">
+            <button className="tc-room-cta" type="button" onClick={() => onOpenAuth('register')}>
+              Xem chi tiết <span className="tc-arrow-circle">→</span>
+            </button>
+          </div>
         </div>
-        <div className="tc-room-footer">
-          <button className="tc-room-cta" type="button" onClick={() => onOpenAuth('register')}>
-            Xem chi tiết →
-          </button>
-        </div>
-      </div>
-    </article>
+      </article>
+    </div>
   );
 }
 
@@ -573,14 +612,16 @@ function TestimonialSection() {
         </div>
         <div className="tc-testimonials-grid">
           {TESTIMONIALS.map(t => (
-            <div key={t.id} className="tc-testimonial-card">
-              <div className="tc-stars">{'★'.repeat(t.rating)}{'☆'.repeat(5 - t.rating)}</div>
-              <p className="tc-testimonial-text">"{t.text}"</p>
-              <div className="tc-testimonial-author">
-                <div className="tc-avatar">{t.avatar}</div>
-                <div>
-                  <div className="tc-author-name">{t.name}</div>
-                  <div className="tc-author-role">{t.role}</div>
+            <div key={t.id} className="tc-card-outer">
+              <div className="tc-testimonial-card tc-card-inner">
+                <div className="tc-stars">{'★'.repeat(t.rating)}{'☆'.repeat(5 - t.rating)}</div>
+                <p className="tc-testimonial-text">"{t.text}"</p>
+                <div className="tc-testimonial-author">
+                  <div className="tc-avatar">{t.avatar}</div>
+                  <div>
+                    <div className="tc-author-name">{t.name}</div>
+                    <div className="tc-author-role">{t.role}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -605,14 +646,15 @@ function ProcessSection({ onOpenAuth }) {
         </div>
         <div className="tc-process-grid">
           {PROCESS_STEPS.map((s, idx) => (
-            <div key={s.step} className="tc-step-card">
-              <div className="tc-step-number">{s.step}</div>
-              <div className="tc-step-icon">{s.icon}</div>
-              <h3 className="tc-step-title">{s.title}</h3>
-              <p className="tc-step-desc">{s.desc}</p>
-              {idx < PROCESS_STEPS.length - 1 && (
-                <div className="tc-step-connector" aria-hidden="true">→</div>
-              )}
+            <div key={s.step} className="tc-card-outer">
+              <div className="tc-step-card tc-card-inner">
+                <div className="tc-step-number">{s.step}</div>
+                <div className="tc-step-icon">
+                  <ProcessIcon name={s.icon} />
+                </div>
+                <h3 className="tc-step-title">{s.title}</h3>
+                <p className="tc-step-desc">{s.desc}</p>
+              </div>
             </div>
           ))}
         </div>
