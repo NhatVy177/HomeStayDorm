@@ -1,14 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
-
-const rooms = [
-  { id: 'P.402', name: 'Luxury Studio - City View', subName: 'Homestay Sunside', area: 'Quận 1, Đa Kao', type: 'Nguyên phòng', price: '7.500.000đ', available: 0, capacity: 2, status: 'TRỐNG' },
-  { id: 'G.B02', name: 'Giường B2 - Dorm Nữ A', subName: 'Dorm Central Park', area: 'Bình Thạnh', type: 'Thuê giường', price: '2.200.000đ', available: 4, capacity: 8, status: 'CÒN CHỖ' },
-  { id: 'G.A01', name: 'Giường A1 - Dorm Nam', subName: 'Green Dorm House', area: 'Quận 3', type: 'Thuê giường', price: '2.500.000đ', available: 1, capacity: 6, status: 'CÒN CHỖ' }
-];
+import { dangKyThueApi } from '../dangKyThue/dangKyThue.api.js';
 
 export default function TraCuuPhongTab() {
   const [viewRoom, setViewRoom] = useState(null);
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({
+    khuVuc: 'Tất cả khu vực',
+    loaiPhong: 'Tất cả loại phòng',
+    hinhThucThue: 'Tất cả hình thức',
+    mucGiaToiDa: 'Tất cả'
+  });
+
+  const fetchRooms = async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        ...filters,
+        mucGiaToiDa: filters.mucGiaToiDa === 'Tất cả' ? '' : filters.mucGiaToiDa.replace(/\D/g, '') + '000000'
+      };
+      const res = await dangKyThueApi.traCuuPhong(payload);
+      setRooms(res.data.map(r => ({
+        id: r.id,
+        name: r.name,
+        subName: r.subName,
+        area: r.area,
+        type: r.type,
+        price: r.price ? r.price.toLocaleString('vi-VN') + 'đ' : '',
+        occupied: r.type === 'Nguyên căn' ? (r.status === 'Trống' ? 0 : r.capacity) : (r.capacity - r.emptyBeds),
+        capacity: r.capacity,
+        status: r.status
+      })));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const handleClearFilters = () => {
+    setFilters({
+      khuVuc: 'Tất cả khu vực',
+      loaiPhong: 'Tất cả loại phòng',
+      hinhThucThue: 'Tất cả hình thức',
+      mucGiaToiDa: 'Tất cả'
+    });
+    // fetchRooms will need to use the cleared filters
+    setTimeout(fetchRooms, 0);
+  };
 
   return (
     <div className="ktp-container">
@@ -28,26 +72,48 @@ export default function TraCuuPhongTab() {
             <Icon name="tune" style={{ color: '#2f6765' }} /> Bộ lọc tìm kiếm
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <span style={{ color: '#2f6765', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>Xóa bộ lọc</span>
-            <button style={{ padding: '10px 24px', borderRadius: '6px', border: 'none', backgroundColor: '#347a78', color: '#fff', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}>Áp dụng bộ lọc</button>
+            <span onClick={handleClearFilters} style={{ color: '#2f6765', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>Xóa bộ lọc</span>
+            <button onClick={fetchRooms} style={{ padding: '10px 24px', borderRadius: '6px', border: 'none', backgroundColor: '#347a78', color: '#fff', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}>Áp dụng bộ lọc</button>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
           <div>
             <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Khu vực</label>
-            <select className="ktp-input" style={{ backgroundColor: '#f4f7f7', border: 'none' }}><option>Tất cả khu vực</option></select>
+            <select className="ktp-input" value={filters.khuVuc} onChange={e => setFilters({...filters, khuVuc: e.target.value})} style={{ backgroundColor: '#f4f7f7', border: 'none' }}>
+              <option>Tất cả khu vực</option>
+              <option>Quận 1</option>
+              <option>Bình Thạnh</option>
+              <option>Thủ Đức</option>
+            </select>
           </div>
           <div>
             <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Loại phòng</label>
-            <select className="ktp-input" style={{ backgroundColor: '#f4f7f7', border: 'none' }}><option>Tất cả loại phòng</option></select>
+            <select className="ktp-input" value={filters.loaiPhong} onChange={e => setFilters({...filters, loaiPhong: e.target.value})} style={{ backgroundColor: '#f4f7f7', border: 'none' }}>
+              <option>Tất cả loại phòng</option>
+              <option>Phòng 2 người</option>
+              <option>Phòng 4 người</option>
+              <option>Phòng 6 người</option>
+              <option>Phòng VIP 2 người</option>
+              <option>Dorm 8 người</option>
+            </select>
           </div>
           <div>
             <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Hình thức thuê</label>
-            <select className="ktp-input" style={{ backgroundColor: '#f4f7f7', border: 'none' }}><option>Tất cả hình thức</option></select>
+            <select className="ktp-input" value={filters.hinhThucThue} onChange={e => setFilters({...filters, hinhThucThue: e.target.value})} style={{ backgroundColor: '#f4f7f7', border: 'none' }}>
+              <option>Tất cả hình thức</option>
+              <option>Nguyên căn</option>
+              <option>Ghép nam</option>
+              <option>Ghép nữ</option>
+            </select>
           </div>
           <div>
             <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Mức giá (Triệu VNĐ)</label>
-            <select className="ktp-input" style={{ backgroundColor: '#f4f7f7', border: 'none' }}><option>Tất cả</option></select>
+            <select className="ktp-input" value={filters.mucGiaToiDa} onChange={e => setFilters({...filters, mucGiaToiDa: e.target.value})} style={{ backgroundColor: '#f4f7f7', border: 'none' }}>
+              <option>Tất cả</option>
+              <option>Dưới 2 triệu</option>
+              <option>Dưới 3 triệu</option>
+              <option>Dưới 5 triệu</option>
+            </select>
           </div>
         </div>
       </div>
@@ -67,22 +133,26 @@ export default function TraCuuPhongTab() {
             </tr>
           </thead>
           <tbody>
-            {rooms.map(r => (
+            {loading ? (
+              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Đang tải dữ liệu...</td></tr>
+            ) : rooms.length === 0 ? (
+              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Không tìm thấy phòng phù hợp.</td></tr>
+            ) : rooms.map(r => (
               <tr key={r.id}>
                 <td style={{ fontWeight: '800', color: '#2f6765', fontSize: '13px' }}>{r.id}</td>
                 <td>
                   <div style={{ fontWeight: '600', color: '#3f494a', fontSize: '13px' }}>{r.name}</div>
                   <div style={{ color: '#6f797a', fontSize: '12px', marginTop: '4px' }}>{r.subName}</div>
                 </td>
-                <td style={{ color: '#6f797a', fontSize: '13px' }}>{r.area.split(',').map((p,i)=><div key={i}>{p.trim()}</div>)}</td>
+                <td style={{ color: '#6f797a', fontSize: '13px' }}>{(r.area||'').split(',').map((p,i)=><div key={i}>{p.trim()}</div>)}</td>
                 <td style={{ color: '#3f494a', fontSize: '13px' }}>{r.type}</td>
                 <td style={{ fontWeight: '700', color: '#a43c12', fontSize: '13px' }}>{r.price}</td>
                 <td>
-                  <span style={{ color: '#1b6f6d', fontWeight: '700' }}>{r.available}</span>
+                  <span style={{ color: '#1b6f6d', fontWeight: '700' }}>{r.occupied}</span>
                   <span style={{ color: '#9eaaab' }}> / {r.capacity}</span>
                 </td>
                 <td>
-                  <span style={{ backgroundColor: '#eaf6ed', color: '#188038', padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '800' }}>{r.status}</span>
+                  <span style={{ backgroundColor: r.status==='Trống'?'#eaf6ed':(r.status==='Kín chỗ'||r.status==='Đã thuê'?'#ffebee':'#fff3cd'), color: r.status==='Trống'?'#188038':(r.status==='Kín chỗ'||r.status==='Đã thuê'?'#c62828':'#f57f17'), padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase' }}>{r.status}</span>
                 </td>
                 <td className="text-center">
                   <button onClick={() => setViewRoom(r)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #bec8c9', backgroundColor: '#fff', color: '#1b6f6d', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}>Xem<br/>chi tiết</button>
@@ -152,7 +222,7 @@ export default function TraCuuPhongTab() {
                       </tr>
                     </thead>
                     <tbody>
-                      {viewRoom.available < viewRoom.capacity ? (
+                      {viewRoom.occupied > 0 ? (
                         <tr>
                           <td style={{ color: '#1b6f6d', fontWeight: '700' }}>KH-0012</td>
                           <td style={{ color: '#3f494a', fontWeight: '500' }}>Nguyễn Văn A</td>

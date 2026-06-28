@@ -754,6 +754,28 @@
   grid-column: 1 / -1;
 }
 
+/* Khoảng giá: chiếm hết 4 cột, 2 input nằm ngang với dấu — ở giữa */
+.kh-register-grid .kh-price-range {
+  align-items: flex-end;
+  display: flex;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+.kh-register-grid .kh-price-range label {
+  flex: 1;
+}
+
+.kh-price-sep {
+  color: var(--kp-muted);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 38px;
+  padding-bottom: 2px;
+  user-select: none;
+  white-space: nowrap;
+}
+
 .kh-register-modal .kh-register-grid label > span {
   color: var(--kp-text);
   font-size: 12px;

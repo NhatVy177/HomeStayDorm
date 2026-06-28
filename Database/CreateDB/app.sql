@@ -115,9 +115,10 @@ CREATE TABLE PhieuDangKy (
     TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ tiếp nhận',
     MaKhachHang         VARCHAR(6)      NOT NULL,
     MaNhanVienSale      VARCHAR(6),
+    GhiChuSale          NVARCHAR(MAX)   NULL,
     CONSTRAINT CHK_PDK_HinhThucThue CHECK (HinhThucThue IN (N'Nguyên căn', N'Ghép')),
     CONSTRAINT CHK_PDK_GioiTinh     CHECK (GioiTinh IN (N'Nam', N'Nữ')),
-    CONSTRAINT CHK_PDK_TrangThai    CHECK (TrangThai IN (N'Chờ xác nhận cọc', N'Từ chối', N'Chấp nhận', N'Chờ tiếp nhận', N'Đã tiếp nhận'))
+    CONSTRAINT CHK_PDK_TrangThai    CHECK (TrangThai IN (N'Chờ xác nhận cọc', N'Xác nhận cọc', N'Từ chối', N'Chờ tiếp nhận', N'Đã tiếp nhận'))
 );
 
 -- 10. LỊCH XEM PHÒNG

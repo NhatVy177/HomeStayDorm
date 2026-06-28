@@ -16,7 +16,7 @@ export async function createHoSoDangKy(req, res, next) {
 
 export async function getHoSoDangKy(req, res, next) {
   try {
-    res.json(await service.getHoSoDangKy());
+    res.json(await service.getHoSoDangKy(req.query));
   } catch (err) {
     next(err);
   }
@@ -25,6 +25,14 @@ export async function getHoSoDangKy(req, res, next) {
 export async function getPhongGiuongKhaDung(req, res, next) {
   try {
     res.json(await service.getPhongGiuongKhaDung(req.query));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function traCuuPhong(req, res, next) {
+  try {
+    res.json(await service.traCuuPhong(req.query));
   } catch (err) {
     next(err);
   }
@@ -40,7 +48,29 @@ export async function kiemTraDieuKienThue(req, res, next) {
 
 export async function capNhatKetQuaXuLy(req, res, next) {
   try {
-    res.json(await service.capNhatKetQuaXuLy(req.params.id, req.body));
+    const data = {
+      ...req.body,
+      nhanVienSaleId: req.user?.maNguoiDung
+    };
+    res.json(await service.capNhatKetQuaXuLy(req.params.id, data));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function tiepNhanHoSoDangKy(req, res, next) {
+  try {
+    const nhanVienSaleId = req.user?.maNguoiDung;
+    res.json(await service.tiepNhanHoSoDangKy(req.params.id, nhanVienSaleId));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function taoHoSoKhachVangLai(req, res, next) {
+  try {
+    const nhanVienSaleId = req.user?.maNguoiDung;
+    res.status(201).json(await service.taoHoSoKhachVangLai(req.body, nhanVienSaleId));
   } catch (err) {
     next(err);
   }

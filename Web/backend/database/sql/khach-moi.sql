@@ -113,7 +113,9 @@ BEGIN
         pdk.KhuVucMongMuon AS khuVucMongMuon,
         pdk.LoaiPhongYeuCau AS loaiPhongYeuCau,
         pdk.MucGia AS mucGia,
+        pdk.MucGiaDen AS mucGiaDen,
         pdk.SoNguoiDuKienO AS soNguoiO,
+        pdk.GioiTinh AS gioiTinh,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
         pdk.ThoiHanThue AS thoiHanThue,
         pdk.YeuCauKhac AS ghiChu,
@@ -174,6 +176,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_KhachMoi_TaoHoSo
     @KhuVucMongMuon NVARCHAR(100) = NULL,
     @LoaiPhongYeuCau NVARCHAR(50) = NULL,
     @MucGia DECIMAL(15, 2) = NULL,
+    @MucGiaDen DECIMAL(15, 2) = NULL,
     @SoNguoiO INT,
     @NgayDuKienVaoO DATE,
     @ThoiHanThue INT = NULL,
@@ -228,12 +231,12 @@ BEGIN
 
         INSERT INTO dbo.PhieuDangKy (
             MaDangKy, NgayDangKy, SoNguoiDuKienO, GioiTinh, HinhThucThue,
-            KhuVucMongMuon, LoaiPhongYeuCau, MucGia, ThoiGianDuKienVaoO,
+            KhuVucMongMuon, LoaiPhongYeuCau, MucGia, MucGiaDen, ThoiGianDuKienVaoO,
             ThoiHanThue, YeuCauKhac, TrangThai, MaKhachHang
         )
         VALUES (
             @MaDangKy, CAST(GETDATE() AS DATE), @SoNguoiO, @GioiTinh, @HinhThucThue,
-            NULLIF(@KhuVucMongMuon, N''), NULLIF(@LoaiPhongYeuCau, N''), @MucGia,
+            NULLIF(@KhuVucMongMuon, N''), NULLIF(@LoaiPhongYeuCau, N''), @MucGia, @MucGiaDen,
             @NgayDuKienVaoO, @ThoiHanThue, NULLIF(@YeuCauKhac, N''), N'Chờ tiếp nhận', @KhachHangId
         );
 
@@ -328,6 +331,7 @@ BEGIN
         pdk.LoaiPhongYeuCau AS loaiPhongYeuCau,
         pdk.MucGia AS mucGia,
         pdk.SoNguoiDuKienO AS soNguoiO,
+        pdk.GioiTinh AS gioiTinh,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
         pdk.ThoiHanThue AS thoiHanThue,
         pdk.YeuCauKhac AS ghiChu,

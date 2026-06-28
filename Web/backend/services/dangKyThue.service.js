@@ -52,14 +52,29 @@ export async function createHoSoDangKy(data = {}) {
   }
 }
 
-export async function getHoSoDangKy() {
-  const result = await executeProcedure('dbo.SP_DanhSachHoSoDangKy');
+export async function getHoSoDangKy(filter = {}) {
+  const result = await executeProcedure('dbo.SP_DanhSachHoSoDangKy', [
+    { name: 'TrangThai', type: sql.NVarChar(30), value: filter.trangThai || null },
+    { name: 'MaChiNhanh', type: sql.VarChar(6), value: filter.maChiNhanh || null },
+    { name: 'NhanVienSaleId', type: sql.VarChar(6), value: filter.nhanVienSaleId || null },
+    { name: 'KhachHangId', type: sql.VarChar(6), value: filter.khachHangId || null }
+  ]);
   return result.recordset;
 }
 
 export async function getPhongGiuongKhaDung(filter = {}) {
   const result = await executeProcedure('dbo.SP_DanhSachPhongGiuongKhaDung', [
     { name: 'Loai', type: sql.NVarChar(50), value: filter.loai || null }
+  ]);
+  return result.recordset;
+}
+
+export async function traCuuPhong(filter = {}) {
+  const result = await executeProcedure('dbo.SP_TraCuuPhong', [
+    { name: 'KhuVuc', type: sql.NVarChar(100), value: filter.khuVuc || null },
+    { name: 'LoaiPhong', type: sql.NVarChar(50), value: filter.loaiPhong || null },
+    { name: 'HinhThucThue', type: sql.NVarChar(50), value: filter.hinhThucThue || null },
+    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: filter.mucGiaToiDa ? Number(filter.mucGiaToiDa) : null }
   ]);
   return result.recordset;
 }
@@ -83,6 +98,51 @@ export async function capNhatKetQuaXuLy(hoSoId, data = {}) {
       { name: 'TrangThai',       type: sql.NVarChar(50),       value: data.trangThai || null },
       { name: 'GhiChuXuLy',     type: sql.NVarChar(sql.MAX),  value: data.ghiChuXuLy || null },
       { name: 'NhanVienSaleId',  type: sql.NVarChar(20),       value: data.nhanVienSaleId || null }
+    ]);
+
+    return result.recordset[0] || null;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
+export async function tiepNhanHoSoDangKy(hoSoId, nhanVienSaleId) {
+  try {
+    const result = await executeProcedure('dbo.SP_TiepNhanHoSoDangKy', [
+      { name: 'MaDangKy', type: sql.VarChar(6), value: String(hoSoId || '').trim() },
+      { name: 'NhanVienSaleId', type: sql.VarChar(6), value: String(nhanVienSaleId || '').trim() }
+    ]);
+    return result.recordset[0] || null;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
+export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
+  try {
+    const soNguoiO = Number(data.soNguoiO || 1);
+    const thoiHanThue = Number(data.thoiHanThue || data.thoiHan || 1);
+    const mucGia = data.mucGia ? Number(data.mucGia) : null;
+    const hinhThucThue = data.hinhThucThue === 'Nguyên căn' ? 'Nguyên căn' : 'Ghép';
+
+    const result = await executeProcedure('dbo.SP_TaoHoSoKhachVangLai', [
+      { name: 'HoTen', type: sql.NVarChar(100), value: data.hoTen },
+      { name: 'NgaySinh', type: sql.Date, value: data.ngaySinh },
+      { name: 'GioiTinh', type: sql.NVarChar(5), value: data.gioiTinh },
+      { name: 'SDT', type: sql.VarChar(20), value: data.sdt },
+      { name: 'Email', type: sql.VarChar(100), value: data.email || null },
+      { name: 'DiaChi', type: sql.NVarChar(255), value: data.diaChi || null },
+      { name: 'QuocTich', type: sql.NVarChar(50), value: data.quocTich || 'Việt Nam' },
+      { name: 'CCCD', type: sql.VarChar(20), value: data.cccd },
+      { name: 'HinhThucThue', type: sql.NVarChar(20), value: hinhThucThue },
+      { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon },
+      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50), value: data.loaiPhongYeuCau },
+      { name: 'MucGia', type: sql.Decimal(15, 2), value: mucGia },
+      { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
+      { name: 'NgayDuKienVaoO', type: sql.Date, value: data.ngayVao || data.ngayDuKienVaoO },
+      { name: 'ThoiHanThue', type: sql.Int, value: thoiHanThue },
+      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || data.yeuCau || null },
+      { name: 'NhanVienSaleId', type: sql.VarChar(6), value: nhanVienSaleId }
     ]);
 
     return result.recordset[0] || null;

@@ -18,7 +18,8 @@ const rentInitial = {
   hinhThucThue: 'Ghép nam',
   khuVucMongMuon: '',
   loaiPhongYeuCau: '',
-  mucGia: '',
+  mucGiaTu: '',
+  mucGiaDen: '',
   soNguoiO: '1',
   ngayDuKienVaoO: '',
   thoiHanThue: '',
@@ -640,7 +641,24 @@ export default function KhachHangPortalPage() {
       hinhThucThue: firstRoom.hinhThucThue || rentInitial.hinhThucThue,
       khuVucMongMuon: getArea(firstRoom),
       loaiPhongYeuCau: firstRoom.loaiPhong || '',
-      mucGia: firstRoom.giaThue ? String(firstRoom.giaThue) : ''
+      mucGiaTu: firstRoom.giaThue ? String(firstRoom.giaThue) : ''
+    });
+    setRentModal(true);
+  }
+
+  function openReRegisterForm(profile) {
+    setSelectedRooms([]);
+    setRentForm({
+      ...getRentDefaultsFromUser(),
+      hinhThucThue: profile.hinhThucThue || 'Ghép nam',
+      khuVucMongMuon: profile.khuVucMongMuon || '',
+      loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
+      mucGiaTu: profile.mucGia || '',
+      mucGiaDen: profile.mucGiaDen || '',
+      soNguoiO: profile.soNguoiO || '1',
+      ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
+      thoiHanThue: profile.thoiHanThue || '',
+      ghiChu: profile.ghiChu || ''
     });
     setRentModal(true);
   }
@@ -658,10 +676,9 @@ export default function KhachHangPortalPage() {
       await khachMoiApi.createHoSo({
         ...rentForm,
         phongQuanTam: selectedRooms.map((room) => room.tenPhong).join(', '),
-        ghiChu: [
-          rentForm.ghiChu,
-          rentForm.hinhThucThue !== 'Nguyên căn' ? `Hình thức mong muốn: ${rentForm.hinhThucThue}` : ''
-        ].filter(Boolean).join('\n')
+        mucGia: rentForm.mucGiaTu || '',
+        mucGiaDen: rentForm.mucGiaDen || '',
+        ghiChu: rentForm.ghiChu || ''
       });
       setRentModal(false);
       setSelectedRooms([]);
@@ -843,29 +860,15 @@ export default function KhachHangPortalPage() {
       
     return (
       <section>
-        <div className="kh-section-actions">
-          <button className="kp-btn kp-btn-primary" type="button" onClick={openGeneralRentForm}>
-            <Icon name="profile" /> Tạo nhu cầu thuê mới
-          </button>
-        </div>
-        {!profiles.length && (
-          <Empty title="Chưa có hồ sơ" action={
-            <button className="kp-btn kp-btn-primary" type="button" onClick={openGeneralRentForm}>
-              Tạo nhu cầu thuê
-            </button>
-          }>
-            Bạn chưa có hồ sơ nào. Hãy tạo nhu cầu thuê để nhân viên tư vấn cho bạn.
-          </Empty>
-        )}
-        
-        {allProfiles.length > 0 && (
-          <div className="lxp-chips-bar" style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 16 }}>
+          <div className="lxp-chips-bar" style={{ marginBottom: 0 }}>
             <div className="lxp-chips">
               {[
                 { key: 'Tất cả', label: 'Tất cả' },
                 { key: 'Chờ tiếp nhận', label: 'Chờ tiếp nhận' },
-                { key: 'Chờ xác nhận cọc', label: 'Chờ xác nhận cọc' },
+                { key: 'Đã tiếp nhận', label: 'Đã tiếp nhận' },
                 { key: 'Chấp nhận', label: 'Chấp nhận' },
+                { key: 'Chờ xác nhận cọc', label: 'Chờ xác nhận cọc' },
                 { key: 'Từ chối', label: 'Từ chối' }
               ].map(f => (
                 <button
@@ -879,6 +882,21 @@ export default function KhachHangPortalPage() {
               ))}
             </div>
           </div>
+          <div className="kh-section-actions" style={{ marginBottom: 0 }}>
+            <button className="kp-btn kp-btn-primary" type="button" onClick={openGeneralRentForm}>
+              <Icon name="profile" /> Tạo nhu cầu thuê mới
+            </button>
+          </div>
+        </div>
+
+        {!profiles.length && (
+          <Empty title="Chưa có hồ sơ" action={
+            <button className="kp-btn kp-btn-primary" type="button" onClick={openGeneralRentForm}>
+              Tạo nhu cầu thuê
+            </button>
+          }>
+            Bạn chưa có hồ sơ nào. Hãy tạo nhu cầu thuê để nhân viên tư vấn cho bạn.
+          </Empty>
         )}
 
         <div className="kh-list">
@@ -897,7 +915,7 @@ export default function KhachHangPortalPage() {
               <div className="kh-profile-meta-grid">
                 <div className="kh-meta-item">
                   <Icon name="people" />
-                  <span>{profile.hinhThucThue} · {profile.soNguoiO || 1} người</span>
+                  <span>{profile.hinhThucThue} · {profile.soNguoiO || 1} người{profile.hinhThucThue === 'Ghép' && profile.gioiTinh ? ` (${profile.gioiTinh})` : ''}</span>
                 </div>
                 {profile.khuVucMongMuon && (
                   <div className="kh-meta-item">
@@ -919,10 +937,10 @@ export default function KhachHangPortalPage() {
                 )}
               </div>
 
-              {profile.trangThai === 'Từ chối' && profile.ghiChu && (
+              {profile.trangThai === 'Từ chối' && profile.ghiChuSale && (
                 <div className="kh-profile-reject-reason">
                   <Icon name="lock" />
-                  <span>Lý do: {profile.ghiChu}</span>
+                  <span>Lý do: {profile.ghiChuSale}</span>
                 </div>
               )}
 
@@ -932,6 +950,11 @@ export default function KhachHangPortalPage() {
                   {profile.trangThai === 'Chờ tiếp nhận' && (
                     <button className="kp-btn kp-btn-primary" type="button" onClick={() => openEditModal(profile)}>
                       Cập nhật hồ sơ
+                    </button>
+                  )}
+                  {profile.trangThai === 'Từ chối' && (
+                    <button className="kp-btn kp-btn-primary" type="button" onClick={() => openReRegisterForm(profile)}>
+                      Đăng ký lại
                     </button>
                   )}
                   <button className="kp-btn kp-btn-soft" type="button" onClick={() => openProfileDetail(profile)}>
@@ -1568,9 +1591,13 @@ export default function KhachHangPortalPage() {
                   <label><span>Hình thức thuê*</span><select value={rentForm.hinhThucThue} onChange={(event) => setRentForm({ ...rentForm, hinhThucThue: event.target.value })} required>{filterOptions.hinhThucThue.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label className="is-half"><span>Khu vực mong muốn*</span><input value={rentForm.khuVucMongMuon} onChange={(event) => setRentForm({ ...rentForm, khuVucMongMuon: event.target.value })} placeholder="Ví dụ: Quận 3, gần trường học..." required /></label>
                   <label className="is-half"><span>Loại phòng mong muốn*</span><select value={rentForm.loaiPhongYeuCau} onChange={(event) => setRentForm({ ...rentForm, loaiPhongYeuCau: event.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <label className="is-half"><span>Mức giá mong muốn*</span><input type="number" min="0" value={rentForm.mucGia} onChange={(event) => setRentForm({ ...rentForm, mucGia: event.target.value })} placeholder="Ví dụ: 2000000" required /></label>
+                  <div className="kh-price-range">
+                    <label><span>Giá từ (đ/tháng)</span><input type="number" min="0" value={rentForm.mucGiaTu} onChange={(event) => setRentForm({ ...rentForm, mucGiaTu: event.target.value })} placeholder="VD: 2.000.000" /></label>
+                    <span className="kh-price-sep">—</span>
+                    <label><span>Giá đến (đ/tháng)</span><input type="number" min="0" value={rentForm.mucGiaDen} onChange={(event) => setRentForm({ ...rentForm, mucGiaDen: event.target.value })} placeholder="VD: 3.000.000" /></label>
+                  </div>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={rentForm.ngayDuKienVaoO} onChange={(event) => setRentForm({ ...rentForm, ngayDuKienVaoO: event.target.value })} required /></label>
-                  <label className="is-half"><span>Thời hạn thuê*</span><input type="number" min="1" value={rentForm.thoiHanThue} onChange={(event) => setRentForm({ ...rentForm, thoiHanThue: event.target.value })} placeholder="Ví dụ: 6" required /></label>
+                  <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={rentForm.thoiHanThue} onChange={(event) => setRentForm({ ...rentForm, thoiHanThue: event.target.value })} placeholder="Ví dụ: 6" required /></label>
                   <label className="is-wide"><span>Yêu cầu khác</span><textarea value={rentForm.ghiChu} onChange={(event) => setRentForm({ ...rentForm, ghiChu: event.target.value })} placeholder="Giờ giấc sinh hoạt, yêu cầu yên tĩnh, gửi xe..." /></label>
                 </div>
               </section>
@@ -1609,11 +1636,11 @@ export default function KhachHangPortalPage() {
             </div>
 
             <div className="kh-profile-detail-grid">
-              <div><span>Hình thức thuê</span><strong>{displayValue(profileDetailModal.hinhThucThue)}</strong></div>
+              <div><span>Hình thức thuê</span><strong>{displayValue(profileDetailModal.hinhThucThue === 'Ghép' && profileDetailModal.gioiTinh ? `Ghép ${profileDetailModal.gioiTinh.toLowerCase()}` : profileDetailModal.hinhThucThue)}</strong></div>
               <div><span>Số người ở</span><strong>{displayValue(profileDetailModal.soNguoiO, 1)} người</strong></div>
               <div><span>Khu vực mong muốn</span><strong>{displayValue(profileDetailModal.khuVucMongMuon)}</strong></div>
               <div><span>Loại phòng yêu cầu</span><strong>{displayValue(profileDetailModal.loaiPhongYeuCau)}</strong></div>
-              <div><span>Mức giá</span><strong>{formatMoney(profileDetailModal.mucGia)}</strong></div>
+              <div><span>Khoảng giá mong muốn</span><strong>{profileDetailModal.mucGia || profileDetailModal.mucGiaDen ? `${formatMoney(profileDetailModal.mucGia)} — ${formatMoney(profileDetailModal.mucGiaDen)}` : 'Chưa cập nhật'}</strong></div>
               <div><span>Ngày dự kiến vào ở</span><strong>{formatDate(profileDetailModal.ngayDuKienVaoO)}</strong></div>
               <div><span>Thời hạn thuê</span><strong>{profileDetailModal.thoiHanThue ? `${profileDetailModal.thoiHanThue} tháng` : 'Chưa cập nhật'}</strong></div>
               <div><span>Lịch xem gần nhất</span><strong>{profileDetailModal.thoiGianHen ? formatDate(profileDetailModal.thoiGianHen, true) : 'Chưa có'}</strong></div>

@@ -1,89 +1,23 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
-
-const mockRegistrations = [
-  {
-    id: 'HS-2024-001',
-    time: '14/06/2026',
-    customerName: 'Nguyễn Văn An',
-    customerPhone: '0901234567',
-    customerDOB: '1998-05-12',
-    customerGender: 'Nam',
-    customerNationality: 'Việt Nam',
-    customerCCCD: '079098012345',
-    customerEmail: 'nguyenvanan@gmail.com',
-    customerAddress: '123 Nguyễn Văn Linh, Quận 7, TP.HCM',
-    demandType: 'Ghép giường',
-    demandGender: 'Nam',
-    demandCount: 1,
-    demandArea: 'Thủ Đức',
-    demandRoomType: 'Phòng 4 người',
-    demandPrice: '2.000.000đ',
-    demandMoveInDate: '01/07/2026',
-    demandDuration: '6 tháng',
-    demandNote: 'Cần gần trạm xe buýt',
-    status: 'Chờ tiếp nhận'
-  },
-  {
-    id: 'HS-2024-002',
-    time: '15/06/2026',
-    customerName: 'Trần Minh Hoàng',
-    customerPhone: '0987654321',
-    customerDOB: '2000-08-22',
-    customerGender: 'Nam',
-    customerNationality: 'Việt Nam',
-    customerCCCD: '079000111222',
-    customerEmail: 'hoangtm@gmail.com',
-    customerAddress: '456 Lê Lợi, Quận 1, TP.HCM',
-    demandType: 'Nguyên phòng',
-    demandGender: 'Nam',
-    demandCount: 2,
-    demandArea: 'Bình Thạnh',
-    demandRoomType: 'Studio',
-    demandPrice: '5.500.000đ',
-    demandMoveInDate: '10/07/2026',
-    demandDuration: '12 tháng',
-    demandNote: 'Phòng có ban công',
-    status: 'Chờ tiếp nhận'
-  },
-  {
-    id: 'HS-2024-003',
-    time: '16/06/2026',
-    customerName: 'Trần Thị Thu',
-    customerPhone: '0911223344',
-    demandType: 'Nguyên phòng',
-    demandGender: 'Nữ',
-    demandCount: 1,
-    demandArea: 'Quận 1',
-    demandRoomType: 'Phòng VIP 2 người',
-    status: 'Đã tiếp nhận'
-  },
-  {
-    id: 'HS-2024-004',
-    time: '12/06/2026',
-    customerName: 'Lê Văn Luyện',
-    customerPhone: '0900000000',
-    demandType: 'Ghép giường',
-    demandGender: 'Nam',
-    demandCount: 1,
-    demandArea: 'Bình Thạnh',
-    demandRoomType: 'Phòng 6 người',
-    status: 'Từ chối'
-  }
-];
+import { dangKyThueApi } from '../dangKyThue/dangKyThue.api.js';
 
 export default function HoSoDangKyTab({ onNavigate }) {
   const [filterStatus, setFilterStatus] = useState('Tất cả');
-  const [list, setList] = useState(mockRegistrations);
+  const [list, setList] = useState([]);
   const [selectedReg, setSelectedReg] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
   const [acceptedReg, setAcceptedReg] = useState(null);
 
   // Drawer States
   const [checkingRooms, setCheckingRooms] = useState(false);
   const [roomResults, setRoomResults] = useState(null);
-
   // Modal States
+  const [mismatchReason, setMismatchReason] = useState(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('Không còn phòng/giường phù hợp');
+  const [rejectNote, setRejectNote] = useState('');
   const [createStep, setCreateStep] = useState(1);
   const [createForm, setCreateForm] = useState({
     hoTen: '', ngaySinh: '', gioiTinh: 'Nam', quocTich: 'Việt Nam', cccd: '', sdt: '', email: '', diaChi: '',
@@ -95,45 +29,140 @@ export default function HoSoDangKyTab({ onNavigate }) {
   const [createRoomResults, setCreateRoomResults] = useState(null);
 
   const stats = {
-    choTiepNhan: list.filter(x => x.status === 'Chờ tiếp nhận').length,
-    daTiepNhan: list.filter(x => x.status === 'Đã tiếp nhận').length,
-    khongPhuHop: list.filter(x => x.status === 'Không tìm thấy phù hợp').length,
-    tuChoi: list.filter(x => x.status === 'Từ chối').length
+    choTiepNhan: list.filter(x => x.trangThai === 'Chờ tiếp nhận').length,
+    daTiepNhan: list.filter(x => x.trangThai === 'Đã tiếp nhận' || x.trangThai === 'Chấp nhận').length,
+    khongPhuHop: 0,
+    tuChoi: list.filter(x => x.trangThai === 'Từ chối').length
   };
-  const filteredList = filterStatus === 'Tất cả' ? list : list.filter(item => item.status === filterStatus);
+  const filteredList = filterStatus === 'Tất cả' 
+    ? list 
+    : list.filter(item => {
+        if (filterStatus === 'Đã tiếp nhận') return item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận';
+        return item.trangThai === filterStatus;
+      });
 
-  // --- Handlers cho Drawer ---
-  const handleCheckRoom = () => {
+  const fetchData = async () => {
+    try {
+      const res = await dangKyThueApi.getAll();
+      setList(res.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+
+
+  const handleAccept = async () => {
+    if (!selectedReg) return;
+    try {
+      await dangKyThueApi.tiepNhan(selectedReg.maDangKy);
+      setAcceptedReg(selectedReg);
+      setSelectedReg(null);
+      setRoomResults(null);
+      fetchData();
+    } catch (err) {
+      alert('Lỗi khi tiếp nhận hồ sơ: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedReg) return;
+    try {
+      let finalNote = rejectReason;
+      if (rejectReason === 'Khác') {
+          finalNote = rejectNote;
+      } else if (rejectNote) {
+          finalNote += ' - ' + rejectNote;
+      }
+      await dangKyThueApi.capNhatKetQuaXuLy(selectedReg.maDangKy, { trangThai: 'Từ chối', ghiChuXuLy: finalNote });
+      alert('Đã từ chối phiếu đăng ký.');
+      setShowRejectModal(false);
+      setSelectedReg(null);
+      setRoomResults(null);
+      setMismatchReason(null);
+      fetchData();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+
+  const handleCheckRoom = async () => {
     setCheckingRooms(true);
     setRoomResults(null);
-    setTimeout(() => {
-      setCheckingRooms(false);
-      if (selectedReg && selectedReg.demandArea === 'Thủ Đức') {
-        setRoomResults([
-          { id: 'P101', bed: 'G03', gender: 'Nữ', price: '1.800.000đ' },
-          { id: 'P203', bed: 'G01', gender: 'Nữ', price: '2.000.000đ' }
-        ]);
-      } else {
-        setRoomResults([]);
+    setMismatchReason(null);
+    try {
+      const res = await dangKyThueApi.getPhongGiuongKhaDung({
+        loai: selectedReg.hinhThucThue === 'Ghép' ? 'Ghép' : 'Nguyên căn'
+      });
+      let currentList = res.data || [];
+      let failedReason = null;
+
+      const steps = [
+        {
+          name: 'Khu vực',
+          filter: r => !selectedReg.khuVucMongMuon || (r.diaChi && r.diaChi.includes(selectedReg.khuVucMongMuon)) || (r.tenChiNhanh && r.tenChiNhanh.includes(selectedReg.khuVucMongMuon)),
+          desc: `Không còn phòng ở khu vực ${selectedReg.khuVucMongMuon}`
+        },
+        {
+          name: 'Giới tính',
+          filter: r => !selectedReg.gioiTinh || r.gioiTinhChoPhep === selectedReg.gioiTinh || r.gioiTinhChoPhep === 'Không phân biệt' || r.gioiTinhChoPhep === 'Nam/Nữ',
+          desc: `Không còn phòng phù hợp cho giới tính ${selectedReg.gioiTinh}`
+        },
+        {
+          name: 'Sức chứa',
+          filter: r => !selectedReg.soNguoiO || r.loaiThue !== 'Nguyên căn' || r.sucChua >= selectedReg.soNguoiO,
+          desc: `Không còn phòng đáp ứng sức chứa ${selectedReg.soNguoiO} người`
+        },
+        {
+          name: 'Loại phòng',
+          filter: r => !selectedReg.loaiPhongYeuCau || r.loaiPhong === selectedReg.loaiPhongYeuCau,
+          desc: `Không còn loại phòng ${selectedReg.loaiPhongYeuCau}`
+        },
+        {
+          name: 'Khoảng giá',
+          filter: r => {
+            if (selectedReg.mucGia && r.giaThue < selectedReg.mucGia) return false;
+            if (selectedReg.mucGiaDen && r.giaThue > selectedReg.mucGiaDen) return false;
+            return true;
+          },
+          desc: `Không còn phòng/giường đáp ứng mức giá ${selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''} — ${selectedReg.mucGiaDen ? selectedReg.mucGiaDen.toLocaleString('vi-VN') + 'đ' : ''}`
+        }
+      ];
+
+      for (const step of steps) {
+        const nextList = currentList.filter(step.filter);
+        if (nextList.length === 0 && currentList.length > 0) {
+          failedReason = { name: step.name, desc: step.desc };
+          currentList = [];
+          break;
+        }
+        currentList = nextList;
       }
-    }, 1200);
+
+      if (currentList.length === 0 && !failedReason) {
+          failedReason = { name: 'Chung', desc: 'Không tìm thấy phòng/giường phù hợp với các tiêu chí trên.' };
+      }
+
+      setMismatchReason(failedReason);
+      setCheckingRooms(false);
+      setRoomResults(currentList.map(r => ({
+        id: r.maPhong,
+        bed: r.maGiuong || 'Trống nguyên phòng',
+        gender: r.gioiTinhChoPhep || r.gioiTinhPhong,
+        price: r.giaThue ? r.giaThue.toLocaleString('vi-VN') + 'đ' : '',
+        demandArea: selectedReg.khuVucMongMuon
+      })));
+    } catch (err) {
+      setCheckingRooms(false);
+      setRoomResults([]);
+    }
   };
 
-  const handleAccept = () => {
-    setAcceptedReg(selectedReg);
-    setList(list.map(x => x.id === selectedReg.id ? { ...x, status: 'Đã tiếp nhận' } : x));
-    setSelectedReg(null);
-    setRoomResults(null);
-  };
-
-  const handleReject = () => {
-    alert('Đã từ chối phiếu đăng ký.');
-    setList(list.map(x => x.id === selectedReg.id ? { ...x, status: 'Từ chối' } : x));
-    setSelectedReg(null);
-    setRoomResults(null);
-  };
-
-  // --- Handlers cho Modal Tạo phiếu ---
   const validateStep1 = () => {
     const err = {};
     if (!createForm.hoTen) err.hoTen = 'Vui lòng nhập họ tên.';
@@ -166,28 +195,25 @@ export default function HoSoDangKyTab({ onNavigate }) {
     }, 1200);
   };
 
-  const handleSaveCreate = () => {
-    const newReg = {
-      id: 'HS-2024-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-      customerName: createForm.hoTen || 'Khách vãng lai',
-      status: 'Đã tiếp nhận',
-      demandType: createForm.hinhThuc,
-      demandGender: createForm.gioiTinhO,
-      demandCount: createForm.soNguoi,
-      demandArea: createForm.khuVuc,
-      demandRoomType: createForm.loaiPhong,
-      time: new Date().toLocaleDateString('en-GB')
-    };
-    setList([newReg, ...list]);
-    setAcceptedReg(newReg);
-    setShowCreateModal(false);
-    setCreateStep(1);
-    setCreateForm({
-      hoTen: '', ngaySinh: '', gioiTinh: 'Nam', quocTich: 'Việt Nam', cccd: '', sdt: '', email: '', diaChi: '',
-      soNguoi: 1, gioiTinhO: 'Nam', hinhThuc: 'Ghép giường', khuVuc: '', loaiPhong: '', mucGia: '',
-      ngayVao: '', thoiHan: '', yeuCau: ''
-    });
-    setCreateRoomResults(null);
+  const handleSaveCreate = async () => {
+    try {
+      await dangKyThueApi.taoHoSoKhachVangLai(createForm);
+      setAcceptedReg({
+        id: 'Hồ sơ mới',
+        customerName: createForm.hoTen || 'Khách vãng lai'
+      });
+      setShowCreateModal(false);
+      setCreateStep(1);
+      setCreateForm({
+        hoTen: '', ngaySinh: '', gioiTinh: 'Nam', quocTich: 'Việt Nam', cccd: '', sdt: '', email: '', diaChi: '',
+        soNguoi: 1, gioiTinhO: 'Nam', hinhThuc: 'Ghép giường', khuVuc: '', loaiPhong: '', mucGia: '',
+        ngayVao: '', thoiHan: '', yeuCau: ''
+      });
+      setCreateRoomResults(null);
+      fetchData();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   return (
@@ -251,23 +277,23 @@ export default function HoSoDangKyTab({ onNavigate }) {
             </thead>
             <tbody>
               {filteredList.map(item => (
-                <tr key={item.id}>
-                  <td style={{ fontWeight: '600' }}>{item.id}</td>
+                <tr key={item.maDangKy}>
+                  <td style={{ fontWeight: '600' }}>{item.maDangKy}</td>
                   <td>
-                    <div style={{ fontWeight: '600', color: '#191c1d' }}>{item.customerName}</div>
-                    <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.customerPhone}</div>
+                    <div style={{ fontWeight: '600', color: '#191c1d' }}>{item.hoTenKhach}</div>
+                    <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.sdtKhach}</div>
                   </td>
                   <td>
-                    <div style={{ color: '#191c1d' }}>{item.demandType} · {item.demandGender}</div>
-                    <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.demandCount} người</div>
+                    <div style={{ color: '#191c1d' }}>{item.hinhThucThue} · {item.gioiTinh}</div>
+                    <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.soNguoiO} người</div>
                   </td>
                   <td>
-                    <div style={{ color: '#191c1d' }}>{item.demandArea}</div>
-                    <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.demandRoomType}</div>
+                    <div style={{ color: '#191c1d' }}>{item.khuVucMongMuon}</div>
+                    <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.loaiPhongYeuCau}</div>
                   </td>
-                  <td>{item.time}</td>
+                  <td>{item.ngayDangKy ? new Date(item.ngayDangKy).toLocaleDateString('en-GB') : ''}</td>
                   <td className="text-center">
-                    <span className={`ktp-badge ${item.status === 'Chờ tiếp nhận' ? 'ktp-badge-warning' : (item.status === 'Đã tiếp nhận' ? 'ktp-badge-success' : (item.status === 'Từ chối' ? 'ktp-badge-danger' : 'ktp-badge-info'))}`} style={{ backgroundColor: item.status === 'Đã tiếp nhận' ? '#e8f5e9' : (item.status === 'Từ chối' ? '#ffebee' : undefined), color: item.status === 'Đã tiếp nhận' ? '#2e7d32' : (item.status === 'Từ chối' ? '#c62828' : undefined) }}>{item.status}</span>
+                    <span className={`ktp-badge ${item.trangThai === 'Chờ tiếp nhận' ? 'ktp-badge-warning' : ((item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận') ? 'ktp-badge-success' : (item.trangThai === 'Từ chối' ? 'ktp-badge-danger' : 'ktp-badge-info'))}`} style={{ backgroundColor: (item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận') ? '#e8f5e9' : (item.trangThai === 'Từ chối' ? '#ffebee' : undefined), color: (item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận') ? '#2e7d32' : (item.trangThai === 'Từ chối' ? '#c62828' : undefined) }}>{item.trangThai}</span>
                   </td>
                   <td className="text-center">
                     <button className="ktp-btn-action-fill" onClick={() => setSelectedReg(item)}>Xem & xử lý</button>
@@ -285,11 +311,11 @@ export default function HoSoDangKyTab({ onNavigate }) {
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ width: '800px', maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <div className="ktp-modal-header" style={{ alignItems: 'flex-start', borderBottom: '1px solid #bec8c9', backgroundColor: '#f4f6f6' }}>
               <div>
-                <h3 style={{ margin: '0 0 4px 0', color: '#191c1d' }}>Phiếu đăng ký {selectedReg.id}</h3>
-                <p className="ktp-modal-header-sub">Ngày gửi: <span>{selectedReg.time}</span></p>
+                <h3 style={{ margin: '0 0 4px 0', color: '#191c1d' }}>Phiếu đăng ký {selectedReg.maDangKy}</h3>
+                <p className="ktp-modal-header-sub">Ngày gửi: <span>{selectedReg.ngayDangKy ? new Date(selectedReg.ngayDangKy).toLocaleDateString('en-GB') : ''}</span></p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div className="ktp-badge-warning">{selectedReg.status}</div>
+                <div className="ktp-badge-warning">{selectedReg.trangThai}</div>
                 <button className="ktp-modal-close" onClick={() => { setSelectedReg(null); setRoomResults(null); }}><Icon name="close" /></button>
               </div>
             </div>
@@ -299,14 +325,14 @@ export default function HoSoDangKyTab({ onNavigate }) {
               <div className="ktp-section ktp-info-box-outline" style={{ backgroundColor: '#fff', marginBottom: '16px' }}>
                 <h4 className="ktp-section-title"><Icon name="person" /> Khối 1: Thông tin khách hàng</h4>
                 <div className="ktp-grid-2" style={{ gap: '16px' }}>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Họ tên:</span> <span className="ktp-info-value">{selectedReg.customerName}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Ngày sinh:</span> <span className="ktp-info-value">{selectedReg.customerDOB}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Giới tính:</span> <span className="ktp-info-value">{selectedReg.customerGender}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Quốc tịch:</span> <span className="ktp-info-value">{selectedReg.customerNationality}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">CCCD:</span> <span className="ktp-info-value">{selectedReg.customerCCCD}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">SĐT:</span> <span className="ktp-info-value">{selectedReg.customerPhone}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Email:</span> <span className="ktp-info-value">{selectedReg.customerEmail}</span></div>
-                  <div className="ktp-info-row" style={{ gridColumn: '1 / -1' }}><span className="ktp-info-label">Địa chỉ:</span> <span className="ktp-info-value">{selectedReg.customerAddress}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Họ tên:</span> <span className="ktp-info-value">{selectedReg.hoTenKhach}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Ngày sinh:</span> <span className="ktp-info-value">{selectedReg.ngaySinhKhach ? new Date(selectedReg.ngaySinhKhach).toLocaleDateString('en-GB') : ''}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Giới tính:</span> <span className="ktp-info-value">{selectedReg.gioiTinh}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Quốc tịch:</span> <span className="ktp-info-value">{selectedReg.quocTichKhach || selectedReg.quocTich}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">CCCD:</span> <span className="ktp-info-value">{selectedReg.cccdKhach || selectedReg.cccd}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">SĐT:</span> <span className="ktp-info-value">{selectedReg.sdtKhach}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Email:</span> <span className="ktp-info-value">{selectedReg.emailKhach}</span></div>
+                  <div className="ktp-info-row" style={{ gridColumn: '1 / -1' }}><span className="ktp-info-label">Địa chỉ:</span> <span className="ktp-info-value">{selectedReg.diaChiKhach}</span></div>
                 </div>
               </div>
 
@@ -314,15 +340,15 @@ export default function HoSoDangKyTab({ onNavigate }) {
               <div className="ktp-section ktp-info-box-outline" style={{ backgroundColor: '#fff', marginBottom: '16px' }}>
                 <h4 className="ktp-section-title"><Icon name="description" /> Khối 2: Thông tin nhu cầu thuê</h4>
                 <div className="ktp-grid-2" style={{ gap: '16px' }}>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Số người ở:</span> <span className="ktp-info-value">{selectedReg.demandCount} người</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Giới tính:</span> <span className="ktp-info-value">{selectedReg.demandGender}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Hình thức:</span> <span className="ktp-info-value">{selectedReg.demandType}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Khu vực:</span> <span className="ktp-info-value ktp-text-primary">{selectedReg.demandArea}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Loại phòng:</span> <span className="ktp-info-value">{selectedReg.demandRoomType}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Mức giá:</span> <span className="ktp-info-value ktp-text-primary">{selectedReg.demandPrice}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">TG vào ở:</span> <span className="ktp-info-value">{selectedReg.demandMoveInDate}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Thời hạn:</span> <span className="ktp-info-value">{selectedReg.demandDuration}</span></div>
-                  <div className="ktp-info-row" style={{ gridColumn: '1 / -1' }}><span className="ktp-info-label">Yêu cầu khác:</span> <span className="ktp-info-value" style={{ fontStyle: 'italic' }}>{selectedReg.demandNote || 'Không có'}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Số người ở:</span> <span className="ktp-info-value">{selectedReg.soNguoiO} người</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Giới tính:</span> <span className="ktp-info-value">{selectedReg.gioiTinh}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Hình thức:</span> <span className="ktp-info-value">{selectedReg.hinhThucThue}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Khu vực:</span> <span className="ktp-info-value ktp-text-primary">{selectedReg.khuVucMongMuon}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Loại phòng:</span> <span className="ktp-info-value">{selectedReg.loaiPhongYeuCau}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Mức giá:</span> <span className="ktp-info-value ktp-text-primary">{selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">TG vào ở:</span> <span className="ktp-info-value">{selectedReg.ngayDuKienVaoO ? new Date(selectedReg.ngayDuKienVaoO).toLocaleDateString('en-GB') : ''}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Thời hạn:</span> <span className="ktp-info-value">{selectedReg.thoiHanThue} tháng</span></div>
+                  <div className="ktp-info-row" style={{ gridColumn: '1 / -1' }}><span className="ktp-info-label">Yêu cầu khác:</span> <span className="ktp-info-value" style={{ fontStyle: 'italic' }}>{selectedReg.ghiChu || 'Không có'}</span></div>
                 </div>
               </div>
 
@@ -333,10 +359,10 @@ export default function HoSoDangKyTab({ onNavigate }) {
                 <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#eef2f2', borderRadius: '4px' }}>
                   <p style={{ margin: '0 0 8px 0', fontWeight: '600', color: '#3f494a', fontSize: '13px' }}>Tiêu chí đối chiếu tự động:</p>
                   <div className="ktp-grid-2" style={{ fontSize: '13px', color: '#6f797a', gap: '8px' }}>
-                    <div>• Khu vực: <strong style={{ color: '#191c1d' }}>{selectedReg.demandArea}</strong></div>
-                    <div>• Giới tính: <strong style={{ color: '#191c1d' }}>{selectedReg.demandGender}</strong></div>
-                    <div>• Sức chứa: <strong style={{ color: '#191c1d' }}>{selectedReg.demandCount} người</strong></div>
-                    <div>• Mức giá: <strong style={{ color: '#191c1d' }}>{selectedReg.demandPrice}</strong></div>
+                    <div>• Khu vực: <strong style={{ color: '#191c1d' }}>{selectedReg.khuVucMongMuon}</strong></div>
+                    <div>• Giới tính: <strong style={{ color: '#191c1d' }}>{selectedReg.gioiTinh}</strong></div>
+                    <div>• Sức chứa: <strong style={{ color: '#191c1d' }}>{selectedReg.soNguoiO} người</strong></div>
+                    <div>• Mức giá: <strong style={{ color: '#191c1d' }}>{selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''}</strong></div>
                   </div>
                 </div>
 
@@ -372,16 +398,44 @@ export default function HoSoDangKyTab({ onNavigate }) {
 
                 {roomResults && roomResults.length === 0 && (
                   <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '4px', borderLeft: '4px solid #ff9800' }}>
-                    <p style={{ margin: 0, fontWeight: '600' }}>Không đạt điều kiện: Không tìm thấy phòng/giường phù hợp với các tiêu chí trên.</p>
+                    <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>Kết quả: Không đạt điều kiện</p>
+                    {mismatchReason ? (
+                      <>
+                        <div style={{ fontSize: '13px', lineHeight: '1.6', marginBottom: '8px' }}>
+                          <div style={{ color: mismatchReason.name === 'Khu vực' ? '#d32f2f' : '#2e7d32' }}>
+                            {mismatchReason.name === 'Khu vực' ? '✗' : '✓'} Khu vực: {selectedReg.khuVucMongMuon}
+                          </div>
+                          <div style={{ color: mismatchReason.name === 'Giới tính' ? '#d32f2f' : (['Khu vực'].includes(mismatchReason.name) ? '#9e9e9e' : '#2e7d32') }}>
+                            {['Khu vực'].includes(mismatchReason.name) ? '-' : (mismatchReason.name === 'Giới tính' ? '✗' : '✓')} Giới tính: {selectedReg.gioiTinh}
+                          </div>
+                          <div style={{ color: mismatchReason.name === 'Sức chứa' ? '#d32f2f' : (['Khu vực', 'Giới tính'].includes(mismatchReason.name) ? '#9e9e9e' : '#2e7d32') }}>
+                            {['Khu vực', 'Giới tính'].includes(mismatchReason.name) ? '-' : (mismatchReason.name === 'Sức chứa' ? '✗' : '✓')} Sức chứa: {selectedReg.soNguoiO} người
+                          </div>
+                          {selectedReg.loaiPhongYeuCau && (
+                            <div style={{ color: mismatchReason.name === 'Loại phòng' ? '#d32f2f' : (['Khu vực', 'Giới tính', 'Sức chứa'].includes(mismatchReason.name) ? '#9e9e9e' : '#2e7d32') }}>
+                              {['Khu vực', 'Giới tính', 'Sức chứa'].includes(mismatchReason.name) ? '-' : (mismatchReason.name === 'Loại phòng' ? '✗' : '✓')} Loại phòng: {selectedReg.loaiPhongYeuCau}
+                            </div>
+                          )}
+                          {(selectedReg.mucGia || selectedReg.mucGiaDen) && (
+                            <div style={{ color: mismatchReason.name === 'Khoảng giá' ? '#d32f2f' : (['Khu vực', 'Giới tính', 'Sức chứa', 'Loại phòng'].includes(mismatchReason.name) ? '#9e9e9e' : '#2e7d32') }}>
+                              {['Khu vực', 'Giới tính', 'Sức chứa', 'Loại phòng'].includes(mismatchReason.name) ? '-' : (mismatchReason.name === 'Khoảng giá' ? '✗' : '✓')} Khoảng giá: {selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''} — {selectedReg.mucGiaDen ? selectedReg.mucGiaDen.toLocaleString('vi-VN') + 'đ' : ''}
+                            </div>
+                          )}
+                        </div>
+                        <p style={{ margin: 0, fontSize: '13px' }}>Lý do: <strong>{mismatchReason.desc}</strong></p>
+                      </>
+                    ) : (
+                      <p style={{ margin: 0, fontWeight: '600' }}>Không tìm thấy phòng/giường phù hợp với các tiêu chí trên.</p>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
             <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px' }}>
-              <button className="ktp-btn-cancel" onClick={() => { setSelectedReg(null); setRoomResults(null); }}>Hủy</button>
+              <button className="ktp-btn-cancel" style={{ backgroundColor: '#f4f6f6' }} onClick={() => { setSelectedReg(null); setRoomResults(null); }}>Hủy</button>
               {roomResults && roomResults.length === 0 && (
-                <button className="ktp-btn-cancel" style={{ color: '#d32f2f', borderColor: '#d32f2f' }} onClick={handleReject}>Từ chối phiếu</button>
+                <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => setShowRejectModal(true)}>Từ chối phiếu</button>
               )}
               <button 
                 className="ktp-btn-submit" 
@@ -391,6 +445,38 @@ export default function HoSoDangKyTab({ onNavigate }) {
               >
                 Tiếp nhận phiếu đăng ký
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REJECT MODAL */}
+      {showRejectModal && (
+        <div className="ktp-modal-overlay" onClick={() => setShowRejectModal(false)}>
+          <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ width: '400px', maxWidth: '90vw' }}>
+            <div className="ktp-modal-header" style={{ alignItems: 'center', borderBottom: '1px solid #bec8c9', backgroundColor: '#f4f6f6' }}>
+              <h3 style={{ fontSize: '16px', margin: 0, color: '#191c1d' }}>Xác nhận từ chối phiếu?</h3>
+              <button className="ktp-modal-close" onClick={() => setShowRejectModal(false)}><Icon name="close" /></button>
+            </div>
+            <div className="ktp-modal-body" style={{ padding: '24px', flex: 'none', display: 'block' }}>
+              <p style={{ margin: '0 0 12px 0', fontWeight: '600', fontSize: '14px', color: '#3f494a' }}>Lý do từ chối <span style={{ color: '#d32f2f' }}>*</span></p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {['Không còn phòng/giường phù hợp', 'Không liên lạc được khách', 'Thông tin không hợp lệ', 'Khách hủy yêu cầu', 'Khác'].map(reason => (
+                  <label key={reason} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#191c1d' }}>
+                    <input type="radio" name="rejectReason" value={reason} checked={rejectReason === reason} onChange={(e) => setRejectReason(e.target.value)} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                    {reason}
+                  </label>
+                ))}
+              </div>
+              {rejectReason === 'Khác' && (
+                <div style={{ marginTop: '12px' }}>
+                  <input type="text" placeholder="Ghi chú lý do..." value={rejectNote} onChange={e => setRejectNote(e.target.value)} style={{ width: '100%', padding: '8px 12px', border: '1px solid #bec8c9', borderRadius: '4px', fontSize: '14px', outline: 'none' }} autoFocus />
+                </div>
+              )}
+            </div>
+            <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="ktp-btn-cancel" style={{ backgroundColor: '#f4f6f6' }} onClick={() => setShowRejectModal(false)}>Hủy</button>
+              <button className="ktp-btn-submit" style={{ backgroundColor: '#c62828' }} onClick={handleReject} disabled={rejectReason === 'Khác' && !rejectNote.trim()}>Xác nhận</button>
             </div>
           </div>
         </div>

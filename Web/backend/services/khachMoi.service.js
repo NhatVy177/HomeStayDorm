@@ -22,27 +22,9 @@ function handleDatabaseError(error) {
 
 async function getCustomerState(khachHangId) {
   try {
-    const pool = await getPool();
-    const result = await pool.request()
-      .input('KhachHangId', sql.VarChar(6), khachHangId)
-      .query(`
-        IF NOT EXISTS (SELECT 1 FROM dbo.KhachHang WHERE MaKhachHang = @KhachHangId)
-          THROW 50101, N'Không tìm thấy khách hàng.', 1;
-
-        SELECT
-          @KhachHangId AS khachHangId,
-          CAST(CASE
-            WHEN EXISTS (SELECT 1 FROM dbo.PhieuDatCoc WHERE MaKhachHang = @KhachHangId)
-              OR EXISTS (SELECT 1 FROM dbo.HopDongThue WHERE MaKhachHang = @KhachHangId)
-            THEN 0 ELSE 1 END AS BIT) AS laKhachMoi,
-          (SELECT COUNT(*) FROM dbo.PhieuDangKy WHERE MaKhachHang = @KhachHangId) AS soHoSo,
-          (SELECT COUNT(*)
-             FROM dbo.LichXemPhong AS lxp
-             INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
-             WHERE pdk.MaKhachHang = @KhachHangId) AS soLichXem,
-          (SELECT COUNT(*) FROM dbo.PhieuDatCoc WHERE MaKhachHang = @KhachHangId) AS soPhieuCoc,
-          (SELECT COUNT(*) FROM dbo.HopDongThue WHERE MaKhachHang = @KhachHangId) AS soHopDong;
-      `);
+    const result = await executeProcedure('dbo.SP_KhachMoi_TrangThai', [
+      { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId }
+    ]);
     return result.recordset[0] || null;
   } catch (error) {
     handleDatabaseError(error);
@@ -60,92 +42,28 @@ export async function getTrangThai(user) {
 }
 
 async function getProfiles(khachHangId) {
-  const pool = await getPool();
-  const result = await pool.request()
-    .input('KhachHangId', sql.VarChar(6), khachHangId)
-    .query(`
-      SELECT
-        pdk.MaDangKy AS id,
-        pdk.MaDangKy AS maDangKy,
-        pdk.NgayDangKy AS ngayDangKy,
-        pdk.HinhThucThue AS hinhThucThue,
-        pdk.KhuVucMongMuon AS khuVucMongMuon,
-        pdk.LoaiPhongYeuCau AS loaiPhongYeuCau,
-        pdk.MucGia AS mucGia,
-        pdk.SoNguoiDuKienO AS soNguoiO,
-        pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
-        pdk.ThoiHanThue AS thoiHanThue,
-        pdk.YeuCauKhac AS ghiChu,
-        pdk.TrangThai AS trangThai,
-        lich.STTLich AS sttLich,
-        lich.ThoiGianHen AS thoiGianHen,
-        lich.TrangThai AS trangThaiLich
-      FROM dbo.PhieuDangKy AS pdk
-      OUTER APPLY (
-        SELECT TOP (1) lxp.STTLich, lxp.ThoiGianHen, lxp.TrangThai
-        FROM dbo.LichXemPhong AS lxp
-        WHERE lxp.MaDangKy = pdk.MaDangKy
-        ORDER BY lxp.STTLich DESC
-      ) AS lich
-      WHERE pdk.MaKhachHang = @KhachHangId
-      ORDER BY pdk.NgayDangKy DESC, pdk.MaDangKy DESC;
-    `);
+  const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachHoSo', [
+    { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId }
+  ]);
   return result.recordset;
 }
 
 async function getSchedules(khachHangId) {
-  const pool = await getPool();
-  const result = await pool.request()
-    .input('KhachHangId', sql.VarChar(6), khachHangId)
-    .query(`
-      SELECT
-        CONCAT(lxp.MaDangKy, '-', lxp.STTLich) AS id,
-        lxp.MaDangKy AS maDangKy,
-        lxp.STTLich AS sttLich,
-        lxp.ThoiGianHen AS thoiGianHen,
-        lxp.TrangThai AS trangThai,
-        phong.phongXem
-      FROM dbo.LichXemPhong AS lxp
-      INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
-      OUTER APPLY (
-        SELECT STUFF((
-          SELECT N', ' + p.TenPhong
-          FROM dbo.ChiTietXemPhong AS ctxp
-          INNER JOIN dbo.Phong AS p ON p.MaPhong = ctxp.MaPhong
-          WHERE ctxp.MaDangKy = lxp.MaDangKy AND ctxp.STTLich = lxp.STTLich
-          FOR XML PATH(''), TYPE
-        ).value('.', 'NVARCHAR(MAX)'), 1, 2, N'') AS phongXem
-      ) AS phong
-      WHERE pdk.MaKhachHang = @KhachHangId
-      ORDER BY lxp.ThoiGianHen DESC, lxp.MaDangKy DESC, lxp.STTLich DESC;
-    `);
+  const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachLichXem', [
+    { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId }
+  ]);
   return result.recordset;
-}
-
-function normalizeKeyword(value) {
-  return String(value || '')
-    .toLocaleLowerCase('vi-VN')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
-}
-
-function roomMatchesKeyword(room, keyword) {
-  if (!keyword) return true;
-  return normalizeKeyword([
-    room.tenPhong,
-    room.maPhong,
-    room.chiNhanh,
-    room.diaChi,
-    room.loaiPhong
-  ].join(' ')).includes(keyword);
 }
 
 async function getAvailableRooms(filter = {}) {
   const keyword = String(filter.tuKhoa || filter.tenPhong || '').trim();
-  const rooms = await getDanhSachPhongKhamPha(filter);
-  const normalizedKeyword = normalizeKeyword(keyword);
-  return rooms.filter((room) => roomMatchesKeyword(room, normalizedKeyword));
+  const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachPhong', [
+    { name: 'TenPhong', type: sql.NVarChar(100), value: keyword || null },
+    { name: 'LoaiPhong', type: sql.NVarChar(100), value: filter.loaiPhong || filter.loai || null },
+    { name: 'KhuVuc', type: sql.NVarChar(100), value: filter.khuVuc || null },
+    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: filter.mucGiaToiDa ? Number(filter.mucGiaToiDa) : null }
+  ]);
+  return result.recordset;
 }
 
 export async function getTongQuan(user) {
@@ -181,24 +99,18 @@ export async function createHoSo(user, data = {}) {
   }
 
   try {
-    const ghiChu = [
-      data.ghiChu,
-      data.phongQuanTam ? `Phòng quan tâm: ${data.phongQuanTam}` : ''
-    ].filter(Boolean).join('\n') || null;
-    const result = await executeProcedure('dbo.SP_TaoHoSoDangKy', [
-      { name: 'KhachHangId', type: sql.NVarChar(20), value: khachHangId },
-      { name: 'NhuCau', type: sql.NVarChar(200), value: data.hinhThucThue === 'Nguyên căn' ? 'Nguyên căn' : 'Ghép' },
-      { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
-      { name: 'NgayDuKienVaoO', type: sql.Date, value: ngayDuKienVaoO },
-      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: ghiChu },
+    const result = await executeProcedure('dbo.SP_KhachMoi_TaoHoSo', [
+      { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
+      { name: 'HinhThucThue', type: sql.NVarChar(20), value: data.hinhThucThue === 'Nguyên căn' ? 'Nguyên căn' : 'Ghép' },
       { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || null },
       { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50), value: data.loaiPhongYeuCau || null },
-      {
-        name: 'MucGia',
-        type: sql.Decimal(15, 2),
-        value: data.mucGia == null || data.mucGia === '' ? null : Number(data.mucGia)
-      },
-      { name: 'ThoiHanThue', type: sql.Int, value: data.thoiHanThue ? Number(data.thoiHanThue) : null }
+      { name: 'MucGia', type: sql.Decimal(15, 2), value: data.mucGia == null || data.mucGia === '' ? null : Number(data.mucGia) },
+      { name: 'MucGiaDen', type: sql.Decimal(15, 2), value: data.mucGiaDen == null || data.mucGiaDen === '' ? null : Number(data.mucGiaDen) },
+      { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
+      { name: 'NgayDuKienVaoO', type: sql.Date, value: ngayDuKienVaoO },
+      { name: 'ThoiHanThue', type: sql.Int, value: data.thoiHanThue ? Number(data.thoiHanThue) : null },
+      { name: 'PhongQuanTam', type: sql.NVarChar(400), value: data.phongQuanTam || null },
+      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || null }
     ]);
 
     return result.recordset[0] || null;
@@ -223,6 +135,7 @@ export async function getHoSoDetail(user, maDangKy) {
         pdk.KhuVucMongMuon,
         pdk.LoaiPhongYeuCau,
         pdk.MucGia,
+        pdk.MucGiaDen,
         pdk.SoNguoiDuKienO  AS soNguoiO,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
         pdk.ThoiHanThue,
@@ -315,39 +228,14 @@ export async function yeuCauDieuChinhLich(user, id, data = {}) {
   }
 
   try {
-    const pool = await getPool();
-    const result = await pool.request()
-      .input('KhachHangId', sql.VarChar(6), khachHangId)
-      .input('MaDangKy', sql.VarChar(6), maDangKy)
-      .input('STTLich', sql.Int, sttLich)
-      .input('ThaoTac', sql.NVarChar(20), data.thaoTac || null)
-      .input('ThoiGianMoi', sql.DateTime, data.thoiGianMoi || null)
-      .query(`
-        IF NOT EXISTS (
-          SELECT 1
-          FROM dbo.LichXemPhong AS lxp
-          INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
-          WHERE lxp.MaDangKy = @MaDangKy
-            AND lxp.STTLich = @STTLich
-            AND pdk.MaKhachHang = @KhachHangId
-        )
-          THROW 50105, N'Không tìm thấy lịch xem phòng.', 1;
-
-        UPDATE dbo.LichXemPhong
-        SET
-          TrangThai = CASE WHEN @ThaoTac = N'Hủy' THEN N'Yêu cầu hủy' ELSE N'Yêu cầu đổi lịch' END,
-          ThoiGianHen = COALESCE(@ThoiGianMoi, ThoiGianHen)
-        WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich;
-
-        SELECT
-          CONCAT(lxp.MaDangKy, '-', lxp.STTLich) AS id,
-          lxp.MaDangKy AS maDangKy,
-          lxp.STTLich AS sttLich,
-          lxp.ThoiGianHen AS thoiGianHen,
-          lxp.TrangThai AS trangThai
-        FROM dbo.LichXemPhong AS lxp
-        WHERE lxp.MaDangKy = @MaDangKy AND lxp.STTLich = @STTLich;
-      `);
+    const result = await executeProcedure('dbo.SP_KhachMoi_YeuCauDieuChinhLich', [
+      { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
+      { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy },
+      { name: 'STTLich', type: sql.Int, value: sttLich },
+      { name: 'ThaoTac', type: sql.NVarChar(20), value: data.thaoTac || null },
+      { name: 'ThoiGianMoi', type: sql.DateTime, value: data.thoiGianMoi || null },
+      { name: 'LyDo', type: sql.NVarChar(sql.MAX), value: data.lyDo || null }
+    ]);
 
     return result.recordset;
   } catch (error) {

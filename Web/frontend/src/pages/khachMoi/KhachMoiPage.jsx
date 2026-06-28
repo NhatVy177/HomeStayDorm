@@ -487,9 +487,9 @@ export default function KhachMoiPage() {
                       <span className={`km-status ${statusTone(profile.trangThai)}`}>{profile.trangThai}</span>
                     </div>
                     <div className="km-info-list">
-                      <div><span>Hình thức thuê</span><strong>{profile.hinhThucThue}</strong></div>
+                      <div><span>Hình thức thuê</span><strong>{profile.hinhThucThue === 'Ghép' && profile.gioiTinh ? `Ghép ${profile.gioiTinh.toLowerCase()}` : profile.hinhThucThue}</strong></div>
                       <div><span>Loại phòng mong muốn</span><strong>{profile.loaiPhongYeuCau || 'Chưa ghi rõ'}</strong></div>
-                      <div><span>Số người</span><strong>{profile.soNguoiO} người</strong></div>
+                      <div><span>Số người</span><strong>{profile.soNguoiO} người{profile.hinhThucThue === 'Ghép' && profile.gioiTinh ? ` (${profile.gioiTinh})` : ''}</strong></div>
                       <div><span>Ngày dự kiến vào ở</span><strong>{formatDate(profile.ngayDuKienVaoO)}</strong></div>
                       {profile.thoiHanThue && <div><span>Thời hạn thuê</span><strong>{profile.thoiHanThue} tháng</strong></div>}
                       <div><span>Ghi chú</span><strong>{profile.ghiChu || 'Không có'}</strong></div>
