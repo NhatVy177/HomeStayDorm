@@ -65,3 +65,46 @@ export async function capNhatLichXemPhong(id, data = {}) {
     handleDatabaseError(error);
   }
 }
+
+export async function getPhongPhuHop(maDangKy) {
+  if (!maDangKy) {
+    throw createServiceError('Vui long cung cap maDangKy');
+  }
+
+  const query = `
+    SELECT 
+      P.MaPhong as id,
+      P.TenPhong as name,
+      LP.TenLoaiPhong as type,
+      CASE 
+        WHEN DK.HinhThucThue = N'Nguyên căn' THEN LP.GiaThueNguyenPhong 
+        ELSE LP.GiaThueTheoGiuong 
+      END as price,
+      '20m2' as area,
+      CN.DiaChi as address,
+      '' as availableDate,
+      (SELECT TOP 1 UrlImg FROM HinhAnhPhong WHERE MaPhong = P.MaPhong ORDER BY STTAnh ASC) as img,
+      P.TinhTrang as status
+    FROM Phong P
+    JOIN LoaiPhong LP ON P.MaLoaiPhong = LP.MaLoaiPhong
+    JOIN ChiNhanh CN ON P.MaChiNhanh = CN.MaChiNhanh
+    JOIN PhieuDangKy DK ON DK.MaDangKy = @MaDangKy
+    WHERE 
+      (P.GioiTinhChoPhep = DK.GioiTinh OR P.GioiTinhChoPhep = N'Không phân biệt')
+      AND (
+        (DK.HinhThucThue = N'Nguyên căn' AND P.TinhTrang IN (N'Trống', N'Giữ chỗ'))
+        OR 
+        (DK.HinhThucThue = N'Ghép' AND P.TinhTrang IN (N'Trống', N'Còn chỗ', N'Giữ chỗ'))
+      )
+  `;
+
+  try {
+    const { executeQuery } = await import('../database/connection.js');
+    const result = await executeQuery(query, [
+      { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy }
+    ]);
+    return result.recordset;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}

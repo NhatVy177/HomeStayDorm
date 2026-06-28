@@ -435,7 +435,10 @@ export default function HoSoDangKyTab({ onNavigate }) {
             <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px' }}>
               <button className="ktp-btn-cancel" style={{ backgroundColor: '#f4f6f6' }} onClick={() => { setSelectedReg(null); setRoomResults(null); }}>Hủy</button>
               {roomResults && roomResults.length === 0 && (
-                <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => setShowRejectModal(true)}>Từ chối phiếu</button>
+                <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => {
+                  setRejectNote(mismatchReason ? mismatchReason.desc : '');
+                  setShowRejectModal(true);
+                }}>Từ chối phiếu</button>
               )}
               <button 
                 className="ktp-btn-submit" 
@@ -468,11 +471,10 @@ export default function HoSoDangKyTab({ onNavigate }) {
                   </label>
                 ))}
               </div>
-              {rejectReason === 'Khác' && (
-                <div style={{ marginTop: '12px' }}>
-                  <input type="text" placeholder="Ghi chú lý do..." value={rejectNote} onChange={e => setRejectNote(e.target.value)} style={{ width: '100%', padding: '8px 12px', border: '1px solid #bec8c9', borderRadius: '4px', fontSize: '14px', outline: 'none' }} autoFocus />
-                </div>
-              )}
+              <div style={{ marginTop: '12px' }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#3f494a' }}>Ghi chú thêm cho khách hàng {rejectReason !== 'Khác' && '(Tùy chọn)'}</p>
+                <input type="text" placeholder="Ghi chú chi tiết hoặc gợi ý chỉnh sửa..." value={rejectNote} onChange={e => setRejectNote(e.target.value)} style={{ width: '100%', padding: '8px 12px', border: '1px solid #bec8c9', borderRadius: '4px', fontSize: '14px', outline: 'none' }} autoFocus={rejectReason === 'Khác'} />
+              </div>
             </div>
             <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px', justifyContent: 'flex-end', gap: '12px' }}>
               <button className="ktp-btn-cancel" style={{ backgroundColor: '#f4f6f6' }} onClick={() => setShowRejectModal(false)}>Hủy</button>

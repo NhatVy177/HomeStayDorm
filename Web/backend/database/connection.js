@@ -43,4 +43,15 @@ export async function executeProcedure(procedureName, parameters = []) {
   return request.execute(procedureName);
 }
 
+export async function executeQuery(sqlString, parameters = []) {
+  const pool = await getPool();
+  const request = pool.request();
+
+  for (const parameter of parameters) {
+    request.input(parameter.name, parameter.type, parameter.value);
+  }
+
+  return request.query(sqlString);
+}
+
 export { sql };

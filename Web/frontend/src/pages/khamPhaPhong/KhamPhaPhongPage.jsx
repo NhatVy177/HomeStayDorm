@@ -266,9 +266,12 @@ function RoomCard({ room, onViewDetail, onRegister }) {
         <RoomVisual room={room} />
       </div>
       <div className="kp-room-body">
-        <div className="kp-room-title-row">
+        <div className="kp-room-title-row" style={{ alignItems: 'flex-start' }}>
           <h3>{room.tenPhong}</h3>
-          <strong className="kp-room-price">{formatMoney(room.giaThue)}<span>{unit}</span></strong>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+            {room.giaTheoGiuong != null && <strong className="kp-room-price">{formatMoney(room.giaTheoGiuong)}<span>/giường</span></strong>}
+            {room.giaNguyenPhong != null && <strong className="kp-room-price">{formatMoney(room.giaNguyenPhong)}<span>/căn</span></strong>}
+          </div>
         </div>
         <p className="kp-room-location"><LineIcon name="map" />{area}</p>
         <div className="kp-room-tags">
@@ -350,7 +353,13 @@ function DetailModal({ room, onClose, onRegister }) {
           <div className="kp-modal-info">
             <div><span>Mã phòng</span><strong>{room.maPhong}</strong></div>
             <div><span>Loại phòng</span><strong>{room.loaiPhong}</strong></div>
-            <div><span>Giá thuê</span><strong className="kp-accent">{formatMoney(room.giaThue)}{unit}</strong></div>
+            <div className="is-wide">
+              <span>Giá thuê</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {room.giaTheoGiuong != null && <strong className="kp-accent">{formatMoney(room.giaTheoGiuong)}<span>/giường</span></strong>}
+                {room.giaNguyenPhong != null && <strong className="kp-accent">{formatMoney(room.giaNguyenPhong)}<span>/căn</span></strong>}
+              </div>
+            </div>
             <div><span>Sức chứa</span><strong>{room.sucChua} người</strong></div>
             <div><span>Chỗ trống</span><strong>{room.soChoTrong} chỗ</strong></div>
             <div><span>Giới tính cho phép</span><strong>{room.gioiTinhChoPhep}</strong></div>

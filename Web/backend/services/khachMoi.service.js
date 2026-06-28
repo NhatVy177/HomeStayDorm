@@ -99,9 +99,11 @@ export async function createHoSo(user, data = {}) {
   }
 
   try {
+    let finalGhiChu = data.ghiChu || '';
+
     const result = await executeProcedure('dbo.SP_KhachMoi_TaoHoSo', [
       { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
-      { name: 'HinhThucThue', type: sql.NVarChar(20), value: data.hinhThucThue === 'Nguyên căn' ? 'Nguyên căn' : 'Ghép' },
+      { name: 'HinhThucThue', type: sql.NVarChar(20), value: data.hinhThucThue || null },
       { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || null },
       { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50), value: data.loaiPhongYeuCau || null },
       { name: 'MucGia', type: sql.Decimal(15, 2), value: data.mucGia == null || data.mucGia === '' ? null : Number(data.mucGia) },
@@ -110,7 +112,14 @@ export async function createHoSo(user, data = {}) {
       { name: 'NgayDuKienVaoO', type: sql.Date, value: ngayDuKienVaoO },
       { name: 'ThoiHanThue', type: sql.Int, value: data.thoiHanThue ? Number(data.thoiHanThue) : null },
       { name: 'PhongQuanTam', type: sql.NVarChar(400), value: data.phongQuanTam || null },
-      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || null }
+      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: finalGhiChu || null },
+      { name: 'HoTen', type: sql.NVarChar(100), value: data.hoTen || null },
+      { name: 'NgaySinh', type: sql.Date, value: data.ngaySinh || null },
+      { name: 'GioiTinhKhach', type: sql.NVarChar(5), value: data.gioiTinh || null },
+      { name: 'SDT', type: sql.VarChar(20), value: data.soDienThoai || null },
+      { name: 'Email', type: sql.VarChar(100), value: data.email || null },
+      { name: 'QuocTich', type: sql.NVarChar(50), value: data.quocTich || null },
+      { name: 'CCCD', type: sql.VarChar(20), value: data.cccd || null }
     ]);
 
     return result.recordset[0] || null;
@@ -137,6 +146,7 @@ export async function getHoSoDetail(user, maDangKy) {
         pdk.MucGia,
         pdk.MucGiaDen,
         pdk.SoNguoiDuKienO  AS soNguoiO,
+        pdk.GioiTinh AS gioiTinhPhong,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
         pdk.ThoiHanThue,
         pdk.YeuCauKhac AS ghiChu,
@@ -167,26 +177,84 @@ export async function updateHoSo(user, maDangKy, data = {}) {
     throw createServiceError(`Không thể cập nhật hồ sơ đang ở trạng thái "${TrangThai}"`, 400);
   }
 
-  await pool.request()
-    .input('MaDangKy', sql.VarChar(6), maDangKy)
-    .input('KhuVucMongMuon', sql.NVarChar(100), data.khuVucMongMuon || null)
-    .input('LoaiPhongYeuCau', sql.NVarChar(50), data.loaiPhongYeuCau || null)
-    .input('MucGia', sql.Decimal(15, 2), data.mucGia ? Number(data.mucGia) : null)
-    .input('SoNguoiO', sql.Int, data.soNguoiO ? Number(data.soNguoiO) : null)
-    .input('NgayDuKienVaoO', sql.Date, data.ngayDuKienVaoO || null)
-    .input('ThoiHanThue', sql.Int, data.thoiHanThue ? Number(data.thoiHanThue) : null)
-    .input('GhiChu', sql.NVarChar(sql.MAX), data.ghiChu || null)
-    .query(`
-      UPDATE dbo.PhieuDangKy SET
-        KhuVucMongMuon      = @KhuVucMongMuon,
-        LoaiPhongYeuCau     = @LoaiPhongYeuCau,
-        MucGia              = @MucGia,
-        SoNguoiDuKienO     = @SoNguoiO,
-        ThoiGianDuKienVaoO  = @NgayDuKienVaoO,
-        ThoiHanThue         = @ThoiHanThue,
-        YeuCauKhac          = @GhiChu
-      WHERE MaDangKy = @MaDangKy;
-    `);
+  let nhuCau = 'Nguyên căn';
+  let gioiTinhPhong = null;
+  if (data.hinhThucThue === 'Ghép nam') {
+    nhuCau = 'Ghép';
+    gioiTinhPhong = 'Nam';
+  } else if (data.hinhThucThue === 'Ghép nữ') {
+    nhuCau = 'Ghép';
+    gioiTinhPhong = 'Nữ';
+  }
+
+  const transaction = new sql.Transaction(pool);
+  await transaction.begin();
+
+  try {
+    await transaction.request()
+      .input('MaDangKy', sql.VarChar(6), maDangKy)
+      .input('HinhThucThue', sql.NVarChar(20), nhuCau)
+      .input('GioiTinhPhong', sql.NVarChar(10), gioiTinhPhong)
+      .input('KhuVucMongMuon', sql.NVarChar(100), data.khuVucMongMuon || null)
+      .input('LoaiPhongYeuCau', sql.NVarChar(50), data.loaiPhongYeuCau || null)
+      .input('MucGia', sql.Decimal(15, 2), data.mucGia ? Number(data.mucGia) : null)
+      .input('MucGiaDen', sql.Decimal(15, 2), data.mucGiaDen ? Number(data.mucGiaDen) : null)
+      .input('SoNguoiO', sql.Int, data.soNguoiO ? Number(data.soNguoiO) : null)
+      .input('NgayDuKienVaoO', sql.Date, data.ngayDuKienVaoO || null)
+      .input('ThoiHanThue', sql.Int, data.thoiHanThue ? Number(data.thoiHanThue) : null)
+      .input('GhiChu', sql.NVarChar(sql.MAX), data.ghiChu || null)
+      .query(`
+        UPDATE dbo.PhieuDangKy SET
+          HinhThucThue        = @HinhThucThue,
+          GioiTinh            = @GioiTinhPhong,
+          KhuVucMongMuon      = @KhuVucMongMuon,
+          LoaiPhongYeuCau     = @LoaiPhongYeuCau,
+          MucGia              = @MucGia,
+          MucGiaDen           = @MucGiaDen,
+          SoNguoiDuKienO      = @SoNguoiO,
+          ThoiGianDuKienVaoO  = @NgayDuKienVaoO,
+          ThoiHanThue         = @ThoiHanThue,
+          YeuCauKhac          = @GhiChu
+        WHERE MaDangKy = @MaDangKy;
+      `);
+
+    if (data.hoTen) {
+      await transaction.request()
+        .input('KhachHangId', sql.VarChar(6), khachHangId)
+        .input('HoTen', sql.NVarChar(100), data.hoTen)
+        .input('NgaySinh', sql.Date, data.ngaySinh || null)
+        .input('GioiTinh', sql.NVarChar(5), data.gioiTinh || null)
+        .input('SDT', sql.VarChar(20), data.soDienThoai || null)
+        .input('Email', sql.VarChar(100), data.email || null)
+        .query(`
+          UPDATE dbo.NguoiDung SET
+            HoTen = @HoTen,
+            NgaySinh = @NgaySinh,
+            GioiTinh = @GioiTinh,
+            SDT = @SDT,
+            Email = @Email
+          WHERE MaNguoiDung = @KhachHangId;
+        `);
+    }
+
+    if (data.quocTich || data.cccd) {
+      await transaction.request()
+        .input('KhachHangId', sql.VarChar(6), khachHangId)
+        .input('QuocTich', sql.NVarChar(50), data.quocTich || null)
+        .input('CCCD', sql.VarChar(20), data.cccd || null)
+        .query(`
+          UPDATE dbo.KhachHang SET
+            QuocTich = @QuocTich,
+            CCCD = @CCCD
+          WHERE MaKhachHang = @KhachHangId;
+        `);
+    }
+
+    await transaction.commit();
+  } catch (err) {
+    await transaction.rollback();
+    throw err;
+  }
 
   return getHoSoDetail(user, maDangKy);
 }
@@ -233,7 +301,7 @@ export async function yeuCauDieuChinhLich(user, id, data = {}) {
       { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy },
       { name: 'STTLich', type: sql.Int, value: sttLich },
       { name: 'ThaoTac', type: sql.NVarChar(20), value: data.thaoTac || null },
-      { name: 'ThoiGianMoi', type: sql.DateTime, value: data.thoiGianMoi || null },
+      { name: 'ThoiGianMoi', type: sql.NVarChar(255), value: data.thoiGianMoi || null },
       { name: 'LyDo', type: sql.NVarChar(sql.MAX), value: data.lyDo || null }
     ]);
 

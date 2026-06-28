@@ -292,7 +292,7 @@ function AppointmentCard({ appt, onChat, onReschedule, onCancel, onViewDetail })
               onClick={() => onReschedule?.(appt)}
             >
               <Icon name="refresh" />
-              Đổi lịch
+              Yêu cầu đổi lịch
             </button>
             <button
               className="lxp-card-btn lxp-card-btn-outline"
@@ -300,7 +300,7 @@ function AppointmentCard({ appt, onChat, onReschedule, onCancel, onViewDetail })
               onClick={() => onViewDetail?.(appt)}
             >
               <Icon name="eye" />
-              Xem chi tiết
+              Xem chi tiết phòng
             </button>
           </>
         )}
@@ -310,10 +310,10 @@ function AppointmentCard({ appt, onChat, onReschedule, onCancel, onViewDetail })
             <button
               className="lxp-card-btn lxp-card-btn-primary"
               type="button"
-              onClick={() => onChat?.(appt)}
+              onClick={() => onViewDetail?.(appt)}
             >
-              <Icon name="chat" />
-              Liên hệ tư vấn
+              <Icon name="eye" />
+              Xem chi tiết phòng
             </button>
             <button
               className="lxp-card-btn lxp-card-btn-outline"
@@ -321,7 +321,7 @@ function AppointmentCard({ appt, onChat, onReschedule, onCancel, onViewDetail })
               onClick={() => onCancel?.(appt)}
             >
               <Icon name="cancel" />
-              Hủy lịch
+              Yêu cầu hủy lịch
             </button>
           </>
         )}
@@ -333,7 +333,7 @@ function AppointmentCard({ appt, onChat, onReschedule, onCancel, onViewDetail })
             onClick={() => onViewDetail?.(appt)}
           >
             <Icon name="eye" />
-            Xem chi tiết hồ sơ
+            Xem chi tiết lịch hẹn
           </button>
         )}
 
@@ -381,11 +381,14 @@ function TimelineNode({ appt, ...handlers }) {
         className={`lxp-dot-pos ${DOT_CLASS[appt.status] || 'lxp-dot-pending'}`}
         style={{
           background:
-            appt.status === 'upcoming' ? 'var(--lxp-primary)' : 'var(--lxp-outline-var)',
+            appt.status === 'upcoming' ? 'var(--lxp-primary)' :
+            appt.status === 'done' ? 'var(--kp-success, #10b981)' : 'var(--lxp-outline-var)',
           border: '3px solid var(--lxp-surface)',
           boxShadow:
             appt.status === 'upcoming'
               ? '0 0 0 4px rgba(0,102,109,0.12)'
+              : appt.status === 'done'
+              ? '0 0 0 4px rgba(16, 185, 129, 0.12)'
               : 'none',
         }}
         aria-hidden="true"
@@ -489,14 +492,14 @@ function NewAppointmentModal({ onClose, onSubmit }) {
 
 /* ─── Reschedule modal ─── */
 function RescheduleModal({ appt, onClose, onSubmit }) {
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [timeText, setTimeText] = useState('');
+  const [reason, setReason] = useState('');
 
   if (!appt) return null;
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSubmit?.({ ...appt, newDate: date, newTime: time });
+    onSubmit?.(appt, { timeText, reason });
     onClose?.();
   }
 
@@ -504,46 +507,94 @@ function RescheduleModal({ appt, onClose, onSubmit }) {
     <div className="lxp-modal-backdrop" onMouseDown={onClose}>
       <div className="lxp-modal" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
         <div className="lxp-modal-head">
-          <h3>Đổi lịch xem phòng</h3>
+          <h3>Yêu cầu đổi lịch xem phòng</h3>
           <button className="lxp-modal-close" type="button" aria-label="Đóng" onClick={onClose}>×</button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="lxp-modal-body">
             <p style={{ fontSize: 14, color: 'var(--lxp-on-surface-var)', margin: 0 }}>
               Bạn đang đổi lịch cho <strong style={{ color: 'var(--lxp-on-surface)' }}>{appt.roomName}</strong>.
-              Lịch mới phải được đổi trước ít nhất 2 tiếng.
+              Lịch mới phải được đổi trước ít nhất 1 tiếng so với lịch hẹn cũ.
             </p>
             <div className="lxp-modal-field">
-              <label htmlFor="lxp-new-date">Ngày mới</label>
-              <input
-                id="lxp-new-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+              <label htmlFor="lxp-new-timeText">Thời gian đề xuất (Có thể nhập nhiều thời gian)</label>
+              <textarea
+                id="lxp-new-timeText"
+                placeholder="VD: Chiều nay 3h hoặc Sáng mai 9h..."
+                value={timeText}
+                onChange={(e) => setTimeText(e.target.value)}
                 required
               />
             </div>
             <div className="lxp-modal-field">
-              <label htmlFor="lxp-new-time">Khung giờ mới</label>
-              <select
-                id="lxp-new-time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
+              <label htmlFor="lxp-reason">Lý do đổi lịch</label>
+              <textarea
+                id="lxp-reason"
+                placeholder="VD: Bận công việc đột xuất..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
                 required
-              >
-                <option value="">-- Chọn khung giờ --</option>
-                <option value="08:00 - 09:00">08:00 - 09:00</option>
-                <option value="09:00 - 10:00">09:00 - 10:00</option>
-                <option value="10:00 - 11:00">10:00 - 11:00</option>
-                <option value="14:00 - 15:00">14:00 - 15:00</option>
-                <option value="15:00 - 16:00">15:00 - 16:00</option>
-                <option value="16:00 - 17:00">16:00 - 17:00</option>
-              </select>
+              />
             </div>
           </div>
           <div className="lxp-modal-footer">
-            <button className="lxp-btn lxp-btn-outline" type="button" onClick={onClose}>Hủy</button>
-            <button className="lxp-btn lxp-btn-primary" type="submit">Xác nhận đổi lịch</button>
+            <button className="lxp-btn lxp-btn-outline" type="button" onClick={onClose}>Thoát</button>
+            <button className="lxp-btn lxp-btn-primary" type="submit">Gửi yêu cầu</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Cancel modal ─── */
+function CancelModal({ appt, onClose, onSubmit }) {
+  const [timeText, setTimeText] = useState('');
+  const [reason, setReason] = useState('');
+
+  if (!appt) return null;
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    onSubmit?.(appt, { timeText, reason });
+    onClose?.();
+  }
+
+  return (
+    <div className="lxp-modal-backdrop" onMouseDown={onClose}>
+      <div className="lxp-modal" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="lxp-modal-head">
+          <h3>Yêu cầu hủy lịch xem phòng</h3>
+          <button className="lxp-modal-close" type="button" aria-label="Đóng" onClick={onClose}>×</button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="lxp-modal-body">
+            <p style={{ fontSize: 14, color: 'var(--lxp-on-surface-var)', margin: 0 }}>
+              Bạn đang yêu cầu hủy lịch cho <strong style={{ color: 'var(--lxp-on-surface)' }}>{appt.roomName}</strong>.
+            </p>
+            <div className="lxp-modal-field">
+              <label htmlFor="lxp-cancel-timeText">Thời gian đề xuất (tùy chọn)</label>
+              <textarea
+                id="lxp-cancel-timeText"
+                placeholder="VD: Nếu được xin chuyển sang chiều mai 3h..."
+                value={timeText}
+                onChange={(e) => setTimeText(e.target.value)}
+              />
+            </div>
+            <div className="lxp-modal-field">
+              <label htmlFor="lxp-cancel-reason">Lý do hủy</label>
+              <textarea
+                id="lxp-cancel-reason"
+                placeholder="VD: Đã tìm được phòng khác..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div className="lxp-modal-footer">
+            <button className="lxp-btn lxp-btn-outline" type="button" onClick={onClose}>Thoát</button>
+            <button className="lxp-btn lxp-btn-danger" style={{ backgroundColor: '#e53e3e', color: 'white' }} type="submit">Gửi yêu cầu hủy</button>
           </div>
         </form>
       </div>
@@ -561,10 +612,11 @@ const FILTERS = [
 ];
 
 /* ─── Main Page Component ─── */
-export default function LichXemPhongPage({ schedules = [], onViewRoomDetail }) {
+export default function LichXemPhongPage({ schedules = [], onViewRoomDetail, onReschedule, onCancel }) {
   const [activeFilter, setActiveFilter] = useState('all');
   const [showNewModal, setShowNewModal] = useState(false);
   const [rescheduleAppt, setRescheduleAppt] = useState(null);
+  const [cancelAppt, setCancelAppt] = useState(null);
 
   /* Map backend data to UI data */
   const appointments = schedules.map((schedule) => {
@@ -578,7 +630,13 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail }) {
     if (schedule.trangThai === 'Đã hủy' || schedule.trangThai === 'Yêu cầu hủy') status = 'cancelled';
     if (schedule.trangThai === 'Yêu cầu đổi lịch') status = 'pending';
 
-    const timeStr = isValidDate ? d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Chưa cập nhật';
+    // Bất kể trạng thái là gì (trừ Đã xem/Đã hủy), nếu quá hạn thì tự động chuyển thành Đã hủy
+    if (isValidDate && d.getTime() < Date.now() && status !== 'done' && status !== 'cancelled') {
+      status = 'cancelled';
+      schedule.trangThai = 'Quá hạn'; // Hoặc 'Đã hủy'
+    }
+
+    const timeStr = isValidDate ? d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Chưa cập nhật';
     
     return {
       id: schedule.id || schedule.maDangKy + '_' + (schedule.thoiGianHen || Date.now()),
@@ -592,7 +650,7 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail }) {
       time: timeStr,
       staffName: schedule.tenNhanVienSale || 'Đang cập nhật',
       staffImg: null,
-      roomImg: null, // the component will handle fallback if null
+      roomImg: schedule.hinhAnhPhong || null, // the component will handle fallback if null
       rating: null,
       rawSchedule: schedule
     };
@@ -645,27 +703,21 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail }) {
       {/* ── Summary + Filter chips ── */}
       <div className="lxp-chips-bar">
         <div className="lxp-chips">
-          <span className="lxp-chip lxp-chip-primary is-active">
-            Sắp tới: {upcomingCount}
-          </span>
-          <span className="lxp-chip lxp-chip-neutral">
-            Đã xem: {doneCount}
-          </span>
-        </div>
-
-        <div className="lxp-chips">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              className={`lxp-chip ${
-                activeFilter === f.key ? 'lxp-chip-primary is-active' : 'lxp-chip-neutral'
-              }`}
-              type="button"
-              onClick={() => setActiveFilter(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
+          {FILTERS.map((f) => {
+            let label = f.label;
+            if (f.key === 'upcoming') label += `: ${upcomingCount}`;
+            if (f.key === 'done') label += `: ${doneCount}`;
+            const isActive = activeFilter === f.key;
+            return (
+              <span
+                key={f.key}
+                className={`lxp-chip ${isActive ? 'lxp-chip-primary is-active' : 'lxp-chip-neutral'}`}
+                onClick={() => setActiveFilter(f.key)}
+              >
+                {label}
+              </span>
+            );
+          })}
         </div>
       </div>
 
@@ -686,10 +738,9 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail }) {
               <TimelineNode
                 key={appt.id}
                 appt={appt}
-                onChat={(a) => alert(`Liên hệ tư vấn cho: ${a.roomName}`)}
-                onReschedule={(a) => setRescheduleAppt(a)}
-                onCancel={handleCancel}
                 onViewDetail={(a) => onViewRoomDetail?.(a.rawSchedule)}
+                onReschedule={setRescheduleAppt}
+                onCancel={setCancelAppt}
               />
             ))}
           </ul>
@@ -708,9 +759,6 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail }) {
             Nếu bạn có thay đổi đột xuất, hãy sử dụng tính năng "Đổi lịch" trước ít nhất 2 tiếng.
           </p>
         </div>
-        <button className="lxp-tip-action" type="button">
-          Xem hướng dẫn đi lại
-        </button>
       </div>
 
       {/* ── Modals ── */}
@@ -724,7 +772,14 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail }) {
         <RescheduleModal
           appt={rescheduleAppt}
           onClose={() => setRescheduleAppt(null)}
-          onSubmit={handleRescheduleSubmit}
+          onSubmit={onReschedule}
+        />
+      )}
+      {cancelAppt && (
+        <CancelModal
+          appt={cancelAppt}
+          onClose={() => setCancelAppt(null)}
+          onSubmit={onCancel}
         />
       )}
     </div>

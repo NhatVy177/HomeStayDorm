@@ -85,10 +85,10 @@ function initials(name = '') {
   return String(name).split(' ').filter(Boolean).slice(-2).map((word) => word.charAt(0)).join('').toUpperCase() || 'KH';
 }
 
-function formatMoney(value) {
+function formatMoney(value, unit = 'tháng') {
   const amount = Number(value);
   if (value == null || value === '' || !Number.isFinite(amount) || amount <= 0) return 'Chưa cập nhật';
-  return amount.toLocaleString('vi-VN') + 'đ/tháng';
+  return amount.toLocaleString('vi-VN') + 'đ/' + unit;
 }
 
 function formatServiceMoney(value, unit) {
@@ -375,7 +375,10 @@ function ChiTietPhongView({ phong, onBack, onRent }) {
               <div>
                 <Icon name="people" />
                 <span>Hình thức thuê</span>
-                <strong>{phong.hinhThucThue}</strong>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                  {phong.giaTheoGiuong != null && <strong>{formatMoney(phong.giaTheoGiuong, 'giường')}</strong>}
+                  {phong.giaNguyenPhong != null && <strong>{formatMoney(phong.giaNguyenPhong, 'căn')}</strong>}
+                </div>
               </div>
               <div>
                 <Icon name="people" />
@@ -432,8 +435,11 @@ function ChiTietPhongView({ phong, onBack, onRent }) {
         <aside className="kh-detail-sidebar">
           <div className="kh-detail-price-card">
             <div className="kh-detail-price-top">
-              <span>Giá thuê hàng tháng</span>
-              <strong>{formatMoney(phong.giaThue)}</strong>
+              <span>Giá thuê</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                {phong.giaTheoGiuong != null && <strong>{formatMoney(phong.giaTheoGiuong, 'giường')}</strong>}
+                {phong.giaNguyenPhong != null && <strong>{formatMoney(phong.giaNguyenPhong, 'căn')}</strong>}
+              </div>
             </div>
             {dichVuUocTinh.length > 0 && (
               <div className="kh-detail-service-list">
@@ -461,9 +467,6 @@ function ChiTietPhongView({ phong, onBack, onRent }) {
           <div className="kh-detail-info-card">
             <div><span>Chi nhánh</span><strong>{phong.chiNhanh || 'Chưa cập nhật'}</strong></div>
             <div><span>Mã phòng</span><strong>{phong.maPhong}</strong></div>
-            {phong.giaThueTheoGiuong && (
-              <div><span>Giá/giường</span><strong>{Number(phong.giaThueTheoGiuong).toLocaleString('vi-VN')}đ</strong></div>
-            )}
           </div>
         </aside>
       </div>
@@ -694,9 +697,18 @@ export default function KhachHangPortalPage() {
 
   function openEditModal(profile) {
     setEditForm({
+      hoTen: profile.hoTen || user?.hoTen || '',
+      ngaySinh: profile.ngaySinh ? String(profile.ngaySinh).slice(0, 10) : (user?.ngaySinh ? String(user.ngaySinh).slice(0, 10) : ''),
+      gioiTinh: profile.gioiTinh || user?.gioiTinh || '',
+      soDienThoai: profile.soDienThoai || user?.soDienThoai || '',
+      email: profile.email || user?.email || '',
+      quocTich: profile.quocTich || user?.quocTich || 'Việt Nam',
+      cccd: profile.cccd || profile.soCCCD || user?.cccd || user?.soCCCD || user?.cmnd || '',
+      hinhThucThue: profile.hinhThucThue === 'Ghép' && (profile.gioiTinhPhong || profile.gioiTinh) ? `Ghép ${(profile.gioiTinhPhong || profile.gioiTinh).toLowerCase()}` : profile.hinhThucThue || '',
       khuVucMongMuon: profile.khuVucMongMuon || '',
       loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
-      mucGia: profile.mucGia || '',
+      mucGiaTu: profile.mucGia || '',
+      mucGiaDen: profile.mucGiaDen || '',
       soNguoiO: profile.soNguoiO || 1,
       ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
       thoiHanThue: profile.thoiHanThue || '',
@@ -722,6 +734,7 @@ export default function KhachHangPortalPage() {
         khuVucMongMuon: detail.khuVucMongMuon || detail.KhuVucMongMuon || profile.khuVucMongMuon,
         loaiPhongYeuCau: detail.loaiPhongYeuCau || detail.LoaiPhongYeuCau || profile.loaiPhongYeuCau,
         mucGia: detail.mucGia ?? detail.MucGia ?? profile.mucGia,
+        mucGiaDen: detail.mucGiaDen ?? detail.MucGiaDen ?? profile.mucGiaDen,
         soNguoiO: detail.soNguoiO ?? detail.SoNguoiO ?? profile.soNguoiO,
         ngayDuKienVaoO: detail.ngayDuKienVaoO || detail.NgayDuKienVaoO || profile.ngayDuKienVaoO,
         thoiHanThue: detail.thoiHanThue ?? detail.ThoiHanThue ?? profile.thoiHanThue,
@@ -754,7 +767,11 @@ export default function KhachHangPortalPage() {
     event.preventDefault();
     setEditSaving(true);
     try {
-      await khachMoiApi.updateHoSo(editModal.maDangKy, editForm);
+      await khachMoiApi.updateHoSo(editModal.maDangKy, {
+        ...editForm,
+        mucGia: editForm.mucGiaTu || '',
+        mucGiaDen: editForm.mucGiaDen || '',
+      });
       setEditModal(null);
       await loadPortal(filters);
       setToast('Đã cập nhật hồ sơ thành công.');
@@ -802,7 +819,13 @@ export default function KhachHangPortalPage() {
                       <RoomPhoto room={room} />
                     </div>
                     <div className="kh-room-body">
-                      <div><h3>{room.tenPhong}</h3><strong>{formatMoney(room.giaThue)}</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <h3>{room.tenPhong}</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                          {room.giaTheoGiuong != null && <strong>{formatMoney(room.giaTheoGiuong, 'giường')}</strong>}
+                          {room.giaNguyenPhong != null && <strong>{formatMoney(room.giaNguyenPhong, 'căn')}</strong>}
+                        </div>
+                      </div>
                       <p className="kh-room-location"><Icon name="explore" />{getArea(room)}</p>
                       <p>{room.moTa || 'Chưa có mô tả chi tiết.'}</p>
                       <div className="kh-pills"><span>{room.loaiPhong}</span><span>{room.hinhThucThue}</span></div>
@@ -870,16 +893,19 @@ export default function KhachHangPortalPage() {
                 { key: 'Chấp nhận', label: 'Chấp nhận' },
                 { key: 'Chờ xác nhận cọc', label: 'Chờ xác nhận cọc' },
                 { key: 'Từ chối', label: 'Từ chối' }
-              ].map(f => (
-                <button
-                  key={f.key}
-                  type="button"
-                  className={`lxp-chip ${profileFilter === f.key ? 'lxp-chip-primary is-active' : 'lxp-chip-neutral'}`}
-                  onClick={() => setProfileFilter(f.key)}
-                >
-                  {f.label}
-                </button>
-              ))}
+              ].map(f => {
+                const count = f.key === 'Tất cả' ? allProfiles.length : allProfiles.filter(p => p.trangThai === f.key).length;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    className={`lxp-chip ${profileFilter === f.key ? 'lxp-chip-primary is-active' : 'lxp-chip-neutral'}`}
+                    onClick={() => setProfileFilter(f.key)}
+                  >
+                    {f.label} ({count})
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div className="kh-section-actions" style={{ marginBottom: 0 }}>
@@ -915,7 +941,7 @@ export default function KhachHangPortalPage() {
               <div className="kh-profile-meta-grid">
                 <div className="kh-meta-item">
                   <Icon name="people" />
-                  <span>{profile.hinhThucThue} · {profile.soNguoiO || 1} người{profile.hinhThucThue === 'Ghép' && profile.gioiTinh ? ` (${profile.gioiTinh})` : ''}</span>
+                  <span>{profile.hinhThucThue} · {profile.soNguoiO || 1} người{profile.hinhThucThue === 'Ghép' && (profile.gioiTinhPhong || profile.gioiTinh) ? ` (${profile.gioiTinhPhong || profile.gioiTinh})` : ''}</span>
                 </div>
                 {profile.khuVucMongMuon && (
                   <div className="kh-meta-item">
@@ -947,19 +973,22 @@ export default function KhachHangPortalPage() {
               <div className="kh-profile-footer">
                 <div />
                 <div className="kh-profile-actions">
-                  {profile.trangThai === 'Chờ tiếp nhận' && (
+                  {profile.trangThai === 'Chờ tiếp nhận' ? (
                     <button className="kp-btn kp-btn-primary" type="button" onClick={() => openEditModal(profile)}>
                       Cập nhật hồ sơ
                     </button>
+                  ) : (
+                    <>
+                      {profile.trangThai === 'Từ chối' && (
+                        <button className="kp-btn kp-btn-primary" type="button" onClick={() => openReRegisterForm(profile)}>
+                          Đăng ký lại
+                        </button>
+                      )}
+                      <button className="kp-btn kp-btn-soft" type="button" onClick={() => openProfileDetail(profile)}>
+                        Xem chi tiết
+                      </button>
+                    </>
                   )}
-                  {profile.trangThai === 'Từ chối' && (
-                    <button className="kp-btn kp-btn-primary" type="button" onClick={() => openReRegisterForm(profile)}>
-                      Đăng ký lại
-                    </button>
-                  )}
-                  <button className="kp-btn kp-btn-soft" type="button" onClick={() => openProfileDetail(profile)}>
-                    Xem chi tiết
-                  </button>
                 </div>
               </div>
             </article>
@@ -1461,7 +1490,7 @@ export default function KhachHangPortalPage() {
   }
 
   function renderCurrentTab() {
-    if (detailPhong && activeTab === 'kham-pha') {
+    if (detailPhong) {
       return (
         <ChiTietPhongView
           phong={detailPhong}
@@ -1591,7 +1620,7 @@ export default function KhachHangPortalPage() {
                   <label><span>Hình thức thuê*</span><select value={rentForm.hinhThucThue} onChange={(event) => setRentForm({ ...rentForm, hinhThucThue: event.target.value })} required>{filterOptions.hinhThucThue.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label className="is-half"><span>Khu vực mong muốn*</span><input value={rentForm.khuVucMongMuon} onChange={(event) => setRentForm({ ...rentForm, khuVucMongMuon: event.target.value })} placeholder="Ví dụ: Quận 3, gần trường học..." required /></label>
                   <label className="is-half"><span>Loại phòng mong muốn*</span><select value={rentForm.loaiPhongYeuCau} onChange={(event) => setRentForm({ ...rentForm, loaiPhongYeuCau: event.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <div className="kh-price-range">
+                  <div className="kh-price-range is-half">
                     <label><span>Giá từ (đ/tháng)</span><input type="number" min="0" value={rentForm.mucGiaTu} onChange={(event) => setRentForm({ ...rentForm, mucGiaTu: event.target.value })} placeholder="VD: 2.000.000" /></label>
                     <span className="kh-price-sep">—</span>
                     <label><span>Giá đến (đ/tháng)</span><input type="number" min="0" value={rentForm.mucGiaDen} onChange={(event) => setRentForm({ ...rentForm, mucGiaDen: event.target.value })} placeholder="VD: 3.000.000" /></label>
@@ -1615,11 +1644,16 @@ export default function KhachHangPortalPage() {
 
       {profileDetailModal && (
         <div className="kp-modal-backdrop" onMouseDown={() => setProfileDetailModal(null)}>
-          <div className="kp-modal kh-rent-modal kh-profile-detail-modal" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="kp-modal-head">
+          <div className="kp-modal kh-rent-modal kh-register-modal kh-profile-detail-modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="kp-modal-head kh-register-head">
               <div>
-                <span className="kp-eyebrow">Chi tiết hồ sơ</span>
-                <h2>Hồ sơ #{profileDetailModal.maDangKy}</h2>
+                <h2>Chi tiết hồ sơ #{profileDetailModal.maDangKy}</h2>
+                <p style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                  <span className={`kh-status-chip kh-status-chip--${statusTone(profileDetailModal.trangThai)}`} style={{ margin: 0, padding: '4px 8px', fontSize: '13px' }}>
+                    {statusIcon(profileDetailModal.trangThai)} {profileDetailModal.trangThai}
+                  </span>
+                  <span style={{ color: 'var(--kp-soft-text)', fontSize: '13px' }}>· Ngày tạo: {formatDate(profileDetailModal.ngayDangKy)}</span>
+                </p>
               </div>
               <button type="button" onClick={() => setProfileDetailModal(null)}>×</button>
             </div>
@@ -1628,44 +1662,61 @@ export default function KhachHangPortalPage() {
               <div className="kh-profile-detail-loading">Đang tải chi tiết hồ sơ...</div>
             )}
 
-            <div className="kh-profile-detail-summary">
-              <span className={`kh-status-chip kh-status-chip--${statusTone(profileDetailModal.trangThai)}`}>
-                {statusIcon(profileDetailModal.trangThai)} {profileDetailModal.trangThai}
-              </span>
-              <p>Ngày tạo: {formatDate(profileDetailModal.ngayDangKy)}</p>
-            </div>
+            <div className="kh-register-scroll">
+              <section className="kh-register-section">
+                <h3><Icon name="profile" />Thông tin cá nhân</h3>
+                <div className="kh-register-grid">
+                  <label className="is-half"><span>Họ và tên</span><div className="kh-readonly-val">{displayValue(profileDetailModal.hoTen || user?.hoTen)}</div></label>
+                  <label><span>Ngày sinh</span><div className="kh-readonly-val">{formatDate(profileDetailModal.ngaySinh || user?.ngaySinh)}</div></label>
+                  <label><span>Giới tính</span><div className="kh-readonly-val">{displayValue(profileDetailModal.gioiTinh || user?.gioiTinh)}</div></label>
+                  <label className="is-half"><span>Số điện thoại</span><div className="kh-readonly-val">{displayValue(profileDetailModal.soDienThoai || user?.soDienThoai)}</div></label>
+                  <label className="is-half"><span>Email</span><div className="kh-readonly-val">{displayValue(profileDetailModal.email || user?.email)}</div></label>
+                  <label className="is-half"><span>Quốc tịch</span><div className="kh-readonly-val">{displayValue(profileDetailModal.quocTich || user?.quocTich)}</div></label>
+                  <label className="is-half"><span>CCCD/Hộ chiếu</span><div className="kh-readonly-val">{displayValue(profileDetailModal.cccd || profileDetailModal.soCCCD || user?.cccd || user?.soCCCD || user?.cmnd)}</div></label>
+                </div>
+              </section>
 
-            <div className="kh-profile-detail-grid">
-              <div><span>Hình thức thuê</span><strong>{displayValue(profileDetailModal.hinhThucThue === 'Ghép' && profileDetailModal.gioiTinh ? `Ghép ${profileDetailModal.gioiTinh.toLowerCase()}` : profileDetailModal.hinhThucThue)}</strong></div>
-              <div><span>Số người ở</span><strong>{displayValue(profileDetailModal.soNguoiO, 1)} người</strong></div>
-              <div><span>Khu vực mong muốn</span><strong>{displayValue(profileDetailModal.khuVucMongMuon)}</strong></div>
-              <div><span>Loại phòng yêu cầu</span><strong>{displayValue(profileDetailModal.loaiPhongYeuCau)}</strong></div>
-              <div><span>Khoảng giá mong muốn</span><strong>{profileDetailModal.mucGia || profileDetailModal.mucGiaDen ? `${formatMoney(profileDetailModal.mucGia)} — ${formatMoney(profileDetailModal.mucGiaDen)}` : 'Chưa cập nhật'}</strong></div>
-              <div><span>Ngày dự kiến vào ở</span><strong>{formatDate(profileDetailModal.ngayDuKienVaoO)}</strong></div>
-              <div><span>Thời hạn thuê</span><strong>{profileDetailModal.thoiHanThue ? `${profileDetailModal.thoiHanThue} tháng` : 'Chưa cập nhật'}</strong></div>
-              <div><span>Lịch xem gần nhất</span><strong>{profileDetailModal.thoiGianHen ? formatDate(profileDetailModal.thoiGianHen, true) : 'Chưa có'}</strong></div>
-              <div><span>Phòng xem</span><strong>{displayValue(profileDetailModal.phongXem || profileDetailModal.phongQuanTam, 'Chưa có')}</strong></div>
-              <div><span>Nhân viên sale</span><strong>{displayValue(profileDetailModal.tenNhanVienSale || profileDetailModal.maNhanVienSale)}</strong></div>
-            </div>
-
-            <div className="kh-profile-detail-note">
-              <span>Ghi chú / yêu cầu khác</span>
-              <p>{profileDetailModal.ghiChu || 'Không có ghi chú.'}</p>
-            </div>
-
-            {Array.isArray(profileDetailModal.phongXemDanhSach) && profileDetailModal.phongXemDanhSach.length > 0 && (
-              <div className="kh-profile-detail-rooms">
-                <h3>Phòng / giường đã gắn lịch xem</h3>
-                {profileDetailModal.phongXemDanhSach.map((room) => (
-                  <div className="kh-profile-room-row" key={`${room.sttLich}-${room.maPhong}-${room.maGiuong || 'room'}`}>
-                    <strong>{room.tenPhong || room.maPhong}</strong>
-                    <span>{room.maGiuong ? `Giường ${room.maGiuong}` : 'Nguyên phòng'} · {formatMoney(room.giaThue)}</span>
+              <section className="kh-register-section">
+                <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
+                <div className="kh-register-grid">
+                  <label><span>Số lượng người ở</span><div className="kh-readonly-val">{displayValue(profileDetailModal.soNguoiO, 1)} người</div></label>
+                  <label><span>Hình thức thuê</span><div className="kh-readonly-val">{displayValue(profileDetailModal.hinhThucThue === 'Ghép' && (profileDetailModal.gioiTinhPhong || profileDetailModal.gioiTinh) ? `Ghép ${(profileDetailModal.gioiTinhPhong || profileDetailModal.gioiTinh).toLowerCase()}` : profileDetailModal.hinhThucThue)}</div></label>
+                  <label className="is-half"><span>Khu vực mong muốn</span><div className="kh-readonly-val">{displayValue(profileDetailModal.khuVucMongMuon)}</div></label>
+                  <label className="is-half"><span>Loại phòng mong muốn</span><div className="kh-readonly-val">{displayValue(profileDetailModal.loaiPhongYeuCau)}</div></label>
+                  <div className="kh-price-range is-half" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                    <label style={{ width: '100%', marginBottom: '-4px' }}><span>Giá từ (đ/tháng)</span></label>
+                    <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                      <div className="kh-readonly-val" style={{ flex: 1 }}>{profileDetailModal.mucGia ? formatMoney(profileDetailModal.mucGia) : 'Chưa cập nhật'}</div>
+                      <span className="kh-price-sep" style={{ lineHeight: '38px' }}>—</span>
+                      <div className="kh-readonly-val" style={{ flex: 1 }}>{profileDetailModal.mucGiaDen ? formatMoney(profileDetailModal.mucGiaDen) : 'Chưa cập nhật'}</div>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <label className="is-half"><span>Thời gian dự kiến dọn vào</span><div className="kh-readonly-val">{formatDate(profileDetailModal.ngayDuKienVaoO)}</div></label>
+                  <label className="is-half"><span>Thời hạn thuê (tháng)</span><div className="kh-readonly-val">{profileDetailModal.thoiHanThue ? `${profileDetailModal.thoiHanThue} tháng` : 'Chưa cập nhật'}</div></label>
+                  <label className="is-half"><span>Lịch xem gần nhất</span><div className="kh-readonly-val">{profileDetailModal.thoiGianHen ? formatDate(profileDetailModal.thoiGianHen, true) : 'Chưa có'}</div></label>
+                  <label className="is-half"><span>Phòng xem</span><div className="kh-readonly-val">{displayValue(profileDetailModal.phongXem || profileDetailModal.phongQuanTam, 'Chưa có')}</div></label>
+                  <label className="is-half"><span>Nhân viên sale</span><div className="kh-readonly-val">{displayValue(profileDetailModal.tenNhanVienSale || profileDetailModal.maNhanVienSale)}</div></label>
+                  <label className="is-wide"><span>Yêu cầu khác</span><div className="kh-readonly-val">{profileDetailModal.ghiChu || 'Không có ghi chú.'}</div></label>
+                </div>
+              </section>
 
-            <div className="kp-modal-actions">
+              {Array.isArray(profileDetailModal.phongXemDanhSach) && profileDetailModal.phongXemDanhSach.length > 0 && (
+                <section className="kh-register-section">
+                  <h3><Icon name="home" />Phòng / giường đã gắn lịch xem</h3>
+                  <div className="kh-profile-detail-rooms" style={{ marginTop: 0 }}>
+                    {profileDetailModal.phongXemDanhSach.map((room) => (
+                      <div className="kh-profile-room-row" key={`${room.sttLich}-${room.maPhong}-${room.maGiuong || 'room'}`}>
+                        <strong>{room.tenPhong || room.maPhong}</strong>
+                        <span>{room.maGiuong ? `Giường ${room.maGiuong}` : 'Nguyên phòng'} · {formatMoney(room.giaThue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+
+            <div className="kp-modal-actions kh-register-actions">
+              <button className="kp-btn kp-btn-soft" type="button" onClick={() => setProfileDetailModal(null)}>Đóng</button>
               {profileDetailModal.trangThai === 'Chờ tiếp nhận' && (
                 <button className="kp-btn kp-btn-primary" type="button" onClick={() => {
                   const currentProfile = profileDetailModal;
@@ -1675,7 +1726,6 @@ export default function KhachHangPortalPage() {
                   Cập nhật hồ sơ
                 </button>
               )}
-              <button className="kp-btn kp-btn-soft" type="button" onClick={() => setProfileDetailModal(null)}>Đóng</button>
             </div>
           </div>
         </div>
@@ -1734,22 +1784,48 @@ export default function KhachHangPortalPage() {
 
       {editModal && (
         <div className="kp-modal-backdrop" onMouseDown={() => setEditModal(null)}>
-          <form className="kp-modal kh-rent-modal" onMouseDown={(e) => e.stopPropagation()} onSubmit={submitEditModal}>
-            <div className="kp-modal-head">
-              <div><span className="kp-eyebrow">Cập nhật hồ sơ</span><h2>Hồ sơ #{editModal.maDangKy}</h2></div>
+          <form className="kp-modal kh-rent-modal kh-register-modal" onMouseDown={(e) => e.stopPropagation()} onSubmit={submitEditModal}>
+            <div className="kp-modal-head kh-register-head">
+              <div>
+                <h2>Cập nhật hồ sơ #{editModal.maDangKy}</h2>
+                <p>Cập nhật lại các thông tin nhu cầu thuê của bạn.</p>
+              </div>
               <button type="button" onClick={() => setEditModal(null)}>×</button>
             </div>
-            <div className="kh-form-grid">
-              <label><span>Khu vực mong muốn</span><input value={editForm.khuVucMongMuon} onChange={(e) => setEditForm({ ...editForm, khuVucMongMuon: e.target.value })} /></label>
-              <label><span>Loại phòng yêu cầu</span><input value={editForm.loaiPhongYeuCau} onChange={(e) => setEditForm({ ...editForm, loaiPhongYeuCau: e.target.value })} /></label>
-              <label><span>Ngày dự kiến vào ở</span><input type="date" value={editForm.ngayDuKienVaoO} onChange={(e) => setEditForm({ ...editForm, ngayDuKienVaoO: e.target.value })} required /></label>
-              <label><span>Số người ở</span><input type="number" min="1" value={editForm.soNguoiO} onChange={(e) => setEditForm({ ...editForm, soNguoiO: e.target.value })} required /></label>
-              <label><span>Ngân sách tối đa (VNĐ)</span><input type="number" min="0" value={editForm.mucGia} onChange={(e) => setEditForm({ ...editForm, mucGia: e.target.value })} /></label>
-              <label><span>Thời hạn thuê (tháng)</span><input type="number" min="1" value={editForm.thoiHanThue} onChange={(e) => setEditForm({ ...editForm, thoiHanThue: e.target.value })} placeholder="VD: 6" /></label>
-              <label className="is-wide"><span>Ghi chú / Yêu cầu khác</span><textarea value={editForm.ghiChu} onChange={(e) => setEditForm({ ...editForm, ghiChu: e.target.value })} /></label>
+            <div className="kh-register-scroll">
+              <section className="kh-register-section">
+                <h3><Icon name="profile" />Thông tin cá nhân</h3>
+                <div className="kh-register-grid">
+                  <label className="is-half"><span>Họ và tên*</span><input value={editForm.hoTen} onChange={(event) => setEditForm({ ...editForm, hoTen: event.target.value })} placeholder="Nguyễn Văn A" required /></label>
+                  <label><span>Ngày sinh*</span><input type="date" value={editForm.ngaySinh} onChange={(event) => setEditForm({ ...editForm, ngaySinh: event.target.value })} required /></label>
+                  <label><span>Giới tính*</span><select value={editForm.gioiTinh} onChange={(event) => setEditForm({ ...editForm, gioiTinh: event.target.value })} required><option value="">Chọn giới tính</option><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></label>
+                  <label className="is-half"><span>Số điện thoại*</span><input value={editForm.soDienThoai} onChange={(event) => setEditForm({ ...editForm, soDienThoai: event.target.value })} placeholder="Nhập số điện thoại liên hệ" required /></label>
+                  <label className="is-half"><span>Email</span><input type="email" value={editForm.email} onChange={(event) => setEditForm({ ...editForm, email: event.target.value })} placeholder="example@gmail.com" /></label>
+                  <label className="is-half"><span>Quốc tịch*</span><input value={editForm.quocTich} onChange={(event) => setEditForm({ ...editForm, quocTich: event.target.value })} placeholder="Ví dụ: Việt Nam" required /></label>
+                  <label className="is-half"><span>CCCD/Hộ chiếu*</span><input value={editForm.cccd} onChange={(event) => setEditForm({ ...editForm, cccd: event.target.value })} placeholder="Số căn cước công dân" required /></label>
+                </div>
+              </section>
+
+              <section className="kh-register-section">
+                <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
+                <div className="kh-register-grid">
+                  <label><span>Số lượng người ở*</span><input type="number" min="1" value={editForm.soNguoiO} onChange={(e) => setEditForm({ ...editForm, soNguoiO: e.target.value })} required /></label>
+                  <label><span>Hình thức thuê*</span><select value={editForm.hinhThucThue} onChange={(e) => setEditForm({ ...editForm, hinhThucThue: e.target.value })} required>{filterOptions.hinhThucThue.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+                  <label className="is-half"><span>Khu vực mong muốn*</span><input value={editForm.khuVucMongMuon} onChange={(e) => setEditForm({ ...editForm, khuVucMongMuon: e.target.value })} placeholder="Ví dụ: Quận 3, gần trường học..." required /></label>
+                  <label className="is-half"><span>Loại phòng mong muốn*</span><select value={editForm.loaiPhongYeuCau} onChange={(e) => setEditForm({ ...editForm, loaiPhongYeuCau: e.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+                  <div className="kh-price-range is-half">
+                    <label><span>Giá từ (đ/tháng)</span><input type="number" min="0" value={editForm.mucGiaTu || editForm.mucGia || ''} onChange={(e) => setEditForm({ ...editForm, mucGiaTu: e.target.value, mucGia: e.target.value })} placeholder="VD: 2.000.000" /></label>
+                    <span className="kh-price-sep">—</span>
+                    <label><span>Giá đến (đ/tháng)</span><input type="number" min="0" value={editForm.mucGiaDen || ''} onChange={(e) => setEditForm({ ...editForm, mucGiaDen: e.target.value })} placeholder="VD: 3.000.000" /></label>
+                  </div>
+                  <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={editForm.ngayDuKienVaoO} onChange={(e) => setEditForm({ ...editForm, ngayDuKienVaoO: e.target.value })} required /></label>
+                  <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={editForm.thoiHanThue} onChange={(e) => setEditForm({ ...editForm, thoiHanThue: e.target.value })} placeholder="Ví dụ: 6" required /></label>
+                  <label className="is-wide"><span>Yêu cầu khác</span><textarea value={editForm.ghiChu} onChange={(e) => setEditForm({ ...editForm, ghiChu: e.target.value })} placeholder="Giờ giấc sinh hoạt, yêu cầu yên tĩnh, gửi xe..." /></label>
+                </div>
+              </section>
             </div>
-            <div className="kp-modal-actions">
-              <button className="kp-btn kp-btn-soft" type="button" onClick={() => setEditModal(null)}>Đóng</button>
+            <div className="kp-modal-actions kh-register-actions">
+              <button className="kp-btn kp-btn-soft" type="button" onClick={() => setEditModal(null)}>Hủy</button>
               <button className="kp-btn kp-btn-primary" type="submit" disabled={editSaving}>{editSaving ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
             </div>
           </form>

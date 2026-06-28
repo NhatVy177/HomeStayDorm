@@ -37,8 +37,8 @@ export async function getDanhSachPhongKhamPha(filter = {}) {
   })();
   const tuKhoa = String(filter.tuKhoa || filter.tenPhong || '').trim() || null;
 
-  const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachPhongKhaDung', [
-    { name: 'TuKhoa',       type: sql.NVarChar(120),    value: tuKhoa },
+  const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachPhong', [
+    { name: 'TenPhong',     type: sql.NVarChar(100),    value: tuKhoa },
     { name: 'LoaiPhong',    type: sql.NVarChar(100),    value: filter.loaiPhong || null },
     { name: 'KhuVuc',       type: sql.NVarChar(100),    value: filter.khuVuc || null },
     { name: 'HinhThucThue', type: sql.NVarChar(20),     value: hinhThucThue },

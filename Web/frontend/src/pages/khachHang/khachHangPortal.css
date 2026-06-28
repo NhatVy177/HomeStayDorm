@@ -2361,3 +2361,42 @@
     grid-row: auto;
   }
 }
+ 
+.kh-readonly-val {
+  padding: 12px 16px;
+  background-color: var(--kp-bg);
+  border: 1px solid var(--kp-border);
+  border-radius: 10px;
+  font-size: 15px;
+  color: var(--kp-text);
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+}
+ 
+.kh-readonly-val {
+  background: #f0f1f2;
+  border: 0;
+  border-radius: 8px;
+  color: var(--kp-text);
+  font-size: 14px;
+  min-height: 38px;
+  padding: 9px 14px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+ 
+.kh-register-grid .kh-price-range.is-wide {
+  align-items: flex-start;
+}
+ 
+.kh-register-grid .kh-price-range.is-half {
+  grid-column: span 2;
+}
+ 
+@media (max-width: 768px) {
+  .kh-register-grid .kh-price-range.is-half {
+    grid-column: 1;
+  }
+}

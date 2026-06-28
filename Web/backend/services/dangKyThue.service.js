@@ -19,7 +19,7 @@ export async function createHoSoDangKy(data = {}) {
 
   // Kiểm tra thông tin bắt buộc phía service (A4 trong UC)
   const hinhThucThueRaw = String(data.hinhThucThue || '').trim();
-  const hinhThucThue = hinhThucThueRaw === 'Nguyên căn' ? 'Nguyên căn' : 'Ghép';
+  const hinhThucThue = hinhThucThueRaw;
   const soNguoiO    = Number(data.soNguoiO);
   const ngayDuKienVaoO = data.ngayDuKienVaoO || null;
 
@@ -123,7 +123,7 @@ export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
     const soNguoiO = Number(data.soNguoiO || 1);
     const thoiHanThue = Number(data.thoiHanThue || data.thoiHan || 1);
     const mucGia = data.mucGia ? Number(data.mucGia) : null;
-    const hinhThucThue = data.hinhThucThue === 'Nguyên căn' ? 'Nguyên căn' : 'Ghép';
+    const hinhThucThue = data.hinhThucThue || null;
 
     const result = await executeProcedure('dbo.SP_TaoHoSoKhachVangLai', [
       { name: 'HoTen', type: sql.NVarChar(100), value: data.hoTen },

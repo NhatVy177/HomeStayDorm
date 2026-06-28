@@ -64,6 +64,18 @@ BEGIN
     IF @NhuCau = N'Nguyên phòng'
         SET @NhuCau = N'Nguyên căn';
 
+    DECLARE @GioiTinhPhong NVARCHAR(10) = NULL;
+    IF @NhuCau = N'Ghép nam'
+    BEGIN
+        SET @GioiTinhPhong = N'Nam';
+        SET @NhuCau = N'Ghép';
+    END
+    ELSE IF @NhuCau = N'Ghép nữ'
+    BEGIN
+        SET @GioiTinhPhong = N'Nữ';
+        SET @NhuCau = N'Ghép';
+    END
+
     IF NOT EXISTS (SELECT 1 FROM dbo.KhachHang WHERE MaKhachHang = @KhachHangId)
         THROW 50010, N'Không tìm thấy khách hàng.', 1;
 
@@ -72,6 +84,16 @@ BEGIN
 
     IF @SoNguoiO IS NULL OR @SoNguoiO < 1
         THROW 50011, N'Số người dự kiến ở phải ít nhất là 1.', 1;
+
+    IF @GioiTinh IS NULL AND @GioiTinhPhong IS NULL
+    BEGIN
+        SELECT @GioiTinh = nd.GioiTinh
+        FROM dbo.KhachHang kh
+        JOIN dbo.NguoiDung nd ON kh.MaKhachHang = nd.MaNguoiDung
+        WHERE kh.MaKhachHang = @KhachHangId;
+    END
+
+    SET @GioiTinh = ISNULL(@GioiTinhPhong, @GioiTinh);
 
     IF @GioiTinh IS NULL OR @GioiTinh NOT IN (N'Nam', N'Nữ')
         THROW 50011, N'Giới tính không hợp lệ.', 1;
@@ -210,7 +232,8 @@ BEGIN
         BEGIN TRANSACTION;
 
         UPDATE dbo.PhieuDangKy
-        SET MaNhanVienSale = @NhanVienSaleId
+        SET MaNhanVienSale = @NhanVienSaleId,
+            TrangThai = N'Đã tiếp nhận'
         WHERE MaDangKy = @MaDangKy
           AND TrangThai = N'Chờ tiếp nhận';
 
@@ -288,6 +311,19 @@ BEGIN
     SET @QuocTich           = COALESCE(NULLIF(LTRIM(RTRIM(@QuocTich)), N''), N'Việt Nam');
     SET @CCCD               = NULLIF(LTRIM(RTRIM(@CCCD)), '');
     SET @HinhThucThue       = NULLIF(LTRIM(RTRIM(@HinhThucThue)), N'');
+
+    DECLARE @GioiTinhPhong NVARCHAR(10) = NULL;
+    IF @HinhThucThue = N'Ghép nam'
+    BEGIN
+        SET @GioiTinhPhong = N'Nam';
+        SET @HinhThucThue = N'Ghép';
+    END
+    ELSE IF @HinhThucThue = N'Ghép nữ'
+    BEGIN
+        SET @GioiTinhPhong = N'Nữ';
+        SET @HinhThucThue = N'Ghép';
+    END
+
     SET @KhuVucMongMuon     = NULLIF(LTRIM(RTRIM(@KhuVucMongMuon)), N'');
     SET @LoaiPhongYeuCau    = NULLIF(LTRIM(RTRIM(@LoaiPhongYeuCau)), N'');
     SET @GhiChu             = NULLIF(LTRIM(RTRIM(@GhiChu)), N'');

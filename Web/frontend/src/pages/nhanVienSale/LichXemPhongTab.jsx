@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
+import { lichXemPhongApi } from '../lichXemPhong/lichXemPhong.api.js';
+import { dangKyThueApi } from '../dangKyThue/dangKyThue.api.js';
 
 // Dữ liệu mock
 const mockProfiles = [
@@ -30,12 +32,24 @@ export default function LichXemPhongTab() {
   const [modalType, setModalType] = useState(null); // 'room-detail', 'cancel-appt', 'reschedule-appt', 'reschedule-success'
   const [roomToView, setRoomToView] = useState(null);
 
+  const [realRooms, setRealRooms] = useState([]);
+
   // Form states
   const [formDate, setFormDate] = useState('');
   const [formTime, setFormTime] = useState('');
   const [formLocation, setFormLocation] = useState('');
   const [formStaff, setFormStaff] = useState('Hoàng Anh (Sales Expert)');
   const [formNote, setFormNote] = useState('');
+
+  const [profiles, setProfiles] = useState([]);
+
+  useEffect(() => {
+    dangKyThueApi.getAll().then(res => {
+      const all = res.data || [];
+      const accepted = all.filter(x => x.trangThai === 'Đã tiếp nhận' || x.trangThai === 'Chấp nhận');
+      setProfiles(accepted);
+    }).catch(console.error);
+  }, []);
 
   const renderTabs = () => {
     const tabs = [
@@ -92,12 +106,12 @@ export default function LichXemPhongTab() {
                 </tr>
               </thead>
               <tbody>
-                {mockProfiles.map(p => (
-                  <tr key={p.id}>
-                    <td><strong className="ktp-text-primary">{p.id}</strong></td>
-                    <td>{p.customerName}</td>
-                    <td>{p.phone}</td>
-                    <td>{p.date}</td>
+                {profiles.map(p => (
+                  <tr key={p.maDangKy}>
+                    <td><strong className="ktp-text-primary">{p.maDangKy}</strong></td>
+                    <td>{p.hoTenKhach}</td>
+                    <td>{p.sdtKhach}</td>
+                    <td>{p.ngayDangKy ? new Date(p.ngayDangKy).toLocaleDateString('en-GB') : ''}</td>
                     <td style={{ textAlign: 'center' }}>
                       <button 
                         className="ktp-btn-action-fill" 
@@ -105,6 +119,10 @@ export default function LichXemPhongTab() {
                         onClick={() => {
                           setSelectedProfile(p);
                           setActiveTab(2);
+                          // Fetch rooms based on selected profile
+                          lichXemPhongApi.getPhongPhuHop(p.maDangKy).then(res => {
+                            setRealRooms(res.data || []);
+                          }).catch(console.error);
                         }}
                       >
                         Lập lịch
@@ -121,7 +139,7 @@ export default function LichXemPhongTab() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '8px', border: '1px solid #bec8c9', color: '#191c1d', fontWeight: '600' }}>
                 <Icon name="person" /> 
-                Đang chọn cho: {selectedProfile ? `${selectedProfile.id} (${selectedProfile.customerName.split(' ').slice(-2).join(' ')})` : 'Chưa chọn'}
+                Đang chọn cho: {selectedProfile ? `${selectedProfile.maDangKy || selectedProfile.id} (${(selectedProfile.hoTenKhach || selectedProfile.customerName || '').split(' ').slice(-2).join(' ')})` : 'Chưa chọn'}
               </div>
               <button className="ktp-btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '8px', border: '1px solid #bec8c9', backgroundColor: '#fff' }}>
                 <Icon name="filter_list" /> Bộ lọc
@@ -129,9 +147,13 @@ export default function LichXemPhongTab() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
-              {mockRooms.map(r => (
+              {realRooms.length === 0 ? (
+                <div style={{ gridColumn: '1 / -1', padding: '32px', textAlign: 'center', color: '#6f797a' }}>
+                  Không tìm thấy phòng phù hợp với yêu cầu của hồ sơ này.
+                </div>
+              ) : realRooms.map(r => (
                 <div key={r.id} className="ktp-detail-card" style={{ overflow: 'hidden', cursor: 'pointer' }} onClick={() => { setRoomToView(r); setModalType('room-detail'); }}>
-                  <img src={r.img} alt={r.name} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
+                  <img src={r.img || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=400&q=80'} alt={r.name} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
                   <div style={{ padding: '16px' }}>
                     <h4 style={{ margin: '0 0 8px', fontSize: '16px', color: '#191c1d' }}>{r.name}</h4>
                     <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#6f797a', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -239,7 +261,7 @@ export default function LichXemPhongTab() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ backgroundColor: '#fff', padding: '12px 16px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', color: '#191c1d' }}>
-                      <Icon name="person" style={{ color: '#14595b' }} /> {selectedProfile ? selectedProfile.customerName : 'Chưa chọn'}
+                      <Icon name="person" style={{ color: '#14595b' }} /> {selectedProfile ? (selectedProfile.hoTenKhach || selectedProfile.customerName) : 'Chưa chọn'}
                     </div>
                     <span style={{ fontSize: '10px', fontWeight: '700', color: '#6f797a' }}>KHÁCH</span>
                   </div>
@@ -500,13 +522,15 @@ export default function LichXemPhongTab() {
                 <h4 style={{ color: '#14595b', margin: '0 0 12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}><Icon name="calendar_today" /> TÌNH TRẠNG PHÒNG</h4>
                 <div style={{ backgroundColor: '#e0f2f1', padding: '16px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <span style={{ fontSize: '10px', fontWeight: 'bold', backgroundColor: '#b2dfdb', color: '#00695c', padding: '4px 8px', borderRadius: '4px', marginBottom: '8px', display: 'inline-block' }}>ĐANG TRỐNG</span>
-                    <div style={{ fontWeight: '600', color: '#004d40' }}>Khả dụng ngay lập tức</div>
+                    <span style={{ fontSize: '10px', fontWeight: 'bold', backgroundColor: '#b2dfdb', color: '#00695c', padding: '4px 8px', borderRadius: '4px', marginBottom: '8px', display: 'inline-block' }}>{roomToView.status.toUpperCase()}</span>
+                    <div style={{ fontWeight: '600', color: '#004d40' }}>{roomToView.status === 'Trống' ? 'Khả dụng ngay lập tức' : 'Đang xử lý'}</div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '12px', color: '#00695c' }}>Ngày trống dự kiến</div>
-                    <div style={{ fontWeight: '700', color: '#004d40' }}>{roomToView.availableDate}</div>
-                  </div>
+                  {roomToView.availableDate && (
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '12px', color: '#00695c' }}>Ngày trống dự kiến</div>
+                      <div style={{ fontWeight: '700', color: '#004d40' }}>{roomToView.availableDate}</div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

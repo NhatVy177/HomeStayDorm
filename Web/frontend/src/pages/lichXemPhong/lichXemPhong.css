@@ -413,8 +413,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  color: var(--lxp-outline);
+  background: rgba(0, 102, 109, 0.08);
+  color: var(--lxp-primary);
   font-size: 12px;
+  font-weight: 500;
 }
 
 /* ── Card body ── */
@@ -489,9 +491,9 @@
 }
 
 .lxp-status-done {
-  background: var(--lxp-surface-highest);
-  color: var(--lxp-tertiary);
-  border: 1px solid var(--lxp-outline-var);
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.2);
 }
 
 .lxp-status-cancelled {

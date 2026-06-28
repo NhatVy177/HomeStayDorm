@@ -24,8 +24,8 @@ const initialRentForm = {
   ghiChu: ''
 };
 
-function formatMoney(value) {
-  return Number(value || 0).toLocaleString('vi-VN') + 'đ/tháng';
+function formatMoney(value, unit = 'tháng') {
+  return Number(value || 0).toLocaleString('vi-VN') + 'đ/' + unit;
 }
 
 function formatDate(value, withTime = false) {
@@ -362,7 +362,13 @@ export default function KhachMoiPage() {
                       <div>
                         <h3>{room.tenPhong}</h3>
                         <p>{room.moTa}</p>
-                        <footer><span>{room.soChoTrong} chỗ trống</span><strong>{formatMoney(room.giaThue)}</strong></footer>
+                        <footer>
+                          <span>{room.soChoTrong} chỗ trống</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                            {room.giaTheoGiuong != null && <strong>{formatMoney(room.giaTheoGiuong, 'giường')}</strong>}
+                            {room.giaNguyenPhong != null && <strong>{formatMoney(room.giaNguyenPhong, 'căn')}</strong>}
+                          </div>
+                        </footer>
                       </div>
                     </article>
                   ))}
@@ -431,7 +437,13 @@ export default function KhachMoiPage() {
                         <img src={room.urlImg} alt={room.tenPhong} />
                       </div>
                       <div className="km-room-body">
-                        <div className="km-room-meta"><span>{room.loaiPhong}</span><strong>{formatMoney(room.giaThue)}</strong></div>
+                        <div className="km-room-meta">
+                          <span>{room.loaiPhong}</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                            {room.giaTheoGiuong != null && <strong>{formatMoney(room.giaTheoGiuong, 'giường')}</strong>}
+                            {room.giaNguyenPhong != null && <strong>{formatMoney(room.giaNguyenPhong, 'căn')}</strong>}
+                          </div>
+                        </div>
                         <h3>{room.tenPhong}</h3>
                         <p>{room.moTa}</p>
                         <div className="km-pills">
@@ -684,9 +696,12 @@ export default function KhachMoiPage() {
                   <span>Loại phòng</span>
                   <strong>{detailModal.loaiPhong}</strong>
                 </div>
-                <div className="km-info-row">
+                <div className="km-info-row" style={{ alignItems: 'flex-start' }}>
                   <span>Giá thuê</span>
-                  <strong className="brick">{formatMoney(detailModal.giaThue)}</strong>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    {detailModal.giaTheoGiuong != null && <strong className="brick">{formatMoney(detailModal.giaTheoGiuong, 'giường')}</strong>}
+                    {detailModal.giaNguyenPhong != null && <strong className="brick">{formatMoney(detailModal.giaNguyenPhong, 'căn')}</strong>}
+                  </div>
                 </div>
                 <div className="km-info-row">
                   <span>Sức chứa</span>

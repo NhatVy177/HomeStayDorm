@@ -31,3 +31,12 @@ export async function capNhatLichXemPhong(req, res, next) {
     next(err);
   }
 }
+
+export async function getPhongPhuHop(req, res, next) {
+  try {
+    const { maDangKy } = req.query;
+    res.json(await service.getPhongPhuHop(maDangKy));
+  } catch (err) {
+    next(err);
+  }
+}

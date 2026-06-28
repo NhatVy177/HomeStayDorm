@@ -37,3 +37,30 @@ ALTER TABLE dbo.PhieuDangKy ADD CONSTRAINT CHK_PDK_TrangThai
 CHECK (TrangThai IN (N'Chờ xác nhận cọc', N'Xác nhận cọc', N'Từ chối', N'Chờ tiếp nhận', N'Đã tiếp nhận'));
 PRINT N'Đã thêm lại ràng buộc CHK_PDK_TrangThai mới.';
 GO
+
+-- Sửa trạng thái
+IF EXISTS (SELECT * FROM sys.check_constraints WHERE name = 'CHK_PDK_TrangThai')
+BEGIN
+    ALTER TABLE dbo.PhieuDangKy DROP CONSTRAINT CHK_PDK_TrangThai;
+END
+GO
+
+UPDATE dbo.PhieuDangKy
+SET TrangThai = N'Xác nhận cọc'
+WHERE TrangThai = N'Chấp nhận';
+GO
+
+ALTER TABLE dbo.PhieuDangKy ADD CONSTRAINT CHK_PDK_TrangThai 
+CHECK (TrangThai IN (N'Chờ xác nhận cọc', N'Xác nhận cọc', N'Từ chối', N'Chờ tiếp nhận', N'Đã tiếp nhận'));
+GO
+
+-- Cập nhật trạng thái Giữ chỗ cho Giường
+IF EXISTS (SELECT * FROM sys.check_constraints WHERE name = 'CHK_Giuong_TinhTrang')
+BEGIN
+    ALTER TABLE dbo.Giuong DROP CONSTRAINT CHK_Giuong_TinhTrang;
+END
+GO
+
+ALTER TABLE dbo.Giuong ADD CONSTRAINT CHK_Giuong_TinhTrang 
+CHECK (TinhTrang IN (N'Trống', N'Đã đặt cọc', N'Đang thuê', N'Giữ chỗ'));
+GO

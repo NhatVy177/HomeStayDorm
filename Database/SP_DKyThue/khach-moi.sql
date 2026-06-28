@@ -10,70 +10,6 @@ IF OBJECT_ID(N'dbo.KhachHang', N'U') IS NULL
     THROW 50100, N'Chưa có schema HOMEDORM4. Hãy chạy app.sql trước khi chạy khach-moi.sql.', 1;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM dbo.ChiNhanh WHERE MaChiNhanh = 'CN0001')
-BEGIN
-    INSERT INTO dbo.ChiNhanh (MaChiNhanh, TenChiNhanh, DiaChi, SDT, Email, TrangThai)
-    VALUES ('CN0001', N'Homestay Dorm Đà Nẵng', N'123 Nguyễn Văn Linh, Đà Nẵng', '0905123456', 'hello@homestaydorm.vn', N'Hoạt động');
-END;
-
-IF NOT EXISTS (SELECT 1 FROM dbo.LoaiPhong WHERE MaLoaiPhong = 'LP0002')
-BEGIN
-    INSERT INTO dbo.LoaiPhong (MaLoaiPhong, TenLoaiPhong, SucChuaToiDa, MoTa, GiaThueTheoGiuong, GiaThueNguyenPhong)
-    VALUES ('LP0002', N'Phòng riêng', 1, N'Phòng riêng có cửa sổ và khu bếp chung.', NULL, 4500000);
-END;
-
-IF NOT EXISTS (SELECT 1 FROM dbo.LoaiPhong WHERE MaLoaiPhong = 'LP0003')
-BEGIN
-    INSERT INTO dbo.LoaiPhong (MaLoaiPhong, TenLoaiPhong, SucChuaToiDa, MoTa, GiaThueTheoGiuong, GiaThueNguyenPhong)
-    VALUES ('LP0003', N'Phòng đôi', 2, N'Phòng đôi đầy đủ nội thất cơ bản.', NULL, 3600000);
-END;
-
-IF NOT EXISTS (SELECT 1 FROM dbo.LoaiPhong WHERE MaLoaiPhong = 'LP0004')
-BEGIN
-    INSERT INTO dbo.LoaiPhong (MaLoaiPhong, TenLoaiPhong, SucChuaToiDa, MoTa, GiaThueTheoGiuong, GiaThueNguyenPhong)
-    VALUES ('LP0004', N'Giường dorm', 4, N'Không gian yên tĩnh, gần trạm xe buýt.', 2200000, NULL);
-END;
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Phong WHERE MaPhong = 'P204')
-BEGIN
-    INSERT INTO dbo.Phong (MaPhong, TenPhong, GioiTinhChoPhep, TinhTrang, MaChiNhanh, MaLoaiPhong)
-    VALUES ('P204', N'Dorm Studio 204', N'Nữ', N'Còn chỗ', 'CN0001', 'LP0001');
-END;
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Phong WHERE MaPhong = 'P101')
-BEGIN
-    INSERT INTO dbo.Phong (MaPhong, TenPhong, GioiTinhChoPhep, TinhTrang, MaChiNhanh, MaLoaiPhong)
-    VALUES ('P101', N'Garden 101', N'Nữ', N'Trống', 'CN0001', 'LP0002');
-END;
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Phong WHERE MaPhong = 'P302')
-BEGIN
-    INSERT INTO dbo.Phong (MaPhong, TenPhong, GioiTinhChoPhep, TinhTrang, MaChiNhanh, MaLoaiPhong)
-    VALUES ('P302', N'Phòng đôi Cozy 302', N'Nữ', N'Trống', 'CN0001', 'LP0003');
-END;
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Phong WHERE MaPhong = 'P305')
-BEGIN
-    INSERT INTO dbo.Phong (MaPhong, TenPhong, GioiTinhChoPhep, TinhTrang, MaChiNhanh, MaLoaiPhong)
-    VALUES ('P305', N'Dorm Green 305', N'Nữ', N'Còn chỗ', 'CN0001', 'LP0004');
-END;
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = 'P204' AND MaGiuong = 'A01')
-    INSERT INTO dbo.Giuong (MaPhong, MaGiuong, SoGiuong, TinhTrang) VALUES ('P204', 'A01', 1, N'Trống');
-IF NOT EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = 'P204' AND MaGiuong = 'A02')
-    INSERT INTO dbo.Giuong (MaPhong, MaGiuong, SoGiuong, TinhTrang) VALUES ('P204', 'A02', 2, N'Trống');
-IF NOT EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = 'P101' AND MaGiuong = 'R01')
-    INSERT INTO dbo.Giuong (MaPhong, MaGiuong, SoGiuong, TinhTrang) VALUES ('P101', 'R01', 1, N'Trống');
-IF NOT EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = 'P302' AND MaGiuong = 'D01')
-    INSERT INTO dbo.Giuong (MaPhong, MaGiuong, SoGiuong, TinhTrang) VALUES ('P302', 'D01', 1, N'Trống');
-IF NOT EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = 'P305' AND MaGiuong = 'B01')
-    INSERT INTO dbo.Giuong (MaPhong, MaGiuong, SoGiuong, TinhTrang) VALUES ('P305', 'B01', 1, N'Trống');
-IF NOT EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = 'P305' AND MaGiuong = 'B02')
-    INSERT INTO dbo.Giuong (MaPhong, MaGiuong, SoGiuong, TinhTrang) VALUES ('P305', 'B02', 2, N'Trống');
-IF NOT EXISTS (SELECT 1 FROM dbo.Giuong WHERE MaPhong = 'P305' AND MaGiuong = 'B03')
-    INSERT INTO dbo.Giuong (MaPhong, MaGiuong, SoGiuong, TinhTrang) VALUES ('P305', 'B03', 3, N'Trống');
-GO
-
 IF OBJECT_ID(N'dbo.SP_KhachMoi_TrangThai', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_KhachMoi_TrangThai AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
 GO
@@ -150,13 +86,19 @@ BEGIN
             p.GioiTinhChoPhep AS gioiTinhChoPhep,
             cn.TenChiNhanh AS chiNhanh,
             cn.DiaChi AS diaChi,
+            CASE
+                WHEN lp.GiaThueTheoGiuong IS NULL THEN N'Nguyên căn'
+                WHEN p.GioiTinhChoPhep = N'Nam' THEN N'Ghép nam'
+                WHEN p.GioiTinhChoPhep = N'Nữ' THEN N'Ghép nữ'
+                ELSE N'Ghép'
+            END AS hinhThucThue,
             (SELECT TOP 1 UrlImg FROM dbo.HinhAnhPhong hap WHERE hap.MaPhong = p.MaPhong ORDER BY hap.STTAnh) AS urlImg
         FROM dbo.Phong AS p
         INNER JOIN dbo.LoaiPhong AS lp ON lp.MaLoaiPhong = p.MaLoaiPhong
         INNER JOIN dbo.ChiNhanh AS cn ON cn.MaChiNhanh = p.MaChiNhanh
         INNER JOIN dbo.Giuong AS g ON g.MaPhong = p.MaPhong
-        WHERE p.TinhTrang IN (N'Trống', N'Còn chỗ')
-          AND cn.TrangThai = N'Hoạt động'
+        -- Remove WHERE p.TinhTrang IN ('Trống', 'Còn chỗ')
+        WHERE cn.TrangThai = N'Hoạt động'
           AND (
               @TenPhong IS NULL
               OR p.TenPhong LIKE N'%' + @TenPhong + N'%'
@@ -172,7 +114,8 @@ BEGIN
     )
     SELECT *
     FROM PhongKhaDung
-    WHERE soChoTrong > 0
+    -- Remove WHERE soChoTrong > 0
+    WHERE (1=1)
       AND (
           @HinhThucThue IS NULL
           OR @HinhThucThue = N''
@@ -209,16 +152,26 @@ BEGIN
         pdk.KhuVucMongMuon AS khuVucMongMuon,
         pdk.LoaiPhongYeuCau AS loaiPhongYeuCau,
         pdk.MucGia AS mucGia,
+        pdk.MucGiaDen AS mucGiaDen,
         pdk.SoNguoiDuKienO AS soNguoiO,
-        pdk.GioiTinh AS gioiTinh,
+        pdk.GioiTinh AS gioiTinhPhong,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
         pdk.ThoiHanThue AS thoiHanThue,
         pdk.YeuCauKhac AS ghiChu,
         pdk.TrangThai AS trangThai,
         lich.STTLich AS sttLich,
         lich.ThoiGianHen AS thoiGianHen,
-        lich.TrangThai AS trangThaiLich
+        lich.TrangThai AS trangThaiLich,
+        nd.HoTen AS hoTen,
+        nd.NgaySinh AS ngaySinh,
+        nd.GioiTinh AS gioiTinh,
+        nd.SDT AS soDienThoai,
+        nd.Email AS email,
+        kh.QuocTich AS quocTich,
+        kh.CCCD AS cccd
     FROM dbo.PhieuDangKy AS pdk
+    INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = pdk.MaKhachHang
+    INNER JOIN dbo.KhachHang AS kh ON kh.MaKhachHang = pdk.MaKhachHang
     OUTER APPLY (
         SELECT TOP (1) lxp.STTLich, lxp.ThoiGianHen, lxp.TrangThai
         FROM dbo.LichXemPhong AS lxp
@@ -271,11 +224,19 @@ CREATE OR ALTER PROCEDURE dbo.SP_KhachMoi_TaoHoSo
     @KhuVucMongMuon NVARCHAR(100) = NULL,
     @LoaiPhongYeuCau NVARCHAR(50) = NULL,
     @MucGia DECIMAL(15, 2) = NULL,
+    @MucGiaDen DECIMAL(15, 2) = NULL,
     @SoNguoiO INT,
     @NgayDuKienVaoO DATE,
     @ThoiHanThue INT = NULL,
     @PhongQuanTam NVARCHAR(400) = NULL,
-    @GhiChu NVARCHAR(MAX) = NULL
+    @GhiChu NVARCHAR(MAX) = NULL,
+    @HoTen NVARCHAR(100) = NULL,
+    @NgaySinh DATE = NULL,
+    @GioiTinhKhach NVarChar(5) = NULL,
+    @SDT VARCHAR(20) = NULL,
+    @Email VARCHAR(100) = NULL,
+    @QuocTich NVARCHAR(50) = NULL,
+    @CCCD VARCHAR(20) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -291,6 +252,19 @@ BEGIN
     SET @HinhThucThue = NULLIF(LTRIM(RTRIM(@HinhThucThue)), N'');
     IF @HinhThucThue = N'Nguyên phòng'
         SET @HinhThucThue = N'Nguyên căn';
+
+    DECLARE @GioiTinhPhong NVARCHAR(10) = NULL;
+    IF @HinhThucThue = N'Ghép nam'
+    BEGIN
+        SET @GioiTinhPhong = N'Nam';
+        SET @HinhThucThue = N'Ghép';
+    END
+    ELSE IF @HinhThucThue = N'Ghép nữ'
+    BEGIN
+        SET @GioiTinhPhong = N'Nữ';
+        SET @HinhThucThue = N'Ghép';
+    END
+
     SET @KhuVucMongMuon = NULLIF(LTRIM(RTRIM(@KhuVucMongMuon)), N'');
     SET @LoaiPhongYeuCau = NULLIF(LTRIM(RTRIM(@LoaiPhongYeuCau)), N'');
 
@@ -323,6 +297,25 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
+        IF @HoTen IS NOT NULL
+        BEGIN
+            UPDATE dbo.NguoiDung SET
+                HoTen = @HoTen,
+                NgaySinh = @NgaySinh,
+                GioiTinh = @GioiTinhKhach,
+                SDT = @SDT,
+                Email = @Email
+            WHERE MaNguoiDung = @KhachHangId;
+        END
+
+        IF @QuocTich IS NOT NULL OR @CCCD IS NOT NULL
+        BEGIN
+            UPDATE dbo.KhachHang SET
+                QuocTich = COALESCE(@QuocTich, QuocTich),
+                CCCD = COALESCE(@CCCD, CCCD)
+            WHERE MaKhachHang = @KhachHangId;
+        END
+
         SELECT @SoThuTu = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaDangKy, 3, 4))), 0) + 1
         FROM dbo.PhieuDangKy WITH (UPDLOCK, HOLDLOCK)
         WHERE MaDangKy LIKE 'DK%';
@@ -331,12 +324,12 @@ BEGIN
 
         INSERT INTO dbo.PhieuDangKy (
             MaDangKy, NgayDangKy, SoNguoiDuKienO, GioiTinh, HinhThucThue,
-            KhuVucMongMuon, LoaiPhongYeuCau, MucGia, ThoiGianDuKienVaoO,
+            KhuVucMongMuon, LoaiPhongYeuCau, MucGia, MucGiaDen, ThoiGianDuKienVaoO,
             ThoiHanThue, YeuCauKhac, TrangThai, MaKhachHang
         )
         VALUES (
-            @MaDangKy, CAST(GETDATE() AS DATE), @SoNguoiO, @GioiTinh, @HinhThucThue,
-            @KhuVucMongMuon, @LoaiPhongYeuCau, @MucGia,
+            @MaDangKy, CAST(GETDATE() AS DATE), @SoNguoiO, ISNULL(@GioiTinhPhong, @GioiTinh), @HinhThucThue,
+            @KhuVucMongMuon, @LoaiPhongYeuCau, @MucGia, @MucGiaDen,
             @NgayDuKienVaoO, @ThoiHanThue, NULLIF(@YeuCauKhac, N''), N'Chờ tiếp nhận', @KhachHangId
         );
 
@@ -361,7 +354,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_KhachMoi_YeuCauDieuChinhLich
     @MaDangKy VARCHAR(6),
     @STTLich INT,
     @ThaoTac NVARCHAR(20),
-    @ThoiGianMoi DATETIME = NULL,
+    @ThoiGianMoi NVARCHAR(255) = NULL,
     @LyDo NVARCHAR(MAX) = NULL
 AS
 BEGIN
@@ -377,17 +370,31 @@ BEGIN
     )
         THROW 50105, N'Không tìm thấy lịch xem phòng của bạn.', 1;
 
+    -- Kiểm tra thời gian: Chỉ cho phép yêu cầu nếu còn >= 1 tiếng so với lịch hẹn
+    DECLARE @ThoiGianHen DATETIME;
+    SELECT @ThoiGianHen = ThoiGianHen 
+    FROM dbo.LichXemPhong 
+    WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich;
+
+    IF DATEDIFF(MINUTE, GETDATE(), @ThoiGianHen) < 60
+        THROW 50107, N'Lịch hẹn sẽ diễn ra trong chưa tới 1 giờ. Vui lòng liên hệ trực tiếp nhân viên để được hỗ trợ.', 1;
+
+    DECLARE @GhiChuKhach NVARCHAR(MAX) = N'';
+
     IF @ThaoTac = N'Hủy'
     BEGIN
+        SET @GhiChuKhach = N'Thời gian đề xuất: ' + ISNULL(@ThoiGianMoi, N'Không có') + N'. Lý do hủy: ' + ISNULL(@LyDo, N'Không có');
         UPDATE dbo.LichXemPhong
-        SET TrangThai = N'Yêu cầu hủy'
+        SET TrangThai = N'Yêu cầu hủy',
+            GhiChu = @GhiChuKhach
         WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich;
     END
-    ELSE IF @ThaoTac = N'Đổi lịch' AND @ThoiGianMoi IS NOT NULL
+    ELSE IF @ThaoTac = N'Đổi lịch'
     BEGIN
+        SET @GhiChuKhach = N'Thời gian đề xuất: ' + ISNULL(@ThoiGianMoi, N'Không có') + N'. Lý do đổi: ' + ISNULL(@LyDo, N'Không có');
         UPDATE dbo.LichXemPhong
         SET TrangThai = N'Yêu cầu đổi lịch',
-            ThoiGianHen = @ThoiGianMoi
+            GhiChu = @GhiChuKhach
         WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich;
     END
     ELSE

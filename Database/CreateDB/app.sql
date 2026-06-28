@@ -97,7 +97,7 @@ CREATE TABLE Giuong (
     SoGiuong    INT             NOT NULL,
     TinhTrang   NVARCHAR(20)    NOT NULL DEFAULT N'Trống', 
 PRIMARY KEY (MaPhong, MaGiuong),
-    CONSTRAINT CHK_Giuong_TinhTrang CHECK (TinhTrang IN (N'Trống', N'Đã đặt cọc', N'Đang thuê'))
+    CONSTRAINT CHK_Giuong_TinhTrang CHECK (TinhTrang IN (N'Trống', N'Đã đặt cọc', N'Đang thuê', N'Giữ chỗ'))
 );
 -- 9. PHIẾU ĐĂNG KÝ
 CREATE TABLE PhieuDangKy (
