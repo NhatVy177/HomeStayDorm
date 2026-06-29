@@ -3,7 +3,7 @@ import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { dangKyThueApi } from '../dangKyThue/dangKyThue.api.js';
 
 export default function HoSoDangKyTab({ onNavigate }) {
-  const [filterStatus, setFilterStatus] = useState('Tất cả');
+  const [filterStatus, setFilterStatus] = useState('Chờ tiếp nhận');
   const [list, setList] = useState([]);
   const [selectedReg, setSelectedReg] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -13,6 +13,9 @@ export default function HoSoDangKyTab({ onNavigate }) {
   // Drawer States
   const [checkingRooms, setCheckingRooms] = useState(false);
   const [roomResults, setRoomResults] = useState(null);
+  const [selectedRooms, setSelectedRooms] = useState([]);
+  const [showTuVanModal, setShowTuVanModal] = useState(false);
+  const [tuVanNote, setTuVanNote] = useState('');
   // Modal States
   const [mismatchReason, setMismatchReason] = useState(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -31,7 +34,6 @@ export default function HoSoDangKyTab({ onNavigate }) {
   const stats = {
     choTiepNhan: list.filter(x => x.trangThai === 'Chờ tiếp nhận').length,
     daTiepNhan: list.filter(x => x.trangThai === 'Đã tiếp nhận' || x.trangThai === 'Chấp nhận').length,
-    khongPhuHop: 0,
     tuChoi: list.filter(x => x.trangThai === 'Từ chối').length
   };
   const filteredList = filterStatus === 'Tất cả' 
@@ -59,10 +61,27 @@ export default function HoSoDangKyTab({ onNavigate }) {
   const handleAccept = async () => {
     if (!selectedReg) return;
     try {
-      await dangKyThueApi.tiepNhan(selectedReg.maDangKy);
+      await dangKyThueApi.capNhatKetQuaXuLy(selectedReg.maDangKy, { trangThai: 'Đã tiếp nhận', ghiChuXuLy: '' });
       setAcceptedReg(selectedReg);
+      // NOTE: Here you would normally store selectedRooms into ChiTietXemPhong. For now we pass them to the next step.
       setSelectedReg(null);
       setRoomResults(null);
+      setSelectedRooms([]);
+      fetchData();
+    } catch (err) {
+      alert('Lỗi khi tiếp nhận hồ sơ: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleTuVan = async () => {
+    if (!selectedReg) return;
+    try {
+      await dangKyThueApi.capNhatKetQuaXuLy(selectedReg.maDangKy, { trangThai: 'Đã tiếp nhận', ghiChuXuLy: tuVanNote });
+      alert('Đã chuyển hồ sơ sang trạng thái Đã tiếp nhận để tư vấn lại.');
+      setShowTuVanModal(false);
+      setSelectedReg(null);
+      setRoomResults(null);
+      setSelectedRooms([]);
       fetchData();
     } catch (err) {
       alert('Lỗi khi tiếp nhận hồ sơ: ' + (err.response?.data?.message || err.message));
@@ -83,6 +102,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
       setShowRejectModal(false);
       setSelectedReg(null);
       setRoomResults(null);
+      setSelectedRooms([]);
       setMismatchReason(null);
       fetchData();
     } catch (err) {
@@ -94,69 +114,41 @@ export default function HoSoDangKyTab({ onNavigate }) {
   const handleCheckRoom = async () => {
     setCheckingRooms(true);
     setRoomResults(null);
-    setMismatchReason(null);
+    setSelectedRooms([]);
     try {
       const res = await dangKyThueApi.getPhongGiuongKhaDung({
-        loai: selectedReg.hinhThucThue === 'Ghép' ? 'Ghép' : 'Nguyên căn'
+        hoSoId: selectedReg.maDangKy
       });
       let currentList = res.data || [];
-      let failedReason = null;
-
-      const steps = [
-        {
-          name: 'Khu vực',
-          filter: r => !selectedReg.khuVucMongMuon || (r.diaChi && r.diaChi.includes(selectedReg.khuVucMongMuon)) || (r.tenChiNhanh && r.tenChiNhanh.includes(selectedReg.khuVucMongMuon)),
-          desc: `Không còn phòng ở khu vực ${selectedReg.khuVucMongMuon}`
-        },
-        {
-          name: 'Giới tính',
-          filter: r => !selectedReg.gioiTinh || r.gioiTinhChoPhep === selectedReg.gioiTinh || r.gioiTinhChoPhep === 'Không phân biệt' || r.gioiTinhChoPhep === 'Nam/Nữ',
-          desc: `Không còn phòng phù hợp cho giới tính ${selectedReg.gioiTinh}`
-        },
-        {
-          name: 'Sức chứa',
-          filter: r => !selectedReg.soNguoiO || r.loaiThue !== 'Nguyên căn' || r.sucChua >= selectedReg.soNguoiO,
-          desc: `Không còn phòng đáp ứng sức chứa ${selectedReg.soNguoiO} người`
-        },
-        {
-          name: 'Loại phòng',
-          filter: r => !selectedReg.loaiPhongYeuCau || r.loaiPhong === selectedReg.loaiPhongYeuCau,
-          desc: `Không còn loại phòng ${selectedReg.loaiPhongYeuCau}`
-        },
-        {
-          name: 'Khoảng giá',
-          filter: r => {
-            if (selectedReg.mucGia && r.giaThue < selectedReg.mucGia) return false;
-            if (selectedReg.mucGiaDen && r.giaThue > selectedReg.mucGiaDen) return false;
-            return true;
-          },
-          desc: `Không còn phòng/giường đáp ứng mức giá ${selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''} — ${selectedReg.mucGiaDen ? selectedReg.mucGiaDen.toLocaleString('vi-VN') + 'đ' : ''}`
+      
+      // Group beds by room
+      const roomMap = {};
+      currentList.forEach(r => {
+        if (!roomMap[r.maPhong]) {
+          roomMap[r.maPhong] = {
+            maPhong: r.maPhong,
+            tenPhong: r.tenPhong,
+            loaiThue: r.loaiThue,
+            loaiPhong: r.loaiPhong,
+            giaThue: r.giaThue,
+            gioiTinhChoPhep: r.gioiTinhChoPhep,
+            tenChiNhanh: r.tenChiNhanh,
+            soGiuongTrong: 0,
+            danhSachGiuong: []
+          };
         }
-      ];
-
-      for (const step of steps) {
-        const nextList = currentList.filter(step.filter);
-        if (nextList.length === 0 && currentList.length > 0) {
-          failedReason = { name: step.name, desc: step.desc };
-          currentList = [];
-          break;
+        if (r.maGiuong) {
+          roomMap[r.maPhong].soGiuongTrong += 1;
+          roomMap[r.maPhong].danhSachGiuong.push(r.maGiuong);
+        } else {
+          roomMap[r.maPhong].soGiuongTrong = r.sucChua;
         }
-        currentList = nextList;
-      }
-
-      if (currentList.length === 0 && !failedReason) {
-          failedReason = { name: 'Chung', desc: 'Không tìm thấy phòng/giường phù hợp với các tiêu chí trên.' };
-      }
-
-      setMismatchReason(failedReason);
+      });
+      
+      const groupedRooms = Object.values(roomMap);
+      
       setCheckingRooms(false);
-      setRoomResults(currentList.map(r => ({
-        id: r.maPhong,
-        bed: r.maGiuong || 'Trống nguyên phòng',
-        gender: r.gioiTinhChoPhep || r.gioiTinhPhong,
-        price: r.giaThue ? r.giaThue.toLocaleString('vi-VN') + 'đ' : '',
-        demandArea: selectedReg.khuVucMongMuon
-      })));
+      setRoomResults(groupedRooms);
     } catch (err) {
       setCheckingRooms(false);
       setRoomResults([]);
@@ -222,10 +214,8 @@ export default function HoSoDangKyTab({ onNavigate }) {
       <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {[
-            { id: 'Tất cả', label: `Tất cả (${list.length})` },
             { id: 'Chờ tiếp nhận', label: `Chờ tiếp nhận (${stats.choTiepNhan})` },
             { id: 'Đã tiếp nhận', label: `Đã tiếp nhận (${stats.daTiepNhan})` },
-            { id: 'Không tìm thấy phù hợp', label: `Không tìm thấy phù hợp (${stats.khongPhuHop})` },
             { id: 'Từ chối', label: `Từ chối (${stats.tuChoi})` }
           ].map(tab => (
             <button
@@ -268,7 +258,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
               <tr>
                 <th>Mã phiếu</th>
                 <th>Khách hàng</th>
-                <th>Nhu cầu thuê</th>
+                <th>Yêu cầu thuê</th>
                 <th>Khu vực / Loại phòng</th>
                 <th>Ngày gửi</th>
                 <th className="text-center">Trạng thái</th>
@@ -284,7 +274,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
                     <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.sdtKhach}</div>
                   </td>
                   <td>
-                    <div style={{ color: '#191c1d' }}>{item.hinhThucThue} · {item.gioiTinh}</div>
+                    <div style={{ color: '#191c1d' }}>{item.gioiTinh || 'Không xác định'}</div>
                     <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.soNguoiO} người</div>
                   </td>
                   <td>
@@ -342,7 +332,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
                 <div className="ktp-grid-2" style={{ gap: '16px' }}>
                   <div className="ktp-info-row"><span className="ktp-info-label">Số người ở:</span> <span className="ktp-info-value">{selectedReg.soNguoiO} người</span></div>
                   <div className="ktp-info-row"><span className="ktp-info-label">Giới tính:</span> <span className="ktp-info-value">{selectedReg.gioiTinh}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Hình thức:</span> <span className="ktp-info-value">{selectedReg.hinhThucThue}</span></div>
+
                   <div className="ktp-info-row"><span className="ktp-info-label">Khu vực:</span> <span className="ktp-info-value ktp-text-primary">{selectedReg.khuVucMongMuon}</span></div>
                   <div className="ktp-info-row"><span className="ktp-info-label">Loại phòng:</span> <span className="ktp-info-value">{selectedReg.loaiPhongYeuCau}</span></div>
                   <div className="ktp-info-row"><span className="ktp-info-label">Mức giá:</span> <span className="ktp-info-value ktp-text-primary">{selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''}</span></div>
@@ -357,18 +347,20 @@ export default function HoSoDangKyTab({ onNavigate }) {
                 <h4 className="ktp-section-title"><Icon name="search" /> Khối 3: Đối chiếu & Kiểm tra phòng/giường</h4>
                 
                 <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#eef2f2', borderRadius: '4px' }}>
-                  <p style={{ margin: '0 0 8px 0', fontWeight: '600', color: '#3f494a', fontSize: '13px' }}>Tiêu chí đối chiếu tự động:</p>
+                  <p style={{ margin: '0 0 8px 0', fontWeight: '600', color: '#3f494a', fontSize: '13px' }}>Tiêu chí từ phiếu đăng ký:</p>
                   <div className="ktp-grid-2" style={{ fontSize: '13px', color: '#6f797a', gap: '8px' }}>
-                    <div>• Khu vực: <strong style={{ color: '#191c1d' }}>{selectedReg.khuVucMongMuon}</strong></div>
-                    <div>• Giới tính: <strong style={{ color: '#191c1d' }}>{selectedReg.gioiTinh}</strong></div>
-                    <div>• Sức chứa: <strong style={{ color: '#191c1d' }}>{selectedReg.soNguoiO} người</strong></div>
-                    <div>• Mức giá: <strong style={{ color: '#191c1d' }}>{selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''}</strong></div>
+                    <div>• Chi nhánh/khu vực mong muốn: <strong style={{ color: '#191c1d' }}>{selectedReg.khuVucMongMuon}</strong></div>
+                    <div>• Giới tính khách hàng: <strong style={{ color: '#191c1d' }}>{selectedReg.gioiTinh}</strong></div>
+                    <div>• Số người dự kiến ở: <strong style={{ color: '#191c1d' }}>{selectedReg.soNguoiO} người</strong></div>
+                    <div>• Loại phòng mong muốn: <strong style={{ color: '#191c1d' }}>{selectedReg.loaiPhongYeuCau}</strong></div>
+                    <div>• Mức giá tối đa/người/tháng: <strong style={{ color: '#191c1d' }}>{selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''}</strong></div>
+                    <div>• Yêu cầu khác nếu có: <strong style={{ color: '#191c1d' }}>{selectedReg.ghiChu || 'Không có'}</strong></div>
                   </div>
                 </div>
 
                 {!checkingRooms && !roomResults && (
                   <div style={{ textAlign: 'center', padding: '10px' }}>
-                    <button className="ktp-btn-action-fill" onClick={handleCheckRoom}>Bắt đầu đối chiếu & tìm phòng</button>
+                    <button className="ktp-btn-action-fill" onClick={handleCheckRoom}>Hệ thống tự động tìm phòng/giường phù hợp</button>
                   </div>
                 )}
 
@@ -381,16 +373,38 @@ export default function HoSoDangKyTab({ onNavigate }) {
 
                 {roomResults && roomResults.length > 0 && (
                   <div style={{ marginTop: '16px' }}>
-                    <div className="ktp-badge-success" style={{ marginBottom: '12px', display: 'inline-block' }}>Đạt điều kiện - Tìm thấy {roomResults.length} phòng/giường phù hợp</div>
+                    <div className="ktp-badge-success" style={{ marginBottom: '12px', display: 'inline-block' }}>Tìm thấy phòng/giường phù hợp với nhu cầu đăng ký.</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {roomResults.map((r, i) => (
-                        <div key={i} className="ktp-detail-card" style={{ padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid #4caf50' }}>
-                          <div>
-                            <strong style={{ fontSize: '16px' }}>{r.id} - {r.bed}</strong>
-                            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#6f797a' }}>Đã khớp giới tính ({r.gender}) & khu vực ({selectedReg.demandArea})</p>
+                        <label key={i} className="ktp-detail-card" style={{ padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid #4caf50', cursor: 'pointer', border: selectedRooms.includes(r.maPhong) ? '2px solid #4caf50' : '1px solid #bec8c9', borderRadius: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={selectedRooms.includes(r.maPhong)}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedRooms([...selectedRooms, r.maPhong]);
+                                else setSelectedRooms(selectedRooms.filter(id => id !== r.maPhong));
+                              }}
+                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            />
+                            <div>
+                              <strong style={{ fontSize: '16px' }}>{r.maPhong} - {r.tenChiNhanh}</strong>
+                              <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#3f494a' }}>
+                                Loại phòng: {r.loaiPhong} | Giới tính cho phép: {r.gioiTinhChoPhep} | Số giường trống: {r.soGiuongTrong}
+                              </p>
+                              {r.danhSachGiuong && r.danhSachGiuong.length > 0 && (
+                                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#6f797a' }}>
+                                  Danh sách giường trống: {r.danhSachGiuong.join(', ')}
+                                </p>
+                              )}
+                              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#4caf50', fontWeight: '600' }}>Trạng thái: Có thể sắp lịch xem</p>
+                            </div>
                           </div>
-                          <strong className="ktp-text-primary">{r.price}</strong>
-                        </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <strong className="ktp-text-primary" style={{ fontSize: '16px' }}>{r.giaThue ? r.giaThue.toLocaleString('vi-VN') + 'đ' : ''}</strong>
+                            <div style={{ fontSize: '12px', color: '#6f797a', marginTop: '2px' }}>{r.loaiThue === 'Nguyên căn' ? 'Giá thuê nguyên phòng' : 'Giá thuê theo giường'}</div>
+                          </div>
+                        </label>
                       ))}
                     </div>
                   </div>
@@ -398,56 +412,76 @@ export default function HoSoDangKyTab({ onNavigate }) {
 
                 {roomResults && roomResults.length === 0 && (
                   <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '4px', borderLeft: '4px solid #ff9800' }}>
-                    <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>Kết quả: Không đạt điều kiện</p>
-                    {mismatchReason ? (
-                      <>
-                        <div style={{ fontSize: '13px', lineHeight: '1.6', marginBottom: '8px' }}>
-                          <div style={{ color: mismatchReason.name === 'Khu vực' ? '#d32f2f' : '#2e7d32' }}>
-                            {mismatchReason.name === 'Khu vực' ? '✗' : '✓'} Khu vực: {selectedReg.khuVucMongMuon}
-                          </div>
-                          <div style={{ color: mismatchReason.name === 'Giới tính' ? '#d32f2f' : (['Khu vực'].includes(mismatchReason.name) ? '#9e9e9e' : '#2e7d32') }}>
-                            {['Khu vực'].includes(mismatchReason.name) ? '-' : (mismatchReason.name === 'Giới tính' ? '✗' : '✓')} Giới tính: {selectedReg.gioiTinh}
-                          </div>
-                          <div style={{ color: mismatchReason.name === 'Sức chứa' ? '#d32f2f' : (['Khu vực', 'Giới tính'].includes(mismatchReason.name) ? '#9e9e9e' : '#2e7d32') }}>
-                            {['Khu vực', 'Giới tính'].includes(mismatchReason.name) ? '-' : (mismatchReason.name === 'Sức chứa' ? '✗' : '✓')} Sức chứa: {selectedReg.soNguoiO} người
-                          </div>
-                          {selectedReg.loaiPhongYeuCau && (
-                            <div style={{ color: mismatchReason.name === 'Loại phòng' ? '#d32f2f' : (['Khu vực', 'Giới tính', 'Sức chứa'].includes(mismatchReason.name) ? '#9e9e9e' : '#2e7d32') }}>
-                              {['Khu vực', 'Giới tính', 'Sức chứa'].includes(mismatchReason.name) ? '-' : (mismatchReason.name === 'Loại phòng' ? '✗' : '✓')} Loại phòng: {selectedReg.loaiPhongYeuCau}
-                            </div>
-                          )}
-                          {(selectedReg.mucGia || selectedReg.mucGiaDen) && (
-                            <div style={{ color: mismatchReason.name === 'Khoảng giá' ? '#d32f2f' : (['Khu vực', 'Giới tính', 'Sức chứa', 'Loại phòng'].includes(mismatchReason.name) ? '#9e9e9e' : '#2e7d32') }}>
-                              {['Khu vực', 'Giới tính', 'Sức chứa', 'Loại phòng'].includes(mismatchReason.name) ? '-' : (mismatchReason.name === 'Khoảng giá' ? '✗' : '✓')} Khoảng giá: {selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''} — {selectedReg.mucGiaDen ? selectedReg.mucGiaDen.toLocaleString('vi-VN') + 'đ' : ''}
-                            </div>
-                          )}
-                        </div>
-                        <p style={{ margin: 0, fontSize: '13px' }}>Lý do: <strong>{mismatchReason.desc}</strong></p>
-                      </>
-                    ) : (
-                      <p style={{ margin: 0, fontWeight: '600' }}>Không tìm thấy phòng/giường phù hợp với các tiêu chí trên.</p>
-                    )}
+                    <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>Chưa tìm thấy phòng/giường phù hợp tại thời điểm hiện tại.</p>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '13px' }}>
+                      Không có phòng/giường còn trống, chưa đặt cọc và đồng thời thỏa các tiêu chí về chi nhánh, giới tính, loại phòng, số người ở và mức giá.
+                    </p>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontStyle: 'italic' }}>
+                      Nhân viên sale có thể tiếp nhận phiếu để liên hệ tư vấn lại với khách hàng, hoặc từ chối phiếu nếu không thể đáp ứng nhu cầu.
+                    </p>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px' }}>
+            <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button className="ktp-btn-cancel" style={{ backgroundColor: '#f4f6f6' }} onClick={() => { setSelectedReg(null); setRoomResults(null); }}>Hủy</button>
-              {roomResults && roomResults.length === 0 && (
-                <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => {
-                  setRejectNote(mismatchReason ? mismatchReason.desc : '');
-                  setShowRejectModal(true);
-                }}>Từ chối phiếu</button>
+              
+              {roomResults && roomResults.length === 0 ? (
+                <>
+                  <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => {
+                    setRejectNote('');
+                    setShowRejectModal(true);
+                  }}>Từ chối phiếu</button>
+                  <button 
+                    className="ktp-btn-submit" 
+                    onClick={() => setShowTuVanModal(true)}
+                  >
+                    Tiếp nhận để tư vấn lại
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => {
+                    setRejectNote('');
+                    setShowRejectModal(true);
+                  }}>Từ chối phiếu</button>
+                  <button 
+                    className="ktp-btn-submit" 
+                    disabled={!roomResults || selectedRooms.length === 0}
+                    style={{ opacity: (!roomResults || selectedRooms.length === 0) ? 0.5 : 1 }}
+                    onClick={handleAccept}
+                  >
+                    Tiếp nhận & lập lịch xem phòng
+                  </button>
+                </>
               )}
-              <button 
-                className="ktp-btn-submit" 
-                disabled={!roomResults || roomResults.length === 0}
-                style={{ opacity: (!roomResults || roomResults.length === 0) ? 0.5 : 1 }}
-                onClick={handleAccept}
-              >
-                Tiếp nhận phiếu đăng ký
-              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TU VAN MODAL */}
+      {showTuVanModal && (
+        <div className="ktp-modal-overlay" onClick={() => setShowTuVanModal(false)}>
+          <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ width: '500px', maxWidth: '90vw' }}>
+            <div className="ktp-modal-header" style={{ alignItems: 'center', borderBottom: '1px solid #bec8c9', backgroundColor: '#f4f6f6' }}>
+              <h3 style={{ fontSize: '16px', margin: 0, color: '#191c1d' }}>Tiếp nhận để tư vấn lại</h3>
+              <button className="ktp-modal-close" onClick={() => setShowTuVanModal(false)}><Icon name="close" /></button>
+            </div>
+            <div className="ktp-modal-body" style={{ padding: '24px', flex: 'none', display: 'block' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#3f494a' }}>Vui lòng nhập ghi chú sale để liên hệ tư vấn lại với khách hàng (Ví dụ: Chưa có phòng phù hợp, cần liên hệ khách tư vấn đổi loại phòng/khu vực/mức giá.)</p>
+              <textarea 
+                placeholder="Nhập ghi chú sale..." 
+                value={tuVanNote} 
+                onChange={e => setTuVanNote(e.target.value)} 
+                style={{ width: '100%', height: '80px', padding: '8px 12px', border: '1px solid #bec8c9', borderRadius: '4px', fontSize: '14px', outline: 'none', resize: 'vertical' }} 
+                autoFocus 
+              />
+            </div>
+            <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="ktp-btn-cancel" style={{ backgroundColor: '#f4f6f6' }} onClick={() => setShowTuVanModal(false)}>Hủy</button>
+              <button className="ktp-btn-submit" onClick={handleTuVan}>Xác nhận tiếp nhận</button>
             </div>
           </div>
         </div>
@@ -575,9 +609,9 @@ export default function HoSoDangKyTab({ onNavigate }) {
               {createStep === 2 && (
                 <div className="ktp-grid-2" style={{ gap: '20px' }}>
                   <div>
-                    <label className="ktp-filter-label">Hình thức thuê</label>
-                    <select className="ktp-input" value={createForm.hinhThuc} onChange={e => setCreateForm({...createForm, hinhThuc: e.target.value})}>
-                      <option>Ghép giường</option><option>Nguyên phòng</option><option>Nguyên căn</option>
+                    <label className="ktp-filter-label">Giới tính thuê</label>
+                    <select className="ktp-input" value={createForm.gioiTinhO} onChange={e => setCreateForm({...createForm, gioiTinhO: e.target.value})}>
+                      <option>Nam</option><option>Nữ</option><option>Không xác định</option>
                     </select>
                   </div>
                   <div>

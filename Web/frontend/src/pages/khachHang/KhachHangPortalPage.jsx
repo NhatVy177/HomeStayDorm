@@ -706,6 +706,7 @@ export default function KhachHangPortalPage() {
       loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
       mucGiaToiDa: profile.mucGiaToiDa || '',
       soNguoiO: profile.soNguoiO || 1,
+      gioiTinhThue: profile.gioiTinh || 'Không xác định',
       ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
       thoiHanThue: profile.thoiHanThue || '',
       ghiChu: profile.ghiChu || ''
@@ -726,12 +727,11 @@ export default function KhachHangPortalPage() {
         ...detail,
         maDangKy: detail.maDangKy || detail.MaDangKy || profile.maDangKy,
         ngayDangKy: detail.ngayDangKy || detail.NgayDangKy || profile.ngayDangKy,
-        hinhThucThue: detail.hinhThucThue || detail.HinhThucThue || profile.hinhThucThue,
         khuVucMongMuon: detail.khuVucMongMuon || detail.KhuVucMongMuon || profile.khuVucMongMuon,
         loaiPhongYeuCau: detail.loaiPhongYeuCau || detail.LoaiPhongYeuCau || profile.loaiPhongYeuCau,
-        mucGia: detail.mucGia ?? detail.MucGia ?? profile.mucGia,
-        mucGiaDen: detail.mucGiaDen ?? detail.MucGiaDen ?? profile.mucGiaDen,
+        mucGiaToiDa: detail.mucGiaToiDa ?? detail.MucGiaToiDa ?? profile.mucGiaToiDa,
         soNguoiO: detail.soNguoiO ?? detail.SoNguoiO ?? profile.soNguoiO,
+        gioiTinh: detail.gioiTinh || detail.GioiTinh || profile.gioiTinh,
         ngayDuKienVaoO: detail.ngayDuKienVaoO || detail.NgayDuKienVaoO || profile.ngayDuKienVaoO,
         thoiHanThue: detail.thoiHanThue ?? detail.ThoiHanThue ?? profile.thoiHanThue,
         ghiChu: detail.ghiChu || detail.GhiChu || profile.ghiChu,
@@ -763,11 +763,7 @@ export default function KhachHangPortalPage() {
     event.preventDefault();
     setEditSaving(true);
     try {
-      await khachMoiApi.updateHoSo(editModal.maDangKy, {
-        ...editForm,
-        mucGia: editForm.mucGiaTu || '',
-        mucGiaDen: editForm.mucGiaDen || '',
-      });
+      await khachMoiApi.updateHoSo(editModal.maDangKy, editForm);
       setEditModal(null);
       await loadPortal(filters);
       setToast('Đã cập nhật hồ sơ thành công.');
@@ -1619,7 +1615,7 @@ export default function KhachHangPortalPage() {
                 <div className="kh-register-grid">
                   <label><span>Số lượng người ở*</span><input type="number" min="1" value={rentForm.soNguoiO} onChange={(event) => setRentForm({ ...rentForm, soNguoiO: event.target.value })} required /></label>
                   <label><span>Giới tính thuê*</span><select value={rentForm.gioiTinhThue} onChange={(event) => setRentForm({ ...rentForm, gioiTinhThue: event.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Không xác định">Không xác định</option></select></label>
-                  <label className="is-half"><span>Khu vực mong muốn*</span><input value={rentForm.khuVucMongMuon} onChange={(event) => setRentForm({ ...rentForm, khuVucMongMuon: event.target.value })} placeholder="Ví dụ: Quận 3, gần trường học..." required /></label>
+                  <label className="is-half"><span>Khu vực mong muốn*</span><select value={rentForm.khuVucMongMuon} onChange={(event) => setRentForm({ ...rentForm, khuVucMongMuon: event.target.value })} required><option value="">Chọn khu vực</option>{filterOptions.khuVuc.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label className="is-half"><span>Loại phòng mong muốn*</span><select value={rentForm.loaiPhongYeuCau} onChange={(event) => setRentForm({ ...rentForm, loaiPhongYeuCau: event.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={rentForm.mucGiaToiDa} onChange={(event) => setRentForm({ ...rentForm, mucGiaToiDa: event.target.value })} placeholder="VD: 3.000.000" required /></label>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={rentForm.ngayDuKienVaoO} onChange={(event) => setRentForm({ ...rentForm, ngayDuKienVaoO: event.target.value })} required /></label>
@@ -1812,14 +1808,10 @@ export default function KhachHangPortalPage() {
                 <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
                 <div className="kh-register-grid">
                   <label><span>Số lượng người ở*</span><input type="number" min="1" value={editForm.soNguoiO} onChange={(e) => setEditForm({ ...editForm, soNguoiO: e.target.value })} required /></label>
-                  <label><span>Hình thức thuê*</span><select value={editForm.hinhThucThue} onChange={(e) => setEditForm({ ...editForm, hinhThucThue: e.target.value })} required>{filterOptions.hinhThucThue.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <label className="is-half"><span>Khu vực mong muốn*</span><input value={editForm.khuVucMongMuon} onChange={(e) => setEditForm({ ...editForm, khuVucMongMuon: e.target.value })} placeholder="Ví dụ: Quận 3, gần trường học..." required /></label>
+                  <label><span>Giới tính thuê*</span><select value={editForm.gioiTinhThue} onChange={(e) => setEditForm({ ...editForm, gioiTinhThue: e.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Không xác định">Không xác định</option></select></label>
+                  <label className="is-half"><span>Khu vực mong muốn*</span><select value={editForm.khuVucMongMuon} onChange={(e) => setEditForm({ ...editForm, khuVucMongMuon: e.target.value })} required><option value="">Chọn khu vực</option>{filterOptions.khuVuc.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label className="is-half"><span>Loại phòng mong muốn*</span><select value={editForm.loaiPhongYeuCau} onChange={(e) => setEditForm({ ...editForm, loaiPhongYeuCau: e.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <div className="kh-price-range is-half">
-                    <label><span>Giá từ (đ/tháng)</span><input type="number" min="0" value={editForm.mucGiaTu || editForm.mucGia || ''} onChange={(e) => setEditForm({ ...editForm, mucGiaTu: e.target.value, mucGia: e.target.value })} placeholder="VD: 2.000.000" /></label>
-                    <span className="kh-price-sep">—</span>
-                    <label><span>Giá đến (đ/tháng)</span><input type="number" min="0" value={editForm.mucGiaDen || ''} onChange={(e) => setEditForm({ ...editForm, mucGiaDen: e.target.value })} placeholder="VD: 3.000.000" /></label>
-                  </div>
+                  <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={editForm.mucGiaToiDa} onChange={(e) => setEditForm({ ...editForm, mucGiaToiDa: e.target.value })} placeholder="VD: 3.000.000" required /></label>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={editForm.ngayDuKienVaoO} onChange={(e) => setEditForm({ ...editForm, ngayDuKienVaoO: e.target.value })} required /></label>
                   <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={editForm.thoiHanThue} onChange={(e) => setEditForm({ ...editForm, thoiHanThue: e.target.value })} placeholder="Ví dụ: 6" required /></label>
                   <label className="is-wide"><span>Yêu cầu khác</span><textarea value={editForm.ghiChu} onChange={(e) => setEditForm({ ...editForm, ghiChu: e.target.value })} placeholder="Giờ giấc sinh hoạt, yêu cầu yên tĩnh, gửi xe..." /></label>

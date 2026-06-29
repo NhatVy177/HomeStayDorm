@@ -16,7 +16,11 @@ export async function createHoSoDangKy(req, res, next) {
 
 export async function getHoSoDangKy(req, res, next) {
   try {
-    res.json(await service.getHoSoDangKy(req.query));
+    const query = { ...req.query };
+    if (req.user?.chucVu === 'Sale' && req.user?.maChiNhanh) {
+      query.maChiNhanh = req.user.maChiNhanh;
+    }
+    res.json(await service.getHoSoDangKy(query));
   } catch (err) {
     next(err);
   }

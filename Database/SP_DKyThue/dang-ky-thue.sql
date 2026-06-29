@@ -602,7 +602,14 @@ BEGIN
     WHERE (@TrangThai IS NULL OR pdk.TrangThai = @TrangThai)
       AND (@NhanVienSaleId IS NULL OR pdk.MaNhanVienSale = @NhanVienSaleId)
       AND (@KhachHangId IS NULL OR pdk.MaKhachHang = @KhachHangId)
-      AND (@MaChiNhanh IS NULL OR nvSale.MaChiNhanh = @MaChiNhanh)
+      AND (@MaChiNhanh IS NULL 
+           OR nvSale.MaChiNhanh = @MaChiNhanh 
+           OR EXISTS (
+               SELECT 1 FROM dbo.ChiNhanh cn 
+               WHERE cn.MaChiNhanh = @MaChiNhanh 
+                 AND cn.TenChiNhanh LIKE N'%' + pdk.KhuVucMongMuon + N'%'
+           )
+      )
     ORDER BY pdk.NgayDangKy DESC, pdk.MaDangKy DESC;
 END;
 GO
@@ -842,8 +849,8 @@ BEGIN
         THROW 50010, N'Không tìm thấy hồ sơ đăng ký.', 1;
 
     -- Kiểm tra trạng thái mới hợp lệ
-    IF @TrangThai NOT IN (N'Chấp nhận', N'Từ chối', N'Chờ xác nhận cọc')
-        THROW 50011, N'Trạng thái xử lý không hợp lệ. Chỉ chấp nhận: "Chấp nhận", "Từ chối", "Chờ xác nhận cọc".', 1;
+    IF @TrangThai NOT IN (N'Chấp nhận', N'Từ chối', N'Chờ xác nhận cọc', N'Đã tiếp nhận')
+        THROW 50011, N'Trạng thái xử lý không hợp lệ.', 1;
 
     -- Kiểm tra hồ sơ có đang ở trạng thái có thể cập nhật không
     DECLARE @TrangThaiHienTai NVARCHAR(30);
@@ -878,14 +885,23 @@ BEGIN
         THROW 50011, N'Không thể chấp nhận hồ sơ khi khách chưa xem phòng lần nào.', 1;
 
     BEGIN TRY
-        BEGIN TRANSACTION;
+        IF @TrangThai = N'Chờ xác nhận cọc'
+        BEGIN
+            UPDATE dbo.PhieuDangKy
+            SET TrangThai = @TrangThai,
+                MaNhanVienSale = COALESCE(@NhanVienSaleId, MaNhanVienSale)
+            WHERE MaDangKy = @HoSoId;
 
-        UPDATE dbo.PhieuDangKy
-        SET TrangThai       = @TrangThai,
-            GhiChuSale      = CASE WHEN @GhiChuXuLy IS NOT NULL THEN @GhiChuXuLy ELSE GhiChuSale END,
-            MaNhanVienSale  = ISNULL(@NhanVienSaleId, MaNhanVienSale)
-        WHERE MaDangKy = @HoSoId;
-
+            -- Khi chuyển sang chờ đặt cọc, không cập nhật GhiChuSale
+        END
+        ELSE
+        BEGIN
+            UPDATE dbo.PhieuDangKy
+            SET TrangThai = @TrangThai,
+                GhiChuSale = ISNULL(@GhiChuXuLy, GhiChuSale),
+                MaNhanVienSale = COALESCE(@NhanVienSaleId, MaNhanVienSale)
+            WHERE MaDangKy = @HoSoId;
+        END;
         COMMIT TRANSACTION;
     END TRY
     BEGIN CATCH
