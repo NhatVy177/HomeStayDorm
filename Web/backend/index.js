@@ -12,6 +12,7 @@ import lichXemPhongRoutes from './routes/lichXemPhong.routes.js';
 import datCocRoutes from './routes/datCoc.routes.js';
 import nhanPhongRoutes from './routes/nhanPhong.routes.js';
 import traPhongRoutes from './routes/traPhong.routes.js';
+import dangKyTraPhongRoutes from './routes/dangKyTraPhong.routes.js';
 import suaChuaBaoTriRoutes from './routes/suaChuaBaoTri.routes.js';
 import khachMoiRoutes from './routes/khachMoi.routes.js';
 import trangChuRoutes from './routes/trangChu.routes.js';
@@ -54,6 +55,7 @@ app.use('/api/lich-xem-phong', requireAuth, lichXemPhongRoutes);
 app.use('/api/dat-coc', requireAuth, datCocRoutes);
 app.use('/api/nhan-phong', requireAuth, nhanPhongRoutes);
 app.use('/api/tra-phong', requireAuth, traPhongRoutes);
+app.use('/api/dang-ky-tra-phong', requireAuth, dangKyTraPhongRoutes);
 app.use('/api/sua-chua-bao-tri', requireAuth, suaChuaBaoTriRoutes);
 app.use('/api/khach-moi', requireAuth, khachMoiRoutes);
 
