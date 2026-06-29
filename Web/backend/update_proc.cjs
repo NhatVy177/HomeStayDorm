@@ -88,6 +88,7 @@ BEGIN
         pdk.KhuVucMongMuon      AS khuVucMongMuon,
         pdk.LoaiPhongYeuCau     AS loaiPhongYeuCau,
         pdk.MucGia              AS mucGia,
+        pdk.MucGiaDen           AS mucGiaDen,
         pdk.ThoiGianDuKienVaoO  AS ngayDuKienVaoO,
         pdk.ThoiHanThue         AS thoiHanThue,
         pdk.YeuCauKhac          AS ghiChu,

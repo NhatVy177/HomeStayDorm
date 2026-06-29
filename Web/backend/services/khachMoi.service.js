@@ -103,23 +103,15 @@ export async function createHoSo(user, data = {}) {
 
     const result = await executeProcedure('dbo.SP_KhachMoi_TaoHoSo', [
       { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
-      { name: 'HinhThucThue', type: sql.NVarChar(20), value: data.hinhThucThue || null },
+      { name: 'GioiTinh', type: sql.NVarChar(10), value: data.gioiTinhThue || null },
       { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || null },
       { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50), value: data.loaiPhongYeuCau || null },
-      { name: 'MucGia', type: sql.Decimal(15, 2), value: data.mucGia == null || data.mucGia === '' ? null : Number(data.mucGia) },
-      { name: 'MucGiaDen', type: sql.Decimal(15, 2), value: data.mucGiaDen == null || data.mucGiaDen === '' ? null : Number(data.mucGiaDen) },
+      { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: data.mucGiaToiDa == null || data.mucGiaToiDa === '' ? null : Number(data.mucGiaToiDa) },
       { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
       { name: 'NgayDuKienVaoO', type: sql.Date, value: ngayDuKienVaoO },
       { name: 'ThoiHanThue', type: sql.Int, value: data.thoiHanThue ? Number(data.thoiHanThue) : null },
       { name: 'PhongQuanTam', type: sql.NVarChar(400), value: data.phongQuanTam || null },
-      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: finalGhiChu || null },
-      { name: 'HoTen', type: sql.NVarChar(100), value: data.hoTen || null },
-      { name: 'NgaySinh', type: sql.Date, value: data.ngaySinh || null },
-      { name: 'GioiTinhKhach', type: sql.NVarChar(5), value: data.gioiTinh || null },
-      { name: 'SDT', type: sql.VarChar(20), value: data.soDienThoai || null },
-      { name: 'Email', type: sql.VarChar(100), value: data.email || null },
-      { name: 'QuocTich', type: sql.NVarChar(50), value: data.quocTich || null },
-      { name: 'CCCD', type: sql.VarChar(20), value: data.cccd || null }
+      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: finalGhiChu || null }
     ]);
 
     return result.recordset[0] || null;
@@ -140,13 +132,11 @@ export async function getHoSoDetail(user, maDangKy) {
       SELECT
         pdk.MaDangKy,
         pdk.NgayDangKy,
-        pdk.HinhThucThue,
         pdk.KhuVucMongMuon,
         pdk.LoaiPhongYeuCau,
-        pdk.MucGia,
-        pdk.MucGiaDen,
+        pdk.MucGiaToiDa,
         pdk.SoNguoiDuKienO  AS soNguoiO,
-        pdk.GioiTinh AS gioiTinhPhong,
+        pdk.GioiTinh,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
         pdk.ThoiHanThue,
         pdk.YeuCauKhac AS ghiChu,
@@ -177,15 +167,7 @@ export async function updateHoSo(user, maDangKy, data = {}) {
     throw createServiceError(`Không thể cập nhật hồ sơ đang ở trạng thái "${TrangThai}"`, 400);
   }
 
-  let nhuCau = 'Nguyên căn';
-  let gioiTinhPhong = null;
-  if (data.hinhThucThue === 'Ghép nam') {
-    nhuCau = 'Ghép';
-    gioiTinhPhong = 'Nam';
-  } else if (data.hinhThucThue === 'Ghép nữ') {
-    nhuCau = 'Ghép';
-    gioiTinhPhong = 'Nữ';
-  }
+
 
   const transaction = new sql.Transaction(pool);
   await transaction.begin();
@@ -193,24 +175,20 @@ export async function updateHoSo(user, maDangKy, data = {}) {
   try {
     await transaction.request()
       .input('MaDangKy', sql.VarChar(6), maDangKy)
-      .input('HinhThucThue', sql.NVarChar(20), nhuCau)
-      .input('GioiTinhPhong', sql.NVarChar(10), gioiTinhPhong)
+      .input('GioiTinh', sql.NVarChar(10), data.gioiTinh || null)
       .input('KhuVucMongMuon', sql.NVarChar(100), data.khuVucMongMuon || null)
       .input('LoaiPhongYeuCau', sql.NVarChar(50), data.loaiPhongYeuCau || null)
-      .input('MucGia', sql.Decimal(15, 2), data.mucGia ? Number(data.mucGia) : null)
-      .input('MucGiaDen', sql.Decimal(15, 2), data.mucGiaDen ? Number(data.mucGiaDen) : null)
+      .input('MucGiaToiDa', sql.Decimal(15, 2), data.mucGiaToiDa ? Number(data.mucGiaToiDa) : null)
       .input('SoNguoiO', sql.Int, data.soNguoiO ? Number(data.soNguoiO) : null)
       .input('NgayDuKienVaoO', sql.Date, data.ngayDuKienVaoO || null)
       .input('ThoiHanThue', sql.Int, data.thoiHanThue ? Number(data.thoiHanThue) : null)
       .input('GhiChu', sql.NVarChar(sql.MAX), data.ghiChu || null)
       .query(`
         UPDATE dbo.PhieuDangKy SET
-          HinhThucThue        = @HinhThucThue,
-          GioiTinh            = @GioiTinhPhong,
+          GioiTinh            = @GioiTinh,
           KhuVucMongMuon      = @KhuVucMongMuon,
           LoaiPhongYeuCau     = @LoaiPhongYeuCau,
-          MucGia              = @MucGia,
-          MucGiaDen           = @MucGiaDen,
+          MucGiaToiDa         = @MucGiaToiDa,
           SoNguoiDuKienO      = @SoNguoiO,
           ThoiGianDuKienVaoO  = @NgayDuKienVaoO,
           ThoiHanThue         = @ThoiHanThue,
@@ -411,7 +389,7 @@ export async function getHopDongDashboard(user) {
   const result = await pool.request()
     .input('MaKhachHang', sql.VarChar(6), khachHangId)
     .execute('sp_GetHopDongDashboard');
-  
+
   if (!result.recordsets || result.recordsets.length === 0 || !result.recordsets[0] || result.recordsets[0].length === 0) {
     return { data: null };
   }

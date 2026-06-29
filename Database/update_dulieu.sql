@@ -64,3 +64,14 @@ GO
 ALTER TABLE dbo.Giuong ADD CONSTRAINT CHK_Giuong_TinhTrang 
 CHECK (TinhTrang IN (N'Trống', N'Đã đặt cọc', N'Đang thuê', N'Giữ chỗ'));
 GO
+
+-- Thêm cột MucGiaDen vào bảng PhieuDangKy
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns 
+    WHERE Name = N'MucGiaDen' AND Object_ID = Object_ID(N'dbo.PhieuDangKy')
+)
+BEGIN
+    ALTER TABLE dbo.PhieuDangKy ADD MucGiaDen DECIMAL(15,2) NULL;
+    PRINT N'Đã thêm cột MucGiaDen vào bảng PhieuDangKy';
+END
+GO

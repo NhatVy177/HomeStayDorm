@@ -7,23 +7,17 @@ import './khamPhaPhong.css';
 const DEFAULT_FILTERS = {
   tuKhoa: '',
   khuVuc: '',
-  hinhThucThue: '',
   loaiPhong: '',
   mucGiaToiDa: ''
 };
 
-const RENTAL_OPTIONS = [
-  { value: '', label: 'Tất cả' },
-  { value: 'Ghép nam', label: 'Ghép nam' },
-  { value: 'Ghép nữ', label: 'Ghép nữ' },
-  { value: 'Nguyên căn', label: 'Nguyên căn' }
-];
 
 const PRICE_OPTIONS = [
   { value: '', label: 'Tất cả mức giá' },
+  { value: '1500000', label: 'Dưới 1,5 triệu' },
   { value: '2000000', label: 'Dưới 2 triệu' },
   { value: '3000000', label: 'Dưới 3 triệu' },
-  { value: '5000000', label: 'Dưới 5 triệu' }
+  { value: '3500000', label: 'Dưới 3,5 triệu' }
 ];
 
 function getFiltersFromSearch(search) {
@@ -31,7 +25,6 @@ function getFiltersFromSearch(search) {
   return {
     tuKhoa: params.get('tuKhoa') || '',
     khuVuc: params.get('khuVuc') || '',
-    hinhThucThue: params.get('hinhThucThue') || '',
     loaiPhong: params.get('loaiPhong') || '',
     mucGiaToiDa: params.get('mucGiaToiDa') || ''
   };
@@ -257,7 +250,6 @@ function RoomVisual({ room }) {
 }
 
 function RoomCard({ room, onViewDetail, onRegister }) {
-  const unit = room.hinhThucThue === 'Nguyên căn' ? '/căn/tháng' : '/giường/tháng';
   const area = getAreaLabel(room.diaChi, room.chiNhanh);
 
   return (
@@ -276,7 +268,6 @@ function RoomCard({ room, onViewDetail, onRegister }) {
         <p className="kp-room-location"><LineIcon name="map" />{area}</p>
         <div className="kp-room-tags">
           <span>{room.loaiPhong}</span>
-          <span>{room.hinhThucThue}</span>
           <span>{room.sucChua} người</span>
         </div>
         {room.moTa && <p className="kp-room-desc">{room.moTa}</p>}
@@ -336,14 +327,12 @@ function Sidebar({ user, onAuthRequired }) {
 
 function DetailModal({ room, onClose, onRegister }) {
   if (!room) return null;
-  const unit = room.hinhThucThue === 'Nguyên căn' ? '/căn/tháng' : '/giường/tháng';
 
   return (
     <div className="kp-modal-backdrop" onMouseDown={onClose}>
       <div className="kp-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
         <div className="kp-modal-head">
           <div>
-            <span className="kp-eyebrow">{room.hinhThucThue}</span>
             <h2>{room.tenPhong}</h2>
           </div>
           <button type="button" aria-label="Đóng" onClick={onClose}>×</button>
@@ -516,12 +505,6 @@ export default function KhamPhaPhongPage() {
                     value={draftFilters.khuVuc}
                     options={areaOptions}
                     onChange={(value) => updateFilter('khuVuc', value)}
-                  />
-                  <FilterSelect
-                    label="Hình thức thuê"
-                    value={draftFilters.hinhThucThue}
-                    options={RENTAL_OPTIONS}
-                    onChange={(value) => updateFilter('hinhThucThue', value)}
                   />
                   <FilterSelect
                     label="Loại phòng"

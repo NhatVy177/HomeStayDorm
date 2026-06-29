@@ -43,6 +43,7 @@ export async function createHoSoDangKy(data = {}) {
       { name: 'KhuVucMongMuon',  type: sql.NVarChar(100),      value: data.khuVucMongMuon || null },
       { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50),       value: data.loaiPhongYeuCau || null },
       { name: 'MucGia',          type: sql.Decimal(15, 2),     value: data.mucGia ? Number(data.mucGia) : null },
+      { name: 'MucGiaDen',       type: sql.Decimal(15, 2),     value: data.mucGiaDen ? Number(data.mucGiaDen) : null },
       { name: 'ThoiHanThue',     type: sql.Int,                value: data.thoiHanThue ? Number(data.thoiHanThue) : null }
     ]);
 
@@ -138,6 +139,7 @@ export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
       { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon },
       { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50), value: data.loaiPhongYeuCau },
       { name: 'MucGia', type: sql.Decimal(15, 2), value: mucGia },
+      { name: 'MucGiaDen', type: sql.Decimal(15, 2), value: data.mucGiaDen ? Number(data.mucGiaDen) : null },
       { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
       { name: 'NgayDuKienVaoO', type: sql.Date, value: data.ngayVao || data.ngayDuKienVaoO },
       { name: 'ThoiHanThue', type: sql.Int, value: thoiHanThue },

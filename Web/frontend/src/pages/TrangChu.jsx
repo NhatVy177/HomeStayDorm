@@ -411,18 +411,12 @@ function SearchDropdown({ icon, label, value, options, onChange }) {
 
 function HeroSection({ onOpenAuth }) {
   const navigate = useNavigate();
-  const [search, setSearch] = useState({ area: '', hinhThuc: '', type: '', price: '' });
+  const [search, setSearch] = useState({ area: '', type: '', price: '' });
   const areaOptions = [
     { value: '', label: 'Tất cả' },
     { value: 'Quận 1', label: 'Quận 1' },
     { value: 'Bình Thạnh', label: 'Bình Thạnh' },
     { value: 'Thủ Đức', label: 'Thủ Đức' }
-  ];
-  const rentOptions = [
-    { value: '', label: 'Tất cả' },
-    { value: 'Ghép nam', label: 'Ghép nam' },
-    { value: 'Ghép nữ', label: 'Ghép nữ' },
-    { value: 'Nguyên căn', label: 'Nguyên căn' }
   ];
   const roomOptions = [
     { value: '', label: 'Tất cả' },
@@ -432,17 +426,16 @@ function HeroSection({ onOpenAuth }) {
     { value: 'Phòng VIP 2 người', label: 'Phòng VIP 2 người' }
   ];
   const priceOptions = [
-    { value: '', label: 'Tất cả' },
-    { value: '1500000', label: 'Dưới 1.5 triệu' },
-    { value: '2500000', label: 'Dưới 2.5 triệu' },
-    { value: '5000000', label: 'Dưới 5 triệu' }
+    { value: '', label: 'Tất cả mức giá' },
+    { value: '1500000', label: 'Dưới 1,5 triệu' },
+    { value: '2000000', label: 'Dưới 2 triệu' },
+    { value: '3000000', label: 'Dưới 3 triệu' },
+    { value: '3500000', label: 'Dưới 3,5 triệu' }
   ];
-
   function handleSearch(e) {
     e.preventDefault();
     const params = new URLSearchParams();
     if (search.area) params.set('khuVuc', search.area);
-    if (search.hinhThuc) params.set('hinhThucThue', search.hinhThuc);
     if (search.type) params.set('loaiPhong', search.type);
     if (search.price) params.set('mucGiaToiDa', search.price);
     navigate(`/kham-pha-phong${params.toString() ? `?${params.toString()}` : ''}`);
@@ -466,14 +459,6 @@ function HeroSection({ onOpenAuth }) {
             value={search.area}
             options={areaOptions}
             onChange={(area) => setSearch((current) => ({ ...current, area }))}
-          />
-          <div className="tc-search-divider" />
-          <SearchDropdown
-            icon="rent"
-            label="Hình thức thuê"
-            value={search.hinhThuc}
-            options={rentOptions}
-            onChange={(hinhThuc) => setSearch((current) => ({ ...current, hinhThuc }))}
           />
           <div className="tc-search-divider" />
           <SearchDropdown
@@ -507,20 +492,6 @@ function HeroSection({ onOpenAuth }) {
           </div>
           <div className="tc-search-divider" />
           <div className="tc-search-field tc-search-field--native">
-            <SearchFieldIcon name="rent" />
-            <div className="tc-search-field-inner">
-              <label className="tc-search-label">Hình thức thuê</label>
-              <select className="tc-search-select" value={search.hinhThuc}
-                onChange={e => setSearch(s => ({ ...s, hinhThuc: e.target.value }))}>
-                <option value="">Tất cả</option>
-                <option value="Ghép nam">Ghép nam</option>
-                <option value="Ghép nữ">Ghép nữ</option>
-                <option value="Nguyên căn">Nguyên căn</option>
-              </select>
-            </div>
-          </div>
-          <div className="tc-search-divider" />
-          <div className="tc-search-field tc-search-field--native">
             <SearchFieldIcon name="room" />
             <div className="tc-search-field-inner">
               <label className="tc-search-label">Loại phòng</label>
@@ -541,10 +512,11 @@ function HeroSection({ onOpenAuth }) {
               <label className="tc-search-label">Mức giá</label>
               <select className="tc-search-select" value={search.price}
                 onChange={e => setSearch(s => ({ ...s, price: e.target.value }))}>
-                <option value="">Tất cả</option>
-                <option value="1500000">Dưới 1.5 triệu</option>
-                <option value="2500000">Dưới 2.5 triệu</option>
-                <option value="5000000">Dưới 5 triệu</option>
+                <option value="">Tất cả mức giá</option>
+                <option value="1500000">Dưới 1,5 triệu</option>
+                <option value="2000000">Dưới 2 triệu</option>
+                <option value="3000000">Dưới 3 triệu</option>
+                <option value="3500000">Dưới 3,5 triệu</option>
               </select>
             </div>
           </div>

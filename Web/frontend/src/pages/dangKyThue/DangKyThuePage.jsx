@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { dangKyThueApi } from './dangKyThue.api.js';
 
-const HINH_THUC_OPTIONS = ['Ghép nam', 'Ghép nữ', 'Nguyên căn'];
+const GIOI_TINH_OPTIONS = ['Nam', 'Nữ', 'Hỗn hợp'];
 
 const INITIAL_FORM = {
   soNguoiO: '',
-  hinhThucThue: '',
+  gioiTinh: '',
   khuVucMongMuon: '',
   loaiPhongYeuCau: '',
   mucGia: '',
+  mucGiaDen: '',
   ngayDuKienVaoO: '',
   thoiHanThue: '',
-  ghiChu: ''
+  ghiChu: '',
+  batBuocOChung: false
 };
 
 export default function DangKyThuePage() {
@@ -23,8 +25,8 @@ export default function DangKyThuePage() {
   const [success, setSuccess] = useState(null); // lưu hồ sơ vừa tạo
 
   function handleChange(e) {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     setError('');
   }
 
@@ -39,7 +41,6 @@ export default function DangKyThuePage() {
     e.preventDefault();
 
     // A4: Kiểm tra phía client trước khi gửi
-    if (!form.hinhThucThue) return setError('Vui lòng chọn hình thức thuê.');
     if (!form.soNguoiO || Number(form.soNguoiO) < 1) return setError('Vui lòng nhập số người dự kiến ở.');
     if (!form.ngayDuKienVaoO) return setError('Vui lòng nhập thời gian dự kiến vào ở.');
 
@@ -48,18 +49,18 @@ export default function DangKyThuePage() {
 
     try {
       const result = await dangKyThueApi.create({
-        hinhThucThue:    form.hinhThucThue,
+        gioiTinh:        form.gioiTinh || undefined,
         soNguoiO:        Number(form.soNguoiO),
         khuVucMongMuon:  form.khuVucMongMuon  || undefined,
         loaiPhongYeuCau: form.loaiPhongYeuCau || undefined,
         mucGia:          form.mucGia           ? Number(form.mucGia) : undefined,
+        mucGiaDen:       form.mucGiaDen        ? Number(form.mucGiaDen) : undefined,
         ngayDuKienVaoO:  form.ngayDuKienVaoO,
         thoiHanThue:     form.thoiHanThue      ? Number(form.thoiHanThue) : undefined,
         ghiChu:          [
           form.ghiChu,
-          form.hinhThucThue && form.hinhThucThue !== 'Nguyên căn'
-            ? `Hình thức mong muốn: ${form.hinhThucThue}`
-            : ''
+
+          form.batBuocOChung ? 'Bắt buộc mọi người phải ở chung' : ''
         ].filter(Boolean).join('\n') || undefined
       });
 
@@ -86,7 +87,7 @@ export default function DangKyThuePage() {
             Nhân viên sale sẽ liên hệ với bạn sớm nhất có thể.
           </p>
           <div className="card" style={{ textAlign: 'left', background: '#f9fafb', boxShadow: 'none', border: '1px solid #e5e7eb' }}>
-            <p style={{ margin: '4px 0' }}><strong>Hình thức thuê:</strong> {success.hinhThucThue}</p>
+            <p style={{ margin: '4px 0' }}><strong>Giới tính:</strong> {success.gioiTinh || 'Không yêu cầu'}</p>
             <p style={{ margin: '4px 0' }}><strong>Số người dự kiến:</strong> {success.soNguoiO}</p>
             <p style={{ margin: '4px 0' }}><strong>Ngày dự kiến vào ở:</strong> {new Date(success.ngayDuKienVaoO).toLocaleDateString('vi-VN')}</p>
             <p style={{ margin: '4px 0' }}><strong>Trạng thái:</strong> <span className="status-badge">{success.trangThai}</span></p>
@@ -118,26 +119,8 @@ export default function DangKyThuePage() {
 
         <form onSubmit={handleSubmit} noValidate>
 
-          {/* Hàng 1: Hình thức thuê + Số người */}
+          {/* Hàng 1: Số người + Giới tính */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <div className="form-control">
-              <label htmlFor="dkt-hinhThucThue">
-                Hình thức thuê <span className="required-mark">*</span>
-              </label>
-              <select
-                id="dkt-hinhThucThue"
-                name="hinhThucThue"
-                value={form.hinhThucThue}
-                onChange={handleChange}
-                required
-              >
-                <option value="">-- Chọn --</option>
-                {HINH_THUC_OPTIONS.map(o => (
-                  <option key={o} value={o}>{o}</option>
-                ))}
-              </select>
-            </div>
-
             <div className="form-control">
               <label htmlFor="dkt-soNguoiO">
                 Số người dự kiến ở <span className="required-mark">*</span>
@@ -152,6 +135,23 @@ export default function DangKyThuePage() {
                 onChange={handleChange}
                 required
               />
+            </div>
+
+            <div className="form-control">
+              <label htmlFor="dkt-gioiTinh">
+                Giới tính
+              </label>
+              <select
+                id="dkt-gioiTinh"
+                name="gioiTinh"
+                value={form.gioiTinh}
+                onChange={handleChange}
+              >
+                <option value="">-- Bất kỳ --</option>
+                {GIOI_TINH_OPTIONS.map(o => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -214,23 +214,50 @@ export default function DangKyThuePage() {
           </div>
 
           {/* Mức giá */}
-          <div className="form-control">
-            <label htmlFor="dkt-mucGia">Mức giá mong muốn (VNĐ/tháng)</label>
-            <input
-              id="dkt-mucGia"
-              type="number"
-              name="mucGia"
-              min="0"
-              step="100000"
-              placeholder="VD: 3000000"
-              value={form.mucGia}
-              onChange={handleChange}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="form-control">
+              <label htmlFor="dkt-mucGia">Mức giá từ (VNĐ/tháng)</label>
+              <input
+                id="dkt-mucGia"
+                type="number"
+                name="mucGia"
+                min="0"
+                step="100000"
+                placeholder="VD: 2000000"
+                value={form.mucGia}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-control">
+              <label htmlFor="dkt-mucGiaDen">Đến mức giá (VNĐ/tháng)</label>
+              <input
+                id="dkt-mucGiaDen"
+                type="number"
+                name="mucGiaDen"
+                min="0"
+                step="100000"
+                placeholder="VD: 3000000"
+                value={form.mucGiaDen}
+                onChange={handleChange}
+              />
+            </div>
           </div>
 
           {/* Yêu cầu khác */}
           <div className="form-control">
             <label htmlFor="dkt-ghiChu">Yêu cầu khác</label>
+            {Number(form.soNguoiO) > 1 && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: 'normal', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  name="batBuocOChung"
+                  checked={form.batBuocOChung}
+                  onChange={handleChange}
+                  style={{ width: 'auto', margin: 0 }}
+                />
+                Bắt buộc mọi người phải ở chung 1 phòng
+              </label>
+            )}
             <textarea
               id="dkt-ghiChu"
               name="ghiChu"
@@ -244,7 +271,9 @@ export default function DangKyThuePage() {
                 borderRadius: 8,
                 resize: 'vertical',
                 fontFamily: 'inherit',
-                fontSize: 'inherit'
+                fontSize: 'inherit',
+                width: '100%',
+                boxSizing: 'border-box'
               }}
             />
           </div>

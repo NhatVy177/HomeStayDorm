@@ -6,7 +6,7 @@ import '../khamPhaPhong/khamPhaPhong.css';
 import './khachHangPortal.css';
 import LichXemPhongPage from '../lichXemPhong/LichXemPhongPage.jsx';
 
-const filtersInitial = { tuKhoa: '', khuVuc: '', hinhThucThue: '', loaiPhong: '', mucGiaToiDa: '' };
+const filtersInitial = { tuKhoa: '', khuVuc: '', loaiPhong: '', mucGiaToiDa: '' };
 const rentInitial = {
   hoTen: '',
   ngaySinh: '',
@@ -15,26 +15,25 @@ const rentInitial = {
   email: '',
   quocTich: '',
   cccd: '',
-  hinhThucThue: 'Ghép nam',
   khuVucMongMuon: '',
   loaiPhongYeuCau: '',
-  mucGiaTu: '',
-  mucGiaDen: '',
+  mucGiaToiDa: '',
   soNguoiO: '1',
+  gioiTinhThue: 'Không xác định',
   ngayDuKienVaoO: '',
   thoiHanThue: '',
   ghiChu: ''
 };
 
 const filterOptions = {
-  hinhThucThue: ['', 'Ghép nam', 'Ghép nữ', 'Nguyên căn'],
   khuVuc: ['', 'Quận 1', 'Bình Thạnh', 'Thủ Đức'],
   loaiPhong: ['', 'Phòng 2 người', 'Phòng 4 người', 'Phòng 6 người', 'Phòng VIP 2 người'],
   mucGiaToiDa: [
     { value: '', label: 'Tất cả mức giá' },
-    { value: '2500000', label: 'Dưới 2,5 triệu' },
+    { value: '1500000', label: 'Dưới 1,5 triệu' },
+    { value: '2000000', label: 'Dưới 2 triệu' },
     { value: '3000000', label: 'Dưới 3 triệu' },
-    { value: '5000000', label: 'Dưới 5 triệu' }
+    { value: '3500000', label: 'Dưới 3,5 triệu' }
   ]
 };
 
@@ -641,10 +640,10 @@ export default function KhachHangPortalPage() {
     setSelectedRooms(selected);
     setRentForm({
       ...getRentDefaultsFromUser(),
-      hinhThucThue: firstRoom.hinhThucThue || rentInitial.hinhThucThue,
       khuVucMongMuon: getArea(firstRoom),
       loaiPhongYeuCau: firstRoom.loaiPhong || '',
-      mucGiaTu: firstRoom.giaThue ? String(firstRoom.giaThue) : ''
+      mucGiaToiDa: firstRoom.giaThue ? String(firstRoom.giaThue) : '',
+      gioiTinhThue: firstRoom.gioiTinhChoPhep || rentInitial.gioiTinhThue
     });
     setRentModal(true);
   }
@@ -653,12 +652,11 @@ export default function KhachHangPortalPage() {
     setSelectedRooms([]);
     setRentForm({
       ...getRentDefaultsFromUser(),
-      hinhThucThue: profile.hinhThucThue || 'Ghép nam',
       khuVucMongMuon: profile.khuVucMongMuon || '',
       loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
-      mucGiaTu: profile.mucGia || '',
-      mucGiaDen: profile.mucGiaDen || '',
+      mucGiaToiDa: profile.mucGiaToiDa || '',
       soNguoiO: profile.soNguoiO || '1',
+      gioiTinhThue: profile.gioiTinh || 'Không xác định',
       ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
       thoiHanThue: profile.thoiHanThue || '',
       ghiChu: profile.ghiChu || ''
@@ -679,8 +677,8 @@ export default function KhachHangPortalPage() {
       await khachMoiApi.createHoSo({
         ...rentForm,
         phongQuanTam: selectedRooms.map((room) => room.tenPhong).join(', '),
-        mucGia: rentForm.mucGiaTu || '',
-        mucGiaDen: rentForm.mucGiaDen || '',
+        mucGiaToiDa: rentForm.mucGiaToiDa || '',
+        gioiTinhThue: rentForm.gioiTinhThue !== 'Không xác định' ? rentForm.gioiTinhThue : null,
         ghiChu: rentForm.ghiChu || ''
       });
       setRentModal(false);
@@ -704,11 +702,9 @@ export default function KhachHangPortalPage() {
       email: profile.email || user?.email || '',
       quocTich: profile.quocTich || user?.quocTich || 'Việt Nam',
       cccd: profile.cccd || profile.soCCCD || user?.cccd || user?.soCCCD || user?.cmnd || '',
-      hinhThucThue: profile.hinhThucThue === 'Ghép' && (profile.gioiTinhPhong || profile.gioiTinh) ? `Ghép ${(profile.gioiTinhPhong || profile.gioiTinh).toLowerCase()}` : profile.hinhThucThue || '',
       khuVucMongMuon: profile.khuVucMongMuon || '',
       loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
-      mucGiaTu: profile.mucGia || '',
-      mucGiaDen: profile.mucGiaDen || '',
+      mucGiaToiDa: profile.mucGiaToiDa || '',
       soNguoiO: profile.soNguoiO || 1,
       ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
       thoiHanThue: profile.thoiHanThue || '',
@@ -802,7 +798,6 @@ export default function KhachHangPortalPage() {
               </label>
               <div className="kh-filter-controls">
                 <SelectField label="Khu vực" value={filters.khuVuc} options={filterOptions.khuVuc} onChange={(value) => setFilters({ ...filters, khuVuc: value })} />
-                <SelectField label="Hình thức thuê" value={filters.hinhThucThue} options={filterOptions.hinhThucThue} onChange={(value) => setFilters({ ...filters, hinhThucThue: value })} />
                 <SelectField label="Loại phòng" value={filters.loaiPhong} options={filterOptions.loaiPhong} onChange={(value) => setFilters({ ...filters, loaiPhong: value })} />
                 <SelectField label="Mức giá" value={filters.mucGiaToiDa} options={filterOptions.mucGiaToiDa} onChange={(value) => setFilters({ ...filters, mucGiaToiDa: value })} />
                 <button className="kp-btn kp-btn-primary kh-filter-submit" type="submit"><Icon name="search" />Tìm</button>
@@ -949,10 +944,16 @@ export default function KhachHangPortalPage() {
                     <span>Khu vực: {profile.khuVucMongMuon}</span>
                   </div>
                 )}
-                {profile.mucGia && (
+                {(profile.mucGia || profile.mucGiaDen) && (
                   <div className="kh-meta-item">
                     <Icon name="payment" />
-                    <span>Mức giá: {Number(profile.mucGia).toLocaleString('vi-VN')}đ/tháng</span>
+                    <span>
+                      Mức giá: {profile.mucGia && profile.mucGiaDen 
+                        ? `Từ ${Number(profile.mucGia).toLocaleString('vi-VN')}đ - ${Number(profile.mucGiaDen).toLocaleString('vi-VN')}đ/tháng` 
+                        : profile.mucGia 
+                          ? `Từ ${Number(profile.mucGia).toLocaleString('vi-VN')}đ/tháng` 
+                          : `Đến ${Number(profile.mucGiaDen).toLocaleString('vi-VN')}đ/tháng`}
+                    </span>
                   </div>
                 )}
                 {profile.ngayDuKienVaoO && (
@@ -1617,17 +1618,18 @@ export default function KhachHangPortalPage() {
                 <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
                 <div className="kh-register-grid">
                   <label><span>Số lượng người ở*</span><input type="number" min="1" value={rentForm.soNguoiO} onChange={(event) => setRentForm({ ...rentForm, soNguoiO: event.target.value })} required /></label>
-                  <label><span>Hình thức thuê*</span><select value={rentForm.hinhThucThue} onChange={(event) => setRentForm({ ...rentForm, hinhThucThue: event.target.value })} required>{filterOptions.hinhThucThue.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+                  <label><span>Giới tính thuê*</span><select value={rentForm.gioiTinhThue} onChange={(event) => setRentForm({ ...rentForm, gioiTinhThue: event.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Không xác định">Không xác định</option></select></label>
                   <label className="is-half"><span>Khu vực mong muốn*</span><input value={rentForm.khuVucMongMuon} onChange={(event) => setRentForm({ ...rentForm, khuVucMongMuon: event.target.value })} placeholder="Ví dụ: Quận 3, gần trường học..." required /></label>
                   <label className="is-half"><span>Loại phòng mong muốn*</span><select value={rentForm.loaiPhongYeuCau} onChange={(event) => setRentForm({ ...rentForm, loaiPhongYeuCau: event.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <div className="kh-price-range is-half">
-                    <label><span>Giá từ (đ/tháng)</span><input type="number" min="0" value={rentForm.mucGiaTu} onChange={(event) => setRentForm({ ...rentForm, mucGiaTu: event.target.value })} placeholder="VD: 2.000.000" /></label>
-                    <span className="kh-price-sep">—</span>
-                    <label><span>Giá đến (đ/tháng)</span><input type="number" min="0" value={rentForm.mucGiaDen} onChange={(event) => setRentForm({ ...rentForm, mucGiaDen: event.target.value })} placeholder="VD: 3.000.000" /></label>
-                  </div>
+                  <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={rentForm.mucGiaToiDa} onChange={(event) => setRentForm({ ...rentForm, mucGiaToiDa: event.target.value })} placeholder="VD: 3.000.000" required /></label>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={rentForm.ngayDuKienVaoO} onChange={(event) => setRentForm({ ...rentForm, ngayDuKienVaoO: event.target.value })} required /></label>
                   <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={rentForm.thoiHanThue} onChange={(event) => setRentForm({ ...rentForm, thoiHanThue: event.target.value })} placeholder="Ví dụ: 6" required /></label>
-                  <label className="is-wide"><span>Yêu cầu khác</span><textarea value={rentForm.ghiChu} onChange={(event) => setRentForm({ ...rentForm, ghiChu: event.target.value })} placeholder="Giờ giấc sinh hoạt, yêu cầu yên tĩnh, gửi xe..." /></label>
+                  <div className="is-wide" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ color: 'var(--kp-soft-text)', fontSize: '10px', fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Yêu cầu khác</span>
+                    <label style={{ margin: 0 }}>
+                      <textarea value={rentForm.ghiChu} onChange={(event) => setRentForm({ ...rentForm, ghiChu: event.target.value })} placeholder="Giờ giấc sinh hoạt, yêu cầu yên tĩnh, gửi xe..." style={{ width: '100%', minHeight: '46px' }} />
+                    </label>
+                  </div>
                 </div>
               </section>
             </div>

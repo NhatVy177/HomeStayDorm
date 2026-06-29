@@ -46,8 +46,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_KhachMoi_DanhSachPhong
     @TenPhong NVARCHAR(100) = NULL,
     @LoaiPhong NVARCHAR(100) = NULL,
     @KhuVuc NVARCHAR(100) = NULL,
-    @MucGiaToiDa DECIMAL(15, 2) = NULL,
-    @HinhThucThue NVARCHAR(20) = NULL
+    @MucGiaToiDa DECIMAL(15, 2) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -55,14 +54,6 @@ BEGIN
     SET @TenPhong = NULLIF(LTRIM(RTRIM(@TenPhong)), N'');
     SET @LoaiPhong = NULLIF(LTRIM(RTRIM(@LoaiPhong)), N'');
     SET @KhuVuc = NULLIF(LTRIM(RTRIM(@KhuVuc)), N'');
-    SET @HinhThucThue = NULLIF(LTRIM(RTRIM(@HinhThucThue)), N'');
-
-    IF @HinhThucThue = N'Nguyên căn'
-        SET @HinhThucThue = N'Nguyên phòng';
-
-    IF @HinhThucThue IS NOT NULL
-       AND @HinhThucThue NOT IN (N'Nguyên phòng', N'Ghép', N'Ghép Nam', N'Ghép Nữ')
-        THROW 50104, N'Hình thức thuê không hợp lệ.', 1;
 
     IF @MucGiaToiDa IS NOT NULL AND @MucGiaToiDa < 0
         THROW 50104, N'Mức giá tối đa không hợp lệ.', 1;
@@ -86,12 +77,6 @@ BEGIN
             p.GioiTinhChoPhep AS gioiTinhChoPhep,
             cn.TenChiNhanh AS chiNhanh,
             cn.DiaChi AS diaChi,
-            CASE
-                WHEN lp.GiaThueTheoGiuong IS NULL THEN N'Nguyên căn'
-                WHEN p.GioiTinhChoPhep = N'Nam' THEN N'Ghép nam'
-                WHEN p.GioiTinhChoPhep = N'Nữ' THEN N'Ghép nữ'
-                ELSE N'Ghép'
-            END AS hinhThucThue,
             (SELECT TOP 1 UrlImg FROM dbo.HinhAnhPhong hap WHERE hap.MaPhong = p.MaPhong ORDER BY hap.STTAnh) AS urlImg
         FROM dbo.Phong AS p
         INNER JOIN dbo.LoaiPhong AS lp ON lp.MaLoaiPhong = p.MaLoaiPhong
@@ -114,21 +99,10 @@ BEGIN
     )
     SELECT *
     FROM PhongKhaDung
-    -- Remove WHERE soChoTrong > 0
     WHERE (1=1)
       AND (
-          @HinhThucThue IS NULL
-          OR @HinhThucThue = N''
-          OR (@HinhThucThue IN (N'Nguyên phòng', N'Nguyên căn') AND soChoTrong = sucChua)
-          OR (@HinhThucThue = N'Ghép' AND giaTheoGiuong IS NOT NULL)
-          OR (@HinhThucThue = N'Ghép Nam' AND giaTheoGiuong IS NOT NULL AND (soChoTrong = sucChua OR gioiTinhChoPhep IN (N'Nam', N'Không phân biệt')))
-          OR (@HinhThucThue = N'Ghép Nữ' AND giaTheoGiuong IS NOT NULL AND (soChoTrong = sucChua OR gioiTinhChoPhep IN (N'Nữ', N'Không phân biệt')))
-      )
-      AND (
           @MucGiaToiDa IS NULL
-          OR (@HinhThucThue = N'Nguyên phòng' AND giaNguyenPhong <= @MucGiaToiDa)
-          OR (@HinhThucThue IN (N'Ghép', N'Ghép Nam', N'Ghép Nữ') AND giaTheoGiuong <= @MucGiaToiDa)
-          OR (@HinhThucThue IS NULL AND COALESCE(giaTheoGiuong, giaNguyenPhong) <= @MucGiaToiDa)
+          OR COALESCE(giaTheoGiuong, giaNguyenPhong) <= @MucGiaToiDa
       )
     ORDER BY COALESCE(giaTheoGiuong, giaNguyenPhong), tenPhong;
 END;
@@ -148,30 +122,19 @@ BEGIN
         pdk.MaDangKy AS id,
         pdk.MaDangKy AS maDangKy,
         pdk.NgayDangKy AS ngayDangKy,
-        pdk.HinhThucThue AS hinhThucThue,
         pdk.KhuVucMongMuon AS khuVucMongMuon,
         pdk.LoaiPhongYeuCau AS loaiPhongYeuCau,
-        pdk.MucGia AS mucGia,
-        pdk.MucGiaDen AS mucGiaDen,
+        pdk.MucGiaToiDa AS mucGia,
         pdk.SoNguoiDuKienO AS soNguoiO,
-        pdk.GioiTinh AS gioiTinhPhong,
+        pdk.GioiTinh AS gioiTinh,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
         pdk.ThoiHanThue AS thoiHanThue,
         pdk.YeuCauKhac AS ghiChu,
         pdk.TrangThai AS trangThai,
         lich.STTLich AS sttLich,
         lich.ThoiGianHen AS thoiGianHen,
-        lich.TrangThai AS trangThaiLich,
-        nd.HoTen AS hoTen,
-        nd.NgaySinh AS ngaySinh,
-        nd.GioiTinh AS gioiTinh,
-        nd.SDT AS soDienThoai,
-        nd.Email AS email,
-        kh.QuocTich AS quocTich,
-        kh.CCCD AS cccd
+        lich.TrangThai AS trangThaiLich
     FROM dbo.PhieuDangKy AS pdk
-    INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = pdk.MaKhachHang
-    INNER JOIN dbo.KhachHang AS kh ON kh.MaKhachHang = pdk.MaKhachHang
     OUTER APPLY (
         SELECT TOP (1) lxp.STTLich, lxp.ThoiGianHen, lxp.TrangThai
         FROM dbo.LichXemPhong AS lxp
@@ -203,8 +166,7 @@ BEGIN
     FROM dbo.LichXemPhong AS lxp
     INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
     OUTER APPLY (
-        SELECT STRING_AGG(CONCAT(p.TenPhong,
-            CASE WHEN ctxp.MaGiuong IS NULL THEN N'' ELSE CONCAT(N' · Giường ', ctxp.MaGiuong) END), N', ') AS phongXem
+        SELECT STRING_AGG(p.TenPhong, N', ') AS phongXem
         FROM dbo.ChiTietXemPhong AS ctxp
         INNER JOIN dbo.Phong AS p ON p.MaPhong = ctxp.MaPhong
         WHERE ctxp.MaDangKy = lxp.MaDangKy AND ctxp.STTLich = lxp.STTLich
@@ -220,23 +182,15 @@ GO
 
 CREATE OR ALTER PROCEDURE dbo.SP_KhachMoi_TaoHoSo
     @KhachHangId VARCHAR(6),
-    @HinhThucThue NVARCHAR(20),
+    @GioiTinh NVARCHAR(10) = NULL,
     @KhuVucMongMuon NVARCHAR(100) = NULL,
     @LoaiPhongYeuCau NVARCHAR(50) = NULL,
-    @MucGia DECIMAL(15, 2) = NULL,
-    @MucGiaDen DECIMAL(15, 2) = NULL,
+    @MucGiaToiDa DECIMAL(15, 2) = NULL,
     @SoNguoiO INT,
     @NgayDuKienVaoO DATE,
     @ThoiHanThue INT = NULL,
     @PhongQuanTam NVARCHAR(400) = NULL,
-    @GhiChu NVARCHAR(MAX) = NULL,
-    @HoTen NVARCHAR(100) = NULL,
-    @NgaySinh DATE = NULL,
-    @GioiTinhKhach NVarChar(5) = NULL,
-    @SDT VARCHAR(20) = NULL,
-    @Email VARCHAR(100) = NULL,
-    @QuocTich NVARCHAR(50) = NULL,
-    @CCCD VARCHAR(20) = NULL
+    @GhiChu NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -249,45 +203,30 @@ BEGIN
        OR EXISTS (SELECT 1 FROM dbo.HopDongThue WHERE MaKhachHang = @KhachHangId)
         THROW 50102, N'Tài khoản không còn ở trạng thái khách mới.', 1;
 
-    SET @HinhThucThue = NULLIF(LTRIM(RTRIM(@HinhThucThue)), N'');
-    IF @HinhThucThue = N'Nguyên phòng'
-        SET @HinhThucThue = N'Nguyên căn';
-
-    DECLARE @GioiTinhPhong NVARCHAR(10) = NULL;
-    IF @HinhThucThue = N'Ghép nam'
-    BEGIN
-        SET @GioiTinhPhong = N'Nam';
-        SET @HinhThucThue = N'Ghép';
-    END
-    ELSE IF @HinhThucThue = N'Ghép nữ'
-    BEGIN
-        SET @GioiTinhPhong = N'Nữ';
-        SET @HinhThucThue = N'Ghép';
-    END
-
     SET @KhuVucMongMuon = NULLIF(LTRIM(RTRIM(@KhuVucMongMuon)), N'');
     SET @LoaiPhongYeuCau = NULLIF(LTRIM(RTRIM(@LoaiPhongYeuCau)), N'');
 
-    IF @HinhThucThue NOT IN (N'Nguyên căn', N'Ghép')
-       OR @SoNguoiO < 1
+    IF @SoNguoiO < 1
        OR @NgayDuKienVaoO IS NULL
        OR @NgayDuKienVaoO <= CAST(GETDATE() AS DATE)
        OR @KhuVucMongMuon IS NULL
        OR @LoaiPhongYeuCau IS NULL
-       OR @MucGia IS NULL
-       OR @MucGia <= 0
+       OR @MucGiaToiDa IS NULL
+       OR @MucGiaToiDa <= 0
        OR @ThoiHanThue IS NULL
        OR @ThoiHanThue < 1
         THROW 50104, N'Vui lòng nhập đầy đủ thông tin nhu cầu thuê.', 1;
 
     DECLARE @SoThuTu INT;
     DECLARE @MaDangKy VARCHAR(6);
-    DECLARE @GioiTinh NVARCHAR(10);
     DECLARE @YeuCauKhac NVARCHAR(MAX);
 
-    SELECT @GioiTinh = nd.GioiTinh
-    FROM dbo.NguoiDung AS nd
-    WHERE nd.MaNguoiDung = @KhachHangId;
+    IF @GioiTinh IS NULL
+    BEGIN
+        SELECT @GioiTinh = nd.GioiTinh
+        FROM dbo.NguoiDung AS nd
+        WHERE nd.MaNguoiDung = @KhachHangId;
+    END
 
     SET @YeuCauKhac = CONCAT(
         CASE WHEN NULLIF(@PhongQuanTam, N'') IS NULL THEN N'' ELSE CONCAT(N'Phòng quan tâm: ', @PhongQuanTam, N'. ') END,
@@ -297,25 +236,6 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        IF @HoTen IS NOT NULL
-        BEGIN
-            UPDATE dbo.NguoiDung SET
-                HoTen = @HoTen,
-                NgaySinh = @NgaySinh,
-                GioiTinh = @GioiTinhKhach,
-                SDT = @SDT,
-                Email = @Email
-            WHERE MaNguoiDung = @KhachHangId;
-        END
-
-        IF @QuocTich IS NOT NULL OR @CCCD IS NOT NULL
-        BEGIN
-            UPDATE dbo.KhachHang SET
-                QuocTich = COALESCE(@QuocTich, QuocTich),
-                CCCD = COALESCE(@CCCD, CCCD)
-            WHERE MaKhachHang = @KhachHangId;
-        END
-
         SELECT @SoThuTu = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaDangKy, 3, 4))), 0) + 1
         FROM dbo.PhieuDangKy WITH (UPDLOCK, HOLDLOCK)
         WHERE MaDangKy LIKE 'DK%';
@@ -323,13 +243,13 @@ BEGIN
         SET @MaDangKy = CONCAT('DK', RIGHT(CONCAT('0000', @SoThuTu), 4));
 
         INSERT INTO dbo.PhieuDangKy (
-            MaDangKy, NgayDangKy, SoNguoiDuKienO, GioiTinh, HinhThucThue,
-            KhuVucMongMuon, LoaiPhongYeuCau, MucGia, MucGiaDen, ThoiGianDuKienVaoO,
+            MaDangKy, NgayDangKy, SoNguoiDuKienO, GioiTinh,
+            KhuVucMongMuon, LoaiPhongYeuCau, MucGiaToiDa, ThoiGianDuKienVaoO,
             ThoiHanThue, YeuCauKhac, TrangThai, MaKhachHang
         )
         VALUES (
-            @MaDangKy, CAST(GETDATE() AS DATE), @SoNguoiO, ISNULL(@GioiTinhPhong, @GioiTinh), @HinhThucThue,
-            @KhuVucMongMuon, @LoaiPhongYeuCau, @MucGia, @MucGiaDen,
+            @MaDangKy, CAST(GETDATE() AS DATE), @SoNguoiO, @GioiTinh,
+            @KhuVucMongMuon, @LoaiPhongYeuCau, @MucGiaToiDa,
             @NgayDuKienVaoO, @ThoiHanThue, NULLIF(@YeuCauKhac, N''), N'Chờ tiếp nhận', @KhachHangId
         );
 

@@ -4,6 +4,9 @@ GO
 USE HOMEDORM4
 GO
 
+SET QUOTED_IDENTIFIER ON;
+GO
+
 -- 1. CHI NHÁNH
 CREATE TABLE ChiNhanh (
     MaChiNhanh      VARCHAR(6)      PRIMARY KEY,
@@ -105,10 +108,9 @@ CREATE TABLE PhieuDangKy (
     NgayDangKy          DATE            NOT NULL,
     SoNguoiDuKienO      INT,
     GioiTinh            NVARCHAR(10),
-    HinhThucThue        NVARCHAR(20)     NOT NULL,
     KhuVucMongMuon      NVARCHAR(100),
     LoaiPhongYeuCau     NVARCHAR(50),
-    MucGia              DECIMAL(15,2),
+    MucGiaToiDa         DECIMAL(15,2),  
     ThoiGianDuKienVaoO  DATE,
     ThoiHanThue         INT,
     YeuCauKhac          NVARCHAR(MAX),
@@ -116,9 +118,9 @@ CREATE TABLE PhieuDangKy (
     MaKhachHang         VARCHAR(6)      NOT NULL,
     MaNhanVienSale      VARCHAR(6),
     GhiChuSale          NVARCHAR(MAX)   NULL,
-    CONSTRAINT CHK_PDK_HinhThucThue CHECK (HinhThucThue IN (N'Nguyên căn', N'Ghép')),
     CONSTRAINT CHK_PDK_GioiTinh     CHECK (GioiTinh IN (N'Nam', N'Nữ')),
-    CONSTRAINT CHK_PDK_TrangThai    CHECK (TrangThai IN (N'Chờ xác nhận cọc', N'Xác nhận cọc', N'Từ chối', N'Chờ tiếp nhận', N'Đã tiếp nhận'))
+    CONSTRAINT CHK_PDK_TrangThai    CHECK (TrangThai IN (N'Chờ xác nhận cọc', N'Xác nhận cọc', N'Từ chối', N'Chờ tiếp nhận', N'Đã tiếp nhận')),
+    CONSTRAINT CHK_PDK_MucGia CHECK (MucGiaToiDa > 0)
 );
 
 -- 10. LỊCH XEM PHÒNG
@@ -127,6 +129,7 @@ CREATE TABLE LichXemPhong (
     STTLich     INT             NOT NULL,
     ThoiGianHen DATETIME        NOT NULL,
     TrangThai   NVARCHAR(30)     NOT NULL DEFAULT N'Chờ xem',
+    GhiChu      NVARCHAR(500),
     PRIMARY KEY (MaDangKy, STTLich),
     CONSTRAINT CHK_LXP_TrangThai    CHECK (TrangThai IN (N'Chờ xem', N'Đã xem', N'Đã hủy', N'Yêu cầu đổi lịch', N'Yêu cầu hủy'))
 );
@@ -136,7 +139,6 @@ CREATE TABLE ChiTietXemPhong (
     MaDangKy    VARCHAR(6)      NOT NULL,
     MaPhong     VARCHAR(4)      NOT NULL,
     STTLich     INT             NOT NULL,
-    MaGiuong    VARCHAR(3)      NULL,
 	PRIMARY KEY (MaDangKy, MaPhong, STTLich)
 );
 
@@ -171,6 +173,7 @@ CREATE TABLE ChiTietDatCoc (
     GiaThue         DECIMAL(15,2)   ,
     PRIMARY KEY (MaChiTietDC),
     CONSTRAINT FK_CTDC_PhieuDatCoc  FOREIGN KEY (MaPhieuDatCoc)         REFERENCES PhieuDatCoc(MaPhieuDatCoc),
+    CONSTRAINT FK_CTDC_Phong        FOREIGN KEY (MaPhong)               REFERENCES Phong(MaPhong),
     CONSTRAINT FK_CTDC_Giuong       FOREIGN KEY (MaPhong, MaGiuong)     REFERENCES Giuong(MaPhong, MaGiuong)
 );
 
@@ -467,7 +470,7 @@ ADD CONSTRAINT FK_LXP_PhieuDangKy       FOREIGN KEY (MaDangKy)          REFERENC
 -- CHI TIẾT XEM PHÒNG
 ALTER TABLE ChiTietXemPhong
     ADD CONSTRAINT FK_CTXP_LichXem          FOREIGN KEY (MaDangKy, STTLich) REFERENCES LichXemPhong(MaDangKy, STTLich),
-        CONSTRAINT FK_CTXP_Giuong			FOREIGN KEY (MaPhong, MaGiuong) REFERENCES Giuong(MaPhong, MaGiuong);
+        CONSTRAINT FK_CTXP_Phong			FOREIGN KEY (MaPhong) REFERENCES Phong(MaPhong);
 
 -- PHIẾU ĐẶT CỌC
 ALTER TABLE PhieuDatCoc
