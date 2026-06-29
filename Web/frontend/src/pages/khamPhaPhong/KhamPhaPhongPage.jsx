@@ -234,10 +234,38 @@ function FilterSelect({ label, value, options, onChange }) {
   );
 }
 
-function RoomVisual({ room }) {
-  const [failed, setFailed] = useState(false);
+function getImageCandidates(url = '') {
+  const trimmed = String(url || '').trim();
+  if (!trimmed) return [];
 
-  if (!room.urlImg || failed) {
+  const match = trimmed.match(/^(.*?)(\.(jpg|jpeg|png|webp|gif))$/i);
+  if (!match) return [trimmed];
+
+  const [, base, , ext] = match;
+  const normalizedExt = String(ext || '').toLowerCase();
+  const candidates = [trimmed];
+
+  if (['jpg', 'jpeg', 'png'].includes(normalizedExt)) {
+    const fallbackExt = normalizedExt === 'png' ? 'jpg' : 'png';
+    candidates.push(`${base}.${fallbackExt}`);
+  }
+
+  return [...new Set(candidates)];
+}
+
+function RoomVisual({ room }) {
+  const [imageSrc, setImageSrc] = useState(room.urlImg || '');
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const imageCandidates = useMemo(() => getImageCandidates(room.urlImg), [room.urlImg]);
+
+  useEffect(() => {
+    setImageSrc(room.urlImg || '');
+    setCandidateIndex(0);
+    setFailed(false);
+  }, [room.urlImg]);
+
+  if (!imageSrc || failed) {
     return (
       <div className="kp-room-placeholder">
         <LineIcon name="room" />
@@ -246,7 +274,22 @@ function RoomVisual({ room }) {
     );
   }
 
-  return <img src={room.urlImg} alt={room.tenPhong} loading="lazy" onError={() => setFailed(true)} />;
+  return (
+    <img
+      src={imageSrc}
+      alt={room.tenPhong}
+      loading="lazy"
+      onError={() => {
+        const nextIndex = candidateIndex + 1;
+        if (nextIndex < imageCandidates.length) {
+          setCandidateIndex(nextIndex);
+          setImageSrc(imageCandidates[nextIndex]);
+        } else {
+          setFailed(true);
+        }
+      }}
+    />
+  );
 }
 
 function RoomCard({ room, onViewDetail, onRegister }) {

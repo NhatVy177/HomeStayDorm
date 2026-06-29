@@ -27,9 +27,6 @@ function normalizeHinhThucThue(value) {
  * Anh dai dien (anhDai) = UrlImg voi STTAnh = 1 trong HinhAnhPhong.
  */
 export async function getDanhSachPhongKhamPha(filter = {}) {
-  const hinhThucThue = normalizeHinhThucThue(
-    filter.hinhThucThue || filter.hinhThuc || filter.loaiThue
-  );
   const mucGiaToiDa = (() => {
     const v = filter.mucGiaToiDa ?? filter.mucGia ?? null;
     const n = v == null || v === '' ? null : Number(v);
@@ -38,11 +35,10 @@ export async function getDanhSachPhongKhamPha(filter = {}) {
   const tuKhoa = String(filter.tuKhoa || filter.tenPhong || '').trim() || null;
 
   const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachPhong', [
-    { name: 'TenPhong',     type: sql.NVarChar(100),    value: tuKhoa },
-    { name: 'LoaiPhong',    type: sql.NVarChar(100),    value: filter.loaiPhong || null },
-    { name: 'KhuVuc',       type: sql.NVarChar(100),    value: filter.khuVuc || null },
-    { name: 'HinhThucThue', type: sql.NVarChar(20),     value: hinhThucThue },
-    { name: 'MucGiaToiDa',  type: sql.Decimal(15, 2),  value: mucGiaToiDa }
+    { name: 'TenPhong',    type: sql.NVarChar(100),   value: tuKhoa },
+    { name: 'LoaiPhong',   type: sql.NVarChar(100),   value: filter.loaiPhong || null },
+    { name: 'KhuVuc',      type: sql.NVarChar(100),   value: filter.khuVuc || null },
+    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: mucGiaToiDa }
   ]);
 
   return result.recordset || [];

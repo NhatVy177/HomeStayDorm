@@ -191,11 +191,11 @@ GO
 
 --7.1. HinhAnhPhong
 INSERT INTO HinhAnhPhong (MaPhong, STTAnh, UrlImg) VALUES
-    (N'P101', 1, '/images/phong/P101/cover.jpg'),
-    (N'P101', 2, '/images/phong/P101/bedroom.jpg'),
-    (N'P101', 3, '/images/phong/P101/bathroom.jpg'),
-    (N'P101', 4, '/images/phong/P101/study.jpg'),
-    (N'P101', 5, '/images/phong/P101/common.jpg'),
+    (N'P101', 1, '/images/phong/P101/cover.png'),
+    (N'P101', 2, '/images/phong/P101/bedroom.png'),
+    (N'P101', 3, '/images/phong/P101/bathroom.png'),
+    (N'P101', 4, '/images/phong/P101/study.png'),
+    (N'P101', 5, '/images/phong/P101/comom.png'),
     (N'P102', 1, '/images/phong/P102/cover.jpg'),
     (N'P102', 2, '/images/phong/P102/bedroom.jpg'),
     (N'P102', 3, '/images/phong/P102/bathroom.jpg'),

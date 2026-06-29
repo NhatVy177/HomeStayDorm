@@ -22,7 +22,8 @@ export async function getPhongNoiBat(req, res, next) {
         lp.GiaThueTheoGiuong,
         lp.GiaThueNguyenPhong,
         cn.TenChiNhanh,
-        cn.DiaChi
+        cn.DiaChi,
+        (SELECT TOP 1 UrlImg FROM HinhAnhPhong WHERE MaPhong = p.MaPhong ORDER BY STTAnh) AS UrlImg
       FROM Phong p
       INNER JOIN LoaiPhong lp ON p.MaLoaiPhong = lp.MaLoaiPhong
       INNER JOIN ChiNhanh cn ON p.MaChiNhanh = cn.MaChiNhanh
