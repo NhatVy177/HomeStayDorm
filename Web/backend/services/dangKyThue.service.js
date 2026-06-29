@@ -65,7 +65,8 @@ export async function getHoSoDangKy(filter = {}) {
 
 export async function getPhongGiuongKhaDung(filter = {}) {
   const result = await executeProcedure('dbo.SP_DanhSachPhongGiuongKhaDung', [
-    { name: 'Loai', type: sql.NVarChar(50), value: filter.loai || null }
+    { name: 'Loai', type: sql.NVarChar(50), value: filter.loai || null },
+    { name: 'HoSoId', type: sql.VarChar(6), value: filter.hoSoId || null }
   ]);
   return result.recordset;
 }
@@ -98,7 +99,7 @@ export async function capNhatKetQuaXuLy(hoSoId, data = {}) {
       { name: 'HoSoId',          type: sql.NVarChar(30),       value: String(hoSoId || '').trim() },
       { name: 'TrangThai',       type: sql.NVarChar(50),       value: data.trangThai || null },
       { name: 'GhiChuXuLy',     type: sql.NVarChar(sql.MAX),  value: data.ghiChuXuLy || null },
-      { name: 'NhanVienSaleId',  type: sql.NVarChar(20),       value: data.nhanVienSaleId || null }
+      { name: 'NhanVienSaleId', type: sql.NVarChar(20),       value: data.nhanVienSaleId || null }
     ]);
 
     return result.recordset[0] || null;
