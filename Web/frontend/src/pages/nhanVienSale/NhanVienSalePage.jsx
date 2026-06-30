@@ -10,6 +10,7 @@ import DatCocTab from './DatCocTab.jsx';
 import LapHopDongTab from './LapHopDongTab.jsx';
 import KhachHangTab from './KhachHangTab.jsx';
 import TraCuuPhongTab from './TraCuuPhongTab.jsx';
+import DangKyTraPhongTab from './DangKyTraPhongTab.jsx';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 
 function Brand() {
@@ -128,15 +129,7 @@ export default function NhanVienSalePage() {
           {activeTab === 'lich-xem' && <LichXemPhongTab onNavigate={setActiveTab} />}
           {activeTab === 'dat-coc' && <DatCocTab />}
           {activeTab === 'hop-dong-thue' && <LapHopDongTab />}
-          {activeTab === 'tra-phong' && (
-            <div className="ktp-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '600px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <Icon name="build" style={{ fontSize: '48px', color: '#9eaaab', marginBottom: '16px' }} />
-                <h2 style={{ color: '#3f494a', margin: '0 0 8px' }}>Chức năng đang phát triển</h2>
-                <p style={{ color: '#6f797a', margin: 0 }}>Tính năng Trả phòng sẽ sớm được cập nhật trong phiên bản tiếp theo.</p>
-              </div>
-            </div>
-          )}
+          {activeTab === 'tra-phong' && <DangKyTraPhongTab />}
           {activeTab === 'khach-hang' && <KhachHangTab />}
         </main>
       </div>
