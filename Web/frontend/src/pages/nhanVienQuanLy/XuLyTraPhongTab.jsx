@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 
 import KiemTraTraPhong from './KiemTraTraPhong.jsx';
+import XacNhanKetQua from './xacnhanketqua.jsx';
 
-export default function LapBienBanKiemTraPhongTab() {
+export default function XuLyTraPhongTab() {
   const [modalType, setModalType] = useState(null);
   const [activeSubTab, setActiveSubTab] = useState('cho-lap-bien-ban');
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -26,7 +27,7 @@ export default function LapBienBanKiemTraPhongTab() {
         <button 
           onClick={() => setActiveSubTab('cho-xac-nhan-quyet-toan')}
           style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'cho-xac-nhan-quyet-toan' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'cho-xac-nhan-quyet-toan' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
-          Chờ xác nhận quyết toán
+          Xác nhận đối soát
         </button>
         <button 
           onClick={() => setActiveSubTab('lich-su')}
@@ -36,6 +37,7 @@ export default function LapBienBanKiemTraPhongTab() {
       </div>
 
       {activeSubTab === 'cho-lap-bien-ban' && <KiemTraTraPhong />}
+      {activeSubTab === 'cho-xac-nhan-quyet-toan' && <XacNhanKetQua />}
 
       {/* Modal Quyết Toán */}
       {(modalType === 'quyet-toan' || modalType === 'detail-quyet-toan') && (

@@ -7,7 +7,7 @@ import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import XacNhanNhanPhongTab from './XacNhanNhanPhongTab.jsx';
 import XacNhanThanhToanTab from './XacNhanThanhToanTab.jsx';
 import BanGiaoPhongTab from './BanGiaoPhongTab.jsx';
-import LapBienBanKiemTraPhongTab from './LapBienBanKiemTraPhongTab.jsx';
+import XuLyTraPhongTab from './XuLyTraPhongTab.jsx';
 import ThanhLyHopDongTab from './ThanhLyHopDongTab.jsx';
 import CapNhatDichVuTab from './CapNhatDichVuTab.jsx';
 import BaoTriSuaChuaTab from './BaoTriSuaChuaTab.jsx';
@@ -126,7 +126,7 @@ export default function NhanVienQuanLyPage() {
           {activeTab === 'xac-nhan-nhan-phong' && <XacNhanNhanPhongTab />}
           {activeTab === 'xac-nhan-thanh-toan' && <XacNhanThanhToanTab />}
           {activeTab === 'lap-bien-ban-ban-giao' && <BanGiaoPhongTab />}
-          {activeTab === 'lap-bien-ban-kiem-tra-phong' && <LapBienBanKiemTraPhongTab />}
+          {activeTab === 'lap-bien-ban-kiem-tra-phong' && <XuLyTraPhongTab />}
           {activeTab === 'ghi-nhan-thanh-ly-hop-dong' && <ThanhLyHopDongTab />}
           {activeTab === 'cap-nhat-dich-vu' && <CapNhatDichVuTab />}
           {activeTab === 'bao-tri-sua-chua' && <BaoTriSuaChuaTab />}

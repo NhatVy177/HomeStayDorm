@@ -57,3 +57,42 @@ BEGIN
     ADD MaQuyDinhTruTien VARCHAR(6) NULL;
 END;
 GO
+
+/* 
+    Nếu bảng TaiSan của mày không có cột DonGia
+    thì đổi ts.DonGiaBoiThuong thành tên cột đơn giá thật:
+    ví dụ: ts.GiaTri, ts.DonGia, ts.GiaTaiSan...
+*/
+
+-- HH0001: Giường - hư hỏng nhẹ
+UPDATE cthh
+SET 
+    cthh.SoLuong = 1,
+    cthh.MucDoHuHong = qd.MucDoHuHong,
+    cthh.TyLeHuHong = qd.TyLeHuHong,
+    cthh.MaQuyDinhTruTien = qd.MaQuyDinhTruTien,
+    cthh.MoTaHuHong = N'Giường: Khung giường bị trầy xước và lỏng ốc, vẫn còn sử dụng được nhưng cần sửa chữa nhẹ.',
+    cthh.ChiPhiSuaChua = ts.DonGia * 1 * qd.TyLeHuHong
+FROM ChiTietHuHong cthh
+JOIN TaiSan ts 
+    ON ts.MaTaiSan = cthh.MaTaiSan
+JOIN QuyDinhTruTien qd 
+    ON qd.MaQuyDinhTruTien = 'QD001'
+WHERE cthh.MaChiTietHH = 'HH0001';
+
+
+-- HH0002: Tủ cá nhân - hư hỏng nhẹ
+UPDATE cthh
+SET 
+    cthh.SoLuong = 1,
+    cthh.MucDoHuHong = qd.MucDoHuHong,
+    cthh.TyLeHuHong = qd.TyLeHuHong,
+    cthh.MaQuyDinhTruTien = qd.MaQuyDinhTruTien,
+    cthh.MoTaHuHong = N'Tủ cá nhân: Cánh tủ bị trầy xước nhẹ, bản lề hơi lỏng nhưng vẫn còn sử dụng được.',
+    cthh.ChiPhiSuaChua = ts.DonGia * 1 * qd.TyLeHuHong
+FROM ChiTietHuHong cthh
+JOIN TaiSan ts 
+    ON ts.MaTaiSan = cthh.MaTaiSan
+JOIN QuyDinhTruTien qd 
+    ON qd.MaQuyDinhTruTien = 'QD001'
+WHERE cthh.MaChiTietHH = 'HH0002';
