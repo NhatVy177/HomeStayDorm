@@ -3,6 +3,7 @@ import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 
 import KiemTraTraPhong from './KiemTraTraPhong.jsx';
 import XacNhanKetQua from './xacnhanketqua.jsx';
+import ThanhLyTraPhong from './thanhlytraphong.jsx';
 
 export default function XuLyTraPhongTab() {
   const [modalType, setModalType] = useState(null);
@@ -30,6 +31,11 @@ export default function XuLyTraPhongTab() {
           Xác nhận đối soát
         </button>
         <button 
+          onClick={() => setActiveSubTab('thanh-ly-tra-phong')}
+          style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'thanh-ly-tra-phong' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'thanh-ly-tra-phong' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+          Thanh lý trả phòng
+        </button>
+        <button 
           onClick={() => setActiveSubTab('lich-su')}
           style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'lich-su' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'lich-su' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
           Đã xử lý / Lịch sử
@@ -38,6 +44,7 @@ export default function XuLyTraPhongTab() {
 
       {activeSubTab === 'cho-lap-bien-ban' && <KiemTraTraPhong />}
       {activeSubTab === 'cho-xac-nhan-quyet-toan' && <XacNhanKetQua />}
+      {activeSubTab === 'thanh-ly-tra-phong' && <ThanhLyTraPhong />}
 
       {/* Modal Quyết Toán */}
       {(modalType === 'quyet-toan' || modalType === 'detail-quyet-toan') && (
