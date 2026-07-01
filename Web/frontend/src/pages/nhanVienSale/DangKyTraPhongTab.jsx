@@ -6,11 +6,15 @@ import './dangKyTraPhongTab.css';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function fmtMoney(n) {
   if (n == null) return '—';
-  return Number(n).toLocaleString('vi-VN') + ' ₫';
+  return Number(n).toLocaleString('vi-VN') + ' đ';
 }
 function fmtDate(s) {
   if (!s) return '—';
-  return String(s).slice(0, 10);
+  const d = new Date(s);
+  const day = String(d.getDate()).padStart(2, '0');
+  const mon = String(d.getMonth() + 1).padStart(2, '0');
+  const yr = d.getFullYear();
+  return `${day}/${mon}/${yr}`;
 }
 function badgeClass(ts) {
   if (!ts) return 'ktp-badge';
@@ -226,11 +230,12 @@ function BuocChonHopDong({ khach, onChon, onQuayLai }) {
                     </span>
                     <span className="tp-cc-ma">{item.maHopDong}</span>
                   </div>
-                  <p className="tp-cc-phong">{item.tenPhong}</p>
                   <p className="tp-cc-cn"><Icon name="location_on" /> {item.tenChiNhanh}</p>
+                  <p className="tp-cc-cn" style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Icon name="meeting_room" style={{ fontSize: '14px' }} /> {item.tenPhong}
+                  </p>
                   <div className="tp-cc-meta">
                     <span>{item.hinhThucThue}</span>
-                    <span style={{ fontWeight: 600, color: '#2f6765' }}>{fmtMoney(item.giaThu)}/th</span>
                   </div>
                   {item.dangCoYeuCau && (
                     <div className="tp-cc-warn">
@@ -302,53 +307,48 @@ function BuocXacNhan({ khach, hopDong, onSuccess, onQuayLai }) {
     <div className="tp-step-card">
       <div className="tp-step-header">
         <span className="tp-step-num">3</span>
-        <h3>Nhập ngày & xác nhận đăng ký</h3>
+        <h3>Xác nhận đăng ký</h3>
       </div>
 
-      {/* Summary */}
-      <div className="tp-confirm-summary">
-        <div className="tp-cs-row">
-          <span>Mã khách hàng</span>
-          <strong>{khach.maKhachHang}</strong>
-        </div>
-        <div className="tp-cs-row">
-          <span>Tên khách hàng</span>
-          <strong>{khach.hoTen}</strong>
-        </div>
-        <div className="tp-cs-row">
-          <span>Hồ sơ</span>
-          <strong>{isHD ? 'Hợp đồng' : 'Phiếu đặt cọc'} ({hopDong.maHopDong})</strong>
-        </div>
-        <div className="tp-cs-row">
-          <span>Chi nhánh</span>
-          <strong>{hopDong.tenChiNhanh}</strong>
-        </div>
-        <div className="tp-cs-row">
-          <span>Phòng</span>
-          <strong>{hopDong.tenPhong}</strong>
-        </div>
-        {hopDong.hinhThucThue === 'Ghép giường' && (
-          <div className="tp-cs-row">
-            <span>Giường</span>
-            <strong>{hopDong.maGiuong || '—'}</strong>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
+        {/* Card 1: Khách thuê */}
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px', fontSize: '14px' }}>
+          <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00666d', fontSize: '15px', fontWeight: '600', margin: '0 0 16px 0' }}>
+            <Icon name="person" /> Khách thuê
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Mã khách hàng:</span><span style={{ fontWeight: 500 }}>{khach.maKhachHang}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Họ tên:</span><span style={{ fontWeight: 500 }}>{khach.hoTen}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Số điện thoại:</span><span style={{ fontWeight: 500 }}>{khach.sdt || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>CCCD:</span><span style={{ fontWeight: 500 }}>{khach.cccd || '—'}</span></div>
           </div>
-        )}
-        <div className="tp-cs-row">
-          <span>Hình thức thuê</span>
-          <strong>{hopDong.hinhThucThue}</strong>
         </div>
-        {hopDong.giaThu != null && (
-          <div className="tp-cs-row">
-            <span>Giá thuê</span>
-            <strong style={{ color: '#2f6765' }}>{fmtMoney(hopDong.giaThu)}/tháng</strong>
+
+        {/* Card 2: Hợp đồng / Đặt cọc */}
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px', fontSize: '14px' }}>
+          <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00666d', fontSize: '15px', fontWeight: '600', margin: '0 0 16px 0' }}>
+            <Icon name="description" /> {isHD ? 'Hợp đồng' : 'Phiếu đặt cọc'}
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Mã {isHD ? 'hợp đồng' : 'phiếu đặt cọc'}:</span><span style={{ fontWeight: 500 }}>{hopDong.maHopDong}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>{isHD ? 'Thời hạn' : 'Thời gian đặt cọc'}:</span><span style={{ fontWeight: 500 }}>{isHD ? (hopDong.ngayBatDau ? `${fmtDate(hopDong.ngayBatDau)} - ${fmtDate(hopDong.ngayKetThuc)}` : '—') : (hopDong.ngayDatCoc ? fmtDate(hopDong.ngayDatCoc) : '—')}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Số tiền cọc:</span><span style={{ fontWeight: 500 }}>{hopDong.tienCoc != null ? fmtMoney(hopDong.tienCoc) : '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ color: '#6f797a' }}>Trạng thái {isHD ? 'hợp đồng' : 'phiếu đặt cọc'}:</span><span style={{ padding: '2px 8px', backgroundColor: hopDong.trangThai === 'Hiệu lực' ? '#e6f4ea' : '#f3f4f5', color: hopDong.trangThai === 'Hiệu lực' ? '#137333' : '#6f797a', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{hopDong.trangThai || '—'}</span></div>
           </div>
-        )}
-        {hopDong.tienCoc != null && (
-          <div className="tp-cs-row">
-            <span>Số tiền cọc</span>
-            <strong style={{ color: '#2f6765' }}>{fmtMoney(hopDong.tienCoc)}</strong>
+        </div>
+
+        {/* Card 3: Phòng/Giường */}
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px', fontSize: '14px' }}>
+          <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00666d', fontSize: '15px', fontWeight: '600', margin: '0 0 16px 0' }}>
+            <Icon name="bed" /> Phòng/Giường
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Chi nhánh:</span><span style={{ fontWeight: 500 }}>{hopDong.tenChiNhanh?.replace('HomeDorm ', '') || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Phòng:</span><span style={{ fontWeight: 500 }}>{hopDong.tenPhong || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Giường:</span><span style={{ fontWeight: 500 }}>{hopDong.hinhThucThue === 'Ghép giường' ? hopDong.maGiuong || '—' : 'Tất cả'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Giá thuê:</span><span style={{ fontWeight: 500 }}>{hopDong.giaThu != null ? `${fmtMoney(hopDong.giaThu)}/tháng` : '—'}</span></div>
           </div>
-        )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="tp-date-form">
@@ -366,9 +366,9 @@ function BuocXacNhan({ khach, hopDong, onSuccess, onQuayLai }) {
             onChange={e => { setNgay(e.target.value); setError(''); }}
           />
         </div>
-        <p className="tp-date-hint">
+        {/* <p className="tp-date-hint">
           <Icon name="info" /> Ngày đăng ký trả sẽ được hệ thống tự động ghi nhận là hôm nay ({todayISO}).
-        </p>
+        </p> */}
 
         {error && <p className="tp-error"><Icon name="error_outline" /> {error}</p>}
 

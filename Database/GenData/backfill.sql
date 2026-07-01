@@ -15,191 +15,12 @@ GO
 --   8.  HoaDon.TongTien
 --   9.  BienBanKiemTraPhong.TongChiPhiSuaChua
 --   10. BienBanViPham.SoTienPhat
---   11. DoiSoat → gọi SP_TinhDoiSoat cho từng phiếu trả phòng
+--   11. DoiSoat → gọi SP_TinhDoiSoat đã tạo trong trigger.sql
 --
 -- Cách chạy:
---   1. schema.sql → 2. Data.sql → 3. 01_triggers_basic.sql
---   4. File này:  EXEC SP_Backfill_DuLieuSuyDienNull;
+--   1. app.sql → 2. data.sql → 3. trigger.sql
+--   4. File này: EXEC SP_Backfill_DuLieuSuyDienNull;
 -- ================================================================
-
-
--- ================================================================
--- SP PHỤ: SP_TinhDoiSoat
--- Mục đích: Tính toàn bộ cột tài chính cho 1 phiếu trả phòng cụ thể.
--- Dùng trong:
---   - Backfill dữ liệu cũ (gọi cho từng MaPhieuTra)
---   - Nghiệp vụ mới: khi nhân viên lập phiếu đối soát
---
--- Logic TyLeHoanCoc:
---   Chưa ký HĐ (MaHopDong IS NULL)       → 80%
---   Trả đúng/sau hạn                      → 100%
---   Trả trước hạn, lưu trú < 6 tháng     → 50%
---   Trả trước hạn, lưu trú >= 6 tháng    → 70%
---
--- Logic TrangThai đối soát:
---   SoTienHoanThucTe > 0  → 'Chờ hoàn cọc'
---   SoTienKhachPhaiTT > 0 → 'Chờ thanh toán thêm'
---   Cả hai = 0            → 'Đã quyết toán'
--- ================================================================
-IF OBJECT_ID('SP_TinhDoiSoat', 'P') IS NOT NULL
-    DROP PROCEDURE SP_TinhDoiSoat;
-GO
-
-CREATE PROCEDURE SP_TinhDoiSoat
-    @MaPhieuTra VARCHAR(6)
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    -- Biến lưu thông tin cơ bản
-    DECLARE @MaHopDong      VARCHAR(6);
-    DECLARE @MaPhieuCoc     VARCHAR(6);
-    DECLARE @NgayBatDau     DATE;
-    DECLARE @NgayKetThuc    DATE;
-    DECLARE @NgayTraThucTe  DATE;
-    DECLARE @MaDoiSoat      VARCHAR(6);
-    DECLARE @GiaThueHD      DECIMAL(15,2);
-
-    -- Lấy thông tin từ PhieuTraPhong → HopDongThue
-    SELECT
-        @MaHopDong     = ptp.MaHopDong,
-        @NgayTraThucTe = ptp.NgayTraThucTe,
-        @NgayBatDau    = hdt.NgayBatDau,
-        @NgayKetThuc   = hdt.NgayKetThuc,
-        @MaPhieuCoc    = CASE WHEN ptp.MaHopDong IS NOT NULL
-                              THEN hdt.MaPhieuCoc
-                              ELSE ptp.MaPhieuDatCoc
-                         END,
-        @GiaThueHD     = hdt.GiaThue
-    FROM PhieuTraPhong ptp
-    LEFT JOIN HopDongThue hdt ON hdt.MaHopDong = ptp.MaHopDong
-    WHERE ptp.MaPhieuTra = @MaPhieuTra;
-
-    -- Lấy MaDoiSoat liên kết (nếu đã có)
-    SELECT @MaDoiSoat = MaDoiSoat
-    FROM   DoiSoat
-    WHERE  MaPhieuTra = @MaPhieuTra;
-
-    IF @MaDoiSoat IS NULL
-    BEGIN
-        PRINT N'SP_TinhDoiSoat: Không tìm thấy DoiSoat cho MaPhieuTra = ' + @MaPhieuTra;
-        RETURN;
-    END;
-
-    -- Tính toán các biến trung gian
-    DECLARE @TienCocBanDau      DECIMAL(15,2);
-    DECLARE @SoThangLuuTru      INT;
-    DECLARE @TyLeHoanCoc        DECIMAL(5,2);
-    DECLARE @TienCocDuocHoan    DECIMAL(15,2);
-    DECLARE @TienThueConNo      DECIMAL(15,2);
-    DECLARE @TienDichVuConNo    DECIMAL(15,2);
-    DECLARE @TongChiPhiSuaChua  DECIMAL(15,2);
-    DECLARE @TienPhat           DECIMAL(15,2);
-    DECLARE @TongKhauTru        DECIMAL(15,2);
-    DECLARE @SoTienHoanThucTe   DECIMAL(15,2);
-    DECLARE @SoTienKhachPhaiTT  DECIMAL(15,2);
-    DECLARE @TrangThai          NVARCHAR(50);
-
-    -- 1. TienCocBanDau: từ PhieuDatCoc
-    SELECT @TienCocBanDau = ISNULL(SoTienCoc, 0)
-    FROM   PhieuDatCoc
-    WHERE  MaPhieuDatCoc = @MaPhieuCoc;
-
-    -- 2. SoThangLuuTru
-    SET @SoThangLuuTru =
-        CASE WHEN @MaHopDong IS NULL THEN 0
-             ELSE ISNULL(DATEDIFF(MONTH, @NgayBatDau, @NgayTraThucTe), 0)
-        END;
-
-    -- 3. TyLeHoanCoc
-    SET @TyLeHoanCoc =
-        CASE
-            WHEN @MaHopDong IS NULL                    THEN 80.00
-            WHEN @NgayTraThucTe >= @NgayKetThuc        THEN 100.00
-            WHEN @SoThangLuuTru < 6                    THEN 50.00
-            ELSE                                            70.00
-        END;
-
-    -- 4. TienCocDuocHoan
-    SET @TienCocDuocHoan = @TienCocBanDau * @TyLeHoanCoc / 100.0;
-
-    -- 5. TienThueConNo: hóa đơn tiền thuê phòng chưa thanh toán
-    SELECT @TienThueConNo = ISNULL(SUM(cthd.ThanhTien), 0)
-    FROM   ChiTietHoaDon cthd
-    INNER JOIN DichVuHopDong dvhd ON dvhd.MaChiTietDVHD = cthd.MaChiTietDVHD
-    INNER JOIN DichVu        dv   ON dv.MaDichVu         = dvhd.MaDichVu
-    INNER JOIN HoaDon        hd   ON hd.MaHoaDon         = cthd.MaHoaDon
-    WHERE  hd.MaHopDong  = @MaHopDong
-      AND  hd.TrangThai  IN (N'Chưa TT', N'Nợ', N'Tạm tính')
-      AND  dv.DonViTinh  = N'tháng'
-      AND  cthd.DonGia   = @GiaThueHD;   -- phân biệt tiền thuê với wifi/gửi xe
-
-    -- 6. TienDichVuConNo: điện, nước, wifi, gửi xe... chưa thanh toán
-    SELECT @TienDichVuConNo = ISNULL(SUM(cthd.ThanhTien), 0)
-    FROM   ChiTietHoaDon cthd
-    INNER JOIN DichVuHopDong dvhd ON dvhd.MaChiTietDVHD = cthd.MaChiTietDVHD
-    INNER JOIN DichVu        dv   ON dv.MaDichVu         = dvhd.MaDichVu
-    INNER JOIN HoaDon        hd   ON hd.MaHoaDon         = cthd.MaHoaDon
-    WHERE  hd.MaHopDong  = @MaHopDong
-      AND  hd.TrangThai  IN (N'Chưa TT', N'Nợ', N'Tạm tính')
-      AND  cthd.DonGia  <> @GiaThueHD;  -- loại trừ dòng tiền thuê
-
-    -- 7. TongChiPhiSuaChua: từ biên bản kiểm tra phòng
-    SELECT @TongChiPhiSuaChua = ISNULL(SUM(bbkt.TongChiPhiSuaChua), 0)
-    FROM   BienBanKiemTraPhong bbkt
-    WHERE  bbkt.MaPhieuTra = @MaPhieuTra;
-
-    -- 8. TienPhat: chỉ tính biên bản vi phạm trạng thái 'Chờ xử lý'
-    --    (tránh tính trùng biên bản đã xử lý / đã thu ở kỳ trước)
-    SELECT @TienPhat = ISNULL(SUM(bbvp.SoTienPhat), 0)
-    FROM   BienBanViPham bbvp
-    WHERE  bbvp.MaHopDong = @MaHopDong
-      AND  bbvp.TrangThai  = N'Chờ xử lý';
-
-    -- 9. TongKhauTru
-    SET @TongKhauTru = @TienThueConNo + @TienDichVuConNo
-                     + @TongChiPhiSuaChua + @TienPhat;
-
-    -- 10. SoTienHoanThucTe = MAX(TienCocDuocHoan - TongKhauTru, 0)
-    SET @SoTienHoanThucTe =
-        CASE WHEN @TienCocDuocHoan > @TongKhauTru
-             THEN @TienCocDuocHoan - @TongKhauTru
-             ELSE 0
-        END;
-
-    -- 11. SoTienKhachPhaiTT = MAX(TongKhauTru - TienCocDuocHoan, 0)
-    SET @SoTienKhachPhaiTT =
-        CASE WHEN @TongKhauTru > @TienCocDuocHoan
-             THEN @TongKhauTru - @TienCocDuocHoan
-             ELSE 0
-        END;
-
-    -- 12. TrangThai đối soát
-    SET @TrangThai =
-        CASE
-            WHEN @SoTienHoanThucTe  > 0 THEN N'Chờ hoàn cọc'
-            WHEN @SoTienKhachPhaiTT > 0 THEN N'Chờ thanh toán thêm'
-            ELSE                             N'Đã quyết toán'
-        END;
-
-    -- Cập nhật vào bảng DoiSoat
-    UPDATE DoiSoat
-    SET
-        TienCocBanDau      = @TienCocBanDau,
-        SoThangLuuTru      = @SoThangLuuTru,
-        TyLeHoanCocHienTai = @TyLeHoanCoc,
-        TienCocDuocHoan    = @TienCocDuocHoan,
-        TienThueConNo      = @TienThueConNo,
-        TienDichVuConNo    = @TienDichVuConNo,
-        TongChiPhiSuaChua  = @TongChiPhiSuaChua,
-        TienPhat           = @TienPhat,
-        TongKhauTru        = @TongKhauTru,
-        SoTienHoanThucTe   = @SoTienHoanThucTe,
-        SoTienKhachPhaiTT  = @SoTienKhachPhaiTT,
-        TrangThai          = @TrangThai
-    WHERE MaPhieuTra = @MaPhieuTra;
-END;
-GO
 
 
 -- ================================================================
@@ -468,16 +289,30 @@ BEGIN
 
 
     -- ============================================================
-    -- BƯỚC 8: HoaDon.TongTien = SUM(ChiTietHoaDon.ThanhTien)
+    -- BƯỚC 8: HoaDon.TongTien = HopDongThue.GiaThue + SUM(ChiTietHoaDon.ThanhTien)
     -- ============================================================
     PRINT N'--- 8. HoaDon.TongTien ---';
 
     UPDATE hd
-    SET    hd.TongTien = ISNULL(
-               (SELECT SUM(c.ThanhTien) FROM ChiTietHoaDon c
-                WHERE  c.MaHoaDon = hd.MaHoaDon AND c.ThanhTien IS NOT NULL), 0)
+    SET    hd.TongTien = ISNULL(hdt.GiaThue, 0)
+                         + ISNULL((
+                               SELECT SUM(c.ThanhTien)
+                               FROM   ChiTietHoaDon c
+                               WHERE  c.MaHoaDon = hd.MaHoaDon
+                                 AND  c.ThanhTien IS NOT NULL
+                           ), 0)
     FROM   HoaDon hd
-    WHERE  hd.TongTien IS NULL;
+    INNER JOIN HopDongThue hdt ON hdt.MaHopDong = hd.MaHopDong
+    WHERE  hd.TongTien IS NULL
+       OR  ABS(ISNULL(hd.TongTien, 0) - (
+                ISNULL(hdt.GiaThue, 0)
+                + ISNULL((
+                    SELECT SUM(c.ThanhTien)
+                    FROM   ChiTietHoaDon c
+                    WHERE  c.MaHoaDon = hd.MaHoaDon
+                      AND  c.ThanhTien IS NOT NULL
+                ), 0)
+            )) >= 1;
 
     PRINT N'  → Đã cập nhật: ' + CAST(@@ROWCOUNT AS NVARCHAR) + N' dòng';
     PRINT N'';
@@ -713,19 +548,41 @@ SELECT
     hd.MaHopDong,
     hd.KyThanhToan,
     hd.TrangThai,
-    FORMAT(hd.TongTien, 'N0', 'vi-VN')                        AS TongTien,
+    FORMAT(hd.TongTien, 'N0', 'vi-VN') AS TongTien,
+    FORMAT(hdt.GiaThue, 'N0', 'vi-VN') AS GiaThueHopDong,
     FORMAT(
-        (SELECT ISNULL(SUM(c.ThanhTien),0)
-         FROM ChiTietHoaDon c WHERE c.MaHoaDon = hd.MaHoaDon),
-        'N0', 'vi-VN')                                         AS TongTien_TinhLai,
-    CASE WHEN hd.TongTien IS NULL THEN N'❌ NULL'
-         WHEN ABS(hd.TongTien -
-              ISNULL((SELECT SUM(c.ThanhTien) FROM ChiTietHoaDon c
-                       WHERE c.MaHoaDon = hd.MaHoaDon), 0)) < 1
-         THEN N'✅'
-         ELSE N'❌ Lệch'
+        ISNULL((
+            SELECT SUM(c.ThanhTien)
+            FROM ChiTietHoaDon c
+            WHERE c.MaHoaDon = hd.MaHoaDon
+        ), 0),
+        'N0', 'vi-VN'
+    ) AS TongTienDichVu,
+    FORMAT(
+        ISNULL(hdt.GiaThue, 0)
+        + ISNULL((
+            SELECT SUM(c.ThanhTien)
+            FROM ChiTietHoaDon c
+            WHERE c.MaHoaDon = hd.MaHoaDon
+        ), 0),
+        'N0', 'vi-VN'
+    ) AS TongTien_TinhLai,
+    CASE
+        WHEN hd.TongTien IS NULL THEN N'❌ NULL'
+        WHEN ABS(
+            hd.TongTien - (
+                ISNULL(hdt.GiaThue, 0)
+                + ISNULL((
+                    SELECT SUM(c.ThanhTien)
+                    FROM ChiTietHoaDon c
+                    WHERE c.MaHoaDon = hd.MaHoaDon
+                ), 0)
+            )
+        ) < 1 THEN N'✅'
+        ELSE N'❌ Lệch'
     END AS KiemTra
 FROM HoaDon hd
+INNER JOIN HopDongThue hdt ON hdt.MaHopDong = hd.MaHopDong
 ORDER BY hd.MaHopDong, hd.KyThanhToan;
 GO
 

@@ -90,6 +90,7 @@ BEGIN
         CONVERT(VARCHAR(10), hdt.NgayKetThuc, 120)  AS ngayKetThuc,
         hdt.TrangThai               AS trangThai,
         pdc.SoTienCoc               AS tienCoc,
+        CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120) AS ngayDatCoc,
         CAST(
             CASE WHEN EXISTS (
                 SELECT 1 FROM dbo.PhieuTraPhong AS ptp
@@ -123,6 +124,7 @@ BEGIN
         NULL                        AS ngayKetThuc,
         pdc.TrangThaiCoc            AS trangThai,
         pdc.SoTienCoc               AS tienCoc,
+        CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120) AS ngayDatCoc,
         CAST(
             CASE WHEN EXISTS (
                 SELECT 1 FROM dbo.PhieuTraPhong AS ptp

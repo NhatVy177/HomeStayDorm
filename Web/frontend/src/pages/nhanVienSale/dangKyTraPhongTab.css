@@ -457,3 +457,6 @@
 /* Toast */
 .tp-toast { position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%); background: #2f6765; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: 500; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: bottom 0.3s ease; z-index: 9999; }
 .tp-toast.show { bottom: 30px; }
+
+input[type='number'].no-spin::-webkit-inner-spin-button, input[type='number'].no-spin::-webkit-outer-spin-button { -webkit-appearance: none !important; margin: 0; }
+input[type='number'].no-spin { -moz-appearance: textfield !important; }
