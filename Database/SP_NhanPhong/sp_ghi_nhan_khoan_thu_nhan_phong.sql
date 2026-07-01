@@ -26,13 +26,15 @@ BEGIN
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         -- Ghép tên phòng và giường để tương thích với UI (ví dụ: "P.102 - Giường A" hoặc ghép danh sách nếu thuê nhiều giường)
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN ' - Giường ' + ctdc.MaGiuong ELSE '' END, ', ') AS PhongGiuong,
+        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
         hd.NgayBatDau,
         -- Lấy TongTien từ hóa đơn kỳ đầu, nếu chưa lập hóa đơn thì lấy tổng tiền thuê kỳ đầu + các dịch vụ đi kèm
-        ISNULL(h.TongTien, 
-            (CASE WHEN hd.KyThanhToan = N'Hàng tháng' THEN hd.GiaThue ELSE hd.GiaThue * 3 END)
-            + ISNULL((SELECT SUM(dv.DonGia) FROM DichVuHopDong dvhd JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu WHERE dvhd.MaHopDong = hd.MaHopDong), 0)
-        ) AS TongTien,
+        CASE 
+            WHEN h.TrangThai = N'Đã TT' THEN h.TongTien
+            ELSE
+                (CASE WHEN hd.KyThanhToan = N'Hàng tháng' THEN hd.GiaThue ELSE hd.GiaThue * 3 END)
+                + ISNULL((SELECT SUM(dv.DonGia) FROM DichVuHopDong dvhd JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu WHERE dvhd.MaHopDong = hd.MaHopDong AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')), 0)
+        END AS TongTien,
         -- Trạng thái thanh toán
         CASE 
             WHEN h.TrangThai = N'Đã TT' THEN N'Đã thanh toán'
@@ -53,9 +55,8 @@ BEGIN
     LEFT JOIN HoaDon h ON h.MaHopDong = hd.MaHopDong AND h.KyThanhToan = CONVERT(CHAR(7), hd.NgayBatDau, 120)
     WHERE hd.TrangThai = N'Hiệu lực'
       AND (
-          @TrangThaiThuTien IS NULL 
-          OR (@TrangThaiThuTien = N'Đã thanh toán' AND h.TrangThai = N'Đã TT')
-          OR (@TrangThaiThuTien = N'Chưa thanh toán' AND (h.TrangThai IS NULL OR h.TrangThai <> N'Đã TT'))
+          (@TrangThaiThuTien = N'Đã thanh toán' AND h.TrangThai = N'Đã TT')
+          OR (ISNULL(@TrangThaiThuTien, N'Chưa thanh toán') <> N'Đã thanh toán' AND (h.MaHoaDon IS NULL OR h.TrangThai <> N'Đã TT'))
       )
       AND (
           @TuKhoaLike IS NULL 
@@ -128,12 +129,34 @@ BEGIN
         RETURN;
     END;
 
+    -- [5] Không cho tính/ghi nhận tiếp nếu hóa đơn kỳ đầu đã thanh toán
+    IF EXISTS (
+        SELECT 1
+        FROM HoaDon h
+        JOIN HopDongThue hd ON hd.MaHopDong = h.MaHopDong
+        WHERE h.MaHopDong = @MaHopDong
+          AND h.KyThanhToan = CONVERT(CHAR(7), hd.NgayBatDau, 120)
+          AND h.TrangThai = N'Đã TT'
+    )
+    BEGIN
+        DECLARE @err5 NVARCHAR(255) = N'Hợp đồng ' + @MaHopDong + N' đã có hóa đơn kỳ đầu Đã TT.';
+        THROW 50005, @err5, 1;
+        RETURN;
+    END;
+
     -- Khai báo và tính toán
     DECLARE @TienThueKyDau DECIMAL(15,2);
     DECLARE @TienDichVu DECIMAL(15,2);
     DECLARE @KyThanhToan NVARCHAR(20);
     
     SELECT @KyThanhToan = KyThanhToan FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
+    IF @KyThanhToan NOT IN (N'Hàng tháng', N'Hàng quý')
+    BEGIN
+        DECLARE @err6 NVARCHAR(255) = N'Hợp đồng ' + @MaHopDong + N' có kỳ thanh toán không hợp lệ.';
+        THROW 50006, @err6, 1;
+        RETURN;
+    END;
 
     IF @KyThanhToan = N'Hàng tháng'
         SET @TienThueKyDau = @GiaThue;
@@ -143,7 +166,15 @@ BEGIN
     SELECT @TienDichVu = ISNULL(SUM(dv.DonGia), 0)
     FROM DichVuHopDong dvhd
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
-    WHERE dvhd.MaHopDong = @MaHopDong;
+    WHERE dvhd.MaHopDong = @MaHopDong
+      AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
+
+    IF (@TienThueKyDau + @TienDichVu) <= 0
+    BEGIN
+        DECLARE @err7 NVARCHAR(255) = N'Tổng tiền cần thu của hợp đồng ' + @MaHopDong + N' không hợp lệ (<= 0).';
+        THROW 50007, @err7, 1;
+        RETURN;
+    END;
 
     -- RESULT SET 1: Thông tin tổng quan
     SELECT 
@@ -151,7 +182,7 @@ BEGIN
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         nd.Email,
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN ' - Giường ' + ctdc.MaGiuong ELSE '' END, ', ') AS PhongGiuong,
+        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
         hd.NgayBatDau,
         hd.KyThanhToan,
         hd.GiaThue,
@@ -193,7 +224,8 @@ BEGIN
         dvhd.MaChiTietDVHD
     FROM DichVuHopDong dvhd
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
-    WHERE dvhd.MaHopDong = @MaHopDong;
+    WHERE dvhd.MaHopDong = @MaHopDong
+      AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
 END;
 GO
 
@@ -287,6 +319,15 @@ BEGIN
             RETURN;
         END;
 
+        -- [Bước 3.3b] Kỳ thanh toán hợp lệ?
+        IF @KyThanhToan NOT IN (N'Hàng tháng', N'Hàng quý')
+        BEGIN
+            SET @MaLoi = -9;
+            SET @ThongBao = N'Kỳ thanh toán của hợp đồng không hợp lệ. Chỉ chấp nhận Hàng tháng hoặc Hàng quý.';
+            IF @TranCounter > 0 ROLLBACK TRANSACTION SP_GhiNhanThu_Save; ELSE ROLLBACK TRANSACTION;
+            RETURN;
+        END;
+
         -- [Bước 3.4] Kiểm tra đơn giá dịch vụ
         IF EXISTS (
             SELECT 1 
@@ -338,9 +379,18 @@ BEGIN
         SELECT @TienDichVu = ISNULL(SUM(dv.DonGia), 0)
         FROM DichVuHopDong dvhd
         JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
-        WHERE dvhd.MaHopDong = @MaHopDong;
+        WHERE dvhd.MaHopDong = @MaHopDong
+          AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
 
         DECLARE @TongTien DECIMAL(15,2) = @TienThueKyDau + @TienDichVu;
+
+        IF @TongTien <= 0
+        BEGIN
+            SET @MaLoi = -10;
+            SET @ThongBao = N'Tổng tiền cần thu không hợp lệ (<= 0). Vui lòng kiểm tra lại hợp đồng và dịch vụ.';
+            IF @TranCounter > 0 ROLLBACK TRANSACTION SP_GhiNhanThu_Save; ELSE ROLLBACK TRANSACTION;
+            RETURN;
+        END;
 
         -- Xác định trạng thái hóa đơn dựa trên số tiền thực nộp
         DECLARE @TrangThaiHD NVARCHAR(20) = N'Chưa TT';
@@ -405,7 +455,8 @@ BEGIN
             SELECT dvhd.MaChiTietDVHD, dv.DonGia, dv.DonViTinh
             FROM DichVuHopDong dvhd
             JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
-            WHERE dvhd.MaHopDong = @MaHopDong;
+            WHERE dvhd.MaHopDong = @MaHopDong
+              AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
 
         DECLARE 
             @MaChiTietDVHD  VARCHAR(6),
@@ -494,7 +545,7 @@ BEGIN
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         nd.Email,
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN ' - Giường ' + ctdc.MaGiuong ELSE '' END, ', ') AS PhongGiuong,
+        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
         hd.NgayBatDau,
         ISNULL(h.TongTien, 0.00) AS TongKhoanThu,
         CASE WHEN h.TrangThai = N'Đã TT' THEN ISNULL(h.TongTien, 0.00) ELSE 0.00 END AS DaThanhToan,
@@ -558,7 +609,8 @@ BEGIN
     FROM ChiTietHoaDon cth
     JOIN DichVuHopDong dvhd ON dvhd.MaChiTietDVHD = cth.MaChiTietDVHD
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
-    WHERE cth.MaHoaDon = @MaHoaDon;
+    WHERE cth.MaHoaDon = @MaHoaDon
+      AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
 END;
 GO
 
@@ -624,9 +676,22 @@ BEGIN
         RETURN;
     END;
 
+    -- [5] Chưa có biên bản bàn giao vào?
+    IF EXISTS (
+        SELECT 1
+        FROM BienBanBanGiao
+        WHERE MaHopDong = @MaHopDong
+          AND LoaiBanGiao = N'Bàn giao vào'
+    )
+    BEGIN
+        SET @MaLoi = -5;
+        SET @ThongBao = N'Hợp đồng đã có biên bản bàn giao vào.';
+        RETURN;
+    END;
+
     -- Đầy đủ điều kiện
     SET @HopLe = 1;
     SET @MaLoi = 0;
-    SET @ThongBao = N'Hợp đồng đủ điều kiện nhận bàn giao phòng (Đã hoàn tất thanh toán kỳ đầu).';
+    SET @ThongBao = N'Đã thu đủ khoản nhận phòng. Có thể tiến hành lập biên bản bàn giao.';
 END;
 GO

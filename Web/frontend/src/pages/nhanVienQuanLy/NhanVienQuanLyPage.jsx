@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import '../khachHang/khachHangPortal.css'; // Reuse main layout styles
 import '../nhanVienKeToan/nhanVienKeToanPortal.css'; // Use specific styles for content
+import './nhanVienQuanLy.css';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import XacNhanNhanPhongTab from './XacNhanNhanPhongTab.jsx';
+import DuyetCuTruTab from './DuyetCuTruTab.jsx';
 import XacNhanThanhToanTab from './XacNhanThanhToanTab.jsx';
 import BanGiaoPhongTab from './BanGiaoPhongTab.jsx';
 import LapBienBanKiemTraPhongTab from './LapBienBanKiemTraPhongTab.jsx';
@@ -48,6 +50,7 @@ export default function NhanVienQuanLyPage() {
 
   const navItems = [
     { id: 'xac-nhan-nhan-phong', label: 'Duyệt nhận phòng', icon: 'check_circle' },
+    { id: 'duyet-cu-tru', label: 'Duyệt cư trú', icon: 'fact_check' },
     { id: 'xac-nhan-thanh-toan', label: 'Duyệt thanh toán', icon: 'payments' },
     { id: 'lap-bien-ban-ban-giao', label: 'Bàn giao phòng', icon: 'description' },
     { id: 'lap-bien-ban-kiem-tra-phong', label: 'Xử lý trả phòng', icon: 'receipt_long' },
@@ -124,13 +127,14 @@ export default function NhanVienQuanLyPage() {
 
         <main className="kp-main" style={{ padding: 0 }}>
           {activeTab === 'xac-nhan-nhan-phong' && <XacNhanNhanPhongTab />}
+          {activeTab === 'duyet-cu-tru' && <DuyetCuTruTab />}
           {activeTab === 'xac-nhan-thanh-toan' && <XacNhanThanhToanTab />}
           {activeTab === 'lap-bien-ban-ban-giao' && <BanGiaoPhongTab />}
           {activeTab === 'lap-bien-ban-kiem-tra-phong' && <LapBienBanKiemTraPhongTab />}
           {activeTab === 'ghi-nhan-thanh-ly-hop-dong' && <ThanhLyHopDongTab />}
           {activeTab === 'cap-nhat-dich-vu' && <CapNhatDichVuTab />}
           {activeTab === 'bao-tri-sua-chua' && <BaoTriSuaChuaTab />}
-          {activeTab !== 'xac-nhan-nhan-phong' && activeTab !== 'xac-nhan-thanh-toan' && activeTab !== 'lap-bien-ban-ban-giao' && activeTab !== 'lap-bien-ban-kiem-tra-phong' && activeTab !== 'ghi-nhan-thanh-ly-hop-dong' && activeTab !== 'cap-nhat-dich-vu' && activeTab !== 'bao-tri-sua-chua' && (
+          {activeTab !== 'xac-nhan-nhan-phong' && activeTab !== 'duyet-cu-tru' && activeTab !== 'xac-nhan-thanh-toan' && activeTab !== 'lap-bien-ban-ban-giao' && activeTab !== 'lap-bien-ban-kiem-tra-phong' && activeTab !== 'ghi-nhan-thanh-ly-hop-dong' && activeTab !== 'cap-nhat-dich-vu' && activeTab !== 'bao-tri-sua-chua' && (
             <div className="ktp-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                 <h2 style={{ color: '#6f797a' }}>Đang phát triển chức năng: {navItems.find(i => i.id === activeTab)?.label}</h2>
             </div>

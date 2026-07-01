@@ -15,6 +15,7 @@ import traPhongRoutes from './routes/traPhong.routes.js';
 import suaChuaBaoTriRoutes from './routes/suaChuaBaoTri.routes.js';
 import khachMoiRoutes from './routes/khachMoi.routes.js';
 import trangChuRoutes from './routes/trangChu.routes.js';
+import hopDongRoutes from './routes/hopDong.routes.js';
 
 // Load bien moi truong trong file .env
 dotenv.config();
@@ -60,6 +61,7 @@ app.use('/api/nhan-phong', requireAuth, nhanPhongRoutes);
 app.use('/api/tra-phong', requireAuth, traPhongRoutes);
 app.use('/api/sua-chua-bao-tri', requireAuth, suaChuaBaoTriRoutes);
 app.use('/api/khach-moi', requireAuth, khachMoiRoutes);
+app.use('/api/hop-dong', requireAuth, hopDongRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

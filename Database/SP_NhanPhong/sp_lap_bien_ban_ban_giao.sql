@@ -64,6 +64,83 @@ GO
 -- Input:    @MaHopDong
 -- Output:   Result set thông tin hợp đồng phục vụ hiển thị các Card
 -- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE dbo.SP_DanhSachChoBanGiaoVao
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        hd.MaHopDong AS maHopDong,
+        hd.NgayBatDau AS ngayBatDau,
+        hd.NgayKetThuc AS ngayKetThuc,
+        hd.GiaThue AS giaThue,
+        hd.KyThanhToan AS kyThanhToan,
+        nd.HoTen AS hoTen,
+        nd.SDT AS soDienThoai,
+        kh.CCCD AS cccd,
+        p.MaPhong AS maPhong,
+        p.TenPhong AS tenPhong,
+        ISNULL(STRING_AGG(ctdc.MaGiuong, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong), N'Nguyên phòng') AS maGiuong,
+        CAST(1 AS BIT) AS daDongTienDauKy,
+        ISNULL(STRING_AGG(g.TinhTrang, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong), N'Đã đặt cọc') AS tinhTrangGiuong,
+        CAST(1 AS BIT) AS tinhTrangGiuongHopLe
+    FROM HopDongThue hd
+    JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
+    JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
+    JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
+    JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+    JOIN Phong p ON p.MaPhong = ctdc.MaPhong
+    LEFT JOIN Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
+    OUTER APPLY (
+        SELECT TOP 1 hdon.TrangThai
+        FROM HoaDon hdon
+        WHERE hdon.MaHopDong = hd.MaHopDong
+        ORDER BY hdon.NgayLap ASC, hdon.MaHoaDon ASC
+    ) hdKyDau
+    WHERE hd.TrangThai = N'Hiệu lực'
+      AND CAST(hd.NgayBatDau AS DATE) <= CAST(GETDATE() AS DATE)
+      AND hdKyDau.TrangThai = N'Đã TT'
+      AND NOT EXISTS (
+          SELECT 1
+          FROM BienBanBanGiao bb
+          WHERE bb.MaHopDong = hd.MaHopDong
+            AND bb.LoaiBanGiao = N'Bàn giao vào'
+            AND ISNULL(bb.TrangThai, N'Đã lập') = N'Đã lập'
+      )
+      AND EXISTS (
+          SELECT 1
+          FROM TaiSan ts
+          WHERE ts.MaPhong = p.MaPhong
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM ChiTietDatCoc ctdcCheck
+          LEFT JOIN Giuong gCheck
+            ON gCheck.MaPhong = ctdcCheck.MaPhong
+           AND gCheck.MaGiuong = ctdcCheck.MaGiuong
+          WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
+            AND pdc.HinhThucThue = N'Ghép giường'
+            AND (
+                ctdcCheck.MaGiuong IS NULL
+                OR gCheck.TinhTrang <> N'Đã đặt cọc'
+                OR gCheck.TinhTrang IS NULL
+            )
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM ChiTietDatCoc ctdcCheck
+          JOIN Giuong gCheck ON gCheck.MaPhong = ctdcCheck.MaPhong
+          WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
+            AND pdc.HinhThucThue <> N'Ghép giường'
+            AND gCheck.TinhTrang <> N'Đã đặt cọc'
+      )
+    GROUP BY
+        hd.MaHopDong, hd.NgayBatDau, hd.NgayKetThuc, hd.GiaThue, hd.KyThanhToan,
+        nd.HoTen, nd.SDT, kh.CCCD, p.MaPhong, p.TenPhong
+    ORDER BY hd.NgayBatDau ASC, hd.MaHopDong ASC;
+END;
+GO
+
 CREATE OR ALTER PROCEDURE SP_TraCuuHopDongBanGiao
     @MaHopDong VARCHAR(6)
 AS
@@ -163,8 +240,8 @@ BEGIN
         RETURN;
     END;
 
-    DECLARE @TrangThaiHopDong NVARCHAR(20), @MaPhieuCoc VARCHAR(6);
-    SELECT @TrangThaiHopDong = TrangThai, @MaPhieuCoc = MaPhieuCoc
+    DECLARE @TrangThaiHopDong NVARCHAR(20), @MaPhieuCoc VARCHAR(6), @NgayBatDau DATE;
+    SELECT @TrangThaiHopDong = TrangThai, @MaPhieuCoc = MaPhieuCoc, @NgayBatDau = NgayBatDau
     FROM HopDongThue
     WHERE MaHopDong = @MaHopDong;
 
@@ -173,6 +250,13 @@ BEGIN
     BEGIN
         SET @MaLoi = -2;
         SET @ThongBao = N'Hợp đồng không còn hiệu lực.';
+        RETURN;
+    END;
+
+    IF CAST(@NgayBatDau AS DATE) > CAST(GETDATE() AS DATE)
+    BEGIN
+        SET @MaLoi = -16;
+        SET @ThongBao = N'Chưa tới ngày hẹn bàn giao. Ngày bắt đầu hợp đồng là ' + CONVERT(NVARCHAR(10), @NgayBatDau, 103) + N'.';
         RETURN;
     END;
 
@@ -580,10 +664,11 @@ BEGIN
             BEGIN TRANSACTION;
 
         -- Khóa và đọc thông tin hợp đồng (chống race condition)
-        DECLARE @TrangThaiHopDong NVARCHAR(20), @MaPhieuCoc VARCHAR(6);
+        DECLARE @TrangThaiHopDong NVARCHAR(20), @MaPhieuCoc VARCHAR(6), @NgayBatDau DATE;
         SELECT 
             @TrangThaiHopDong = hd.TrangThai, 
-            @MaPhieuCoc = hd.MaPhieuCoc
+            @MaPhieuCoc = hd.MaPhieuCoc,
+            @NgayBatDau = hd.NgayBatDau
         FROM HopDongThue hd WITH (UPDLOCK, HOLDLOCK)
         WHERE hd.MaHopDong = @MaHopDong;
 
@@ -604,6 +689,17 @@ BEGIN
         BEGIN
             SET @MaLoi = -2;
             SET @ThongBao = N'Hợp đồng không còn hiệu lực.';
+            IF @TranCounter > 0
+                ROLLBACK TRANSACTION SP_LapBG_Save;
+            ELSE
+                ROLLBACK TRANSACTION;
+            RETURN;
+        END;
+
+        IF CAST(@NgayBatDau AS DATE) > CAST(GETDATE() AS DATE)
+        BEGIN
+            SET @MaLoi = -16;
+            SET @ThongBao = N'Chưa tới ngày hẹn bàn giao. Ngày bắt đầu hợp đồng là ' + CONVERT(NVARCHAR(10), @NgayBatDau, 103) + N'.';
             IF @TranCounter > 0
                 ROLLBACK TRANSACTION SP_LapBG_Save;
             ELSE
