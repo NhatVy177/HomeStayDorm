@@ -705,77 +705,31 @@ BEGIN
         TrangThai          = @TrangThai
     WHERE MaPhieuTra = @MaPhieuTra;
 
+    -- ---- In kết quả tóm tắt ----
+    PRINT N'';
+    PRINT N'=== DoiSoat: ' + @MaDoiSoat + '  |  PhieuTra: ' + @MaPhieuTra
+        + '  |  HopDong: ' + ISNULL(@MaHopDong, N'(chưa ký)') + N' ===';
+    PRINT N'  TienCocBanDau     : ' + FORMAT(@TienCocBanDau,     'N0', 'vi-VN') + N' đ';
+    PRINT N'  TyLeHoanCoc       : ' + CAST(@TyLeHoanCoc AS VARCHAR) + N'%'
+        + N'  →  TienCocDuocHoan: ' + FORMAT(@TienCocDuocHoan, 'N0', 'vi-VN') + N' đ';
+    PRINT N'  TienThueConNo     : ' + FORMAT(@TienThueConNo,     'N0', 'vi-VN') + N' đ';
+    PRINT N'  TienDichVuConNo   : ' + FORMAT(@TienDichVuConNo,   'N0', 'vi-VN') + N' đ';
+    PRINT N'  TongChiPhiSuaChua : ' + FORMAT(@TongChiPhiSuaChua, 'N0', 'vi-VN') + N' đ';
+    PRINT N'  TienPhat          : ' + FORMAT(@TienPhat,           'N0', 'vi-VN') + N' đ';
+    PRINT N'  TongKhauTru       : ' + FORMAT(@TongKhauTru,        'N0', 'vi-VN') + N' đ';
+    PRINT N'  ────────────────────────────────────────';
+    PRINT N'  SoTienHoanThucTe  : ' + FORMAT(@SoTienHoanThucTe,  'N0', 'vi-VN') + N' đ';
+    PRINT N'  SoTienKhachPhaiTT : ' + FORMAT(@SoTienKhachPhaiTT, 'N0', 'vi-VN') + N' đ';
+    PRINT N'  TrangThai         : ' + @TrangThai;
+    PRINT N'';
 END;
 GO
-IF OBJECT_ID('TRG_Phong_CapNhatGioiTinhChoPhep', 'TR') IS NOT NULL
-    DROP TRIGGER TRG_Phong_CapNhatGioiTinhChoPhep;
-GO
-
-CREATE TRIGGER TRG_Phong_CapNhatGioiTinhChoPhep
-ON ThanhVienHopDong
-AFTER INSERT, UPDATE, DELETE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @PhongBiAnhHuong TABLE (
-        MaPhong VARCHAR(4) PRIMARY KEY
-    );
-
-    INSERT INTO @PhongBiAnhHuong (MaPhong)
-    SELECT DISTINCT ctdc.MaPhong
-    FROM inserted i
-    JOIN HopDongThue hdt 
-        ON i.MaHopDong = hdt.MaHopDong
-    JOIN ChiTietDatCoc ctdc 
-        ON hdt.MaPhieuCoc = ctdc.MaPhieuDatCoc
-
-    UNION
-
-    SELECT DISTINCT ctdc.MaPhong
-    FROM deleted d
-    JOIN HopDongThue hdt 
-        ON d.MaHopDong = hdt.MaHopDong
-    JOIN ChiTietDatCoc ctdc 
-        ON hdt.MaPhieuCoc = ctdc.MaPhieuDatCoc;
 
 
-    IF EXISTS (
-        SELECT 1
-        FROM @PhongBiAnhHuong pbh
-        JOIN ChiTietDatCoc ctdc 
-            ON pbh.MaPhong = ctdc.MaPhong
-        JOIN HopDongThue hdt 
-            ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
-        JOIN ThanhVienHopDong tvhd 
-            ON hdt.MaHopDong = tvhd.MaHopDong
-        WHERE tvhd.TrangThai = N'Đang ở'
-          AND hdt.TrangThai = N'Hiệu lực'
-        GROUP BY pbh.MaPhong
-        HAVING COUNT(DISTINCT tvhd.GioiTinh) > 1
-    )
-    BEGIN
-        RAISERROR(N'Không thể xếp Nam và Nữ vào cùng một phòng.', 16, 1);
-        ROLLBACK TRANSACTION;
-        RETURN;
-    END;
 
-
-    UPDATE p
-    SET p.GioiTinhChoPhep = COALESCE(CAST(gt.GioiTinh AS NVARCHAR(20)), N'Không phân biệt')
-    FROM Phong p
-    JOIN @PhongBiAnhHuong pbh 
-        ON p.MaPhong = pbh.MaPhong
-    OUTER APPLY (
-        SELECT MAX(CAST(tvhd.GioiTinh AS NVARCHAR(20))) AS GioiTinh
-        FROM ChiTietDatCoc ctdc
-        JOIN HopDongThue hdt 
-            ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
-        JOIN ThanhVienHopDong tvhd 
-            ON hdt.MaHopDong = tvhd.MaHopDong
-        WHERE ctdc.MaPhong = p.MaPhong
-          AND hdt.TrangThai = N'Hiệu lực'
-          AND tvhd.TrangThai = N'Đang ở'
-    ) gt;
-END;
-GO
+EXEC SP_TinhDoiSoat 'TP0001';
+EXEC SP_TinhDoiSoat 'TP0002';
+EXEC SP_TinhDoiSoat 'TP0003';
+EXEC SP_TinhDoiSoat 'TP0004';
+EXEC SP_TinhDoiSoat 'TP0008';
+EXEC SP_TinhDoiSoat 'TP0009';
