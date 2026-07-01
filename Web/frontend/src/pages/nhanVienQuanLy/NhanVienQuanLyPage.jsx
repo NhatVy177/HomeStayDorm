@@ -47,8 +47,8 @@ export default function NhanVienQuanLyPage() {
   }, []);
 
   const navItems = [
-    { id: 'xac-nhan-nhan-phong', label: 'Duyệt nhận phòng', icon: 'check_circle' },
-    { id: 'xac-nhan-thanh-toan', label: 'Duyệt thanh toán', icon: 'payments' },
+    { id: 'xac-nhan-nhan-phong', label: 'Xác nhận khả năng nhận cọc', icon: 'assignment_turned_in' },
+    { id: 'xac-nhan-thanh-toan', label: 'Xác nhận thanh toán cọc', icon: 'payments' },
     { id: 'lap-bien-ban-ban-giao', label: 'Bàn giao phòng', icon: 'description' },
     { id: 'lap-bien-ban-kiem-tra-phong', label: 'Xử lý trả phòng', icon: 'receipt_long' },
     { id: 'ghi-nhan-thanh-ly-hop-dong', label: 'Thanh lý hợp đồng', icon: 'description' },

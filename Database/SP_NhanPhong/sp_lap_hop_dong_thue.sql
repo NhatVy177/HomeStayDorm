@@ -112,10 +112,14 @@ BEGIN
         pdc.HinhThucThue,
         pdc.TrangThaiCoc,
         pdc.TrangThaiThanhToan,
-        -- CoTheLapHopDong = 1 khi đủ 3 điều kiện
+        hs.MaHoSoCuTru,
+        ISNULL(hs.TrangThaiHoSo, N'Chưa cập nhật')      AS TrangThaiHoSoCuTru,
+        hs.NgayDuyet                                    AS NgayDuyetCuTru,
+        -- CoTheLapHopDong = 1 khi đủ điều kiện cọc, thanh toán, chưa có HĐ và đã duyệt cư trú
         CASE
             WHEN pdc.TrangThaiCoc       = N'Hiệu lực'
              AND pdc.TrangThaiThanhToan = N'Đã TT'
+             AND hs.TrangThaiHoSo       = N'Đã duyệt cư trú'
              AND NOT EXISTS (
                     SELECT 1 FROM dbo.HopDongThue hdt
                     WHERE hdt.MaPhieuCoc = pdc.MaPhieuDatCoc
@@ -127,6 +131,7 @@ BEGIN
     JOIN        dbo.KhachHang       kh   ON kh.MaKhachHang  = pdc.MaKhachHang
     JOIN        dbo.NguoiDung       nd   ON nd.MaNguoiDung   = kh.MaKhachHang
     JOIN        dbo.ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+    LEFT JOIN   dbo.HoSoCuTru       hs   ON hs.MaPhieuDatCoc = pdc.MaPhieuDatCoc
     WHERE
         -- Lọc từ khóa
         (
@@ -149,7 +154,10 @@ BEGIN
         pdc.ThoiGianNhanPhong,
         pdc.HinhThucThue,
         pdc.TrangThaiCoc,
-        pdc.TrangThaiThanhToan
+        pdc.TrangThaiThanhToan,
+        hs.MaHoSoCuTru,
+        hs.TrangThaiHoSo,
+        hs.NgayDuyet
     ORDER BY pdc.ThoiDiemDatCoc DESC;
 END;
 GO
@@ -280,7 +288,21 @@ BEGIN
             RETURN;
         END;
 
-        -- [5] Phòng/giường chưa bị hợp đồng hiệu lực khác chiếm
+        -- [5] Hồ sơ cư trú đã được quản lý duyệt?
+        IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NULL
+           OR NOT EXISTS (
+                SELECT 1
+                FROM dbo.HoSoCuTru
+                WHERE MaPhieuDatCoc = @MaPhieuDatCoc
+                  AND TrangThaiHoSo = N'Đã duyệt cư trú'
+           )
+        BEGIN
+            SET @MaLoi    = -30;
+            SET @ThongBao = N'Phiếu đặt cọc chưa có hồ sơ cư trú được quản lý duyệt. Vui lòng chờ duyệt cư trú trước khi lập hợp đồng.';
+            RETURN;
+        END;
+
+        -- [6] Phòng/giường chưa bị hợp đồng hiệu lực khác chiếm
         IF @HinhThucThue = N'Nguyên phòng'
         BEGIN
             -- Kiểm tra theo phòng
@@ -399,22 +421,33 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Lấy thông tin phòng (giới tính, sức chứa)
+    -- Lấy thông tin phòng (giới tính, sức chứa) và hình thức thuê, số lượng giường đã đặt
     DECLARE
         @GioiTinhChoPhep    NVARCHAR(20),
-        @SucChuaToiDa       INT;
+        @SucChuaToiDa       INT,
+        @HinhThucThue       NVARCHAR(20),
+        @SoGiuongDat        INT;
 
     SELECT TOP 1
         @GioiTinhChoPhep = p.GioiTinhChoPhep,
-        @SucChuaToiDa    = lp.SucChuaToiDa
+        @SucChuaToiDa    = lp.SucChuaToiDa,
+        @HinhThucThue    = pdc.HinhThucThue
     FROM        dbo.ChiTietDatCoc   ctdc
+    JOIN        dbo.PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
     JOIN        dbo.Phong           p    ON p.MaPhong      = ctdc.MaPhong
     JOIN        dbo.LoaiPhong       lp   ON lp.MaLoaiPhong = p.MaLoaiPhong
     WHERE ctdc.MaPhieuDatCoc = @MaPhieuDatCoc;
 
-    -- Validate từng thành viên + đánh dấu vượt sức chứa ngay tại result set 1
-    -- Dùng CTE + ROW_NUMBER để xếp số thứ tự trong nhóm hợp lệ,
-    -- những người có ValidRank > SucChuaToiDa cũng bị đánh là Bị từ chối.
+    SELECT @SoGiuongDat = COUNT(*) 
+    FROM dbo.ChiTietDatCoc 
+    WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+
+    -- Đặt giới hạn số thành viên tối đa
+    DECLARE @GioiHanThanhVien INT = @SucChuaToiDa;
+    IF @HinhThucThue = N'Ghép giường'
+        SET @GioiHanThanhVien = @SoGiuongDat;
+
+    -- Validate từng thành viên + đánh dấu vượt giới hạn ngay tại result set 1
     ;WITH Validity AS (
         SELECT
             tv.HoTen, tv.NgaySinh, tv.GioiTinh, tv.CCCD, tv.SDT, tv.Email, tv.QuocTich,
@@ -447,16 +480,21 @@ BEGIN
     )
     SELECT
         HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email, QuocTich,
-        -- Trạng thái cuối: bị từ chối nếu sai cá nhân HOẶC vượt sức chứa
+        -- Trạng thái cuối: bị từ chối nếu sai cá nhân HOẶC vượt giới hạn
         CASE
             WHEN IsValid = 0                         THEN N'Bị từ chối'
-            WHEN ValidRank > @SucChuaToiDa           THEN N'Bị từ chối'
+            WHEN ValidRank > @GioiHanThanhVien       THEN N'Bị từ chối'
             ELSE N'Đang ở'
         END AS TrangThaiKiemTra,
         -- Lý do
         CASE
             WHEN IsValid = 0                         THEN LyDoCaNhan
-            WHEN ValidRank > @SucChuaToiDa           THEN N'Vượt sức chứa tối đa (' + CAST(@SucChuaToiDa AS NVARCHAR) + N' người)'
+            WHEN ValidRank > @GioiHanThanhVien       THEN 
+                CASE 
+                    WHEN @HinhThucThue = N'Ghép giường' 
+                    THEN N'Vượt số giường đã đặt cọc (' + CAST(@GioiHanThanhVien AS NVARCHAR) + N' giường)'
+                    ELSE N'Vượt sức chứa tối đa (' + CAST(@GioiHanThanhVien AS NVARCHAR) + N' người)'
+                END
             ELSE NULL
         END AS LyDo
     FROM Ranked;
@@ -471,7 +509,7 @@ BEGIN
                 WHEN @GioiTinhChoPhep = N'Nữ'  AND tv.GioiTinh = N'Nam' THEN 0
                 ELSE 1
             END)                                                        AS ThanhVienHopLe,
-        @SucChuaToiDa                                                   AS SucChuaToiDa,
+        @GioiHanThanhVien                                               AS SucChuaToiDa,
         CASE
             WHEN SUM(CASE
                         WHEN ISNULL(LTRIM(RTRIM(tv.CCCD)), '') = ''             THEN 0
@@ -479,8 +517,12 @@ BEGIN
                         WHEN @GioiTinhChoPhep = N'Nam' AND tv.GioiTinh = N'Nữ' THEN 0
                         WHEN @GioiTinhChoPhep = N'Nữ'  AND tv.GioiTinh = N'Nam' THEN 0
                         ELSE 1
-                    END) > @SucChuaToiDa
-            THEN N'Vượt sức chứa'
+                    END) > @GioiHanThanhVien
+            THEN 
+                CASE 
+                    WHEN @HinhThucThue = N'Ghép giường' THEN N'Vượt số giường'
+                    ELSE N'Vượt sức chứa'
+                END
             WHEN SUM(CASE
                         WHEN ISNULL(LTRIM(RTRIM(tv.CCCD)), '') = ''             THEN 0
                         WHEN ISNULL(LTRIM(RTRIM(tv.SDT)),  '') = ''             THEN 0
@@ -612,7 +654,24 @@ BEGIN
         END;
 
         -- -----------------------------------------------
-        -- BƯỚC KT-5: Ngày hợp lệ?
+        -- BƯỚC KT-5: Hồ sơ cư trú đã được quản lý duyệt?
+        -- -----------------------------------------------
+        IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NULL
+           OR NOT EXISTS (
+                SELECT 1
+                FROM dbo.HoSoCuTru
+                WHERE MaPhieuDatCoc = @MaPhieuDatCoc
+                  AND TrangThaiHoSo = N'Đã duyệt cư trú'
+           )
+        BEGIN
+            SET @MaLoi    = -30;
+            SET @ThongBao = N'Phiếu đặt cọc chưa có hồ sơ cư trú được quản lý duyệt. Vui lòng chờ duyệt cư trú trước khi lập hợp đồng.';
+            ROLLBACK TRAN;
+            RETURN;
+        END;
+
+        -- -----------------------------------------------
+        -- BƯỚC KT-6: Ngày hợp lệ?
         -- -----------------------------------------------
         IF @NgayBatDau IS NULL OR @NgayKetThuc IS NULL OR @NgayKetThuc <= @NgayBatDau
         BEGIN
@@ -623,7 +682,7 @@ BEGIN
         END;
 
         -- -----------------------------------------------
-        -- BƯỚC KT-6: Kỳ thanh toán hợp lệ?
+        -- BƯỚC KT-7: Kỳ thanh toán hợp lệ?
         -- -----------------------------------------------
         IF @KyThanhToan NOT IN (N'Hàng tháng', N'Hàng quý')
         BEGIN
@@ -634,7 +693,7 @@ BEGIN
         END;
 
         -- -----------------------------------------------
-        -- BƯỚC KT-7: 2 checkbox xác nhận trên màn 5
+        -- BƯỚC KT-8: 2 checkbox xác nhận trên màn 5
         --   Checkbox 1: Khách hàng đã kiểm tra thông tin và đồng ý ký HĐ
         --   Checkbox 2: Nhân viên Sale xác nhận thông tin HĐ là chính xác
         -- -----------------------------------------------
@@ -788,11 +847,24 @@ BEGIN
                 RETURN;
             END;
 
-            IF @SoThanhVienHopLe > @SucChuaToiDa
+            -- Lấy số giường đã cọc để so sánh
+            DECLARE @SoGiuongCoc INT;
+            SELECT @SoGiuongCoc = COUNT(*) FROM dbo.ChiTietDatCoc WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+
+            IF @HinhThucThue = N'Ghép giường' AND @SoThanhVienHopLe > @SoGiuongCoc
             BEGIN
                 SET @MaLoi    = -10;
                 SET @ThongBao = N'Số thành viên hợp lệ (' + CAST(@SoThanhVienHopLe AS NVARCHAR)
-                                + N') vượt sức chứa tối đa (' + CAST(@SucChuaToiDa AS NVARCHAR) + N').';
+                                + N') vượt quá số giường đã đặt cọc (' + CAST(@SoGiuongCoc AS NVARCHAR) + N' giường).';
+                ROLLBACK TRAN;
+                RETURN;
+            END;
+
+            IF @HinhThucThue = N'Nguyên phòng' AND @SoThanhVienHopLe > @SucChuaToiDa
+            BEGIN
+                SET @MaLoi    = -10;
+                SET @ThongBao = N'Số thành viên hợp lệ (' + CAST(@SoThanhVienHopLe AS NVARCHAR)
+                                + N') vượt sức chứa tối đa của phòng/căn hộ (' + CAST(@SucChuaToiDa AS NVARCHAR) + N' người).';
                 ROLLBACK TRAN;
                 RETURN;
             END;
@@ -1074,7 +1146,7 @@ GO
 -- Màn hình : Hiển thị chi tiết hợp đồng sau khi lập / tra cứu chi tiết
 -- Mục đích : Lấy toàn bộ thông tin chi tiết của hợp đồng để hiển thị lên UI.
 -- Input    : @MaHopDong
--- Output   : 4 Result sets
+-- Output   : 5 Result sets
 -- ============================================================
 CREATE OR ALTER PROCEDURE SP_LayChiTietHopDongThue
     @MaHopDong VARCHAR(6)
@@ -1088,6 +1160,9 @@ BEGIN
         hd.NgayKyHD,
         DATEDIFF(MONTH, hd.NgayBatDau, hd.NgayKetThuc) AS ThoiHanThue,
         hd.TrangThai AS TrangThaiKy, -- Hiển thị ở Trạng thái ký (Hiệu lực / Đã xác nhận)
+        hd.KyThanhToan,
+        pdc.HinhThucThue,
+        hd.SoGiuongThue,
         p.TenPhong,
         -- Ghép phòng-giường nếu là ghép giường
         CASE
@@ -1145,6 +1220,14 @@ BEGIN
     SELECT N'Điều 2: Bảo trì tài sản' AS TieuDeNoiQuy, N'Bên B có trách nhiệm bảo quản các trang thiết bị trong phòng. Mọi hư hỏng do lỗi chủ quan sẽ phải bồi thường theo giá trị thị trường.' AS NoiDung
     UNION ALL
     SELECT N'Điều 3: Trả phòng & Cọc' AS TieuDeNoiQuy, N'Bên B cần thông báo trước ít nhất 30 ngày khi có ý định chấm dứt hợp đồng. Tiền cọc sẽ được hoàn trả sau khi trừ các chi phí vệ sinh và hư hỏng (nếu có).' AS NoiDung;
+
+    -- [Result Set 5] Quy định hoàn cọc đang áp dụng
+    SELECT
+        qh.MaQuyDinhHoanCoc,
+        qh.TenQuyDinh,
+        qh.TyLeHoanCoc
+    FROM dbo.QuyDinhHoanCoc qh
+    ORDER BY qh.MaQuyDinhHoanCoc;
 END;
 GO
 

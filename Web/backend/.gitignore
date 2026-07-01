@@ -1,3 +1,7 @@
 node_modules
 .env
 .DS_Store
+
+# Ảnh chứng từ upload (giữ thư mục, bỏ qua file thật)
+uploads/chung-tu/*
+!uploads/chung-tu/.gitkeep

@@ -62,7 +62,7 @@ function initials(name = '') {
 }
 
 function statusTone(status) {
-  if (['Chấp nhận', 'Đã xem', 'Đã lên lịch'].includes(status)) return 'done';
+  if (['Xác nhận cọc', 'Đã xem', 'Đã lên lịch'].includes(status)) return 'done';
   if (['Từ chối', 'Đã hủy', 'Yêu cầu hủy'].includes(status)) return 'danger';
   return 'warn';
 }

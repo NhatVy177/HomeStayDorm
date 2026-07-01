@@ -1,0 +1,68 @@
+###############################################################################
+# dat-coc.http — Kiểm thử tầng BUS (service) + DAO (stored procedure) không cần UI
+#
+# Cách dùng: cài extension "REST Client" (humao.rest-client) trong VS Code,
+# bật backend (npm run dev), rồi bấm "Send Request" phía trên từng block ###.
+# Token tự gán từ phản hồi đăng nhập nhờ biến {{login.response.body.token}}.
+###############################################################################
+
+@base = http://localhost:5000/api
+
+### 0. Health check — backend đã chạy chưa
+GET {{base}}/health
+
+### 1. Đăng nhập Sale (nv0001/123) — lấy token. Phản hồi: { token, user }
+# @name login
+POST {{base}}/auth/dang-nhap
+Content-Type: application/json
+
+{
+  "tenDangNhap": "nv0001",
+  "matKhau": "123"
+}
+
+### 2. HienThi() — danh sách phiếu của Sale (SP_DanhSachDatCocSale)
+#    Lấy 1 mã ở trạng thái "Chờ tiếp nhận" để dùng cho bước 3.
+GET {{base}}/dat-coc
+Authorization: Bearer {{login.response.body.token}}
+
+### 3. btn_Click() — Gửi yêu cầu đặt cọc (SP_GuiYeuCauDatCoc)
+#    maNhanVienSale KHÔNG gửi ở body — backend lấy từ token. Đổi maDangKy theo bước 2.
+#    Lần 1: 200 + trạng thái -> "Chờ xác nhận cọc". Lần 2 (lặp lại): 409 (map THROW 50202).
+POST {{base}}/dat-coc/gui-yeu-cau
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "maDangKy": "DK0001"
+}
+
+### 3b. Trường hợp lỗi — mã đăng ký không tồn tại => 404 (map THROW 50201)
+POST {{base}}/dat-coc/gui-yeu-cau
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "maDangKy": "XXXXXX"
+}
+
+### 3c. Thiếu token => 401 (requireAuth) — bỏ header Authorization để kiểm tra
+POST {{base}}/dat-coc/gui-yeu-cau
+Content-Type: application/json
+
+{
+  "maDangKy": "DK0001"
+}
+
+###############################################################################
+# Các endpoint còn lại của bước đặt cọc (ngoài lát dọc mẫu — tham khảo).
+# DC02/DC03 đã có SP; DC04/DC05 service đã gọi SP nhưng SP CHƯA tồn tại => sẽ lỗi.
+###############################################################################
+
+### 4. DC02 — Danh sách chờ Quản lý xác nhận (SP_DanhSachChoXacNhanCoc)
+GET {{base}}/dat-coc/cho-xac-nhan
+Authorization: Bearer {{login.response.body.token}}
+
+### 5. DC03 — Danh sách chờ Kế toán lập phiếu (SP_DanhSachChoLapPhieuDatCoc)
+GET {{base}}/dat-coc/cho-lap-phieu
+Authorization: Bearer {{login.response.body.token}}

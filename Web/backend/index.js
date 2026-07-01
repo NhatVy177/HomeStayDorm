@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getPool } from './database/connection.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
@@ -40,6 +42,10 @@ app.use(cors({
   }
 }));
 app.use(express.json());
+
+// Phục vụ ảnh chứng từ đã upload (đường dẫn lưu trong PhieuDatCoc.ChungTuThanhToan).
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/health', (req, res) => {
   res.json({ message: 'HappyRoom backend is running' });

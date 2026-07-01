@@ -97,7 +97,7 @@ CREATE TABLE Giuong (
     SoGiuong    INT             NOT NULL,
     TinhTrang   NVARCHAR(20)    NOT NULL DEFAULT N'Trống', 
 PRIMARY KEY (MaPhong, MaGiuong),
-    CONSTRAINT CHK_Giuong_TinhTrang CHECK (TinhTrang IN (N'Trống', N'Đã đặt cọc', N'Đang thuê'))
+    CONSTRAINT CHK_Giuong_TinhTrang CHECK (TinhTrang IN (N'Trống', N'Giữ chỗ', N'Đã đặt cọc', N'Đang thuê'))
 );
 -- 9. PHIẾU ĐĂNG KÝ
 CREATE TABLE PhieuDangKy (
@@ -149,6 +149,7 @@ CREATE TABLE PhieuDatCoc (
     TrangThaiThanhToan      NVARCHAR(20)     NOT NULL DEFAULT N'Chờ TT',
     ThoiGianXacNhanTT       DATETIME,
     ChungTuThanhToan        VARCHAR(500),
+    GhiChuChungTu           NVARCHAR(200),
     ThoiGianNhanPhong       DATETIME,
     HinhThucThue            NVARCHAR(20)     NOT NULL,
     TrangThaiCoc            NVARCHAR(20)     NOT NULL DEFAULT N'Hiệu lực',

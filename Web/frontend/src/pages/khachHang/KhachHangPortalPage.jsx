@@ -2,9 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { khachMoiApi } from '../khachMoi/khachMoi.api.js';
+import { datCocApi } from '../datCoc/datCoc.api.js';
 import '../khamPhaPhong/khamPhaPhong.css';
 import './khachHangPortal.css';
 import LichXemPhongPage from '../lichXemPhong/LichXemPhongPage.jsx';
+
+// Gốc backend để mở lại file chứng từ đã upload (DB lưu đường dẫn /uploads/chung-tu/..).
+const FILE_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
 const filtersInitial = { tuKhoa: '', khuVuc: '', hinhThucThue: '', loaiPhong: '', mucGiaToiDa: '' };
 const rentInitial = {
@@ -205,13 +209,13 @@ function normalizeRoomDetail(payload, fallback = {}) {
 }
 
 function statusTone(status = '') {
-  if (['Chấp nhận', 'Đã xem', 'Đã lên lịch', 'Đã TT', 'Hiệu lực', 'Đã tiếp nhận', 'Chờ xác nhận cọc'].includes(status)) return 'done';
+  if (['Xác nhận cọc', 'Đã xem', 'Đã lên lịch', 'Đã TT', 'Hiệu lực', 'Đã tiếp nhận', 'Chờ xác nhận cọc'].includes(status)) return 'done';
   if (['Từ chối', 'Đã hủy', 'Yêu cầu hủy', 'Hết hạn'].includes(status)) return 'danger';
   return 'warn';
 }
 
 function statusIcon(status = '') {
-  if (['Chấp nhận', 'Đã xem', 'Đã tiếp nhận', 'Chờ xác nhận cọc'].includes(status)) return '✅';
+  if (['Xác nhận cọc', 'Đã xem', 'Đã tiếp nhận', 'Chờ xác nhận cọc'].includes(status)) return '✅';
   if (['Từ chối', 'Đã hủy'].includes(status)) return '❌';
   if (status === 'Chờ tiếp nhận') return '⏳';
   if (status === 'Đã tiếp nhận') return '📥';
@@ -865,7 +869,7 @@ export default function KhachHangPortalPage() {
                 { key: 'Tất cả', label: 'Tất cả' },
                 { key: 'Chờ tiếp nhận', label: 'Chờ tiếp nhận' },
                 { key: 'Chờ xác nhận cọc', label: 'Chờ xác nhận cọc' },
-                { key: 'Chấp nhận', label: 'Chấp nhận' },
+                { key: 'Xác nhận cọc', label: 'Xác nhận cọc' },
                 { key: 'Từ chối', label: 'Từ chối' }
               ].map(f => (
                 <button
@@ -1150,21 +1154,35 @@ export default function KhachHangPortalPage() {
   function handleFileUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setUploadForm((prev) => ({ ...prev, fileBase64: ev.target.result, fileName: file.name }));
-    reader.readAsDataURL(file);
+    // Giữ File thật để gửi multipart (không còn dùng base64).
+    setUploadForm((prev) => ({ ...prev, file, fileName: file.name }));
   }
 
   async function submitMinhChung(e) {
     e.preventDefault();
     if (!datCocSelected) return;
+    if (!uploadForm.file) {
+      setToast('Vui lòng chọn ảnh hoặc PDF chứng từ thanh toán.');
+      return;
+    }
     setUploading(true);
     try {
-      await khachMoiApi.uploadMinhChung(datCocSelected.maPhieuCoc, {
-        minhChung: JSON.stringify({ maGiaoDich: uploadForm.maGiaoDich, ngayGiaoDich: uploadForm.ngayGiaoDich, nganHang: uploadForm.nganHang, ghiChu: uploadForm.ghiChu, file: uploadForm.fileBase64, fileName: uploadForm.fileName })
-      });
+      // Gộp thông tin giao dịch vào ghi chú (cột GhiChuChungTu giới hạn 200 ký tự).
+      const ghiChu = [
+        uploadForm.nganHang && `Ngân hàng: ${uploadForm.nganHang}`,
+        uploadForm.maGiaoDich && `Mã GD: ${uploadForm.maGiaoDich}`,
+        uploadForm.ngayGiaoDich && `Ngày GD: ${uploadForm.ngayGiaoDich}`,
+        uploadForm.ghiChu
+      ].filter(Boolean).join(' · ').slice(0, 200);
+
+      const fd = new FormData();
+      fd.append('file', uploadForm.file);
+      if (ghiChu) fd.append('ghiChu', ghiChu);
+
+      // Endpoint khách: gửi file thật + qua SP_CapNhatMinhChungThanhToanCoc (check hạn 24h + sở hữu).
+      await datCocApi.capNhatMinhChungKhach(datCocSelected.maPhieuCoc, fd);
       setToast('Đã gửi chứng từ thành công. Vui lòng chờ nhân viên kiểm tra.');
-      const updated = { ...datCocSelected, trangThai: 'Chờ xác nhận', minhChungThanhToan: JSON.stringify({ maGiaoDich: uploadForm.maGiaoDich }) };
+      const updated = { ...datCocSelected, trangThai: 'Chờ xác nhận', minhChungThanhToan: uploadForm.fileName };
       setDatCocSelected(updated);
       setDatCocList((prev) => prev.map((p) => p.maPhieuCoc === updated.maPhieuCoc ? updated : p));
     } catch (err) {
@@ -1257,7 +1275,15 @@ export default function KhachHangPortalPage() {
   }
 
   function renderDatCocDetail(phieu) {
-    const minhChung = (() => { try { return phieu.minhChungThanhToan ? JSON.parse(phieu.minhChungThanhToan) : null; } catch { return null; } })();
+    // minhChungThanhToan giờ là ĐƯỜNG DẪN file (vd /uploads/chung-tu/..); vẫn đỡ được dữ liệu JSON cũ.
+    const minhChung = (() => {
+      const raw = phieu.minhChungThanhToan;
+      if (!raw) return null;
+      if (raw.startsWith('/') || raw.startsWith('http')) {
+        return { fileName: raw.split('/').pop(), fileUrl: raw.startsWith('http') ? raw : `${FILE_BASE}${raw}` };
+      }
+      try { return JSON.parse(raw); } catch { return { fileName: raw }; }
+    })();
     const isExpired = phieu.trangThai === 'Hết hạn' || phieu.trangThai === 'Đã hủy';
     const isWaiting = phieu.trangThai === 'Chờ thanh toán';
     const isSent = phieu.trangThai === 'Chờ xác nhận';
@@ -1399,7 +1425,9 @@ export default function KhachHangPortalPage() {
                 <div className="dc-receipt-box">
                   <span className="dc-chip dc-chip-info" style={{ fontSize: 11 }}>⏳ Chờ kiểm tra chứng từ</span>
                   {minhChung.fileName && (
-                    <div className="dc-receipt-file"><Icon name="profile" /><span>{minhChung.fileName}</span></div>
+                    minhChung.fileUrl
+                      ? <a className="dc-receipt-file" href={minhChung.fileUrl} target="_blank" rel="noreferrer"><Icon name="profile" /><span>{minhChung.fileName}</span></a>
+                      : <div className="dc-receipt-file"><Icon name="profile" /><span>{minhChung.fileName}</span></div>
                   )}
                   {minhChung.maGiaoDich && <p>Mã giao dịch: <strong>{minhChung.maGiaoDich}</strong></p>}
                   <p style={{ fontSize: 12, color: 'var(--kp-soft-text)' }}>Hệ thống sẽ ghi nhận số của bạn. Đội ngũ CSKH sẽ kiểm tra và cập nhật trạng thái trong vòng 2–4 giờ làm việc.</p>
