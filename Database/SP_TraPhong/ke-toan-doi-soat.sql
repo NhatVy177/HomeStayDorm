@@ -9,9 +9,15 @@ IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_DanhSachChoDoiSoat', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachChoDoiSoat AS BEGIN SET NOCOUNT ON; END;');
 GO
 CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachChoDoiSoat
+    @MaNhanVienKeToan VARCHAR(6) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @MaChiNhanh VARCHAR(6);
+    SELECT @MaChiNhanh = MaChiNhanh
+    FROM dbo.NhanVien
+    WHERE MaNhanVien = @MaNhanVienKeToan;
 
     SELECT
         ptp.MaPhieuTra AS maPhieuTra,
@@ -40,6 +46,19 @@ BEGIN
                 N'Chờ thanh toán thêm',
                 N'Cần điều chỉnh'
             )
+      )
+      AND (
+          @MaChiNhanh IS NULL
+          OR EXISTS (
+              SELECT 1
+              FROM dbo.PhieuDatCoc pdcFilter
+              INNER JOIN dbo.ChiTietDatCoc ctdcFilter
+                  ON ctdcFilter.MaPhieuDatCoc = pdcFilter.MaPhieuDatCoc
+              INNER JOIN dbo.Phong pFilter
+                  ON pFilter.MaPhong = ctdcFilter.MaPhong
+              WHERE pdcFilter.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hd.MaPhieuCoc)
+                AND pFilter.MaChiNhanh = @MaChiNhanh
+          )
       )
     ORDER BY ptp.NgayTraThucTe DESC, ptp.NgayDangKyTra DESC, ptp.MaPhieuTra DESC;
 END;
@@ -506,10 +525,16 @@ IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_LayPhieuTraPhong', N'P') IS NULL
 GO
 CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_LayPhieuTraPhong
     @MaPhieuTra VARCHAR(6),
-    @LockForUpdate BIT = 0
+    @LockForUpdate BIT = 0,
+    @MaNhanVienKeToan VARCHAR(6) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @MaChiNhanh VARCHAR(6);
+    SELECT @MaChiNhanh = MaChiNhanh
+    FROM dbo.NhanVien
+    WHERE MaNhanVien = @MaNhanVienKeToan;
 
     IF @LockForUpdate = 1
     BEGIN
@@ -532,7 +557,20 @@ BEGIN
         LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = ptp.MaPhieuDatCoc
         LEFT JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hd.MaKhachHang, pdc.MaKhachHang)
         LEFT JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
-        WHERE ptp.MaPhieuTra = @MaPhieuTra;
+        WHERE ptp.MaPhieuTra = @MaPhieuTra
+          AND (
+              @MaChiNhanh IS NULL
+              OR EXISTS (
+                  SELECT 1
+                  FROM dbo.PhieuDatCoc pdcFilter
+                  INNER JOIN dbo.ChiTietDatCoc ctdcFilter
+                      ON ctdcFilter.MaPhieuDatCoc = pdcFilter.MaPhieuDatCoc
+                  INNER JOIN dbo.Phong pFilter
+                      ON pFilter.MaPhong = ctdcFilter.MaPhong
+                  WHERE pdcFilter.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hd.MaPhieuCoc)
+                    AND pFilter.MaChiNhanh = @MaChiNhanh
+              )
+          );
 
         RETURN;
     END
@@ -556,7 +594,20 @@ BEGIN
     LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = ptp.MaPhieuDatCoc
     LEFT JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hd.MaKhachHang, pdc.MaKhachHang)
     LEFT JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
-    WHERE ptp.MaPhieuTra = @MaPhieuTra;
+    WHERE ptp.MaPhieuTra = @MaPhieuTra
+      AND (
+          @MaChiNhanh IS NULL
+          OR EXISTS (
+              SELECT 1
+              FROM dbo.PhieuDatCoc pdcFilter
+              INNER JOIN dbo.ChiTietDatCoc ctdcFilter
+                  ON ctdcFilter.MaPhieuDatCoc = pdcFilter.MaPhieuDatCoc
+              INNER JOIN dbo.Phong pFilter
+                  ON pFilter.MaPhong = ctdcFilter.MaPhong
+              WHERE pdcFilter.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hd.MaPhieuCoc)
+                AND pFilter.MaChiNhanh = @MaChiNhanh
+          )
+      );
 END;
 GO
 

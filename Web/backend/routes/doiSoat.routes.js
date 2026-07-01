@@ -6,6 +6,7 @@ import {
   getChiTietThuThem,
   getDanhSachChoHoanCoc,
   getDanhSachChoThuThem,
+  uploadChungTuThanhToan,
   xacNhanHoanCoc,
   xacNhanThuThem,
   taoDoiSoat
@@ -20,6 +21,7 @@ router.post('/thu-them/xac-nhan', xacNhanThuThem);
 router.get('/cho-hoan-coc', getDanhSachChoHoanCoc);
 router.get('/hoan-coc/:maDoiSoat', getChiTietHoanCoc);
 router.post('/hoan-coc/xac-nhan', xacNhanHoanCoc);
+router.post('/chung-tu', uploadChungTuThanhToan);
 router.get('/phieu-tra-phong/:maPhieuTra', getChiTietPhieuTraPhong);
 router.post('/', taoDoiSoat);
 

@@ -1,3 +1,5 @@
+import fs from 'fs/promises';
+import path from 'path';
 import { getPool, sql } from '../database/connection.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 import {
@@ -10,6 +12,9 @@ import * as doiSoatRepository from '../repositories/doiSoat.repository.js';
 const TRANG_THAI_CHO_DOI_SOAT = 'Chờ đối soát';
 const MESSAGE_STALE =
   'Phiếu trả phòng này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.';
+const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads/chung-tu-doi-soat');
+const MAX_PROOF_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PROOF_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']);
 
 function requireMaPhieuTra(maPhieuTra) {
   if (!maPhieuTra || String(maPhieuTra).trim().length > 6) {
@@ -25,6 +30,41 @@ function requireMaDoiSoat(maDoiSoat) {
   }
 
   return String(maDoiSoat).trim();
+}
+
+function sanitizeFileName(value) {
+  const raw = String(value || 'chung-tu').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const safe = raw.replace(/[^a-zA-Z0-9._-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return safe || 'chung-tu';
+}
+
+function extensionFromContentType(contentType) {
+  switch (contentType) {
+    case 'image/jpeg': return '.jpg';
+    case 'image/png': return '.png';
+    case 'image/webp': return '.webp';
+    case 'image/gif': return '.gif';
+    case 'application/pdf': return '.pdf';
+    default: return '';
+  }
+}
+
+function contentTypeFromFileName(fileName) {
+  switch (path.extname(fileName).toLowerCase()) {
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.png':
+      return 'image/png';
+    case '.webp':
+      return 'image/webp';
+    case '.gif':
+      return 'image/gif';
+    case '.pdf':
+      return 'application/pdf';
+    default:
+      return '';
+  }
 }
 
 function normalizePaymentMethod(value) {
@@ -182,15 +222,20 @@ function buildPreview(phieuTraPhong, context, overrides = {}) {
   });
 }
 
-export async function getDanhSachChoDoiSoat() {
+export async function getDanhSachChoDoiSoat(maNhanVienKeToan) {
   const pool = await getPool();
-  return doiSoatRepository.getDanhSachChoDoiSoat(pool);
+  return doiSoatRepository.getDanhSachChoDoiSoat(pool, maNhanVienKeToan);
 }
 
-export async function getChiTietPhieuTraPhong(maPhieuTraInput) {
+export async function getChiTietPhieuTraPhong(maPhieuTraInput, maNhanVienKeToan) {
   const maPhieuTra = requireMaPhieuTra(maPhieuTraInput);
   const pool = await getPool();
-  const phieuTraPhong = await doiSoatRepository.getPhieuTraPhongById(pool, maPhieuTra);
+  const phieuTraPhong = await doiSoatRepository.getPhieuTraPhongById(
+    pool,
+    maPhieuTra,
+    false,
+    maNhanVienKeToan
+  );
 
   if (!phieuTraPhong) {
     throw createServiceError('Không tìm thấy phiếu trả phòng.', 404);
@@ -246,7 +291,12 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
   try {
     await transaction.begin(sql.ISOLATION_LEVEL.SERIALIZABLE);
 
-    const phieuTraPhong = await doiSoatRepository.getPhieuTraPhongById(transaction, maPhieuTra, true);
+    const phieuTraPhong = await doiSoatRepository.getPhieuTraPhongById(
+      transaction,
+      maPhieuTra,
+      true,
+      maNhanVienKeToan
+    );
 
     if (!phieuTraPhong) {
       throw createServiceError('Không tìm thấy phiếu trả phòng.', 404);
@@ -308,6 +358,56 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
 
     throw error;
   }
+}
+
+export async function uploadChungTuThanhToan(data, maNhanVienKeToan) {
+  if (!maNhanVienKeToan) {
+    throw createServiceError('Bạn cần đăng nhập để tải chứng từ.', 401);
+  }
+
+  const maDoiSoat = requireMaDoiSoat(data?.maDoiSoat);
+  const fileName = sanitizeFileName(data?.fileName);
+  const contentType = String(data?.contentType || '').trim() || contentTypeFromFileName(fileName);
+  const dataBase64 = String(data?.dataBase64 || '').trim();
+
+  if (!ALLOWED_PROOF_TYPES.has(contentType)) {
+    throw createServiceError('Chỉ hỗ trợ ảnh JPG, PNG, WEBP, GIF hoặc PDF.', 400);
+  }
+
+  if (!dataBase64) {
+    throw createServiceError('Thiếu dữ liệu chứng từ.', 400);
+  }
+
+  const buffer = Buffer.from(dataBase64, 'base64');
+  if (buffer.length <= 0 || buffer.length > MAX_PROOF_BYTES) {
+    throw createServiceError('Dung lượng chứng từ tối đa là 5MB.', 400);
+  }
+
+  const pool = await getPool();
+  const detail = await doiSoatRepository.getChiTietThuThem(pool, maDoiSoat, maNhanVienKeToan);
+  const hasThuThem = Boolean(detail.chiTiet);
+  const hasHoanCoc = hasThuThem
+    ? false
+    : Boolean((await doiSoatRepository.getChiTietHoanCoc(pool, maDoiSoat, maNhanVienKeToan)).chiTiet);
+
+  if (!hasThuThem && !hasHoanCoc) {
+    throw createServiceError('Không tìm thấy phiếu đối soát trong chi nhánh của bạn.', 404);
+  }
+
+  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+
+  const parsed = path.parse(fileName);
+  const extension = parsed.ext || extensionFromContentType(contentType);
+  const baseName = sanitizeFileName(parsed.name || maDoiSoat);
+  const savedName = `${maDoiSoat}_${Date.now()}_${baseName}${extension}`;
+  const savedPath = path.join(UPLOAD_DIR, savedName);
+
+  await fs.writeFile(savedPath, buffer);
+
+  return {
+    url: `/uploads/chung-tu-doi-soat/${savedName}`,
+    fileName: savedName
+  };
 }
 
 export async function getDanhSachChoHoanCoc(maNhanVienKeToan) {
@@ -388,6 +488,7 @@ export default {
   getDanhSachChoDoiSoat,
   getChiTietPhieuTraPhong,
   taoDoiSoat,
+  uploadChungTuThanhToan,
   getDanhSachChoThuThem,
   getChiTietThuThem,
   xacNhanThuThem,

@@ -944,6 +944,140 @@
   grid-column: 1 / -1;
 }
 
+.qt-proof-upload {
+  align-items: stretch;
+  background: #f8fbfb;
+  border: 1.5px dashed #8fb9b7;
+  border-radius: 8px;
+  color: #3f494a;
+  display: flex;
+  min-height: 116px;
+  overflow: hidden;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.qt-proof-upload:hover {
+  background: #f1faf9;
+  border-color: #3b8280;
+}
+
+.qt-proof-upload.has-file {
+  background: #ffffff;
+  border-style: solid;
+}
+
+.qt-proof-input {
+  display: none;
+}
+
+.qt-proof-empty {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 14px;
+  min-height: 116px;
+  padding: 18px;
+  width: 100%;
+}
+
+.qt-proof-icon {
+  align-items: center;
+  background: #dbe4e5;
+  border-radius: 8px;
+  color: #00666d;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.qt-proof-icon .portal-icon,
+.qt-proof-preview .portal-icon,
+.qt-proof-remove .portal-icon {
+  stroke: currentColor;
+}
+
+.qt-proof-empty strong,
+.qt-proof-meta strong {
+  color: #191c1d;
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.qt-proof-empty small,
+.qt-proof-meta span {
+  color: #6f797a;
+  display: block;
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 3px;
+}
+
+.qt-proof-file {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 84px minmax(0, 1fr) 36px;
+  padding: 14px;
+  width: 100%;
+}
+
+.qt-proof-preview {
+  align-items: center;
+  background: #eef3f3;
+  border: 1px solid #d6e0e0;
+  border-radius: 8px;
+  color: #3b8280;
+  display: flex;
+  height: 72px;
+  justify-content: center;
+  overflow: hidden;
+  width: 84px;
+}
+
+.qt-proof-preview img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.qt-proof-meta {
+  min-width: 0;
+}
+
+.qt-proof-meta strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qt-proof-remove {
+  align-items: center;
+  background: #f4f6f6;
+  border: 1px solid #d6e0e0;
+  border-radius: 8px;
+  color: #6f797a;
+  cursor: pointer;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  width: 34px;
+}
+
+.qt-proof-remove:hover {
+  background: #ffdad6;
+  border-color: #ffb4ab;
+  color: #ba1a1a;
+}
+
+.qt-proof-path {
+  margin-top: 10px;
+}
+
 .ktp-btn-cancel {
   align-items: center;
   display: inline-flex;

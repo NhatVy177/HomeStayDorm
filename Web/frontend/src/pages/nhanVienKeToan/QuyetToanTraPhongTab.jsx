@@ -273,6 +273,82 @@ function KhauTruPanel({ title, value, children, editing, onEdit, onDone }) {
   );
 }
 
+function formatFileSize(bytes) {
+  const size = safeNumber(bytes);
+  if (size <= 0) return '';
+  if (size < 1024 * 1024) return `${Math.ceil(size / 1024)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      resolve(result.includes(',') ? result.split(',').pop() : result);
+    };
+    reader.onerror = () => reject(new Error('Không đọc được file chứng từ.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function ChungTuUpload({ evidence, onFileSelect, onRemove }) {
+  const inputId = 'qt-chung-tu-upload';
+  const hasFile = Boolean(evidence?.name);
+  const isImage = Boolean(evidence?.type?.startsWith('image/') && evidence?.previewUrl);
+
+  function handleFiles(files) {
+    const file = files?.[0];
+    if (file) onFileSelect(file);
+  }
+
+  return (
+    <div
+      className={`qt-proof-upload${hasFile ? ' has-file' : ''}`}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        handleFiles(event.dataTransfer.files);
+      }}
+    >
+      <input
+        id={inputId}
+        className="qt-proof-input"
+        type="file"
+        accept="image/*,.pdf"
+        onChange={(event) => handleFiles(event.target.files)}
+      />
+
+      {hasFile ? (
+        <div className="qt-proof-file">
+          <div className="qt-proof-preview">
+            {isImage ? (
+              <img src={evidence.previewUrl} alt="Minh chứng thanh toán" />
+            ) : (
+              <Icon name="description" />
+            )}
+          </div>
+          <div className="qt-proof-meta">
+            <strong>{evidence.name}</strong>
+            <span>{evidence.type || 'Tệp chứng từ'}{evidence.size ? ` · ${formatFileSize(evidence.size)}` : ''}</span>
+          </div>
+          <button type="button" className="qt-proof-remove" onClick={onRemove} aria-label="Bỏ chứng từ">
+            <Icon name="close" />
+          </button>
+        </div>
+      ) : (
+        <label className="qt-proof-empty" htmlFor={inputId}>
+          <span className="qt-proof-icon"><Icon name="upload_file" /></span>
+          <span>
+            <strong>Tải ảnh chứng từ lên</strong>
+            <small>Chọn ảnh/PDF hoặc kéo thả vào đây</small>
+          </span>
+        </label>
+      )}
+    </div>
+  );
+}
+
 function GhiNhanThanhToanPanel({ type }) {
   const isThuThem = type === 'thu-them';
   const title = isThuThem ? 'Ghi nhận thu thêm' : 'Ghi nhận hoàn cọc';
@@ -298,6 +374,7 @@ function GhiNhanThanhToanPanel({ type }) {
     ngayThanhToan: new Date().toISOString().slice(0, 10),
     chungTuThanhToan: ''
   });
+  const [refundEvidence, setRefundEvidence] = useState(null);
 
   async function loadRows() {
     setLoadingRows(true);
@@ -317,6 +394,14 @@ function GhiNhanThanhToanPanel({ type }) {
   useEffect(() => {
     loadRows();
   }, [isThuThem]);
+
+  useEffect(() => {
+    return () => {
+      if (refundEvidence?.previewUrl) {
+        URL.revokeObjectURL(refundEvidence.previewUrl);
+      }
+    };
+  }, [refundEvidence?.previewUrl]);
 
   const filteredRows = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
@@ -342,6 +427,7 @@ function GhiNhanThanhToanPanel({ type }) {
       ngayThanhToan: new Date().toISOString().slice(0, 10),
       chungTuThanhToan: ''
     });
+    setRefundEvidence(null);
     setLoadingDetail(true);
 
     try {
@@ -377,11 +463,23 @@ function GhiNhanThanhToanPanel({ type }) {
     setLocalError('');
     setLocalMessage('');
     try {
+      let chungTuThanhToan = refundForm.chungTuThanhToan;
+      if (refundEvidence?.file) {
+        const dataBase64 = await readFileAsBase64(refundEvidence.file);
+        const uploadResponse = await doiSoatApi.uploadChungTu({
+          maDoiSoat: selectedRefund.maDoiSoat,
+          fileName: refundEvidence.name,
+          contentType: refundEvidence.type,
+          dataBase64
+        });
+        chungTuThanhToan = uploadResponse.data.url;
+      }
+
       const payload = {
         maDoiSoat: selectedRefund.maDoiSoat,
         phuongThucThanhToan: refundForm.phuongThucThanhToan,
         ngayThanhToan: refundForm.ngayThanhToan,
-        chungTuThanhToan: refundForm.chungTuThanhToan
+        chungTuThanhToan
       };
       if (isThuThem) {
         await doiSoatApi.xacNhanThuThem(payload);
@@ -396,6 +494,31 @@ function GhiNhanThanhToanPanel({ type }) {
     } finally {
       setSubmittingRefund(false);
     }
+  }
+
+  function handleEvidenceSelect(file) {
+    setRefundEvidence((prev) => {
+      if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+      return {
+        file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
+      };
+    });
+    setRefundForm((prev) => ({
+      ...prev,
+      chungTuThanhToan: file.name
+    }));
+  }
+
+  function removeEvidence() {
+    setRefundEvidence((prev) => {
+      if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+      return null;
+    });
+    setRefundForm((prev) => ({ ...prev, chungTuThanhToan: '' }));
   }
 
   return (
@@ -566,16 +689,21 @@ function GhiNhanThanhToanPanel({ type }) {
                         onChange={(event) => setRefundForm((prev) => ({ ...prev, ngayThanhToan: event.target.value }))}
                       />
                     </label>
-                    <label className="ktp-filter-group">
+                    <div className="ktp-filter-group">
                       <span className="ktp-filter-label">Chứng từ thanh toán</span>
+                      <ChungTuUpload
+                        evidence={refundEvidence}
+                        onFileSelect={handleEvidenceSelect}
+                        onRemove={removeEvidence}
+                      />
                       <input
-                        className="ktp-input"
+                        className="ktp-input qt-proof-path"
                         type="text"
-                        placeholder="Nhập mã, tên file hoặc đường dẫn chứng từ..."
+                        placeholder="Hoặc nhập mã, tên file, đường dẫn chứng từ..."
                         value={refundForm.chungTuThanhToan}
                         onChange={(event) => setRefundForm((prev) => ({ ...prev, chungTuThanhToan: event.target.value }))}
                       />
-                    </label>
+                    </div>
                   </section>
                 </>
               ) : null}

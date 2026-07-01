@@ -1,8 +1,19 @@
 import doiSoatService from '../services/doiSoat.service.js';
 
+export async function uploadChungTuThanhToan(req, res, next) {
+  try {
+    const maNhanVienKeToan = req.user?.maNguoiDung;
+    const data = await doiSoatService.uploadChungTuThanhToan(req.body, maNhanVienKeToan);
+    res.status(201).json(data);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getDanhSachChoDoiSoat(req, res, next) {
   try {
-    const danhSach = await doiSoatService.getDanhSachChoDoiSoat();
+    const maNhanVienKeToan = req.user?.maNguoiDung;
+    const danhSach = await doiSoatService.getDanhSachChoDoiSoat(maNhanVienKeToan);
     res.json({ danhSach });
   } catch (error) {
     next(error);
@@ -12,7 +23,8 @@ export async function getDanhSachChoDoiSoat(req, res, next) {
 export async function getChiTietPhieuTraPhong(req, res, next) {
   try {
     const { maPhieuTra } = req.params;
-    const data = await doiSoatService.getChiTietPhieuTraPhong(maPhieuTra);
+    const maNhanVienKeToan = req.user?.maNguoiDung;
+    const data = await doiSoatService.getChiTietPhieuTraPhong(maPhieuTra, maNhanVienKeToan);
     res.json(data);
   } catch (error) {
     next(error);

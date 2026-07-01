@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { getPool } from './database/connection.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
@@ -45,7 +46,8 @@ app.use(cors({
     return callback(null, false);
   }
 }));
-app.use(express.json());
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+app.use(express.json({ limit: '8mb' }));
 app.use((req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   next();

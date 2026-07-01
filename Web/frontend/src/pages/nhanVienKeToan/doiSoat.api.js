@@ -10,6 +10,9 @@ export const doiSoatApi = {
   taoDoiSoat: (data) =>
     httpClient.post('/accountant/doi-soat', data),
 
+  uploadChungTu: (data) =>
+    httpClient.post('/accountant/doi-soat/chung-tu', data),
+
   getDanhSachChoHoanCoc: () =>
     httpClient.get('/accountant/doi-soat/cho-hoan-coc'),
 

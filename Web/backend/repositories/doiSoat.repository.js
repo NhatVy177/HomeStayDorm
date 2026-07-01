@@ -14,15 +14,18 @@ async function execute(db, procedureName, parameters = []) {
   return request.execute(procedureName);
 }
 
-export async function getDanhSachChoDoiSoat(db) {
-  const result = await execute(db, 'SP_TraPhong_KeToan_DanhSachChoDoiSoat');
+export async function getDanhSachChoDoiSoat(db, maNhanVienKeToan) {
+  const result = await execute(db, 'SP_TraPhong_KeToan_DanhSachChoDoiSoat', [
+    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null }
+  ]);
   return result.recordset;
 }
 
-export async function getPhieuTraPhongById(db, maPhieuTra, lockForUpdate = false) {
+export async function getPhieuTraPhongById(db, maPhieuTra, lockForUpdate = false, maNhanVienKeToan = null) {
   const result = await execute(db, 'SP_TraPhong_KeToan_LayPhieuTraPhong', [
     { name: 'MaPhieuTra', type: sql.VarChar(6), value: maPhieuTra },
-    { name: 'LockForUpdate', type: sql.Bit, value: lockForUpdate ? 1 : 0 }
+    { name: 'LockForUpdate', type: sql.Bit, value: lockForUpdate ? 1 : 0 },
+    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null }
   ]);
 
   return result.recordset[0] || null;
