@@ -390,3 +390,6 @@ PRINT N'- Vao tab Ke toan/Ghi nhan thu phong: tim HD9098.';
 PRINT N'- Vao tab Quan ly/Lap bien ban ban giao: tim HD9099.';
 PRINT N'- Vao tab Quan ly/Lap bien ban ban giao: tim HD9100 de test nguyen can.';
 GO
+
+
+-- Test pull
