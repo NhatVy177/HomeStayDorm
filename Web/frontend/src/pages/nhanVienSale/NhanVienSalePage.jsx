@@ -52,7 +52,7 @@ export default function NhanVienSalePage() {
     { id: 'tra-cuu', label: 'Kiểm tra phòng/giường', icon: 'meeting_room' },
     { id: 'lich-xem', label: 'Lịch xem phòng', icon: 'pending_actions' },
     { id: 'dat-coc', label: 'Đặt cọc', icon: 'account_balance_wallet' },
-    { id: 'nhan-phong', label: 'Cập nhật cư trú', icon: 'badge' },
+    { id: 'nhan-phong', label: 'Ghi nhận cư trú', icon: 'badge' },
     { id: 'hop-dong-thue', label: 'Hợp đồng thuê', icon: 'article' },
     { id: 'tra-phong', label: 'Trả phòng', icon: 'logout' },
     { id: 'khach-hang', label: 'Khách hàng', icon: 'person' }

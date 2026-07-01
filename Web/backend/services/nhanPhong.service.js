@@ -197,11 +197,11 @@ export async function duyetHoSoCuTru(data = {}) {
   if (!maNhanVienQuanLy) {
     throw createServiceError('Không xác định được nhân viên quản lý đang thực hiện.');
   }
-  if (!['Đã duyệt cư trú', 'Cần điều chỉnh', 'Từ chối cư trú'].includes(ketQua)) {
+  if (!['Đã duyệt cư trú', 'Từ chối cư trú'].includes(ketQua)) {
     throw createServiceError('Kết quả duyệt hồ sơ cư trú không hợp lệ.');
   }
-  if (ketQua !== 'Đã duyệt cư trú' && !String(data.ghiChuQuanLy || '').trim()) {
-    throw createServiceError('Vui lòng nhập ghi chú khi yêu cầu điều chỉnh hoặc từ chối hồ sơ.');
+  if (ketQua === 'Từ chối cư trú' && !String(data.ghiChuQuanLy || '').trim()) {
+    throw createServiceError('Vui lòng nhập ghi chú khi từ chối hồ sơ.');
   }
 
   try {

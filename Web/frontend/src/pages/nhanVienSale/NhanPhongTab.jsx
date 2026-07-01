@@ -36,7 +36,7 @@ const demoPhieuCocs = [
     viTriThue: 'Phòng P202',
     thoiGianNhanPhong: '2026-07-02',
     trangThaiThanhToan: 'Đã TT',
-    trangThaiHoSo: 'Cần điều chỉnh',
+    trangThaiHoSo: 'Từ chối cư trú',
     gioiTinhChoPhep: 'Không phân biệt',
     sucChuaToiDa: 3,
     soGiuongDaCoc: 3,
@@ -160,11 +160,9 @@ function StatusBadge({ value }) {
   const label = value || 'Chưa cập nhật';
   const tone = label === 'Đã duyệt cư trú'
     ? 'is-success'
-    : label === 'Cần điều chỉnh'
-      ? 'is-warning'
-      : label === 'Từ chối cư trú'
-        ? 'is-danger'
-        : 'is-primary';
+    : label === 'Từ chối cư trú'
+      ? 'is-danger'
+      : 'is-primary';
   return <span className={`residence-badge ${tone}`}>{label}</span>;
 }
 
@@ -316,7 +314,7 @@ export default function NhanPhongTab() {
 
       <section className="residence-hero">
         <div>
-          <p className="residence-eyebrow">Cập nhật cư trú</p>
+          <p className="residence-eyebrow">Ghi nhận cư trú</p>
           <h2>Hoàn tất thông tin trước khi lập hợp đồng</h2>
           <p>Sale đối chiếu giấy tờ, nhập thành viên ở cùng và gửi quản lý duyệt điều kiện lưu trú.</p>
         </div>
@@ -351,7 +349,7 @@ export default function NhanPhongTab() {
       <section className="ktp-table-section">
         <div className="residence-table-head">
           <div>
-            <h3>Phiếu cọc chờ cập nhật cư trú</h3>
+            <h3>Phiếu cọc chờ ghi nhận cư trú</h3>
             <p>Chỉ các hồ sơ được quản lý duyệt mới chuyển sang bước lập hợp đồng.</p>
           </div>
         </div>
@@ -372,7 +370,7 @@ export default function NhanPhongTab() {
                 <tr><td colSpan="6" className="text-center">Đang tải dữ liệu...</td></tr>
               )}
               {!loading && normalizedList.length === 0 && (
-                <tr><td colSpan="6" className="text-center">Không có phiếu cọc cần cập nhật cư trú.</td></tr>
+                <tr><td colSpan="6" className="text-center">Không có phiếu cọc cần ghi nhận cư trú.</td></tr>
               )}
               {!loading && normalizedList.map((item) => {
                 const editable = canEditResidenceProfile(item.trangThaiHoSo);
@@ -395,9 +393,9 @@ export default function NhanPhongTab() {
                         type="button"
                         onClick={() => openForm(item)}
                         disabled={!editable}
-                        title={editable ? 'Cập nhật hồ sơ cư trú' : 'Hồ sơ đang chờ quản lý xử lý'}
+                        title={editable ? 'Ghi nhận thông tin cư trú' : 'Hồ sơ đang chờ quản lý xử lý'}
                       >
-                        {editable ? 'Cập nhật' : 'Chờ duyệt'}
+                        {editable ? 'Ghi nhận' : 'Chờ duyệt'}
                       </button>
                     </td>
                   </tr>

@@ -16,8 +16,8 @@ PRINT N'============================================================';
               Dung de test tab "Lap bien ban ban giao" cua quan ly.
     - HD9100: Thue ca phong/nguyen can, co 2 thanh vien cu tru, DA thu tien ky dau.
               Dung de test truong hop ban giao nguyen can.
-    - DC9101: Phieu coc nguyen can con hieu luc, CHUA cap nhat cu tru.
-              Dung de test tab "Cap nhat cu tru" cua sale.
+    - DC9101: Phieu coc nguyen can con hieu luc, CHUA ghi nhan cu tru.
+              Dung de test tab "Ghi nhan cu tru" cua sale.
 
     Luu y:
     - Script idempotent, co the chay lai nhieu lan.
@@ -30,39 +30,56 @@ PRINT N'============================================================';
    ============================================================ */
 BEGIN TRANSACTION;
 BEGIN TRY
+    DECLARE @TestContracts TABLE (MaHopDong VARCHAR(6) PRIMARY KEY);
+
+    INSERT INTO @TestContracts (MaHopDong)
+    SELECT DISTINCT MaHopDong
+    FROM dbo.HopDongThue
+    WHERE MaHopDong IN ('HD9098', 'HD9099', 'HD9100')
+       OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
+
     DELETE FROM dbo.ChiTietBanGiao
     WHERE MaBienBan IN (
         SELECT MaBienBan FROM dbo.BienBanBanGiao
-        WHERE MaHopDong IN ('HD9098', 'HD9099', 'HD9100')
+        WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
     );
 
     DELETE FROM dbo.BienBanBanGiao
-    WHERE MaHopDong IN ('HD9098', 'HD9099', 'HD9100')
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
        OR MaBienBan IN ('BG9098', 'BG9099', 'BG9100');
 
     DELETE FROM dbo.ChiTietHoaDon
-    WHERE MaHoaDon IN ('HO9098', 'HO9099', 'HO9100');
+    WHERE MaHoaDon IN (
+        SELECT MaHoaDon FROM dbo.HoaDon
+        WHERE MaHoaDon IN ('HO9098', 'HO9099', 'HO9100')
+           OR MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
+    );
 
     DELETE FROM dbo.HoaDon
     WHERE MaHoaDon IN ('HO9098', 'HO9099', 'HO9100')
-       OR MaHopDong IN ('HD9098', 'HD9099', 'HD9100');
+       OR MaHopDong IN (SELECT MaHopDong FROM @TestContracts);
 
     DELETE FROM dbo.ThanhVienHopDong
-    WHERE MaHopDong IN ('HD9098', 'HD9099', 'HD9100')
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
        OR MaThanhVien IN ('TV9098', 'TV9099', 'TV9101', 'TV9102');
 
     DELETE FROM dbo.DichVuHopDong
-    WHERE MaHopDong IN ('HD9098', 'HD9099', 'HD9100')
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
        OR MaChiTietDVHD IN ('VH9081', 'VH9082', 'VH9083', 'VH9091', 'VH9092', 'VH9093', 'VH9101', 'VH9102', 'VH9103');
 
     DELETE FROM dbo.HopDongThue
-    WHERE MaHopDong IN ('HD9098', 'HD9099', 'HD9100')
-       OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100');
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
+       OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
 
     IF OBJECT_ID(N'dbo.ThanhVienCuTru', N'U') IS NOT NULL
     BEGIN
         DELETE FROM dbo.ThanhVienCuTru
-        WHERE MaHoSoCuTru IN ('CT9098', 'CT9099', 'CT9100')
+        WHERE MaHoSoCuTru IN (
+                SELECT MaHoSoCuTru
+                FROM dbo.HoSoCuTru
+                WHERE MaHoSoCuTru IN ('CT9098', 'CT9099', 'CT9100')
+                   OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101')
+            )
            OR MaThanhVienCuTru IN ('TC9098', 'TC9099', 'TC9101', 'TC9102');
     END
 
@@ -146,7 +163,7 @@ UPDATE dbo.Giuong
 SET TinhTrang = N'Đã đặt cọc'
 WHERE MaPhong = 'P301';
 
--- DC9101: nguyen can P105, con hieu luc, chua cap nhat cu tru.
+-- DC9101: nguyen can P105, con hieu luc, chua ghi nhan cu tru.
 UPDATE dbo.Phong
 SET TinhTrang = N'Đã đặt cọc',
     GioiTinhChoPhep = N'Nữ'
@@ -196,7 +213,7 @@ VALUES
     ('DK9100', '2026-06-13', 0, 2, 2, N'Thủ Đức', 5000000, '2026-07-01', 6,
      N'Test nhận phòng: thuê nguyên căn/phòng, nhóm 2 nữ, chờ bàn giao.', N'Xác nhận cọc', 'KH9100', 'NV0001'),
     ('DK9101', '2026-06-14', 0, 3, 3, N'Thủ Đức', 9000000, '2026-07-02', 6,
-     N'Test cập nhật cư trú: thuê nguyên căn, nhóm 3 nữ, chưa lập hợp đồng.', N'Xác nhận cọc', 'KH9101', 'NV0001');
+     N'Test ghi nhận cư trú: thuê nguyên căn, nhóm 3 nữ, chưa lập hợp đồng.', N'Xác nhận cọc', 'KH9101', 'NV0001');
 
 INSERT INTO dbo.PDK_LoaiPhong (MaDangKy, MaLoaiPhong)
 VALUES

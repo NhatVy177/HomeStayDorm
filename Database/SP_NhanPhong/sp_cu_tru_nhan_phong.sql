@@ -17,7 +17,7 @@ BEGIN
         GhiChuQuanLy       NVARCHAR(500) NULL,
         CONSTRAINT UQ_HSCT_PhieuDatCoc UNIQUE (MaPhieuDatCoc),
         CONSTRAINT CHK_HSCT_TrangThai CHECK (TrangThaiHoSo IN (
-            N'Chưa cập nhật', N'Chờ duyệt cư trú', N'Đã duyệt cư trú', N'Cần điều chỉnh', N'Từ chối cư trú'
+            N'Chưa cập nhật', N'Chờ duyệt cư trú', N'Đã duyệt cư trú', N'Từ chối cư trú'
         )),
         CONSTRAINT FK_HSCT_PhieuDatCoc FOREIGN KEY (MaPhieuDatCoc) REFERENCES dbo.PhieuDatCoc(MaPhieuDatCoc),
         CONSTRAINT FK_HSCT_NhanVienSale FOREIGN KEY (MaNhanVienSale) REFERENCES dbo.NhanVien(MaNhanVien),
@@ -129,10 +129,10 @@ BEGIN
           AND pdc.TrangThaiCoc = N'Hiệu lực'
           AND pdc.TrangThaiThanhToan = N'Đã TT'
     )
-        THROW 50010, N'Phiếu đặt cọc không đủ điều kiện cập nhật cư trú.', 1;
+        THROW 50010, N'Phiếu đặt cọc không đủ điều kiện ghi nhận thông tin cư trú.', 1;
 
     IF EXISTS (SELECT 1 FROM dbo.HopDongThue WHERE MaPhieuCoc = @MaPhieuDatCoc)
-        THROW 50011, N'Phiếu đặt cọc đã lập hợp đồng, không thể cập nhật cư trú.', 1;
+        THROW 50011, N'Phiếu đặt cọc đã lập hợp đồng, không thể ghi nhận thông tin cư trú.', 1;
 
     IF @DaDoiChieuGiayTo = 0
         THROW 50012, N'Cần đối chiếu giấy tờ tùy thân trước khi lưu hồ sơ.', 1;
@@ -235,7 +235,7 @@ BEGIN
         NgayGuiDuyet = GETDATE(),
         GhiChuQuanLy = NULL
     WHERE MaHoSoCuTru = @MaHoSoCuTru
-      AND TrangThaiHoSo IN (N'Chưa cập nhật', N'Cần điều chỉnh');
+      AND TrangThaiHoSo IN (N'Chưa cập nhật', N'Từ chối cư trú');
 
     IF @@ROWCOUNT = 0
         THROW 50015, N'Hồ sơ cư trú không ở trạng thái có thể gửi duyệt.', 1;
@@ -368,7 +368,7 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    IF @KetQua NOT IN (N'Đã duyệt cư trú', N'Cần điều chỉnh', N'Từ chối cư trú')
+    IF @KetQua NOT IN (N'Đã duyệt cư trú', N'Từ chối cư trú')
         THROW 50016, N'Kết quả duyệt hồ sơ cư trú không hợp lệ.', 1;
 
     IF NOT EXISTS (

@@ -352,13 +352,10 @@ export default function LapHopDongTab() {
     if (status === 'Chờ duyệt cư trú') {
       return { class: 'lhd-badge-warning', label: 'Chờ quản lý duyệt' };
     }
-    if (status === 'Cần điều chỉnh') {
-      return { class: 'lhd-badge-warning', label: status };
-    }
     if (status === 'Từ chối cư trú') {
       return { class: 'lhd-badge-danger', label: status };
     }
-    return { class: 'lhd-badge-muted', label: 'Chưa cập nhật cư trú' };
+    return { class: 'lhd-badge-muted', label: 'Chưa ghi nhận cư trú' };
   };
 
   const getContractMembers = () => {

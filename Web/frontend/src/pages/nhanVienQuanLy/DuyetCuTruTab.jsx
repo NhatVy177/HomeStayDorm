@@ -84,11 +84,9 @@ function normalizeHoSo(row = {}) {
 function StatusBadge({ value }) {
   const tone = value === 'Đã duyệt cư trú'
     ? 'is-success'
-    : value === 'Cần điều chỉnh'
-      ? 'is-warning'
-      : value === 'Từ chối cư trú'
-        ? 'is-danger'
-        : 'is-primary';
+    : value === 'Từ chối cư trú'
+      ? 'is-danger'
+      : 'is-primary';
   return <span className={`residence-badge ${tone}`}>{value}</span>;
 }
 
@@ -177,8 +175,8 @@ export default function DuyetCuTruTab() {
   }
 
   function getDecisionValidation() {
-    if (decision !== 'Đã duyệt cư trú' && !managerNote.trim()) {
-      return 'Vui lòng nhập ghi chú khi yêu cầu điều chỉnh hoặc từ chối.';
+    if (decision === 'Từ chối cư trú' && !managerNote.trim()) {
+      return 'Vui lòng nhập ghi chú khi từ chối hồ sơ.';
     }
     if (decision === 'Đã duyệt cư trú') {
       const acceptedCount = members.filter((item) => item.trangThaiDuyet === 'Đủ điều kiện').length;
@@ -264,7 +262,6 @@ export default function DuyetCuTruTab() {
           <select className="ktp-input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option>Chờ duyệt cư trú</option>
             <option>Đã duyệt cư trú</option>
-            <option>Cần điều chỉnh</option>
             <option>Từ chối cư trú</option>
             <option value="">Tất cả</option>
           </select>
@@ -345,6 +342,16 @@ export default function DuyetCuTruTab() {
                 <div><span>Sức chứa</span><strong>{selected.sucChuaToiDa} người</strong></div>
               </div>
 
+              {selected.ghiChuSale?.trim() && (
+                <section className="residence-sale-note">
+                  <span className="residence-sale-note-icon"><Icon name="sticky_note_2" /></span>
+                  <div>
+                    <strong>Ghi chú từ sale</strong>
+                    <p>{selected.ghiChuSale}</p>
+                  </div>
+                </section>
+              )}
+
               <div className="residence-approval-strip">
                 <div>
                   <span>Đủ điều kiện</span>
@@ -370,7 +377,7 @@ export default function DuyetCuTruTab() {
                     <Icon name="assignment_turned_in" />
                     <div>
                       <strong>Hồ sơ đã gửi duyệt</strong>
-                      <span>Sale đã hoàn tất bước cập nhật cư trú.</span>
+                      <span>Sale đã hoàn tất bước ghi nhận thông tin cư trú.</span>
                     </div>
                   </div>
                   <div className={`residence-condition-card ${genderMismatchCount ? 'is-danger' : 'is-ok'}`}>
@@ -449,7 +456,7 @@ export default function DuyetCuTruTab() {
                   <span>Chọn kết quả cuối cùng sau khi kiểm từng thành viên và điều kiện phòng.</span>
                 </div>
                 <div className="residence-decision-grid">
-                  {['Đã duyệt cư trú', 'Cần điều chỉnh', 'Từ chối cư trú'].map((item) => (
+                  {['Đã duyệt cư trú', 'Từ chối cư trú'].map((item) => (
                     <button
                       key={item}
                       type="button"

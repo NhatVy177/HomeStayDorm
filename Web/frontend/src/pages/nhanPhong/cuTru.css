@@ -279,6 +279,45 @@
   font-size: 14px;
 }
 
+.residence-sale-note {
+  align-items: flex-start;
+  background: #f3fbfb;
+  border: 1px solid #b9dfe1;
+  border-left: 4px solid var(--residence-primary);
+  border-radius: 12px;
+  display: flex;
+  gap: 12px;
+  margin: -4px 0 18px;
+  padding: 14px 16px;
+}
+
+.residence-sale-note-icon {
+  align-items: center;
+  background: #e6f5f5;
+  border-radius: 10px;
+  color: var(--residence-primary);
+  display: inline-flex;
+  flex: 0 0 34px;
+  font-size: 20px;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.residence-sale-note strong {
+  color: #0d5559;
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.residence-sale-note p {
+  color: #263233;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+}
+
 .residence-approval-strip {
   background: linear-gradient(135deg, #edfafa 0%, #ffffff 100%);
   border: 1px solid var(--residence-line);
@@ -632,7 +671,7 @@
 .residence-decision-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .residence-decision-grid button {
