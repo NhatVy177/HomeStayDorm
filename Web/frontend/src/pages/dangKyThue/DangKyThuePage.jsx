@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { dangKyThueApi } from './dangKyThue.api.js';
 
-const GIOI_TINH_OPTIONS = ['Nam', 'Nữ', 'Hỗn hợp'];
+const GIOI_TINH_OPTIONS = ['Nam', 'Nữ', 'Khác'];
 
 const INITIAL_FORM = {
   soNguoiO: '',
@@ -14,7 +14,9 @@ const INITIAL_FORM = {
   ngayDuKienVaoO: '',
   thoiHanThue: '',
   ghiChu: '',
-  batBuocOChung: false
+  batBuocOChung: false,
+  soNam: 0,
+  soNu: 0
 };
 
 export default function DangKyThuePage() {
@@ -43,6 +45,15 @@ export default function DangKyThuePage() {
     // A4: Kiểm tra phía client trước khi gửi
     if (!form.soNguoiO || Number(form.soNguoiO) < 1) return setError('Vui lòng nhập số người dự kiến ở.');
     if (!form.ngayDuKienVaoO) return setError('Vui lòng nhập thời gian dự kiến vào ở.');
+    
+    if (form.gioiTinh === 'Khác') {
+      const soNguoiO = Number(form.soNguoiO) || 0;
+      const soNam = Number(form.soNam) || 0;
+      const soNu = Number(form.soNu) || 0;
+      if (soNam + soNu !== soNguoiO) {
+        return setError('Tổng số lượng nam và nữ không khớp với số người dự kiến ở.');
+      }
+    }
 
     setLoading(true);
     setError('');
@@ -51,6 +62,8 @@ export default function DangKyThuePage() {
       const result = await dangKyThueApi.create({
         gioiTinh:        form.gioiTinh || undefined,
         soNguoiO:        Number(form.soNguoiO),
+        soNam:           form.soNam ? Number(form.soNam) : 0,
+        soNu:            form.soNu ? Number(form.soNu) : 0,
         khuVucMongMuon:  form.khuVucMongMuon  || undefined,
         loaiPhongYeuCau: form.loaiPhongYeuCau || undefined,
         mucGia:          form.mucGia           ? Number(form.mucGia) : undefined,
@@ -59,7 +72,6 @@ export default function DangKyThuePage() {
         thoiHanThue:     form.thoiHanThue      ? Number(form.thoiHanThue) : undefined,
         ghiChu:          [
           form.ghiChu,
-
           form.batBuocOChung ? 'Bắt buộc mọi người phải ở chung' : ''
         ].filter(Boolean).join('\n') || undefined
       });
@@ -139,7 +151,7 @@ export default function DangKyThuePage() {
 
             <div className="form-control">
               <label htmlFor="dkt-gioiTinh">
-                Giới tính
+                Giới tính thuê
               </label>
               <select
                 id="dkt-gioiTinh"
@@ -153,6 +165,18 @@ export default function DangKyThuePage() {
                 ))}
               </select>
             </div>
+            {form.gioiTinh === 'Khác' && (
+              <>
+                <div className="form-control">
+                  <label htmlFor="dkt-soNam">Số lượng nam <span className="required-mark">*</span></label>
+                  <input id="dkt-soNam" type="number" name="soNam" min="0" value={form.soNam} onChange={handleChange} required />
+                </div>
+                <div className="form-control">
+                  <label htmlFor="dkt-soNu">Số lượng nữ <span className="required-mark">*</span></label>
+                  <input id="dkt-soNu" type="number" name="soNu" min="0" value={form.soNu} onChange={handleChange} required />
+                </div>
+              </>
+            )}
           </div>
 
           {/* Hàng 2: Ngày dự kiến vào ở + Thời hạn thuê */}
@@ -194,22 +218,37 @@ export default function DangKyThuePage() {
                 id="dkt-khuVucMongMuon"
                 type="text"
                 name="khuVucMongMuon"
-                placeholder="VD: Quận Hải Châu, Đà Nẵng"
+                placeholder="VD: Quận 1, Thủ Đức..."
                 value={form.khuVucMongMuon}
                 onChange={handleChange}
               />
             </div>
 
             <div className="form-control">
-              <label htmlFor="dkt-loaiPhongYeuCau">Loại phòng yêu cầu</label>
-              <input
-                id="dkt-loaiPhongYeuCau"
-                type="text"
-                name="loaiPhongYeuCau"
-                placeholder="VD: Phòng đôi, Dorm 4 người"
-                value={form.loaiPhongYeuCau}
-                onChange={handleChange}
-              />
+              <label>Loại phòng yêu cầu</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
+                {['Phòng 2 người', 'Phòng 4 người', 'Phòng 6 người', 'Phòng VIP 2 người'].map((option) => {
+                  const isChecked = form.loaiPhongYeuCau ? form.loaiPhongYeuCau.split(', ').includes(option) : false;
+                  return (
+                    <label key={option} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          let currentArr = form.loaiPhongYeuCau ? form.loaiPhongYeuCau.split(', ').filter(Boolean) : [];
+                          if (e.target.checked) {
+                            currentArr.push(option);
+                          } else {
+                            currentArr = currentArr.filter(v => v !== option);
+                          }
+                          handleChange({ target: { name: 'loaiPhongYeuCau', value: currentArr.join(', ') } });
+                        }}
+                      />
+                      {option}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

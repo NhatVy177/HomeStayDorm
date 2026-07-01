@@ -106,8 +106,8 @@ PRIMARY KEY (MaPhong, MaGiuong),
 CREATE TABLE PhieuDangKy (
     MaDangKy            VARCHAR(6)      PRIMARY KEY,
     NgayDangKy          DATE            NOT NULL,
-    SoNam               INT             DEFAULT 0,
-    SoNu                INT             DEFAULT 0,
+    SoNam               INT,
+    SoNu                INT,
     SoNguoiDuKienO      INT,
     KhuVucMongMuon      NVARCHAR(100),
     LoaiPhongYeuCau     NVARCHAR(50),
@@ -119,12 +119,7 @@ CREATE TABLE PhieuDangKy (
     MaKhachHang         VARCHAR(6)      NOT NULL,
     MaNhanVienSale      VARCHAR(6),
     GhiChuSale          NVARCHAR(MAX)   NULL,
-    CONSTRAINT CHK_PDK_SoNguoi CHECK (
-        SoNguoiDuKienO > 0
-        AND SoNam >= 0
-        AND SoNu >= 0
-        AND SoNam + SoNu = SoNguoiDuKienO
-    ),
+
     CONSTRAINT CHK_PDK_TrangThai    CHECK (TrangThai IN (N'Chờ xác nhận cọc', N'Xác nhận cọc', N'Từ chối', N'Chờ tiếp nhận', N'Đã tiếp nhận')),
     CONSTRAINT CHK_PDK_MucGia CHECK (MucGiaToiDa > 0)
 );

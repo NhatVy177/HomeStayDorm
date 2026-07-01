@@ -945,6 +945,40 @@
   text-align: right;
 }
 
+.kh-profile-room-row-button {
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  width: 100%;
+}
+
+.kh-profile-room-row-button:hover {
+  border-color: var(--kp-primary);
+  box-shadow: 0 10px 22px rgba(0, 65, 68, 0.12);
+  transform: translateY(-1px);
+}
+
+.kh-profile-room-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.kh-profile-room-main small {
+  color: var(--kp-soft-text);
+  font-size: 12px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.kh-profile-room-action {
+  color: var(--kp-primary) !important;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
 .kh-register-modal .kh-register-actions {
   background: #fff;
   border-top: 1px solid var(--kp-border);
@@ -1486,6 +1520,80 @@
 .kh-detail-info-card strong {
   font-size: 12px;
   text-align: right;
+}
+
+.kh-detail-map-card {
+  background: #fff;
+  border: 1px solid var(--kp-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.kh-detail-map-card-wide {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.kh-detail-map-card-wide .kh-detail-map-frame {
+  grid-column: 1 / -1;
+}
+
+.kh-detail-map-card-wide .kh-detail-map-link {
+  align-self: start;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 150px;
+}
+
+.kh-detail-map-head {
+  display: grid;
+  gap: 2px;
+}
+
+.kh-detail-map-head span {
+  color: var(--kp-soft-text);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.kh-detail-map-head strong {
+  color: var(--kp-text);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.kh-detail-map-frame {
+  aspect-ratio: 16 / 7;
+  border: 0;
+  border-radius: 8px;
+  min-height: 260px;
+  width: 100%;
+}
+
+.kh-detail-map-link {
+  border-radius: 8px;
+  font-size: 13px;
+  min-height: 38px;
+}
+
+@media (max-width: 720px) {
+  .kh-detail-map-card-wide {
+    grid-template-columns: 1fr;
+  }
+
+  .kh-detail-map-card-wide .kh-detail-map-link {
+    grid-column: auto;
+    grid-row: auto;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .kh-detail-map-frame {
+    aspect-ratio: 4 / 3;
+    min-height: 220px;
+  }
 }
 
 /* Lightbox */

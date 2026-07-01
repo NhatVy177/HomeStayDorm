@@ -2,7 +2,7 @@ import * as service from '../services/lichXemPhong.service.js';
 
 export async function createLichXemPhong(req, res, next) {
   try {
-    res.status(201).json(await service.createLichXemPhong(req.body));
+    res.status(201).json(await service.createLichXemPhong(req.body, req.user));
   } catch (err) {
     next(err);
   }

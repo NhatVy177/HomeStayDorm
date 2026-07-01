@@ -1,18 +1,125 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
+import { useAuth } from '../../auth/AuthContext.jsx';
 import { dangKyThueApi } from '../dangKyThue/dangKyThue.api.js';
+import LapLichChoHoSo from './LapLichChoHoSo.jsx';
+
+function parseMoney(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const numericText = raw.replace(/[^\d,.-]/g, '');
+  const commaAsDecimal = numericText.includes(',') && numericText.lastIndexOf(',') > numericText.lastIndexOf('.');
+  const cleaned = commaAsDecimal
+    ? numericText.replace(/\./g, '').replace(',', '.')
+    : numericText.replace(/,/g, '');
+  const compact = (cleaned.match(/\./g) || []).length > 1
+    ? cleaned.replace(/\./g, '')
+    : cleaned;
+  const number = Number(compact);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+function formatMoney(value) {
+  const number = parseMoney(value);
+  if (!number) return '';
+  const vnd = Math.round(number);
+  const remainder = ((vnd % 1000) + 1000) % 1000;
+  const normalized = remainder <= 10
+    ? vnd - remainder
+    : 1000 - remainder <= 10
+      ? vnd + (1000 - remainder)
+      : vnd;
+  return normalized.toLocaleString('vi-VN') + 'đ';
+}
+
+function formatDate(value) {
+  return value ? new Date(value).toLocaleDateString('en-GB') : '';
+}
+
+function formatGenderRequirement(reg = {}) {
+  const soNam = Number(reg.soNam || 0);
+  const soNu = Number(reg.soNu || 0);
+  if (soNam > 0 && soNu > 0) return `Khác (Nam: ${soNam}, Nữ: ${soNu})`;
+  if (soNu > 0 && soNam === 0) return 'Nữ';
+  if (soNam > 0 && soNu === 0) return 'Nam';
+  return reg.gioiTinh || 'Không yêu cầu';
+}
+
+function buildDoiChieuRows(reg, roomResults, isRegionValid) {
+  const hasRooms = Array.isArray(roomResults) && roomResults.length > 0;
+  const roomCriteriaPassed = hasRooms;
+
+  return [
+    {
+      label: 'Khu vực mong muốn',
+      value: reg?.khuVucMongMuon || 'Không yêu cầu',
+      passed: isRegionValid,
+      note: isRegionValid ? 'Có chi nhánh phù hợp' : 'Không có chi nhánh phù hợp'
+    },
+    {
+      label: 'Giới tính thuê',
+      value: formatGenderRequirement(reg),
+      passed: roomCriteriaPassed,
+      note: roomCriteriaPassed ? 'Có phòng/giường phù hợp' : 'Chưa có phòng/giường phù hợp'
+    },
+    {
+      label: 'Số người ở / sức chứa',
+      value: reg?.soNguoiO ? `${reg.soNguoiO} người` : 'Không yêu cầu',
+      passed: roomCriteriaPassed,
+      note: roomCriteriaPassed ? 'Đủ sức chứa/chỗ trống' : 'Chưa tìm thấy sức chứa phù hợp'
+    },
+    {
+      label: 'Loại phòng mong muốn',
+      value: reg?.loaiPhongYeuCau || 'Không yêu cầu',
+      passed: roomCriteriaPassed,
+      note: roomCriteriaPassed ? 'Có loại phòng phù hợp' : 'Chưa có loại phòng phù hợp'
+    },
+    {
+      label: 'Mức giá tối đa',
+      value: formatMoney(reg?.mucGia || reg?.mucGiaToiDa) || 'Không yêu cầu',
+      passed: roomCriteriaPassed,
+      note: roomCriteriaPassed ? 'Có phòng trong mức giá' : 'Chưa có phòng trong mức giá'
+    },
+    {
+      label: 'Thời gian dự kiến vào ở',
+      value: formatDate(reg?.ngayDuKienVaoO) || 'Chưa có',
+      passed: Boolean(reg?.ngayDuKienVaoO),
+      note: reg?.ngayDuKienVaoO ? 'Đã ghi nhận' : 'Thiếu thời gian dự kiến'
+    },
+    {
+      label: 'Thời hạn thuê',
+      value: reg?.thoiHanThue ? `${reg.thoiHanThue} tháng` : 'Chưa có',
+      passed: Boolean(reg?.thoiHanThue),
+      note: reg?.thoiHanThue ? 'Đã ghi nhận' : 'Thiếu thời hạn thuê'
+    },
+    {
+      label: 'Yêu cầu khác',
+      value: reg?.ghiChu || 'Không có',
+      passed: true,
+      note: 'Đã ghi nhận'
+    }
+  ];
+}
 
 export default function HoSoDangKyTab({ onNavigate }) {
+  const { user } = useAuth();
   const [filterStatus, setFilterStatus] = useState('Chờ tiếp nhận');
   const [list, setList] = useState([]);
   const [selectedReg, setSelectedReg] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [schedulingProfile, setSchedulingProfile] = useState(null);
 
   const [acceptedReg, setAcceptedReg] = useState(null);
 
   // Drawer States
   const [checkingRooms, setCheckingRooms] = useState(false);
   const [roomResults, setRoomResults] = useState(null);
+  const [isRegionValid, setIsRegionValid] = useState(true);
   const [selectedRooms, setSelectedRooms] = useState([]);
   const [showTuVanModal, setShowTuVanModal] = useState(false);
   const [tuVanNote, setTuVanNote] = useState('');
@@ -24,21 +131,41 @@ export default function HoSoDangKyTab({ onNavigate }) {
   const [createStep, setCreateStep] = useState(1);
   const [createForm, setCreateForm] = useState({
     hoTen: '', ngaySinh: '', gioiTinh: 'Nam', quocTich: 'Việt Nam', cccd: '', sdt: '', email: '', diaChi: '',
-    soNguoi: 1, gioiTinhO: 'Nam', hinhThuc: 'Ghép giường', khuVuc: '', loaiPhong: '', mucGia: '',
+    soNguoi: 1, gioiTinhO: 'Nam', soNam: 0, soNu: 0, hinhThuc: 'Ghép giường', khuVuc: '', loaiPhong: '', mucGia: '',
     ngayVao: '', thoiHan: '', yeuCau: ''
   });
   const [createErrors, setCreateErrors] = useState({});
   const [createChecking, setCreateChecking] = useState(false);
   const [createRoomResults, setCreateRoomResults] = useState(null);
 
+  // Lọc theo chi nhánh
+  const branchFilteredList = useMemo(() => {
+    if (user?.vaiTro !== 'NhanVienSale' || !user?.maChiNhanh) return list;
+
+    // Map maChiNhanh to KhuVucMongMuon
+    let targetKhuVuc = '';
+    if (user.maChiNhanh === 'CN0001') targetKhuVuc = 'Quận 1';
+    else if (user.maChiNhanh === 'CN0002') targetKhuVuc = 'Bình Thạnh';
+    else if (user.maChiNhanh === 'CN0003') targetKhuVuc = 'Thủ Đức';
+
+    return list.filter(item => {
+        // If KhuVucMongMuon is specified and not matching, exclude it
+        if (item.khuVucMongMuon && targetKhuVuc && !item.khuVucMongMuon.includes(targetKhuVuc)) {
+            return false;
+        }
+        return true;
+    });
+  }, [list, user]);
+
   const stats = {
-    choTiepNhan: list.filter(x => x.trangThai === 'Chờ tiếp nhận').length,
-    daTiepNhan: list.filter(x => x.trangThai === 'Đã tiếp nhận' || x.trangThai === 'Chấp nhận').length,
-    tuChoi: list.filter(x => x.trangThai === 'Từ chối').length
+    choTiepNhan: branchFilteredList.filter(x => x.trangThai === 'Chờ tiếp nhận').length,
+    daTiepNhan: branchFilteredList.filter(x => x.trangThai === 'Đã tiếp nhận' || x.trangThai === 'Chấp nhận').length,
+    tuChoi: branchFilteredList.filter(x => x.trangThai === 'Từ chối').length
   };
-  const filteredList = filterStatus === 'Tất cả' 
-    ? list 
-    : list.filter(item => {
+
+  const filteredList = filterStatus === 'Tất cả'
+    ? branchFilteredList
+    : branchFilteredList.filter(item => {
         if (filterStatus === 'Đã tiếp nhận') return item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận';
         return item.trangThai === filterStatus;
       });
@@ -61,8 +188,8 @@ export default function HoSoDangKyTab({ onNavigate }) {
   const handleAccept = async () => {
     if (!selectedReg) return;
     try {
-      await dangKyThueApi.capNhatKetQuaXuLy(selectedReg.maDangKy, { trangThai: 'Đã tiếp nhận', ghiChuXuLy: '' });
-      setAcceptedReg(selectedReg);
+      const res = await dangKyThueApi.capNhatKetQuaXuLy(selectedReg.maDangKy, { trangThai: 'Đã tiếp nhận', ghiChuXuLy: '' });
+      setAcceptedReg(res.data || selectedReg);
       // NOTE: Here you would normally store selectedRooms into ChiTietXemPhong. For now we pass them to the next step.
       setSelectedReg(null);
       setRoomResults(null);
@@ -114,13 +241,16 @@ export default function HoSoDangKyTab({ onNavigate }) {
   const handleCheckRoom = async () => {
     setCheckingRooms(true);
     setRoomResults(null);
+    setIsRegionValid(true);
     setSelectedRooms([]);
     try {
       const res = await dangKyThueApi.getPhongGiuongKhaDung({
         hoSoId: selectedReg.maDangKy
       });
-      let currentList = res.data || [];
-      
+      let currentList = (res.data?.rooms || []).filter((item) => item.maPhong);
+      const regionValid = res.data?.isRegionValid ?? true;
+      setIsRegionValid(regionValid);
+
       // Group beds by room
       const roomMap = {};
       currentList.forEach(r => {
@@ -133,7 +263,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
             giaThue: r.giaThue,
             gioiTinhChoPhep: r.gioiTinhChoPhep,
             tenChiNhanh: r.tenChiNhanh,
-            soGiuongTrong: 0,
+            soGiuongTrong: r.soGiuongTrong ?? 0,
             danhSachGiuong: []
           };
         }
@@ -141,12 +271,12 @@ export default function HoSoDangKyTab({ onNavigate }) {
           roomMap[r.maPhong].soGiuongTrong += 1;
           roomMap[r.maPhong].danhSachGiuong.push(r.maGiuong);
         } else {
-          roomMap[r.maPhong].soGiuongTrong = r.sucChua;
+          roomMap[r.maPhong].soGiuongTrong = r.soGiuongTrong ?? r.sucChua ?? 0;
         }
       });
-      
+
       const groupedRooms = Object.values(roomMap);
-      
+
       setCheckingRooms(false);
       setRoomResults(groupedRooms);
     } catch (err) {
@@ -169,7 +299,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
     if (!createForm.hoTen) errors.hoTen = 'Vui lòng nhập họ tên';
     if (!createForm.sdt) errors.sdt = 'Vui lòng nhập SĐT';
     if (!createForm.cccd) errors.cccd = 'Vui lòng nhập CCCD';
-    
+
     if (Object.keys(errors).length > 0) {
       setCreateErrors(errors);
       return;
@@ -188,9 +318,21 @@ export default function HoSoDangKyTab({ onNavigate }) {
   };
 
   const handleSaveCreate = async () => {
+    if (createForm.gioiTinhO === 'Khác') {
+      const soNguoi = Number(createForm.soNguoi) || 0;
+      const soNam = Number(createForm.soNam) || 0;
+      const soNu = Number(createForm.soNu) || 0;
+      if (soNam + soNu !== soNguoi) {
+        alert('Tổng số lượng nam và nữ không khớp với số người dự kiến ở.');
+        return;
+      }
+    }
+
     try {
-      await dangKyThueApi.taoHoSoKhachVangLai(createForm);
-      setAcceptedReg({
+      let finalForm = { ...createForm };
+
+      const res = await dangKyThueApi.taoHoSoKhachVangLai(finalForm);
+      setAcceptedReg(res.data || {
         id: 'Hồ sơ mới',
         customerName: createForm.hoTen || 'Khách vãng lai'
       });
@@ -198,7 +340,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
       setCreateStep(1);
       setCreateForm({
         hoTen: '', ngaySinh: '', gioiTinh: 'Nam', quocTich: 'Việt Nam', cccd: '', sdt: '', email: '', diaChi: '',
-        soNguoi: 1, gioiTinhO: 'Nam', hinhThuc: 'Ghép giường', khuVuc: '', loaiPhong: '', mucGia: '',
+        soNguoi: 1, gioiTinhO: 'Nam', soNam: 0, soNu: 0, hinhThuc: 'Ghép giường', khuVuc: '', loaiPhong: '', mucGia: '',
         ngayVao: '', thoiHan: '', yeuCau: ''
       });
       setCreateRoomResults(null);
@@ -207,6 +349,23 @@ export default function HoSoDangKyTab({ onNavigate }) {
       alert('Lỗi: ' + (err.response?.data?.message || err.message));
     }
   };
+
+  if (schedulingProfile) {
+    return (
+      <LapLichChoHoSo
+        profile={schedulingProfile}
+        onBack={() => {
+          setSchedulingProfile(null);
+          fetchData();
+        }}
+        onCreated={fetchData}
+      />
+    );
+  }
+
+  const doiChieuRows = roomResults
+    ? buildDoiChieuRows(selectedReg, roomResults, isRegionValid)
+    : [];
 
   return (
     <div className="ktp-container">
@@ -238,7 +397,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
             </button>
           ))}
         </div>
-        
+
         <button className="ktp-btn-action-fill" style={{ backgroundColor: '#2f6765', borderRadius: '6px', whiteSpace: 'nowrap' }} onClick={() => setShowCreateModal(true)}>
           <Icon name="add_circle" /> Tạo phiếu mới cho khách vãng lai
         </button>
@@ -274,7 +433,9 @@ export default function HoSoDangKyTab({ onNavigate }) {
                     <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.sdtKhach}</div>
                   </td>
                   <td>
-                    <div style={{ color: '#191c1d' }}>{item.gioiTinh || 'Không xác định'}</div>
+                    <div style={{ color: '#191c1d' }}>
+                      {(item.soNam > 0 && item.soNu > 0) ? 'Khác' : (item.soNu > 0 && item.soNam === 0 ? 'Nữ' : (item.soNam > 0 && item.soNu === 0 ? 'Nam' : 'Khác'))}
+                    </div>
                     <div style={{ fontSize: '12px', color: '#6f797a' }}>{item.soNguoiO} người</div>
                   </td>
                   <td>
@@ -322,21 +483,20 @@ export default function HoSoDangKyTab({ onNavigate }) {
                   <div className="ktp-info-row"><span className="ktp-info-label">CCCD:</span> <span className="ktp-info-value">{selectedReg.cccdKhach || selectedReg.cccd}</span></div>
                   <div className="ktp-info-row"><span className="ktp-info-label">SĐT:</span> <span className="ktp-info-value">{selectedReg.sdtKhach}</span></div>
                   <div className="ktp-info-row"><span className="ktp-info-label">Email:</span> <span className="ktp-info-value">{selectedReg.emailKhach}</span></div>
-                  <div className="ktp-info-row" style={{ gridColumn: '1 / -1' }}><span className="ktp-info-label">Địa chỉ:</span> <span className="ktp-info-value">{selectedReg.diaChiKhach}</span></div>
                 </div>
               </div>
 
               {/* Khối 2 */}
               <div className="ktp-section ktp-info-box-outline" style={{ backgroundColor: '#fff', marginBottom: '16px' }}>
-                <h4 className="ktp-section-title"><Icon name="description" /> Khối 2: Thông tin nhu cầu thuê</h4>
+                <h4 className="ktp-section-title"><Icon name="description" /> Khối 2: Yêu cầu thuê</h4>
                 <div className="ktp-grid-2" style={{ gap: '16px' }}>
                   <div className="ktp-info-row"><span className="ktp-info-label">Số người ở:</span> <span className="ktp-info-value">{selectedReg.soNguoiO} người</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Giới tính:</span> <span className="ktp-info-value">{selectedReg.gioiTinh}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Giới tính thuê:</span> <span className="ktp-info-value">{formatGenderRequirement(selectedReg)}</span></div>
 
                   <div className="ktp-info-row"><span className="ktp-info-label">Khu vực:</span> <span className="ktp-info-value ktp-text-primary">{selectedReg.khuVucMongMuon}</span></div>
                   <div className="ktp-info-row"><span className="ktp-info-label">Loại phòng:</span> <span className="ktp-info-value">{selectedReg.loaiPhongYeuCau}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">Mức giá:</span> <span className="ktp-info-value ktp-text-primary">{selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''}</span></div>
-                  <div className="ktp-info-row"><span className="ktp-info-label">TG vào ở:</span> <span className="ktp-info-value">{selectedReg.ngayDuKienVaoO ? new Date(selectedReg.ngayDuKienVaoO).toLocaleDateString('en-GB') : ''}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">Mức giá:</span> <span className="ktp-info-value ktp-text-primary">{formatMoney(selectedReg.mucGia || selectedReg.mucGiaToiDa)}</span></div>
+                  <div className="ktp-info-row"><span className="ktp-info-label">TG vào ở:</span> <span className="ktp-info-value">{formatDate(selectedReg.ngayDuKienVaoO)}</span></div>
                   <div className="ktp-info-row"><span className="ktp-info-label">Thời hạn:</span> <span className="ktp-info-value">{selectedReg.thoiHanThue} tháng</span></div>
                   <div className="ktp-info-row" style={{ gridColumn: '1 / -1' }}><span className="ktp-info-label">Yêu cầu khác:</span> <span className="ktp-info-value" style={{ fontStyle: 'italic' }}>{selectedReg.ghiChu || 'Không có'}</span></div>
                 </div>
@@ -345,16 +505,18 @@ export default function HoSoDangKyTab({ onNavigate }) {
               {/* Khối 3 */}
               <div className="ktp-section ktp-info-box-outline" style={{ backgroundColor: '#fff' }}>
                 <h4 className="ktp-section-title"><Icon name="search" /> Khối 3: Đối chiếu & Kiểm tra phòng/giường</h4>
-                
+
                 <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#eef2f2', borderRadius: '4px' }}>
-                  <p style={{ margin: '0 0 8px 0', fontWeight: '600', color: '#3f494a', fontSize: '13px' }}>Tiêu chí từ phiếu đăng ký:</p>
-                  <div className="ktp-grid-2" style={{ fontSize: '13px', color: '#6f797a', gap: '8px' }}>
-                    <div>• Chi nhánh/khu vực mong muốn: <strong style={{ color: '#191c1d' }}>{selectedReg.khuVucMongMuon}</strong></div>
-                    <div>• Giới tính khách hàng: <strong style={{ color: '#191c1d' }}>{selectedReg.gioiTinh}</strong></div>
-                    <div>• Số người dự kiến ở: <strong style={{ color: '#191c1d' }}>{selectedReg.soNguoiO} người</strong></div>
-                    <div>• Loại phòng mong muốn: <strong style={{ color: '#191c1d' }}>{selectedReg.loaiPhongYeuCau}</strong></div>
-                    <div>• Mức giá tối đa/người/tháng: <strong style={{ color: '#191c1d' }}>{selectedReg.mucGia ? selectedReg.mucGia.toLocaleString('vi-VN') + 'đ' : ''}</strong></div>
-                    <div>• Yêu cầu khác nếu có: <strong style={{ color: '#191c1d' }}>{selectedReg.ghiChu || 'Không có'}</strong></div>
+                  <p style={{ margin: '0 0 10px 0', fontWeight: '600', color: '#3f494a', fontSize: '13px' }}>Thông tin cần đối chiếu từ phiếu đăng ký:</p>
+                  <div className="ktp-grid-2" style={{ fontSize: '13px', color: '#6f797a', gap: '8px 20px' }}>
+                    <div>Khu vực: <strong style={{ color: '#191c1d' }}>{selectedReg.khuVucMongMuon || 'Không yêu cầu'}</strong></div>
+                    <div>Giới tính thuê: <strong style={{ color: '#191c1d' }}>{formatGenderRequirement(selectedReg)}</strong></div>
+                    <div>Số người ở: <strong style={{ color: '#191c1d' }}>{selectedReg.soNguoiO ? `${selectedReg.soNguoiO} người` : 'Không yêu cầu'}</strong></div>
+                    <div>Loại phòng: <strong style={{ color: '#191c1d' }}>{selectedReg.loaiPhongYeuCau || 'Không yêu cầu'}</strong></div>
+                    <div>Mức giá tối đa: <strong style={{ color: '#191c1d' }}>{formatMoney(selectedReg.mucGia || selectedReg.mucGiaToiDa) || 'Không yêu cầu'}</strong></div>
+                    <div>Ngày vào ở: <strong style={{ color: '#191c1d' }}>{formatDate(selectedReg.ngayDuKienVaoO) || 'Chưa có'}</strong></div>
+                    <div>Thời hạn: <strong style={{ color: '#191c1d' }}>{selectedReg.thoiHanThue ? `${selectedReg.thoiHanThue} tháng` : 'Chưa có'}</strong></div>
+                    <div>Yêu cầu khác: <strong style={{ color: '#191c1d' }}>{selectedReg.ghiChu || 'Không có'}</strong></div>
                   </div>
                 </div>
 
@@ -371,90 +533,50 @@ export default function HoSoDangKyTab({ onNavigate }) {
                   </div>
                 )}
 
-                {roomResults && roomResults.length > 0 && (
-                  <div style={{ marginTop: '16px' }}>
-                    <div className="ktp-badge-success" style={{ marginBottom: '12px', display: 'inline-block' }}>Tìm thấy phòng/giường phù hợp với nhu cầu đăng ký.</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {roomResults.map((r, i) => (
-                        <label key={i} className="ktp-detail-card" style={{ padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid #4caf50', cursor: 'pointer', border: selectedRooms.includes(r.maPhong) ? '2px solid #4caf50' : '1px solid #bec8c9', borderRadius: '4px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={selectedRooms.includes(r.maPhong)}
-                              onChange={(e) => {
-                                if (e.target.checked) setSelectedRooms([...selectedRooms, r.maPhong]);
-                                else setSelectedRooms(selectedRooms.filter(id => id !== r.maPhong));
-                              }}
-                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                            />
-                            <div>
-                              <strong style={{ fontSize: '16px' }}>{r.maPhong} - {r.tenChiNhanh}</strong>
-                              <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#3f494a' }}>
-                                Loại phòng: {r.loaiPhong} | Giới tính cho phép: {r.gioiTinhChoPhep} | Số giường trống: {r.soGiuongTrong}
-                              </p>
-                              {r.danhSachGiuong && r.danhSachGiuong.length > 0 && (
-                                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#6f797a' }}>
-                                  Danh sách giường trống: {r.danhSachGiuong.join(', ')}
-                                </p>
-                              )}
-                              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#4caf50', fontWeight: '600' }}>Trạng thái: Có thể sắp lịch xem</p>
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <strong className="ktp-text-primary" style={{ fontSize: '16px' }}>{r.giaThue ? r.giaThue.toLocaleString('vi-VN') + 'đ' : ''}</strong>
-                            <div style={{ fontSize: '12px', color: '#6f797a', marginTop: '2px' }}>{r.loaiThue === 'Nguyên căn' ? 'Giá thuê nguyên phòng' : 'Giá thuê theo giường'}</div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
-                {roomResults && roomResults.length === 0 && (
-                  <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '4px', borderLeft: '4px solid #ff9800' }}>
-                    <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>Chưa tìm thấy phòng/giường phù hợp tại thời điểm hiện tại.</p>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '13px' }}>
-                      Không có phòng/giường còn trống, chưa đặt cọc và đồng thời thỏa các tiêu chí về chi nhánh, giới tính, loại phòng, số người ở và mức giá.
-                    </p>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontStyle: 'italic' }}>
-                      Nhân viên sale có thể tiếp nhận phiếu để liên hệ tư vấn lại với khách hàng, hoặc từ chối phiếu nếu không thể đáp ứng nhu cầu.
-                    </p>
+
+                {roomResults && (
+                  <div style={{ marginTop: '16px', border: '1px solid #bec8c9', borderRadius: '4px', padding: '16px', backgroundColor: '#fcfdfd' }}>
+                    <div style={{ marginBottom: '12px', fontWeight: 'bold' }}>Kết quả đối chiếu điều kiện:</div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px 16px' }}>
+                      {doiChieuRows.map((row) => (
+                        <li key={row.label} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', minWidth: 0 }}>
+                          <span style={{ color: row.passed ? '#2e7d32' : '#d32f2f', display: 'inline-flex', lineHeight: 1, paddingTop: '1px' }}>
+                            <Icon name={row.passed ? 'check_circle' : 'cancel'} style={{ fontSize: '18px' }} />
+                          </span>
+                          <span style={{ display: 'block', minWidth: 0 }}>
+                            <span style={{ color: '#3f494a' }}>{row.label}: </span>
+                            <strong style={{ color: '#191c1d' }}>{row.value}</strong>
+                            <span style={{ display: 'block', color: row.passed ? '#2e7d32' : '#d32f2f', fontSize: '12px', marginTop: '2px' }}>{row.note}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    {!isRegionValid && (
+                      <div style={{ marginTop: '12px', color: '#d32f2f', fontSize: '13px', fontStyle: 'italic' }}>
+                        Nhân viên sale vui lòng liên hệ lại với khách để lựa chọn chi nhánh phù hợp.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
             <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button className="ktp-btn-cancel" style={{ backgroundColor: '#f4f6f6' }} onClick={() => { setSelectedReg(null); setRoomResults(null); }}>Hủy</button>
-              
-              {roomResults && roomResults.length === 0 ? (
-                <>
-                  <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => {
-                    setRejectNote('');
-                    setShowRejectModal(true);
-                  }}>Từ chối phiếu</button>
-                  <button 
-                    className="ktp-btn-submit" 
-                    onClick={() => setShowTuVanModal(true)}
-                  >
-                    Tiếp nhận để tư vấn lại
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => {
-                    setRejectNote('');
-                    setShowRejectModal(true);
-                  }}>Từ chối phiếu</button>
-                  <button 
-                    className="ktp-btn-submit" 
-                    disabled={!roomResults || selectedRooms.length === 0}
-                    style={{ opacity: (!roomResults || selectedRooms.length === 0) ? 0.5 : 1 }}
-                    onClick={handleAccept}
-                  >
-                    Tiếp nhận & lập lịch xem phòng
-                  </button>
-                </>
+              {roomResults && (
+                <button className="ktp-btn-cancel" style={{ color: '#c62828', borderColor: '#ffcdd2', backgroundColor: '#ffebee' }} onClick={() => {
+                  setRejectNote('');
+                  setShowRejectModal(true);
+                }}>Từ chối phiếu</button>
+              )}
+
+              {roomResults && roomResults.length > 0 && (
+                <button
+                  className="ktp-btn-submit"
+                  onClick={handleAccept}
+                >
+                  Tiếp nhận & lập lịch xem phòng
+                </button>
               )}
             </div>
           </div>
@@ -471,12 +593,12 @@ export default function HoSoDangKyTab({ onNavigate }) {
             </div>
             <div className="ktp-modal-body" style={{ padding: '24px', flex: 'none', display: 'block' }}>
               <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#3f494a' }}>Vui lòng nhập ghi chú sale để liên hệ tư vấn lại với khách hàng (Ví dụ: Chưa có phòng phù hợp, cần liên hệ khách tư vấn đổi loại phòng/khu vực/mức giá.)</p>
-              <textarea 
-                placeholder="Nhập ghi chú sale..." 
-                value={tuVanNote} 
-                onChange={e => setTuVanNote(e.target.value)} 
-                style={{ width: '100%', height: '80px', padding: '8px 12px', border: '1px solid #bec8c9', borderRadius: '4px', fontSize: '14px', outline: 'none', resize: 'vertical' }} 
-                autoFocus 
+              <textarea
+                placeholder="Nhập ghi chú sale..."
+                value={tuVanNote}
+                onChange={e => setTuVanNote(e.target.value)}
+                style={{ width: '100%', height: '80px', padding: '8px 12px', border: '1px solid #bec8c9', borderRadius: '4px', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                autoFocus
               />
             </div>
             <div className="ktp-modal-footer" style={{ borderTop: '1px solid #bec8c9', padding: '16px 24px', justifyContent: 'flex-end', gap: '12px' }}>
@@ -520,28 +642,24 @@ export default function HoSoDangKyTab({ onNavigate }) {
 
       {/* SUCCESS MODAL */}
       {acceptedReg && (
-        <div className="ktp-modal-overlay" onClick={() => setAcceptedReg(null)}>
+        <div className="ktp-modal-overlay">
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ width: '400px', maxWidth: '90vw' }}>
             <div className="ktp-modal-header" style={{ alignItems: 'center', backgroundColor: '#2f6765', color: '#ffffff' }}>
               <h3 style={{ fontSize: '18px', margin: 0, color: '#ffffff' }}>Tiếp nhận thành công</h3>
-              <button className="ktp-modal-close" onClick={() => setAcceptedReg(null)} style={{ color: '#ffffff' }}><Icon name="close" /></button>
             </div>
             <div className="ktp-modal-body" style={{ padding: '24px', textAlign: 'center', flex: 'none', display: 'block' }}>
               <div style={{ color: '#2f6765', fontSize: '48px', marginBottom: '16px' }}>
                 <Icon name="check_circle" />
               </div>
               <p style={{ margin: '0 0 8px', fontWeight: 'bold', color: '#191c1d', fontSize: '16px' }}>
-                Phiếu đăng ký {acceptedReg.id} đã được tiếp nhận.
-              </p>
-              <p style={{ margin: 0, color: '#6f797a', fontSize: '14px' }}>
-                Khách hàng: {acceptedReg.customerName}
+                Phiếu đăng ký {acceptedReg.maDangKy || acceptedReg.id} đã được tiếp nhận.
               </p>
             </div>
             <div className="ktp-modal-footer" style={{ justifyContent: 'center', gap: '16px' }}>
-              <button className="ktp-btn-cancel" onClick={() => setAcceptedReg(null)}>Đóng</button>
               <button className="ktp-btn-submit" onClick={() => {
+                const profileToSchedule = acceptedReg;
                 setAcceptedReg(null);
-                if (onNavigate) onNavigate('lich-xem');
+                setSchedulingProfile(profileToSchedule);
               }}>Lập lịch tiếp</button>
             </div>
           </div>
@@ -556,7 +674,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
               <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff' }}>Tạo phiếu mới cho khách vãng lai</h3>
               <button className="ktp-modal-close" onClick={() => setShowCreateModal(false)} style={{ color: '#ffffff' }}><Icon name="close" /></button>
             </div>
-            
+
             <div className="ktp-modal-body" style={{ padding: '24px', flex: 'none', display: 'block' }}>
               {/* Stepper */}
               <div style={{ display: 'flex', marginBottom: '24px', borderBottom: '2px solid #e9ecef', paddingBottom: '16px' }}>
@@ -611,24 +729,54 @@ export default function HoSoDangKyTab({ onNavigate }) {
                   <div>
                     <label className="ktp-filter-label">Giới tính thuê</label>
                     <select className="ktp-input" value={createForm.gioiTinhO} onChange={e => setCreateForm({...createForm, gioiTinhO: e.target.value})}>
-                      <option>Nam</option><option>Nữ</option><option>Không xác định</option>
+                      <option>Nam</option><option>Nữ</option><option>Khác</option>
                     </select>
                   </div>
+                  {createForm.gioiTinhO === 'Khác' && (
+                    <>
+                      <div>
+                        <label className="ktp-filter-label">Số lượng nam *</label>
+                        <input className="ktp-input" type="number" min="0" value={createForm.soNam} onChange={e => setCreateForm({...createForm, soNam: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="ktp-filter-label">Số lượng nữ *</label>
+                        <input className="ktp-input" type="number" min="0" value={createForm.soNu} onChange={e => setCreateForm({...createForm, soNu: e.target.value})} />
+                      </div>
+                    </>
+                  )}
                   <div>
                     <label className="ktp-filter-label">Số người ở</label>
                     <input className="ktp-input" type="number" min="1" value={createForm.soNguoi} onChange={e => setCreateForm({...createForm, soNguoi: e.target.value})} />
                   </div>
                   <div>
                     <label className="ktp-filter-label">Khu vực</label>
-                    <select className="ktp-input" value={createForm.khuVuc} onChange={e => setCreateForm({...createForm, khuVuc: e.target.value})}>
-                      <option value="">-- Chọn khu vực --</option>
-                      <option value="Thủ Đức">Thủ Đức</option>
-                      <option value="Bình Thạnh">Bình Thạnh</option>
-                    </select>
+                    <input className="ktp-input" type="text" placeholder="VD: Quận 1, Thủ Đức..." value={createForm.khuVuc} onChange={e => setCreateForm({...createForm, khuVuc: e.target.value})} />
                   </div>
-                  <div>
+                  <div style={{ gridColumn: '1 / -1' }}>
                     <label className="ktp-filter-label">Loại phòng</label>
-                    <input className="ktp-input" type="text" value={createForm.loaiPhong} onChange={e => setCreateForm({...createForm, loaiPhong: e.target.value})} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
+                      {['Phòng 2 người', 'Phòng 4 người', 'Phòng 6 người', 'Phòng VIP 2 người'].map((option) => {
+                        const isChecked = createForm.loaiPhong ? createForm.loaiPhong.split(', ').includes(option) : false;
+                        return (
+                          <label key={option} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                let currentArr = createForm.loaiPhong ? createForm.loaiPhong.split(', ').filter(Boolean) : [];
+                                if (e.target.checked) {
+                                  currentArr.push(option);
+                                } else {
+                                  currentArr = currentArr.filter(v => v !== option);
+                                }
+                                setCreateForm({...createForm, loaiPhong: currentArr.join(', ')});
+                              }}
+                            />
+                            {option}
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div>
                     <label className="ktp-filter-label">Mức giá mong muốn</label>
@@ -677,7 +825,7 @@ export default function HoSoDangKyTab({ onNavigate }) {
           </div>
         </div>
       )}
-      
+
       {/* Styles inline for animations and spinner if missing */}
       <style>{`
         @keyframes slideInRight {

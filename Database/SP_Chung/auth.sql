@@ -147,10 +147,13 @@ BEGIN
         nd.LoaiNguoiDung AS vaiTro,
         tk.TrangThai AS trangThai,
         nv.ChucVu AS chucVu,
-        nv.MaChiNhanh AS maChiNhanh
+        nv.MaChiNhanh AS maChiNhanh,
+        kh.QuocTich AS quocTich,
+        kh.CCCD AS cccd
     FROM dbo.TaiKhoan AS tk
     INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = tk.MaNguoiDung
     LEFT JOIN dbo.NhanVien AS nv ON nv.MaNhanVien = tk.MaNguoiDung
+    LEFT JOIN dbo.KhachHang AS kh ON kh.MaKhachHang = tk.MaNguoiDung
     WHERE tk.TenDangNhap = @TenDangNhap;
 END;
 GO

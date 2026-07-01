@@ -175,12 +175,14 @@ INSERT INTO Phong (MaPhong,TenPhong,GioiTinhChoPhep,TinhTrang,MaChiNhanh,MaLoaiP
     (N'P104', N'Phòng P201', N'Không phân biệt', N'Đầy', N'CN0001', N'LP0002'),
     (N'P105', N'Phòng P202', N'Nữ', N'Trống', N'CN0001', N'LP0003'),
     (N'P106', N'Phòng P203', N'Không phân biệt', N'Đã đặt cọc', N'CN0001', N'LP0004'),
+
     (N'P201', N'Phòng P101', N'Không phân biệt', N'Đầy', N'CN0002', N'LP0001'),
     (N'P202', N'Phòng P102', N'Nữ', N'Trống', N'CN0002', N'LP0001'),
     (N'P203', N'Phòng P103', N'Nam', N'Còn chỗ', N'CN0002', N'LP0002'),
     (N'P204', N'Phòng P201', N'Không phân biệt', N'Trống', N'CN0002', N'LP0002'),
     (N'P205', N'Phòng P202', N'Nữ', N'Trống', N'CN0002', N'LP0003'),
     (N'P206', N'Phòng P203', N'Nữ', N'Đầy', N'CN0002', N'LP0004'),
+    
     (N'P301', N'Phòng P101', N'Nam', N'Trống', N'CN0003', N'LP0001'),
     (N'P302', N'Phòng P102', N'Không phân biệt', N'Đầy', N'CN0003', N'LP0001'),
     (N'P303', N'Phòng P103', N'Không phân biệt', N'Đầy', N'CN0003', N'LP0002'),

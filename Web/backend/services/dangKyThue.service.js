@@ -1,4 +1,4 @@
-import { executeProcedure, sql } from '../database/connection.js';
+import { executeProcedure, executeQuery, sql } from '../database/connection.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 
 function handleDatabaseError(error) {
@@ -6,6 +6,36 @@ function handleDatabaseError(error) {
     50010: 404,
     50011: 400
   });
+}
+
+function parseMoney(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const numericText = raw.replace(/[^\d,.-]/g, '');
+  const commaAsDecimal = numericText.includes(',') && numericText.lastIndexOf(',') > numericText.lastIndexOf('.');
+  const cleaned = commaAsDecimal
+    ? numericText.replace(/\./g, '').replace(',', '.')
+    : numericText.replace(/,/g, '');
+  const compact = (cleaned.match(/\./g) || []).length > 1
+    ? cleaned.replace(/\./g, '')
+    : cleaned;
+  const number = Number(compact);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+function normalizeMoneyVnd(value) {
+  const number = parseMoney(value);
+  if (number == null || number <= 0) return null;
+  const vnd = Math.round(number);
+  const remainder = ((vnd % 1000) + 1000) % 1000;
+  if (remainder <= 10) return vnd - remainder;
+  if (1000 - remainder <= 10) return vnd + (1000 - remainder);
+  return vnd;
 }
 
 // UC: Gửi thông tin đăng ký thuê
@@ -18,33 +48,34 @@ export async function createHoSoDangKy(data = {}) {
   }
 
   // Kiểm tra thông tin bắt buộc phía service (A4 trong UC)
-  const hinhThucThueRaw = String(data.hinhThucThue || '').trim();
-  const hinhThucThue = hinhThucThueRaw;
+  const gioiTinhThue = data.gioiTinhThue || data.gioiTinh || null;
   const soNguoiO    = Number(data.soNguoiO);
   const ngayDuKienVaoO = data.ngayDuKienVaoO || null;
+  const mucGiaToiDa = normalizeMoneyVnd(data.mucGiaToiDa ?? data.mucGiaDen ?? data.mucGia);
 
-  if (!hinhThucThueRaw) {
-    throw createServiceError('Vui lòng chọn hình thức thuê.');
-  }
   if (!soNguoiO || soNguoiO < 1) {
     throw createServiceError('Vui lòng nhập số người dự kiến ở (tối thiểu 1 người).');
   }
   if (!ngayDuKienVaoO) {
     throw createServiceError('Vui lòng nhập thời gian dự kiến vào ở.');
   }
+  if (!mucGiaToiDa) {
+    throw createServiceError('Vui lòng nhập mức giá mong muốn hợp lệ.');
+  }
 
   try {
     const result = await executeProcedure('dbo.SP_TaoHoSoDangKy', [
       { name: 'KhachHangId',     type: sql.NVarChar(20),       value: khachHangId },
-      { name: 'NhuCau',          type: sql.NVarChar(200),      value: hinhThucThue },
       { name: 'SoNguoiO',        type: sql.Int,                value: soNguoiO },
+      { name: 'SoNamInput',      type: sql.Int,                value: data.soNam || 0 },
+      { name: 'SoNuInput',       type: sql.Int,                value: data.soNu || 0 },
       { name: 'NgayDuKienVaoO',  type: sql.Date,               value: ngayDuKienVaoO },
       { name: 'GhiChu',          type: sql.NVarChar(sql.MAX),  value: data.ghiChu || null },
       { name: 'KhuVucMongMuon',  type: sql.NVarChar(100),      value: data.khuVucMongMuon || null },
-      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50),       value: data.loaiPhongYeuCau || null },
-      { name: 'MucGia',          type: sql.Decimal(15, 2),     value: data.mucGia ? Number(data.mucGia) : null },
-      { name: 'MucGiaDen',       type: sql.Decimal(15, 2),     value: data.mucGiaDen ? Number(data.mucGiaDen) : null },
-      { name: 'ThoiHanThue',     type: sql.Int,                value: data.thoiHanThue ? Number(data.thoiHanThue) : null }
+      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(200),      value: data.loaiPhongYeuCau || null },
+      { name: 'MucGiaToiDa',     type: sql.Decimal(18, 2),     value: mucGiaToiDa },
+      { name: 'ThoiHanThue',     type: sql.Int,                value: data.thoiHanThue ? Number(data.thoiHanThue) : null },
+      { name: 'GioiTinh',        type: sql.NVarChar(10),       value: gioiTinhThue }
     ]);
 
     return result.recordset[0] || null;
@@ -64,11 +95,43 @@ export async function getHoSoDangKy(filter = {}) {
 }
 
 export async function getPhongGiuongKhaDung(filter = {}) {
+  const hoSoId = String(filter.hoSoId || '').trim();
+  let mucGiaToiDa = normalizeMoneyVnd(filter.mucGiaToiDa);
+
+  if (hoSoId && !mucGiaToiDa) {
+    const profile = await executeQuery(`
+      SELECT MucGiaToiDa
+      FROM dbo.PhieuDangKy
+      WHERE MaDangKy = @HoSoId
+    `, [
+      { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId }
+    ]);
+    mucGiaToiDa = normalizeMoneyVnd(profile.recordset[0]?.MucGiaToiDa);
+  }
+
   const result = await executeProcedure('dbo.SP_DanhSachPhongGiuongKhaDung', [
     { name: 'Loai', type: sql.NVarChar(50), value: filter.loai || null },
-    { name: 'HoSoId', type: sql.VarChar(6), value: filter.hoSoId || null }
+    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: mucGiaToiDa },
+    { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId || null }
   ]);
-  return result.recordset;
+
+  let isRegionValid = true;
+  if (hoSoId) {
+    const check = await executeQuery(`
+      SELECT 1 
+      FROM PhieuDangKy pdk
+      JOIN ChiNhanh cn ON cn.DiaChi LIKE '%' + pdk.KhuVucMongMuon + '%' OR cn.TenChiNhanh LIKE '%' + pdk.KhuVucMongMuon + '%'
+      WHERE pdk.MaDangKy = @HoSoId
+    `, [
+      { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId }
+    ]);
+    isRegionValid = check.recordset.length > 0;
+  }
+
+  return {
+    rooms: result.recordset,
+    isRegionValid
+  };
 }
 
 export async function traCuuPhong(filter = {}) {
@@ -76,7 +139,7 @@ export async function traCuuPhong(filter = {}) {
     { name: 'KhuVuc', type: sql.NVarChar(100), value: filter.khuVuc || null },
     { name: 'LoaiPhong', type: sql.NVarChar(50), value: filter.loaiPhong || null },
     { name: 'HinhThucThue', type: sql.NVarChar(50), value: filter.hinhThucThue || null },
-    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: filter.mucGiaToiDa ? Number(filter.mucGiaToiDa) : null }
+    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: normalizeMoneyVnd(filter.mucGiaToiDa) }
   ]);
   return result.recordset;
 }
@@ -122,26 +185,27 @@ export async function tiepNhanHoSoDangKy(hoSoId, nhanVienSaleId) {
 
 export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
   try {
-    const soNguoiO = Number(data.soNguoiO || 1);
+    const soNguoiO = Number(data.soNguoiO || data.soNguoi || 1);
     const thoiHanThue = Number(data.thoiHanThue || data.thoiHan || 1);
-    const mucGia = data.mucGia ? Number(data.mucGia) : null;
-    const hinhThucThue = data.hinhThucThue || null;
+    const mucGia = normalizeMoneyVnd(data.mucGiaToiDa ?? data.mucGiaDen ?? data.mucGia);
+    const hinhThucThue = data.hinhThucThue || data.hinhThuc || null;
 
     const result = await executeProcedure('dbo.SP_TaoHoSoKhachVangLai', [
       { name: 'HoTen', type: sql.NVarChar(100), value: data.hoTen },
       { name: 'NgaySinh', type: sql.Date, value: data.ngaySinh },
-      { name: 'GioiTinh', type: sql.NVarChar(5), value: data.gioiTinh },
+      { name: 'GioiTinh', type: sql.NVarChar(5), value: data.gioiTinhO || data.gioiTinh },
       { name: 'SDT', type: sql.VarChar(20), value: data.sdt },
       { name: 'Email', type: sql.VarChar(100), value: data.email || null },
       { name: 'DiaChi', type: sql.NVarChar(255), value: data.diaChi || null },
       { name: 'QuocTich', type: sql.NVarChar(50), value: data.quocTich || 'Việt Nam' },
       { name: 'CCCD', type: sql.VarChar(20), value: data.cccd },
       { name: 'HinhThucThue', type: sql.NVarChar(20), value: hinhThucThue },
-      { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon },
-      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50), value: data.loaiPhongYeuCau },
-      { name: 'MucGia', type: sql.Decimal(15, 2), value: mucGia },
-      { name: 'MucGiaDen', type: sql.Decimal(15, 2), value: data.mucGiaDen ? Number(data.mucGiaDen) : null },
+      { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || data.khuVuc },
+      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(200), value: data.loaiPhongYeuCau || data.loaiPhong },
+      { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: mucGia },
       { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
+      { name: 'SoNamInput', type: sql.Int, value: data.soNam || 0 },
+      { name: 'SoNuInput', type: sql.Int, value: data.soNu || 0 },
       { name: 'NgayDuKienVaoO', type: sql.Date, value: data.ngayVao || data.ngayDuKienVaoO },
       { name: 'ThoiHanThue', type: sql.Int, value: thoiHanThue },
       { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || data.yeuCau || null },

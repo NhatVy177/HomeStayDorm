@@ -19,7 +19,9 @@ const rentInitial = {
   loaiPhongYeuCau: '',
   mucGiaToiDa: '',
   soNguoiO: '1',
-  gioiTinhThue: 'Không xác định',
+  gioiTinhThue: 'Nam',
+  soNam: 0,
+  soNu: 0,
   ngayDuKienVaoO: '',
   thoiHanThue: '',
   ghiChu: ''
@@ -84,14 +86,50 @@ function initials(name = '') {
   return String(name).split(' ').filter(Boolean).slice(-2).map((word) => word.charAt(0)).join('').toUpperCase() || 'KH';
 }
 
+function parseMoney(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const numericText = raw.replace(/[^\d,.-]/g, '');
+  const commaAsDecimal = numericText.includes(',') && numericText.lastIndexOf(',') > numericText.lastIndexOf('.');
+  const cleaned = commaAsDecimal
+    ? numericText.replace(/\./g, '').replace(',', '.')
+    : numericText.replace(/,/g, '');
+  const compact = (cleaned.match(/\./g) || []).length > 1
+    ? cleaned.replace(/\./g, '')
+    : cleaned;
+  const amount = Number(compact);
+
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function normalizeMoneyVnd(value) {
+  const amount = parseMoney(value);
+  if (amount == null || amount <= 0) return null;
+  const vnd = Math.round(amount);
+  const remainder = ((vnd % 1000) + 1000) % 1000;
+  if (remainder <= 10) return vnd - remainder;
+  if (1000 - remainder <= 10) return vnd + (1000 - remainder);
+  return vnd;
+}
+
+function formatMoneyAmount(value) {
+  const amount = normalizeMoneyVnd(value);
+  if (!Number.isFinite(amount) || amount <= 0) return '';
+  return amount.toLocaleString('vi-VN') + 'đ';
+}
+
 function formatMoney(value, unit = 'tháng') {
-  const amount = Number(value);
+  const amount = normalizeMoneyVnd(value);
   if (value == null || value === '' || !Number.isFinite(amount) || amount <= 0) return 'Chưa cập nhật';
   return amount.toLocaleString('vi-VN') + 'đ/' + unit;
 }
 
 function formatServiceMoney(value, unit) {
-  const amount = Number(value);
+  const amount = normalizeMoneyVnd(value);
   if (!Number.isFinite(amount) || amount <= 0) return 'Chưa cập nhật';
   return `${amount.toLocaleString('vi-VN')}đ${unit ? `/${unit}` : ''}`;
 }
@@ -326,18 +364,22 @@ function GalleryPhoto({ urlAnh, fallbackUrl, moTa, index }) {
   return <img src={src} alt={moTa || `Ảnh ${index + 1}`} onError={() => setFailed(true)} loading="lazy" />;
 }
 
-function ChiTietPhongView({ phong, onBack, onRent }) {
+function ChiTietPhongView({ phong, onBack, onRent, backLabel = '← Quay lại khám phá phòng' }) {
   const [lightbox, setLightbox] = useState(null);
   const anh = phong.hinhAnh || [];
   const tienNghi = phong.tienNghi || [];
   const dichVuUocTinh = phong.dichVuUocTinh || [];
   const mainAnh = anh[0];
   const extraAnh = anh.slice(1, 5);
+  const mapAddress = [phong.diaChi, phong.chiNhanh].filter(Boolean).join(', ');
+  const mapQuery = encodeURIComponent(mapAddress || phong.tenPhong || '');
+  const mapEmbedUrl = mapQuery ? `https://maps.google.com/maps?q=${mapQuery}&t=&z=16&ie=UTF8&iwloc=&output=embed` : '';
+  const mapOpenUrl = mapQuery ? `https://www.google.com/maps/search/?api=1&query=${mapQuery}` : '';
 
   return (
     <section className="kh-detail-view">
       <button className="kh-detail-back" type="button" onClick={onBack}>
-        <Icon name="explore" />← Quay lại khám phá phòng
+        <Icon name="explore" />{backLabel}
       </button>
 
       <div className="kh-detail-header">
@@ -470,6 +512,25 @@ function ChiTietPhongView({ phong, onBack, onRent }) {
         </aside>
       </div>
 
+      {mapEmbedUrl && (
+        <div className="kh-detail-map-card kh-detail-map-card-wide">
+          <div className="kh-detail-map-head">
+            <span>Vị trí</span>
+            <strong>{phong.chiNhanh || phong.tenPhong}</strong>
+          </div>
+          <iframe
+            className="kh-detail-map-frame"
+            title={`Bản đồ ${phong.tenPhong}`}
+            src={mapEmbedUrl}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+          <a className="kp-btn kp-btn-soft kh-detail-map-link" href={mapOpenUrl} target="_blank" rel="noreferrer">
+            <Icon name="map" />Chỉ đường
+          </a>
+        </div>
+      )}
+
       {/* Lightbox */}
       {lightbox !== null && (
         <div className="kh-lightbox" onClick={() => setLightbox(null)}>
@@ -498,6 +559,7 @@ export default function KhachHangPortalPage() {
   const [activeTab, setActiveTab] = useState('kham-pha');
   const [detailPhong, setDetailPhong] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailBackContext, setDetailBackContext] = useState(null);
 
   const [overview, setOverview] = useState(null);
   const [rooms, setRooms] = useState([]);
@@ -567,19 +629,49 @@ export default function KhachHangPortalPage() {
     return () => clearTimeout(timeout);
   }, [toast]);
 
+  useEffect(() => {
+    if (activeTab !== 'lich-xem') return undefined;
+
+    let disposed = false;
+    const refreshSchedules = async () => {
+      try {
+        const { data } = await khachMoiApi.getTongQuan();
+        if (!disposed) setOverview(data);
+      } catch {
+        // Giữ dữ liệu hiện có nếu refresh nền lỗi.
+      }
+    };
+    const handleVisibility = () => {
+      if (!document.hidden) refreshSchedules();
+    };
+
+    window.addEventListener('focus', refreshSchedules);
+    document.addEventListener('visibilitychange', handleVisibility);
+    const interval = window.setInterval(refreshSchedules, 15000);
+
+    return () => {
+      disposed = true;
+      window.removeEventListener('focus', refreshSchedules);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.clearInterval(interval);
+    };
+  }, [activeTab]);
+
   function goTo(tab) {
     if (locks[tab]) {
       setToast(getLockedMessage(tab));
       return;
     }
     setDetailPhong(null);
+    setDetailBackContext(null);
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  async function openRoomDetail(room) {
+  async function openRoomDetail(room, options = {}) {
     const fallbackRoom = normalizeRoomDetail(room);
     const maPhong = fallbackRoom.maPhong;
+    setDetailBackContext(options.backContext || null);
 
     if (!maPhong) {
       setDetailPhong(fallbackRoom);
@@ -597,6 +689,27 @@ export default function KhachHangPortalPage() {
     } finally {
       setDetailLoading(false);
     }
+  }
+
+  function handleRoomDetailBack() {
+    if (detailBackContext?.type === 'schedule') {
+      const previousSchedule = detailBackContext.schedule;
+      setDetailPhong(null);
+      setDetailBackContext(null);
+      setScheduleDetailModal(previousSchedule);
+      return;
+    }
+
+    setDetailPhong(null);
+    setDetailBackContext(null);
+  }
+
+  function openScheduledRoomDetail(room) {
+    const currentSchedule = scheduleDetailModal;
+    setScheduleDetailModal(null);
+    openRoomDetail(room, {
+      backContext: { type: 'schedule', schedule: currentSchedule }
+    });
   }
 
   async function logout() {
@@ -642,7 +755,7 @@ export default function KhachHangPortalPage() {
       ...getRentDefaultsFromUser(),
       khuVucMongMuon: getArea(firstRoom),
       loaiPhongYeuCau: firstRoom.loaiPhong || '',
-      mucGiaToiDa: firstRoom.giaThue ? String(firstRoom.giaThue) : '',
+      mucGiaToiDa: firstRoom.giaThue ? String(normalizeMoneyVnd(firstRoom.giaThue) || firstRoom.giaThue) : '',
       gioiTinhThue: firstRoom.gioiTinhChoPhep || rentInitial.gioiTinhThue
     });
     setRentModal(true);
@@ -654,9 +767,11 @@ export default function KhachHangPortalPage() {
       ...getRentDefaultsFromUser(),
       khuVucMongMuon: profile.khuVucMongMuon || '',
       loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
-      mucGiaToiDa: profile.mucGiaToiDa || '',
+      mucGiaToiDa: normalizeMoneyVnd(profile.mucGiaToiDa) || profile.mucGiaToiDa || '',
       soNguoiO: profile.soNguoiO || '1',
-      gioiTinhThue: profile.gioiTinh || 'Không xác định',
+      gioiTinhThue: (profile.gioiTinh === 'Nam' || profile.gioiTinh === 'Nữ') ? profile.gioiTinh : 'Khác',
+      soNam: 0,
+      soNu: 0,
       ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
       thoiHanThue: profile.thoiHanThue || '',
       ghiChu: profile.ghiChu || ''
@@ -672,13 +787,26 @@ export default function KhachHangPortalPage() {
 
   async function submitRent(event) {
     event.preventDefault();
+
+    if (rentForm.gioiTinhThue === 'Khác') {
+      const soNguoiO = Number(rentForm.soNguoiO) || 0;
+      const soNam = Number(rentForm.soNam) || 0;
+      const soNu = Number(rentForm.soNu) || 0;
+      if (soNam + soNu !== soNguoiO) {
+        setToast('Tổng số lượng nam và nữ không khớp với số người dự kiến ở.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       await khachMoiApi.createHoSo({
         ...rentForm,
         phongQuanTam: selectedRooms.map((room) => room.tenPhong).join(', '),
-        mucGiaToiDa: rentForm.mucGiaToiDa || '',
-        gioiTinhThue: rentForm.gioiTinhThue !== 'Không xác định' ? rentForm.gioiTinhThue : null,
+        mucGiaToiDa: normalizeMoneyVnd(rentForm.mucGiaToiDa) || '',
+        gioiTinhThue: rentForm.gioiTinhThue,
+        soNam: rentForm.soNam || 0,
+        soNu: rentForm.soNu || 0,
         ghiChu: rentForm.ghiChu || ''
       });
       setRentModal(false);
@@ -704,9 +832,11 @@ export default function KhachHangPortalPage() {
       cccd: profile.cccd || profile.soCCCD || user?.cccd || user?.soCCCD || user?.cmnd || '',
       khuVucMongMuon: profile.khuVucMongMuon || '',
       loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
-      mucGiaToiDa: profile.mucGiaToiDa || '',
+      mucGiaToiDa: normalizeMoneyVnd(profile.mucGiaToiDa) || profile.mucGiaToiDa || '',
       soNguoiO: profile.soNguoiO || 1,
-      gioiTinhThue: profile.gioiTinh || 'Không xác định',
+      gioiTinhThue: (profile.gioiTinh === 'Nam' || profile.gioiTinh === 'Nữ') ? profile.gioiTinh : 'Khác',
+      soNam: 0,
+      soNu: 0,
       ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
       thoiHanThue: profile.thoiHanThue || '',
       ghiChu: profile.ghiChu || ''
@@ -761,9 +891,25 @@ export default function KhachHangPortalPage() {
 
   async function submitEditModal(event) {
     event.preventDefault();
+
+    if (editForm.gioiTinhThue === 'Khác') {
+      const soNguoiO = Number(editForm.soNguoiO) || 0;
+      const soNam = Number(editForm.soNam) || 0;
+      const soNu = Number(editForm.soNu) || 0;
+      if (soNam + soNu !== soNguoiO) {
+        setToast('Tổng số lượng nam và nữ không khớp với số người dự kiến ở.');
+        return;
+      }
+    }
+
     setEditSaving(true);
     try {
-      await khachMoiApi.updateHoSo(editModal.maDangKy, editForm);
+      let finalForm = {
+        ...editForm,
+        mucGiaToiDa: normalizeMoneyVnd(editForm.mucGiaToiDa) || ''
+      };
+
+      await khachMoiApi.updateHoSo(editModal.maDangKy, finalForm);
       setEditModal(null);
       await loadPortal(filters);
       setToast('Đã cập nhật hồ sơ thành công.');
@@ -945,10 +1091,10 @@ export default function KhachHangPortalPage() {
                     <Icon name="payment" />
                     <span>
                       Mức giá: {profile.mucGia && profile.mucGiaDen 
-                        ? `Từ ${Number(profile.mucGia).toLocaleString('vi-VN')}đ - ${Number(profile.mucGiaDen).toLocaleString('vi-VN')}đ/tháng` 
+                        ? `Từ ${formatMoneyAmount(profile.mucGia)} - ${formatMoneyAmount(profile.mucGiaDen)}/tháng` 
                         : profile.mucGia 
-                          ? `Từ ${Number(profile.mucGia).toLocaleString('vi-VN')}đ/tháng` 
-                          : `Đến ${Number(profile.mucGiaDen).toLocaleString('vi-VN')}đ/tháng`}
+                          ? `Từ ${formatMoneyAmount(profile.mucGia)}/tháng` 
+                          : `Đến ${formatMoneyAmount(profile.mucGiaDen)}/tháng`}
                     </span>
                   </div>
                 )}
@@ -997,9 +1143,32 @@ export default function KhachHangPortalPage() {
 
   function renderSchedules() {
     if (locks['lich-xem']) return renderLocked('lich-xem');
-    return <LichXemPhongPage schedules={overview?.lichXem || []} onViewRoomDetail={(schedule) => {
-      openScheduleDetail(schedule);
-    }} />;
+    return (
+      <LichXemPhongPage
+        schedules={overview?.lichXem || []}
+        onViewRoomDetail={(schedule) => {
+          openScheduleDetail(schedule);
+        }}
+        onReschedule={async (appointment, form) => {
+          await khachMoiApi.yeuCauDieuChinhLich(appointment.rawSchedule.id, {
+            thaoTac: 'Đổi lịch',
+            thoiGianMoi: form.timeText,
+            lyDo: form.reason
+          });
+          await loadPortal(filters);
+          setToast('Đã gửi yêu cầu đổi lịch. Nhân viên Sale sẽ kiểm tra lại.');
+        }}
+        onCancel={async (appointment, form) => {
+          await khachMoiApi.yeuCauDieuChinhLich(appointment.rawSchedule.id, {
+            thaoTac: 'Hủy',
+            thoiGianMoi: form.timeText,
+            lyDo: form.reason
+          });
+          await loadPortal(filters);
+          setToast('Đã gửi yêu cầu hủy lịch. Nhân viên Sale sẽ kiểm tra lại.');
+        }}
+      />
+    );
   }
 
   function renderSimpleUnlocked(tab, title, icon) {
@@ -1491,8 +1660,9 @@ export default function KhachHangPortalPage() {
       return (
         <ChiTietPhongView
           phong={detailPhong}
-          onBack={() => setDetailPhong(null)}
-          onRent={(room) => { setDetailPhong(null); openRentForm(room); }}
+          onBack={handleRoomDetailBack}
+          onRent={(room) => { setDetailPhong(null); setDetailBackContext(null); openRentForm(room); }}
+          backLabel={detailBackContext?.type === 'schedule' ? '← Quay lại danh sách phòng' : '← Quay lại khám phá phòng'}
         />
       );
     }
@@ -1614,9 +1784,41 @@ export default function KhachHangPortalPage() {
                 <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
                 <div className="kh-register-grid">
                   <label><span>Số lượng người ở*</span><input type="number" min="1" value={rentForm.soNguoiO} onChange={(event) => setRentForm({ ...rentForm, soNguoiO: event.target.value })} required /></label>
-                  <label><span>Giới tính thuê*</span><select value={rentForm.gioiTinhThue} onChange={(event) => setRentForm({ ...rentForm, gioiTinhThue: event.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Không xác định">Không xác định</option></select></label>
-                  <label className="is-half"><span>Khu vực mong muốn*</span><select value={rentForm.khuVucMongMuon} onChange={(event) => setRentForm({ ...rentForm, khuVucMongMuon: event.target.value })} required><option value="">Chọn khu vực</option>{filterOptions.khuVuc.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <label className="is-half"><span>Loại phòng mong muốn*</span><select value={rentForm.loaiPhongYeuCau} onChange={(event) => setRentForm({ ...rentForm, loaiPhongYeuCau: event.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+                  <label><span>Giới tính thuê*</span><select value={rentForm.gioiTinhThue} onChange={(event) => setRentForm({ ...rentForm, gioiTinhThue: event.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></label>
+                  {rentForm.gioiTinhThue === 'Khác' && (
+                    <div className="is-half" style={{ display: 'flex', gap: '16px' }}>
+                      <label style={{ margin: 0, flex: 1 }}><span>Số lượng nam*</span><input type="number" min="0" value={rentForm.soNam || ''} onChange={(event) => setRentForm({ ...rentForm, soNam: event.target.value })} required /></label>
+                      <label style={{ margin: 0, flex: 1 }}><span>Số lượng nữ*</span><input type="number" min="0" value={rentForm.soNu || ''} onChange={(event) => setRentForm({ ...rentForm, soNu: event.target.value })} required /></label>
+                    </div>
+                  )}
+                  <label className="is-half"><span>Khu vực mong muốn*</span><input type="text" value={rentForm.khuVucMongMuon} onChange={(event) => setRentForm({ ...rentForm, khuVucMongMuon: event.target.value })} placeholder="VD: Quận 1, Thủ Đức..." required /></label>
+                  <div className="is-half" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start' }}>
+                    <span style={{ color: 'var(--kp-soft-text)', fontSize: '10px', fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Loại phòng mong muốn*</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      {filterOptions.loaiPhong.filter(Boolean).map((option) => {
+                        const isChecked = rentForm.loaiPhongYeuCau ? rentForm.loaiPhongYeuCau.split(', ').includes(option) : false;
+                        return (
+                          <label key={option} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal', fontSize: '14px', color: '#191c1d', padding: 0, background: 'none', border: 'none' }}>
+                            <input 
+                              type="checkbox" 
+                              style={{ width: '16px', height: '16px', margin: 0 }}
+                              checked={isChecked} 
+                              onChange={(e) => {
+                                let currentArr = rentForm.loaiPhongYeuCau ? rentForm.loaiPhongYeuCau.split(', ').filter(Boolean) : [];
+                                if (e.target.checked) {
+                                  currentArr.push(option);
+                                } else {
+                                  currentArr = currentArr.filter(v => v !== option);
+                                }
+                                setRentForm({ ...rentForm, loaiPhongYeuCau: currentArr.join(', ') });
+                              }} 
+                            />
+                            {option}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={rentForm.mucGiaToiDa} onChange={(event) => setRentForm({ ...rentForm, mucGiaToiDa: event.target.value })} placeholder="VD: 3.000.000" required /></label>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={rentForm.ngayDuKienVaoO} onChange={(event) => setRentForm({ ...rentForm, ngayDuKienVaoO: event.target.value })} required /></label>
                   <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={rentForm.thoiHanThue} onChange={(event) => setRentForm({ ...rentForm, thoiHanThue: event.target.value })} placeholder="Ví dụ: 6" required /></label>
@@ -1760,10 +1962,20 @@ export default function KhachHangPortalPage() {
               <div className="kh-profile-detail-rooms">
                 <h3>Danh sách phòng sẽ xem</h3>
                 {scheduleDetailModal.phongXem.map((room) => (
-                  <div className="kh-profile-room-row" key={`${room.maPhong}-${room.maGiuong || 'room'}`}>
-                    <strong>{room.tenPhong || room.maPhong}</strong>
-                    <span>{room.maGiuong ? `Giường ${room.maGiuong}` : 'Nguyên phòng'}</span>
-                  </div>
+                  <button
+                    className="kh-profile-room-row kh-profile-room-row-button"
+                    key={`${room.maPhong}-${room.maGiuong || 'room'}`}
+                    type="button"
+                    onClick={() => openScheduledRoomDetail(room)}
+                  >
+                    <span className="kh-profile-room-main">
+                      <strong>{room.tenPhong || room.maPhong}</strong>
+                      <small>{room.tenChiNhanh || room.chiNhanh || room.loaiPhong || 'Chi tiết phòng'}</small>
+                    </span>
+                    <span className="kh-profile-room-action">
+                      {room.maGiuong ? `Giường ${room.maGiuong}` : 'Xem chi tiết'}
+                    </span>
+                  </button>
                 ))}
               </div>
             ) : (
@@ -1808,9 +2020,41 @@ export default function KhachHangPortalPage() {
                 <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
                 <div className="kh-register-grid">
                   <label><span>Số lượng người ở*</span><input type="number" min="1" value={editForm.soNguoiO} onChange={(e) => setEditForm({ ...editForm, soNguoiO: e.target.value })} required /></label>
-                  <label><span>Giới tính thuê*</span><select value={editForm.gioiTinhThue} onChange={(e) => setEditForm({ ...editForm, gioiTinhThue: e.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Không xác định">Không xác định</option></select></label>
-                  <label className="is-half"><span>Khu vực mong muốn*</span><select value={editForm.khuVucMongMuon} onChange={(e) => setEditForm({ ...editForm, khuVucMongMuon: e.target.value })} required><option value="">Chọn khu vực</option>{filterOptions.khuVuc.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <label className="is-half"><span>Loại phòng mong muốn*</span><select value={editForm.loaiPhongYeuCau} onChange={(e) => setEditForm({ ...editForm, loaiPhongYeuCau: e.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+                  <label><span>Giới tính thuê*</span><select value={editForm.gioiTinhThue} onChange={(e) => setEditForm({ ...editForm, gioiTinhThue: e.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></label>
+                  {editForm.gioiTinhThue === 'Khác' && (
+                    <div className="is-half" style={{ display: 'flex', gap: '16px' }}>
+                      <label style={{ margin: 0, flex: 1 }}><span>Số lượng nam*</span><input type="number" min="0" value={editForm.soNam || ''} onChange={(e) => setEditForm({ ...editForm, soNam: e.target.value })} required /></label>
+                      <label style={{ margin: 0, flex: 1 }}><span>Số lượng nữ*</span><input type="number" min="0" value={editForm.soNu || ''} onChange={(e) => setEditForm({ ...editForm, soNu: e.target.value })} required /></label>
+                    </div>
+                  )}
+                  <label className="is-half"><span>Khu vực mong muốn*</span><input type="text" value={editForm.khuVucMongMuon} onChange={(e) => setEditForm({ ...editForm, khuVucMongMuon: e.target.value })} placeholder="VD: Quận 1, Thủ Đức..." required /></label>
+                  <div className="is-half" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start' }}>
+                    <span style={{ color: 'var(--kp-soft-text)', fontSize: '10px', fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Loại phòng mong muốn*</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      {filterOptions.loaiPhong.filter(Boolean).map((option) => {
+                        const isChecked = editForm.loaiPhongYeuCau ? editForm.loaiPhongYeuCau.split(', ').includes(option) : false;
+                        return (
+                          <label key={option} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal', fontSize: '14px', color: '#191c1d', padding: 0, background: 'none', border: 'none' }}>
+                            <input 
+                              type="checkbox" 
+                              style={{ width: '16px', height: '16px', margin: 0 }}
+                              checked={isChecked} 
+                              onChange={(e) => {
+                                let currentArr = editForm.loaiPhongYeuCau ? editForm.loaiPhongYeuCau.split(', ').filter(Boolean) : [];
+                                if (e.target.checked) {
+                                  currentArr.push(option);
+                                } else {
+                                  currentArr = currentArr.filter(v => v !== option);
+                                }
+                                setEditForm({ ...editForm, loaiPhongYeuCau: currentArr.join(', ') });
+                              }} 
+                            />
+                            {option}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={editForm.mucGiaToiDa} onChange={(e) => setEditForm({ ...editForm, mucGiaToiDa: e.target.value })} placeholder="VD: 3.000.000" required /></label>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={editForm.ngayDuKienVaoO} onChange={(e) => setEditForm({ ...editForm, ngayDuKienVaoO: e.target.value })} required /></label>
                   <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={editForm.thoiHanThue} onChange={(e) => setEditForm({ ...editForm, thoiHanThue: e.target.value })} placeholder="Ví dụ: 6" required /></label>

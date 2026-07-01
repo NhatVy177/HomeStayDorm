@@ -52,7 +52,9 @@ function toUser(record) {
     vaiTro: record.vaiTro,
     trangThai: record.trangThai,
     chucVu: record.chucVu || null,
-    maChiNhanh: record.maChiNhanh || null
+    maChiNhanh: record.maChiNhanh || null,
+    quocTich: record.quocTich || null,
+    cccd: record.cccd || null
   };
 
   return {
@@ -68,6 +70,8 @@ function toUser(record) {
       trangThai: user.trangThai,
       chucVu: user.chucVu,
       maChiNhanh: user.maChiNhanh,
+      quocTich: user.quocTich,
+      cccd: user.cccd,
       exp: Date.now() + 7 * 24 * 60 * 60 * 1000
     }),
     user

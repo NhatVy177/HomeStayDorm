@@ -144,7 +144,7 @@ function FilledStarIcon({ half = false }) {
 /* ─── Status badge ─── */
 const STATUS_CONFIG = {
   upcoming: {
-    label: 'Sắp diễn ra',
+    label: 'Chờ xem',
     icon: 'schedule',
     cls: 'lxp-status-upcoming',
   },
@@ -494,13 +494,23 @@ function NewAppointmentModal({ onClose, onSubmit }) {
 function RescheduleModal({ appt, onClose, onSubmit }) {
   const [timeText, setTimeText] = useState('');
   const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   if (!appt) return null;
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSubmit?.(appt, { timeText, reason });
-    onClose?.();
+    setSubmitting(true);
+    setError('');
+    try {
+      await onSubmit?.(appt, { timeText, reason });
+      onClose?.();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không thể gửi yêu cầu đổi lịch.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -516,6 +526,7 @@ function RescheduleModal({ appt, onClose, onSubmit }) {
               Bạn đang đổi lịch cho <strong style={{ color: 'var(--lxp-on-surface)' }}>{appt.roomName}</strong>.
               Lịch mới phải được đổi trước ít nhất 1 tiếng so với lịch hẹn cũ.
             </p>
+            {error && <p style={{ color: 'var(--lxp-error)', fontSize: 13, margin: 0 }}>{error}</p>}
             <div className="lxp-modal-field">
               <label htmlFor="lxp-new-timeText">Thời gian đề xuất (Có thể nhập nhiều thời gian)</label>
               <textarea
@@ -538,8 +549,8 @@ function RescheduleModal({ appt, onClose, onSubmit }) {
             </div>
           </div>
           <div className="lxp-modal-footer">
-            <button className="lxp-btn lxp-btn-outline" type="button" onClick={onClose}>Thoát</button>
-            <button className="lxp-btn lxp-btn-primary" type="submit">Gửi yêu cầu</button>
+            <button className="lxp-btn lxp-btn-outline" type="button" onClick={onClose} disabled={submitting}>Thoát</button>
+            <button className="lxp-btn lxp-btn-primary" type="submit" disabled={submitting}>{submitting ? 'Đang gửi...' : 'Gửi yêu cầu'}</button>
           </div>
         </form>
       </div>
@@ -551,13 +562,23 @@ function RescheduleModal({ appt, onClose, onSubmit }) {
 function CancelModal({ appt, onClose, onSubmit }) {
   const [timeText, setTimeText] = useState('');
   const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   if (!appt) return null;
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSubmit?.(appt, { timeText, reason });
-    onClose?.();
+    setSubmitting(true);
+    setError('');
+    try {
+      await onSubmit?.(appt, { timeText, reason });
+      onClose?.();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không thể gửi yêu cầu hủy lịch.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -572,6 +593,7 @@ function CancelModal({ appt, onClose, onSubmit }) {
             <p style={{ fontSize: 14, color: 'var(--lxp-on-surface-var)', margin: 0 }}>
               Bạn đang yêu cầu hủy lịch cho <strong style={{ color: 'var(--lxp-on-surface)' }}>{appt.roomName}</strong>.
             </p>
+            {error && <p style={{ color: 'var(--lxp-error)', fontSize: 13, margin: 0 }}>{error}</p>}
             <div className="lxp-modal-field">
               <label htmlFor="lxp-cancel-timeText">Thời gian đề xuất (tùy chọn)</label>
               <textarea
@@ -593,8 +615,10 @@ function CancelModal({ appt, onClose, onSubmit }) {
             </div>
           </div>
           <div className="lxp-modal-footer">
-            <button className="lxp-btn lxp-btn-outline" type="button" onClick={onClose}>Thoát</button>
-            <button className="lxp-btn lxp-btn-danger" style={{ backgroundColor: '#e53e3e', color: 'white' }} type="submit">Gửi yêu cầu hủy</button>
+            <button className="lxp-btn lxp-btn-outline" type="button" onClick={onClose} disabled={submitting}>Thoát</button>
+            <button className="lxp-btn lxp-btn-danger" style={{ backgroundColor: '#e53e3e', color: 'white' }} type="submit" disabled={submitting}>
+              {submitting ? 'Đang gửi...' : 'Gửi yêu cầu hủy'}
+            </button>
           </div>
         </form>
       </div>

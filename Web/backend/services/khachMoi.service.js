@@ -20,6 +20,36 @@ function handleDatabaseError(error) {
   });
 }
 
+function parseMoney(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const numericText = raw.replace(/[^\d,.-]/g, '');
+  const commaAsDecimal = numericText.includes(',') && numericText.lastIndexOf(',') > numericText.lastIndexOf('.');
+  const cleaned = commaAsDecimal
+    ? numericText.replace(/\./g, '').replace(',', '.')
+    : numericText.replace(/,/g, '');
+  const compact = (cleaned.match(/\./g) || []).length > 1
+    ? cleaned.replace(/\./g, '')
+    : cleaned;
+  const number = Number(compact);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+function normalizeMoneyVnd(value) {
+  const number = parseMoney(value);
+  if (number == null || number <= 0) return null;
+  const vnd = Math.round(number);
+  const remainder = ((vnd % 1000) + 1000) % 1000;
+  if (remainder <= 10) return vnd - remainder;
+  if (1000 - remainder <= 10) return vnd + (1000 - remainder);
+  return vnd;
+}
+
 async function getCustomerState(khachHangId) {
   try {
     const result = await executeProcedure('dbo.SP_KhachMoi_TrangThai', [
@@ -61,7 +91,7 @@ async function getAvailableRooms(filter = {}) {
     { name: 'TenPhong', type: sql.NVarChar(100), value: keyword || null },
     { name: 'LoaiPhong', type: sql.NVarChar(100), value: filter.loaiPhong || filter.loai || null },
     { name: 'KhuVuc', type: sql.NVarChar(100), value: filter.khuVuc || null },
-    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: filter.mucGiaToiDa ? Number(filter.mucGiaToiDa) : null }
+    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: normalizeMoneyVnd(filter.mucGiaToiDa) }
   ]);
   return result.recordset;
 }
@@ -104,14 +134,23 @@ export async function createHoSo(user, data = {}) {
     const result = await executeProcedure('dbo.SP_KhachMoi_TaoHoSo', [
       { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
       { name: 'GioiTinh', type: sql.NVarChar(10), value: data.gioiTinhThue || null },
+      { name: 'SoNamInput', type: sql.Int, value: data.soNam || 0 },
+      { name: 'SoNuInput', type: sql.Int, value: data.soNu || 0 },
       { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || null },
       { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50), value: data.loaiPhongYeuCau || null },
-      { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: data.mucGiaToiDa == null || data.mucGiaToiDa === '' ? null : Number(data.mucGiaToiDa) },
+      { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: normalizeMoneyVnd(data.mucGiaToiDa) },
       { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
       { name: 'NgayDuKienVaoO', type: sql.Date, value: ngayDuKienVaoO },
       { name: 'ThoiHanThue', type: sql.Int, value: data.thoiHanThue ? Number(data.thoiHanThue) : null },
       { name: 'PhongQuanTam', type: sql.NVarChar(400), value: data.phongQuanTam || null },
-      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: finalGhiChu || null }
+      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: finalGhiChu || null },
+      { name: 'HoTenKhach', type: sql.NVarChar(100), value: data.hoTen || null },
+      { name: 'NgaySinhKhach', type: sql.Date, value: data.ngaySinh || null },
+      { name: 'GioiTinhKhach', type: sql.NVarChar(5), value: data.gioiTinh || null },
+      { name: 'SDTKhach', type: sql.VarChar(20), value: data.soDienThoai || null },
+      { name: 'EmailKhach', type: sql.VarChar(100), value: data.email || null },
+      { name: 'QuocTichKhach', type: sql.NVarChar(50), value: data.quocTich || null },
+      { name: 'CCCDKhach', type: sql.VarChar(20), value: data.cccd || null }
     ]);
 
     return result.recordset[0] || null;
@@ -173,19 +212,39 @@ export async function updateHoSo(user, maDangKy, data = {}) {
   await transaction.begin();
 
   try {
+    let soNam = data.soNam ? Number(data.soNam) : 0;
+    let soNu = data.soNu ? Number(data.soNu) : 0;
+    const soNguoiO = data.soNguoiO ? Number(data.soNguoiO) : null;
+    if (data.gioiTinh === 'Nam') {
+      soNam = soNguoiO || 0;
+      soNu = 0;
+    } else if (data.gioiTinh === 'Nữ') {
+      soNu = soNguoiO || 0;
+      soNam = 0;
+    } else if (data.gioiTinh === 'Khác' || data.gioiTinh === 'Hỗn hợp') {
+      if (soNam === 0 && soNu === 0) soNam = soNguoiO || 0;
+    } else {
+      soNam = soNguoiO || 0;
+      soNu = 0;
+    }
+
     await transaction.request()
       .input('MaDangKy', sql.VarChar(6), maDangKy)
       .input('GioiTinh', sql.NVarChar(10), data.gioiTinh || null)
+      .input('SoNam', sql.Int, soNam)
+      .input('SoNu', sql.Int, soNu)
       .input('KhuVucMongMuon', sql.NVarChar(100), data.khuVucMongMuon || null)
       .input('LoaiPhongYeuCau', sql.NVarChar(50), data.loaiPhongYeuCau || null)
-      .input('MucGiaToiDa', sql.Decimal(15, 2), data.mucGiaToiDa ? Number(data.mucGiaToiDa) : null)
-      .input('SoNguoiO', sql.Int, data.soNguoiO ? Number(data.soNguoiO) : null)
+      .input('MucGiaToiDa', sql.Decimal(15, 2), normalizeMoneyVnd(data.mucGiaToiDa))
+      .input('SoNguoiO', sql.Int, soNguoiO)
       .input('NgayDuKienVaoO', sql.Date, data.ngayDuKienVaoO || null)
       .input('ThoiHanThue', sql.Int, data.thoiHanThue ? Number(data.thoiHanThue) : null)
       .input('GhiChu', sql.NVarChar(sql.MAX), data.ghiChu || null)
       .query(`
         UPDATE dbo.PhieuDangKy SET
           GioiTinh            = @GioiTinh,
+          SoNam               = @SoNam,
+          SoNu                = @SoNu,
           KhuVucMongMuon      = @KhuVucMongMuon,
           LoaiPhongYeuCau     = @LoaiPhongYeuCau,
           MucGiaToiDa         = @MucGiaToiDa,

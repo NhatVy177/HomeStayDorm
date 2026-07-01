@@ -3,7 +3,7 @@ import { httpClient } from '../../api/httpClient.js';
 export const dangKyThueApi = {
   getAll: (params) => httpClient.get('/dang-ky-thue', { params }),
   create: (data) => httpClient.post('/dang-ky-thue', data),
-  getPhongGiuongKhaDung: () => httpClient.get('/dang-ky-thue/phong-giuong-kha-dung'),
+  getPhongGiuongKhaDung: (params) => httpClient.get('/dang-ky-thue/phong-giuong-kha-dung', { params }),
   traCuuPhong: (params) => httpClient.get('/dang-ky-thue/tra-cuu-phong', { params }),
   kiemTraDieuKien: (id) => httpClient.get(`/dang-ky-thue/${id}/kiem-tra-dieu-kien`),
   capNhatKetQuaXuLy: (id, data) => httpClient.put(`/dang-ky-thue/${id}/ket-qua-xu-ly`, data),
