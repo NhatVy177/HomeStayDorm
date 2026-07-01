@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getPool } from './database/connection.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
@@ -15,10 +17,12 @@ import traPhongRoutes from './routes/traPhong.routes.js';
 import suaChuaBaoTriRoutes from './routes/suaChuaBaoTri.routes.js';
 import khachMoiRoutes from './routes/khachMoi.routes.js';
 import trangChuRoutes from './routes/trangChu.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 // Load bien moi truong trong file .env
 dotenv.config();
 
+const backendDir = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 5000;
 const clientOrigins = String(process.env.CLIENT_URL || '*')
@@ -39,7 +43,8 @@ app.use(cors({
     return callback(null, false);
   }
 }));
-app.use(express.json());
+app.use(express.json({ limit: '8mb' }));
+app.use('/uploads', express.static(path.join(backendDir, 'uploads')));
 app.use((req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   next();
@@ -60,6 +65,7 @@ app.use('/api/nhan-phong', requireAuth, nhanPhongRoutes);
 app.use('/api/tra-phong', requireAuth, traPhongRoutes);
 app.use('/api/sua-chua-bao-tri', requireAuth, suaChuaBaoTriRoutes);
 app.use('/api/khach-moi', requireAuth, khachMoiRoutes);
+app.use('/api/admin', requireAuth, adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

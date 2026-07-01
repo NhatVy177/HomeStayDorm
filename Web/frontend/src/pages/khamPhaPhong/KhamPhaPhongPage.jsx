@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { httpClient } from '../../api/httpClient.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
+import { filterUnlockedRooms } from '../../utils/lockedRooms.js';
 import './khamPhaPhong.css';
 
 const DEFAULT_FILTERS = {
@@ -440,7 +441,7 @@ export default function KhamPhaPhongPage() {
     setError('');
     httpClient.get('/trang-chu/kham-pha-phong', { params: compactParams(activeFilters) })
       .then(({ data }) => {
-        setRooms(data.data || []);
+        setRooms(filterUnlockedRooms(data.data || [], (room) => room.maPhong || room.MaPhong));
         setCurrentPage(1);
       })
       .catch((requestError) => {
