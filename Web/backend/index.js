@@ -11,10 +11,16 @@ import dangKyThueRoutes from './routes/dangKyThue.routes.js';
 import lichXemPhongRoutes from './routes/lichXemPhong.routes.js';
 import datCocRoutes from './routes/datCoc.routes.js';
 import nhanPhongRoutes from './routes/nhanPhong.routes.js';
-import traPhongRoutes from './routes/traPhong.routes.js';
+import dangKyTraPhongRoutes from './routes/dangKyTraPhong.routes.js';
+import kiemTraTraPhongRoutes from './routes/kiemTraTraPhong.routes.js';
+import xacNhanKetQuaRoutes from './routes/xacNhanKetQua.routes.js';
+import thanhLyTraPhongRoutes from './routes/thanhlytraphong.routes.js';
+import capNhatTraPhongRoutes from './routes/capnhattraphong.routes.js';
 import suaChuaBaoTriRoutes from './routes/suaChuaBaoTri.routes.js';
 import khachMoiRoutes from './routes/khachMoi.routes.js';
 import trangChuRoutes from './routes/trangChu.routes.js';
+import doiSoatRoutes from './routes/doiSoat.routes.js';
+import { startHoaDonQuaHanScheduler } from './services/hoaDonQuaHan.service.js';
 
 // Load bien moi truong trong file .env
 dotenv.config();
@@ -57,9 +63,14 @@ app.use('/api/dang-ky-thue', requireAuth, dangKyThueRoutes);
 app.use('/api/lich-xem-phong', requireAuth, lichXemPhongRoutes);
 app.use('/api/dat-coc', requireAuth, datCocRoutes);
 app.use('/api/nhan-phong', requireAuth, nhanPhongRoutes);
-app.use('/api/tra-phong', requireAuth, traPhongRoutes);
+app.use('/api/dang-ky-tra-phong', requireAuth, dangKyTraPhongRoutes);
+app.use('/api/kiem-tra-tra-phong', requireAuth, kiemTraTraPhongRoutes);
+app.use('/api/xac-nhan-ket-qua', requireAuth, xacNhanKetQuaRoutes);
+app.use('/api/thanh-ly-tra-phong', requireAuth, thanhLyTraPhongRoutes);
+app.use('/api/cap-nhat-tra-phong', requireAuth, capNhatTraPhongRoutes);
 app.use('/api/sua-chua-bao-tri', requireAuth, suaChuaBaoTriRoutes);
 app.use('/api/khach-moi', requireAuth, khachMoiRoutes);
+app.use('/api/accountant/doi-soat', requireAuth, doiSoatRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -70,6 +81,7 @@ async function start() {
   const server = app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log(`Connected to SQL Server database: ${process.env.DB_NAME || 'not configured'}`);
+    startHoaDonQuaHanScheduler();
   });
 
   server.on('error', (error) => {

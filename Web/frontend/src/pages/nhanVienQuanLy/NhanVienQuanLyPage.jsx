@@ -7,8 +7,7 @@ import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import XacNhanNhanPhongTab from './XacNhanNhanPhongTab.jsx';
 import XacNhanThanhToanTab from './XacNhanThanhToanTab.jsx';
 import BanGiaoPhongTab from './BanGiaoPhongTab.jsx';
-import LapBienBanKiemTraPhongTab from './LapBienBanKiemTraPhongTab.jsx';
-import ThanhLyHopDongTab from './ThanhLyHopDongTab.jsx';
+import XuLyTraPhongTab from './XuLyTraPhongTab.jsx';
 import CapNhatDichVuTab from './CapNhatDichVuTab.jsx';
 import BaoTriSuaChuaTab from './BaoTriSuaChuaTab.jsx';
 
@@ -51,7 +50,6 @@ export default function NhanVienQuanLyPage() {
     { id: 'xac-nhan-thanh-toan', label: 'Duyệt thanh toán', icon: 'payments' },
     { id: 'lap-bien-ban-ban-giao', label: 'Bàn giao phòng', icon: 'description' },
     { id: 'lap-bien-ban-kiem-tra-phong', label: 'Xử lý trả phòng', icon: 'receipt_long' },
-    { id: 'ghi-nhan-thanh-ly-hop-dong', label: 'Thanh lý hợp đồng', icon: 'description' },
     { id: 'cap-nhat-dich-vu', label: 'Cập nhật dịch vụ', icon: 'bolt' },
     { id: 'bao-tri-sua-chua', label: 'Bảo trì', icon: 'info' }
   ];
@@ -126,11 +124,10 @@ export default function NhanVienQuanLyPage() {
           {activeTab === 'xac-nhan-nhan-phong' && <XacNhanNhanPhongTab />}
           {activeTab === 'xac-nhan-thanh-toan' && <XacNhanThanhToanTab />}
           {activeTab === 'lap-bien-ban-ban-giao' && <BanGiaoPhongTab />}
-          {activeTab === 'lap-bien-ban-kiem-tra-phong' && <LapBienBanKiemTraPhongTab />}
-          {activeTab === 'ghi-nhan-thanh-ly-hop-dong' && <ThanhLyHopDongTab />}
+          {activeTab === 'lap-bien-ban-kiem-tra-phong' && <XuLyTraPhongTab />}
           {activeTab === 'cap-nhat-dich-vu' && <CapNhatDichVuTab />}
           {activeTab === 'bao-tri-sua-chua' && <BaoTriSuaChuaTab />}
-          {activeTab !== 'xac-nhan-nhan-phong' && activeTab !== 'xac-nhan-thanh-toan' && activeTab !== 'lap-bien-ban-ban-giao' && activeTab !== 'lap-bien-ban-kiem-tra-phong' && activeTab !== 'ghi-nhan-thanh-ly-hop-dong' && activeTab !== 'cap-nhat-dich-vu' && activeTab !== 'bao-tri-sua-chua' && (
+          {activeTab !== 'xac-nhan-nhan-phong' && activeTab !== 'xac-nhan-thanh-toan' && activeTab !== 'lap-bien-ban-ban-giao' && activeTab !== 'lap-bien-ban-kiem-tra-phong' && activeTab !== 'cap-nhat-dich-vu' && activeTab !== 'bao-tri-sua-chua' && (
             <div className="ktp-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                 <h2 style={{ color: '#6f797a' }}>Đang phát triển chức năng: {navItems.find(i => i.id === activeTab)?.label}</h2>
             </div>

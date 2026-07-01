@@ -631,3 +631,336 @@
 
 .ktp-info-box { background-color: #f3f4f5; padding: 20px; border-radius: 16px; }
 .ktp-info-box-outline { border: 1px solid #c1c6d5; padding: 16px; border-radius: 16px; }
+
+.qt-subtab-bar {
+  align-items: stretch;
+  background: #ffffff;
+  border-bottom: 1px solid #d7dddd;
+  display: flex;
+  gap: 28px;
+  margin: -24px -24px 24px;
+  padding: 0 20px;
+}
+
+.qt-subtab-btn {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #5f6869;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  min-height: 68px;
+  padding: 0 0;
+}
+
+.qt-subtab-btn:focus {
+  outline: none;
+}
+
+.qt-subtab-btn:focus-visible {
+  color: #2f6765;
+  outline: 2px solid rgba(47, 103, 101, 0.24);
+  outline-offset: -4px;
+}
+
+.qt-subtab-btn:hover,
+.qt-subtab-btn.is-active {
+  color: #2f6765;
+}
+
+.qt-subtab-btn.is-active {
+  border-bottom-color: #2f6765;
+}
+
+.qt-empty-workflow {
+  align-items: center;
+  color: #6f797a;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 34px 16px;
+}
+
+.qt-empty-workflow svg {
+  color: #3b8280;
+  height: 28px;
+  width: 28px;
+}
+
+.qt-empty-workflow strong {
+  color: #191c1d;
+  font-size: 15px;
+}
+
+.qt-empty-workflow span {
+  font-size: 13px;
+}
+
+.qt-modal {
+  max-width: min(1120px, 96vw) !important;
+}
+
+.qt-modal-body {
+  align-items: start;
+  display: grid;
+  gap: 18px !important;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  padding: 18px 22px !important;
+}
+
+.qt-main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.qt-main-column .ktp-grid-2 {
+  gap: 14px;
+}
+
+.qt-main-column .ktp-info-box-outline,
+.qt-summary-panel {
+  border-color: #d5dddd;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.qt-deduction-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.qt-deduction-card {
+  background: #ffffff;
+  border: 1px solid #d5dddd;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.qt-deduction-head {
+  align-items: flex-start;
+  border-bottom: 1px solid #e1e3e4;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding-bottom: 10px;
+}
+
+.qt-deduction-head h5 {
+  color: #00666d;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.qt-deduction-head strong {
+  color: #ba1a1a;
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.qt-deduction-lines {
+  flex: 1;
+  min-height: 0;
+  padding-top: 4px;
+}
+
+.qt-source-line {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 10px 0;
+  border-top: 1px dashed #e1e3e4;
+}
+
+.qt-source-line.is-editing {
+  align-items: start;
+}
+
+.qt-line-amount-input {
+  font-size: 13px;
+  font-weight: 800;
+  height: 30px;
+  margin: 0;
+  min-width: 0;
+  padding: 4px 8px;
+  text-align: right;
+  width: 92px;
+}
+
+.qt-icon-btn {
+  align-items: center;
+  background: #f4f8f8;
+  border: 1px solid #c9d6d7;
+  border-radius: 8px;
+  color: #3b8280;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 30px;
+  justify-content: center;
+  padding: 0;
+  width: 30px;
+}
+
+.qt-icon-btn:hover,
+.qt-icon-btn.is-active {
+  background: #3b8280;
+  border-color: #3b8280;
+  color: #ffffff;
+}
+
+.qt-debt-group {
+  border-top: 1px solid #e1e3e4;
+  margin-top: 10px;
+  padding-top: 8px;
+}
+
+.qt-debt-group:first-child {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.qt-summary-panel {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+}
+
+.qt-summary-card {
+  border: 1px solid #e1e3e4;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.qt-summary-line {
+  align-items: center;
+  border-bottom: 1px dashed #e1e3e4;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 11px 0;
+}
+
+.qt-summary-line:last-child {
+  border-bottom: 0;
+}
+
+.qt-summary-line span {
+  color: #526061;
+  font-size: 12px;
+}
+
+.qt-summary-line strong {
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.qt-result-box {
+  align-items: center;
+  border: 1px solid;
+  border-radius: 10px;
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+}
+
+.qt-result-box > svg {
+  flex: 0 0 auto;
+  font-size: 32px;
+}
+
+.qt-result-box span {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.qt-result-box strong {
+  display: block;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.qt-result-box.is-danger {
+  background: #fff7ed;
+  border-color: #f2b36c;
+  color: #ba1a1a;
+}
+
+.qt-result-box.is-primary {
+  background: #f1faf9;
+  border-color: #9fd3d0;
+  color: #00666d;
+}
+
+.qt-info-note {
+  align-items: center;
+  background: #f4f8ff;
+  border: 1px solid #cfe0ff;
+  border-radius: 8px;
+  color: #3869b1;
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+}
+
+.qt-info-note span {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.qt-refund-modal {
+  max-width: min(760px, 94vw) !important;
+}
+
+.qt-refund-body {
+  gap: 14px !important;
+}
+
+.qt-refund-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.qt-refund-form .ktp-section-title,
+.qt-refund-form .ktp-filter-group:last-child {
+  grid-column: 1 / -1;
+}
+
+.ktp-btn-cancel {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+@media (max-width: 980px) {
+  .qt-modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .qt-deduction-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qt-refund-form {
+    grid-template-columns: 1fr;
+  }
+}

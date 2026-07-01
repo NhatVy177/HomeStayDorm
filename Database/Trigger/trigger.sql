@@ -10,9 +10,9 @@ GO
 --   2. TRG_ChiTietDatCoc_TinhGiaThue_Va_SoTienCoc  ← ĐÃ GỘP
 --   3. TRG_HopDongThue_TinhGiaThueSoGiuong
 --   4. TRG_PhieuGhiChiSo_SetKyGhi
---   5. TRG_ChiTietHoaDon_TinhSoLuong
---   6. TRG_ChiTietHoaDon_TinhThanhTien
---   7. TRG_HoaDon_TinhTongTien_OnDelete
+--   5. TRG_ChiTietHoaDon_TinhSoLuong_ThanhTien_TongTien  ← ĐÃ GỘP
+--   6. TRG_HoaDon_TinhTongTien_OnDelete
+--   7. SP_TinhDoiSoat
 --   8. TRG_ChiTietHuHong_CapNhatTongSuaChua
 --   9. TRG_BienBanViPham_TinhSoTienPhat
 -- ================================================================
@@ -30,7 +30,9 @@ IF OBJECT_ID('TRG_HopDongThue_TinhGiaThueSoGiuong',   'TR') IS NOT NULL DROP TRI
 IF OBJECT_ID('TRG_PhieuGhiChiSo_SetKyGhi',            'TR') IS NOT NULL DROP TRIGGER TRG_PhieuGhiChiSo_SetKyGhi;
 IF OBJECT_ID('TRG_ChiTietHoaDon_TinhSoLuong',         'TR') IS NOT NULL DROP TRIGGER TRG_ChiTietHoaDon_TinhSoLuong;
 IF OBJECT_ID('TRG_ChiTietHoaDon_TinhThanhTien',       'TR') IS NOT NULL DROP TRIGGER TRG_ChiTietHoaDon_TinhThanhTien;
+IF OBJECT_ID('TRG_ChiTietHoaDon_TinhSoLuong_ThanhTien_TongTien','TR') IS NOT NULL DROP TRIGGER TRG_ChiTietHoaDon_TinhSoLuong_ThanhTien_TongTien;
 IF OBJECT_ID('TRG_HoaDon_TinhTongTien_OnDelete',      'TR') IS NOT NULL DROP TRIGGER TRG_HoaDon_TinhTongTien_OnDelete;
+IF OBJECT_ID('TRG_HoaDon_ChuyenNoQuaHan',             'TR') IS NOT NULL DROP TRIGGER TRG_HoaDon_ChuyenNoQuaHan;
 IF OBJECT_ID('TRG_ChiTietHuHong_CapNhatTongSuaChua',  'TR') IS NOT NULL DROP TRIGGER TRG_ChiTietHuHong_CapNhatTongSuaChua;
 IF OBJECT_ID('TRG_BienBanViPham_TinhSoTienPhat',      'TR') IS NOT NULL DROP TRIGGER TRG_BienBanViPham_TinhSoTienPhat;
 GO
@@ -199,24 +201,21 @@ GO
 
 
 -- ================================================================
--- TRIGGER 5: TRG_ChiTietHoaDon_TinhSoLuong
--- Bảng : ChiTietHoaDon   |  Sự kiện: AFTER INSERT, UPDATE
--- Cột  : SoLuong
+-- TRIGGER 5+6: TRG_ChiTietHoaDon_TinhSoLuong_ThanhTien_TongTien
+-- Bảng : ChiTietHoaDon | Sự kiện: AFTER INSERT, UPDATE
+-- Cột  :
+--   1. SoLuong:
+--      - Dịch vụ theo tháng: 1
+--      - Điện/nước nguyên phòng: lấy toàn bộ mức tiêu thụ
+--      - Điện/nước ghép giường: chia theo tỉ lệ số giường thuê
+--   2. ThanhTien = SoLuong * DonGia
+--   3. HoaDon.TongTien = HopDongThue.GiaThue + SUM(ChiTietHoaDon.ThanhTien)
 --
--- Trigger này tính SoLuong khi dòng ChiTietHoaDon vừa được INSERT.
--- Dữ liệu đầu vào cần có sẵn: MaPhieuGhi (cho điện/nước), DonViTinh.
---
--- Trong luồng nghiệp vụ chuẩn, SP_LapHoaDonThang sẽ set MaPhieuGhi
--- rồi INSERT ChiTietHoaDon → trigger này kích hoạt → SoLuong được fill.
---
--- LOGIC:
---   A. DonViTinh = 'tháng' (wifi, gửi xe, vệ sinh...)  → SoLuong = 1
---   B. DonViTinh = 'kWh'   + MaPhieuGhi có giá trị:
---       Nguyên phòng: SoLuong = ChiSoDienCuoi - ChiSoDienDau
---       Ghép giường:  SoLuong = TieuThu × SoGiuongThue_HD / TongGiuong_cùng_phòng_cùng_kỳ
---   C. DonViTinh = 'm3'    + MaPhieuGhi có giá trị: tương tự B nhưng dùng ChiSoNuoc
+-- Lưu ý nghiệp vụ:
+--   ChiTietHoaDon KHÔNG lưu tiền thuê phòng.
+--   Tiền thuê phòng lấy từ HopDongThue.GiaThue và chỉ cộng vào HoaDon.TongTien.
 -- ================================================================
-CREATE TRIGGER TRG_ChiTietHoaDon_TinhSoLuong
+CREATE TRIGGER TRG_ChiTietHoaDon_TinhSoLuong_ThanhTien_TongTien
 ON ChiTietHoaDon
 AFTER INSERT, UPDATE
 AS
@@ -224,60 +223,59 @@ BEGIN
     SET NOCOUNT ON;
     IF TRIGGER_NESTLEVEL() > 1 RETURN;
 
-    -- ---- A: Dịch vụ tháng cố định ----
+    -- ---- A: Dịch vụ tháng cố định: wifi, vệ sinh, gửi xe... ----
     UPDATE cthd
     SET    cthd.SoLuong = 1
     FROM   ChiTietHoaDon cthd
     INNER JOIN inserted i ON cthd.MaChiTietHD = i.MaChiTietHD
-    WHERE  i.SoLuong  IS NULL
-      AND  i.DonViTinh = N'tháng';
+    WHERE  cthd.SoLuong IS NULL
+      AND  cthd.DonViTinh = N'tháng';
 
     -- ---- B: ĐIỆN — Nguyên phòng ----
     UPDATE cthd
-    SET    cthd.SoLuong = (pgcs.ChiSoDienCuoi - pgcs.ChiSoDienDau)
+    SET    cthd.SoLuong = pgcs.ChiSoDienCuoi - pgcs.ChiSoDienDau
     FROM   ChiTietHoaDon cthd
     INNER JOIN inserted        i    ON cthd.MaChiTietHD   = i.MaChiTietHD
-    INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = i.MaHoaDon
+    INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = cthd.MaHoaDon
     INNER JOIN HopDongThue     hdt  ON hdt.MaHopDong      = hd.MaHopDong
     INNER JOIN PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc  = hdt.MaPhieuCoc
-    INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = i.MaPhieuGhi
-    WHERE  i.SoLuong    IS NULL
-      AND  i.DonViTinh   = N'kWh'
-      AND  i.MaPhieuGhi IS NOT NULL
+    INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = cthd.MaPhieuGhi
+    WHERE  cthd.SoLuong IS NULL
+      AND  cthd.DonViTinh = N'kWh'
+      AND  cthd.MaPhieuGhi IS NOT NULL
       AND  pdc.HinhThucThue = N'Nguyên phòng';
 
     -- ---- C: NƯỚC — Nguyên phòng ----
     UPDATE cthd
-    SET    cthd.SoLuong = (pgcs.ChiSoNuocCuoi - pgcs.ChiSoNuocDau)
+    SET    cthd.SoLuong = pgcs.ChiSoNuocCuoi - pgcs.ChiSoNuocDau
     FROM   ChiTietHoaDon cthd
     INNER JOIN inserted        i    ON cthd.MaChiTietHD   = i.MaChiTietHD
-    INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = i.MaHoaDon
+    INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = cthd.MaHoaDon
     INNER JOIN HopDongThue     hdt  ON hdt.MaHopDong      = hd.MaHopDong
     INNER JOIN PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc  = hdt.MaPhieuCoc
-    INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = i.MaPhieuGhi
-    WHERE  i.SoLuong    IS NULL
-      AND  i.DonViTinh   = N'm3'
-      AND  i.MaPhieuGhi IS NOT NULL
+    INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = cthd.MaPhieuGhi
+    WHERE  cthd.SoLuong IS NULL
+      AND  cthd.DonViTinh = N'm3'
+      AND  cthd.MaPhieuGhi IS NOT NULL
       AND  pdc.HinhThucThue = N'Nguyên phòng';
 
-    -- ---- D: ĐIỆN — Ghép giường (chia theo tỉ lệ số giường) ----
+    -- ---- D: ĐIỆN — Ghép giường ----
     UPDATE cthd
     SET    cthd.SoLuong = CAST(
                (pgcs.ChiSoDienCuoi - pgcs.ChiSoDienDau)
                * CAST(hdt.SoGiuongThue AS DECIMAL(10,4))
-               / CAST(tong.TongGiuong  AS DECIMAL(10,4))
+               / CAST(tong.TongGiuong AS DECIMAL(10,4))
            AS DECIMAL(10,2))
     FROM   ChiTietHoaDon cthd
     INNER JOIN inserted        i    ON cthd.MaChiTietHD   = i.MaChiTietHD
-    INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = i.MaHoaDon
+    INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = cthd.MaHoaDon
     INNER JOIN HopDongThue     hdt  ON hdt.MaHopDong      = hd.MaHopDong
     INNER JOIN PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc  = hdt.MaPhieuCoc
     INNER JOIN ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
                                     AND ctdc.MaGiuong IS NOT NULL
-    INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = i.MaPhieuGhi
+    INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = cthd.MaPhieuGhi
                                     AND pgcs.MaPhong       = ctdc.MaPhong
     INNER JOIN (
-        -- Tổng số giường thuê ghép cùng phòng, cùng kỳ ghi
         SELECT ctdc2.MaPhong, pgcs2.KyGhi, SUM(hdt2.SoGiuongThue) AS TongGiuong
         FROM   HopDongThue     hdt2
         INNER JOIN PhieuDatCoc   pdc2  ON pdc2.MaPhieuDatCoc  = hdt2.MaPhieuCoc
@@ -291,27 +289,27 @@ BEGIN
         WHERE  pdc2.HinhThucThue = N'Ghép giường'
         GROUP BY ctdc2.MaPhong, pgcs2.KyGhi
     ) tong ON tong.MaPhong = ctdc.MaPhong AND tong.KyGhi = pgcs.KyGhi
-    WHERE  i.SoLuong    IS NULL
-      AND  i.DonViTinh   = N'kWh'
-      AND  i.MaPhieuGhi IS NOT NULL
+    WHERE  cthd.SoLuong IS NULL
+      AND  cthd.DonViTinh = N'kWh'
+      AND  cthd.MaPhieuGhi IS NOT NULL
       AND  pdc.HinhThucThue = N'Ghép giường'
-      AND  tong.TongGiuong  > 0;
+      AND  tong.TongGiuong > 0;
 
     -- ---- E: NƯỚC — Ghép giường ----
     UPDATE cthd
     SET    cthd.SoLuong = CAST(
                (pgcs.ChiSoNuocCuoi - pgcs.ChiSoNuocDau)
                * CAST(hdt.SoGiuongThue AS DECIMAL(10,4))
-               / CAST(tong.TongGiuong  AS DECIMAL(10,4))
+               / CAST(tong.TongGiuong AS DECIMAL(10,4))
            AS DECIMAL(10,2))
     FROM   ChiTietHoaDon cthd
     INNER JOIN inserted        i    ON cthd.MaChiTietHD   = i.MaChiTietHD
-    INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = i.MaHoaDon
+    INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = cthd.MaHoaDon
     INNER JOIN HopDongThue     hdt  ON hdt.MaHopDong      = hd.MaHopDong
     INNER JOIN PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc  = hdt.MaPhieuCoc
     INNER JOIN ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
                                     AND ctdc.MaGiuong IS NOT NULL
-    INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = i.MaPhieuGhi
+    INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = cthd.MaPhieuGhi
                                     AND pgcs.MaPhong       = ctdc.MaPhong
     INNER JOIN (
         SELECT ctdc2.MaPhong, pgcs2.KyGhi, SUM(hdt2.SoGiuongThue) AS TongGiuong
@@ -327,49 +325,31 @@ BEGIN
         WHERE  pdc2.HinhThucThue = N'Ghép giường'
         GROUP BY ctdc2.MaPhong, pgcs2.KyGhi
     ) tong ON tong.MaPhong = ctdc.MaPhong AND tong.KyGhi = pgcs.KyGhi
-    WHERE  i.SoLuong    IS NULL
-      AND  i.DonViTinh   = N'm3'
-      AND  i.MaPhieuGhi IS NOT NULL
+    WHERE  cthd.SoLuong IS NULL
+      AND  cthd.DonViTinh = N'm3'
+      AND  cthd.MaPhieuGhi IS NOT NULL
       AND  pdc.HinhThucThue = N'Ghép giường'
-      AND  tong.TongGiuong  > 0;
-END;
-GO
+      AND  tong.TongGiuong > 0;
 
-
--- ================================================================
--- TRIGGER 6: TRG_ChiTietHoaDon_TinhThanhTien
--- Bảng : ChiTietHoaDon   |  Sự kiện: AFTER INSERT, UPDATE
--- Cột  : ThanhTien = SoLuong × DonGia
---        + cập nhật HoaDon.TongTien = SUM(ThanhTien)
---
--- Đọc SoLuong từ BẢNG (không từ inserted) để lấy giá trị đã được
--- trigger 5 tính ở bước trước trong cùng statement.
--- ================================================================
-CREATE TRIGGER TRG_ChiTietHoaDon_TinhThanhTien
-ON ChiTietHoaDon
-AFTER INSERT, UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-    IF TRIGGER_NESTLEVEL() > 1 RETURN;
-
-    -- Tính ThanhTien: đọc từ bảng để lấy SoLuong đã được trigger 5 fill
+    -- ---- F: ThanhTien = SoLuong * DonGia ----
     UPDATE cthd
     SET    cthd.ThanhTien = cthd.SoLuong * cthd.DonGia
     FROM   ChiTietHoaDon cthd
     INNER JOIN inserted i ON cthd.MaChiTietHD = i.MaChiTietHD
     WHERE  cthd.SoLuong IS NOT NULL
-      AND  cthd.DonGia  IS NOT NULL;
+      AND  cthd.DonGia IS NOT NULL;
 
-    -- Cập nhật HoaDon.TongTien = GiaThue + SUM(ThanhTien)
+    -- ---- G: HoaDon.TongTien = tiền thuê + tổng dịch vụ ----
     UPDATE hd
-    SET    hd.TongTien = ISNULL(hdt.GiaThue, 0) + (
-               SELECT ISNULL(SUM(c.ThanhTien), 0)
-               FROM   ChiTietHoaDon c
-               WHERE  c.MaHoaDon = hd.MaHoaDon AND c.ThanhTien IS NOT NULL
-           )
+    SET    hd.TongTien = ISNULL(hdt.GiaThue, 0)
+                         + ISNULL((
+                               SELECT SUM(c.ThanhTien)
+                               FROM   ChiTietHoaDon c
+                               WHERE  c.MaHoaDon = hd.MaHoaDon
+                                 AND  c.ThanhTien IS NOT NULL
+                           ), 0)
     FROM   HoaDon hd
-    INNER JOIN HopDongThue hdt ON hd.MaHopDong = hdt.MaHopDong
+    INNER JOIN HopDongThue hdt ON hdt.MaHopDong = hd.MaHopDong
     WHERE  hd.MaHoaDon IN (SELECT DISTINCT MaHoaDon FROM inserted);
 END;
 GO
@@ -377,8 +357,9 @@ GO
 
 -- ================================================================
 -- TRIGGER 7: TRG_HoaDon_TinhTongTien_OnDelete
--- Bảng : ChiTietHoaDon   |  Sự kiện: AFTER DELETE
--- Cập nhật HoaDon.TongTien khi XÓA dòng chi tiết hóa đơn
+-- Bảng : ChiTietHoaDon | Sự kiện: AFTER DELETE
+-- Cập nhật HoaDon.TongTien khi xóa dòng dịch vụ.
+-- Công thức: TongTien = HopDongThue.GiaThue + SUM(ChiTietHoaDon.ThanhTien)
 -- ================================================================
 CREATE TRIGGER TRG_HoaDon_TinhTongTien_OnDelete
 ON ChiTietHoaDon
@@ -386,15 +367,36 @@ AFTER DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
+
     UPDATE hd
-    SET    hd.TongTien = ISNULL(hdt.GiaThue, 0) + (
-               SELECT ISNULL(SUM(c.ThanhTien), 0)
-               FROM   ChiTietHoaDon c
-               WHERE  c.MaHoaDon = hd.MaHoaDon AND c.ThanhTien IS NOT NULL
-           )
+    SET    hd.TongTien = ISNULL(hdt.GiaThue, 0)
+                         + ISNULL((
+                               SELECT SUM(c.ThanhTien)
+                               FROM   ChiTietHoaDon c
+                               WHERE  c.MaHoaDon = hd.MaHoaDon
+                                 AND  c.ThanhTien IS NOT NULL
+                           ), 0)
     FROM   HoaDon hd
-    INNER JOIN HopDongThue hdt ON hd.MaHopDong = hdt.MaHopDong
+    INNER JOIN HopDongThue hdt ON hdt.MaHopDong = hd.MaHopDong
     WHERE  hd.MaHoaDon IN (SELECT DISTINCT MaHoaDon FROM deleted);
+END;
+GO
+
+-- ================================================================
+-- TRIGGER: TRG_HoaDon_ChuyenNoQuaHan
+-- Bang : HoaDon | Su kien: AFTER INSERT, UPDATE
+-- Neu hoa don qua NgayHanTT ma van Chua TT thi tu dong chuyen thanh No.
+-- Khong dung vao hoa don Da TT, No, Tam tinh hoac hoa don da co NgayThanhToan.
+-- ================================================================
+CREATE TRIGGER TRG_HoaDon_ChuyenNoQuaHan
+ON HoaDon
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF TRIGGER_NESTLEVEL() > 1 RETURN;
+
+    EXEC dbo.SP_HoaDon_CapNhatNoQuaHan @TraKetQua = 0;
 END;
 GO
 
@@ -474,7 +476,7 @@ SELECT
 FROM sys.triggers
 WHERE OBJECT_NAME(parent_id) IN (
     'LoaiPhong', 'ChiTietDatCoc', 'HopDongThue', 'PhieuGhiChiSo',
-    'ChiTietHoaDon', 'ChiTietHuHong', 'BienBanViPham'
+    'ChiTietHoaDon', 'HoaDon', 'ChiTietHuHong', 'BienBanViPham'
 )
 ORDER BY BangApDung, TenTrigger;
 GO
@@ -486,8 +488,8 @@ PRINT N'  #01  TRG_LoaiPhong_TinhGiaThueNguyenPhong';
 PRINT N'  #02  TRG_ChiTietDatCoc_TinhGiaThue_Va_SoTienCoc  ← ĐÃ GỘP (fix thứ tự)';
 PRINT N'  #03  TRG_HopDongThue_TinhGiaThueSoGiuong';
 PRINT N'  #04  TRG_PhieuGhiChiSo_SetKyGhi';
-PRINT N'  #05  TRG_ChiTietHoaDon_TinhSoLuong';
-PRINT N'  #06  TRG_ChiTietHoaDon_TinhThanhTien';
+PRINT N'  #05  TRG_ChiTietHoaDon_TinhSoLuong_ThanhTien_TongTien';
+PRINT N'  #06  TRG_HoaDon_TinhTongTien_OnDelete';
 PRINT N'  #07  TRG_HoaDon_TinhTongTien_OnDelete';
 PRINT N'  #08  TRG_ChiTietHuHong_CapNhatTongSuaChua';
 PRINT N'  #09  TRG_BienBanViPham_TinhSoTienPhat';
@@ -499,33 +501,17 @@ GO
 -- SP: SP_TinhDoiSoat
 -- ================================================================
 -- Mục đích:
---   Tính toàn bộ cột tài chính cho bảng DoiSoat
---   ứng với 1 phiếu trả phòng cụ thể (@MaPhieuTra).
+--   Tính toàn bộ cột tài chính cho bảng DoiSoat theo 1 phiếu trả phòng.
 --
--- Khi nào gọi:
---   Sau khi nhân viên đã:
---     1. Tạo PhieuTraPhong
---     2. Hoàn tất BienBanKiemTraPhong + ChiTietHuHong
---     3. Chốt trạng thái HoaDon (Nợ / Chưa TT)
---     4. Ghi đủ BienBanViPham
---     5. INSERT dòng DoiSoat (chỉ điền cột hành chính)
---   → Gọi SP này để fill toàn bộ cột tài chính
+-- Quy ước tiền thuê:
+--   ChiTietHoaDon chỉ lưu tiền dịch vụ phát sinh.
+--   Tiền thuê phòng lấy từ HopDongThue.GiaThue.
 --
--- Có thể gọi lại bất kỳ lúc nào nếu có sửa đổi.
---
--- Cú pháp:
---   EXEC SP_TinhDoiSoat 'TP0001';
---
--- Logic TyLeHoanCoc (từ QuyDinhHoanCoc):
---   MaHopDong IS NULL                       → 80%   (chưa ký HĐ)
---   NgayTraThucTe >= NgayKetThuc            → 100%  (đúng/sau hạn)
---   NgayTraThucTe <  NgayKetThuc, < 6 tháng → 50%  (trả sớm)
---   NgayTraThucTe <  NgayKetThuc, >= 6 tháng → 70% (trả sớm lâu)
---
--- Logic TrangThai:
---   SoTienHoanThucTe  > 0  → 'Chờ hoàn cọc'
---   SoTienKhachPhaiTT > 0  → 'Chờ thanh toán thêm'
---   Cả hai = 0             → 'Đã quyết toán'
+-- Quy ước hóa đơn Tạm tính:
+--   Với hợp đồng Hàng quý, hóa đơn tháng có TrangThai = 'Tạm tính'
+--   là hóa đơn chờ gom quý, không cho thanh toán trực tiếp.
+--   Khi đã có hóa đơn quý Đã TT cho cùng quý thì không tính lại các
+--   hóa đơn tháng Tạm tính trong quý đó.
 -- ================================================================
 IF OBJECT_ID('SP_TinhDoiSoat', 'P') IS NOT NULL
     DROP PROCEDURE SP_TinhDoiSoat;
@@ -537,13 +523,13 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- ---- Lấy thông tin cơ bản từ PhieuTraPhong → HopDongThue ----
     DECLARE @MaHopDong     VARCHAR(6);
     DECLARE @MaPhieuCoc    VARCHAR(6);
     DECLARE @NgayBatDau    DATE;
     DECLARE @NgayKetThuc   DATE;
     DECLARE @NgayTraThucTe DATE;
     DECLARE @GiaThueHD     DECIMAL(15,2);
+    DECLARE @KyThanhToanHD NVARCHAR(20);
     DECLARE @MaDoiSoat     VARCHAR(6);
 
     SELECT
@@ -552,6 +538,7 @@ BEGIN
         @NgayBatDau    = hdt.NgayBatDau,
         @NgayKetThuc   = hdt.NgayKetThuc,
         @GiaThueHD     = hdt.GiaThue,
+        @KyThanhToanHD = hdt.KyThanhToan,
         @MaPhieuCoc    = CASE
                              WHEN ptp.MaHopDong IS NOT NULL THEN hdt.MaPhieuCoc
                              ELSE ptp.MaPhieuDatCoc
@@ -560,7 +547,6 @@ BEGIN
     LEFT JOIN HopDongThue hdt ON hdt.MaHopDong = ptp.MaHopDong
     WHERE ptp.MaPhieuTra = @MaPhieuTra;
 
-    -- Kiểm tra có dòng DoiSoat chưa
     SELECT @MaDoiSoat = MaDoiSoat
     FROM   DoiSoat
     WHERE  MaPhieuTra = @MaPhieuTra;
@@ -568,11 +554,10 @@ BEGIN
     IF @MaDoiSoat IS NULL
     BEGIN
         PRINT N'SP_TinhDoiSoat: Chưa có dòng DoiSoat cho MaPhieuTra = ' + @MaPhieuTra;
-        PRINT N'  → Hãy INSERT dòng DoiSoat trước (điền cột hành chính), rồi gọi lại SP này.';
+        PRINT N'  → Hãy INSERT dòng DoiSoat trước, rồi gọi lại SP này.';
         RETURN;
     END;
 
-    -- ---- Tính từng biến ----
     DECLARE @TienCocBanDau     DECIMAL(15,2);
     DECLARE @SoThangLuuTru     INT;
     DECLARE @TyLeHoanCoc       DECIMAL(5,2);
@@ -606,53 +591,91 @@ BEGIN
     END;
 
     -- 4. TienCocDuocHoan
-    SET @TienCocDuocHoan = @TienCocBanDau * @TyLeHoanCoc / 100.0;
+    SET @TienCocDuocHoan = ISNULL(@TienCocBanDau, 0) * ISNULL(@TyLeHoanCoc, 0) / 100.0;
 
-    -- 5. TienThueConNo: tiền thuê phòng còn nợ (hóa đơn Chưa TT / Nợ / Tạm tính)
-    --    Phân biệt bằng DonGia = GiaThue của hợp đồng
-    SELECT @TienThueConNo = ISNULL(SUM(cthd.ThanhTien), 0)
-    FROM   ChiTietHoaDon   cthd
-    INNER JOIN DichVuHopDong dvhd ON dvhd.MaChiTietDVHD = cthd.MaChiTietDVHD
-    INNER JOIN DichVu        dv   ON dv.MaDichVu         = dvhd.MaDichVu
-    INNER JOIN HoaDon        hd   ON hd.MaHoaDon         = cthd.MaHoaDon
-    WHERE  hd.MaHopDong = @MaHopDong
-      AND  hd.TrangThai IN (N'Chưa TT', N'Nợ', N'Tạm tính')
-      AND  dv.DonViTinh = N'tháng'
-      AND  cthd.DonGia  = @GiaThueHD;
+    ----------------------------------------------------------------
+    -- Các hóa đơn còn phải thanh toán dùng cho đối soát
+    --  - Hàng tháng: Chưa TT / Nợ
+    --  - Hàng quý:
+    --      + Tháng Tạm tính được tính nếu quý đó chưa có hóa đơn quý Đã TT
+    --      + Chưa TT / Nợ vẫn được tính
+    --  - Đã TT không bao giờ tính nợ
+    ----------------------------------------------------------------
+    DECLARE @HoaDonConNo TABLE (
+        MaHoaDon VARCHAR(6) PRIMARY KEY
+    );
 
-    -- 6. TienDichVuConNo: điện, nước, wifi, gửi xe... còn nợ
+    INSERT INTO @HoaDonConNo (MaHoaDon)
+    SELECT hd.MaHoaDon
+    FROM HoaDon hd
+    WHERE hd.MaHopDong = @MaHopDong
+      AND (
+            (
+                @KyThanhToanHD = N'Hàng tháng'
+                AND hd.TrangThai IN (N'Chưa TT', N'Nợ')
+            )
+            OR
+            (
+                @KyThanhToanHD = N'Hàng quý'
+                AND hd.KyThanhToan NOT LIKE '%-Q%'
+                AND hd.TrangThai IN (N'Chưa TT', N'Nợ')
+            )
+            OR
+            (
+                @KyThanhToanHD = N'Hàng quý'
+                AND hd.KyThanhToan NOT LIKE '%-Q%'
+                AND hd.TrangThai = N'Tạm tính'
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM HoaDon hdq
+                    WHERE hdq.MaHopDong = hd.MaHopDong
+                    AND hdq.KyThanhToan LIKE '%-Q%'
+                    AND hdq.TrangThai = N'Đã TT'
+                    -- Hóa đơn quý Đã TT bao phủ 3 tháng kết thúc tại tháng lập hóa đơn quý.
+                    -- Ví dụ: NgayLap = 2026-04-30 => bao phủ 2026-02, 2026-03, 2026-04.
+                    AND TRY_CONVERT(date, hd.KyThanhToan + '-01') BETWEEN
+                        DATEADD(MONTH, -2, DATEFROMPARTS(YEAR(hdq.NgayLap), MONTH(hdq.NgayLap), 1))
+                        AND DATEFROMPARTS(YEAR(hdq.NgayLap), MONTH(hdq.NgayLap), 1)
+                )
+            )
+          );
+
+    -- 5. TienThueConNo
+    -- ChiTietHoaDon không có tiền thuê, nên tiền thuê còn nợ = số hóa đơn tháng còn nợ * GiaThue hợp đồng.
+    SELECT @TienThueConNo = ISNULL(COUNT(*), 0) * ISNULL(@GiaThueHD, 0)
+    FROM @HoaDonConNo;
+
+    -- 6. TienDichVuConNo
+    -- Chỉ lấy tổng dịch vụ trong ChiTietHoaDon của các hóa đơn còn phải thanh toán.
     SELECT @TienDichVuConNo = ISNULL(SUM(cthd.ThanhTien), 0)
-    FROM   ChiTietHoaDon   cthd
-    INNER JOIN DichVuHopDong dvhd ON dvhd.MaChiTietDVHD = cthd.MaChiTietDVHD
-    INNER JOIN DichVu        dv   ON dv.MaDichVu         = dvhd.MaDichVu
-    INNER JOIN HoaDon        hd   ON hd.MaHoaDon         = cthd.MaHoaDon
-    WHERE  hd.MaHopDong = @MaHopDong
-      AND  hd.TrangThai IN (N'Chưa TT', N'Nợ', N'Tạm tính')
-      AND  cthd.DonGia <> @GiaThueHD;
+    FROM @HoaDonConNo hdn
+    INNER JOIN ChiTietHoaDon cthd ON cthd.MaHoaDon = hdn.MaHoaDon;
 
-    -- 7. TongChiPhiSuaChua: từ biên bản kiểm tra phòng của phiếu trả này
+    -- 7. TongChiPhiSuaChua
     SELECT @TongChiPhiSuaChua = ISNULL(SUM(bbkt.TongChiPhiSuaChua), 0)
     FROM   BienBanKiemTraPhong bbkt
     WHERE  bbkt.MaPhieuTra = @MaPhieuTra;
 
-    -- 8. TienPhat: chỉ tính vi phạm 'Chờ xử lý' (tránh cộng trùng đã xử lý)
+    -- 8. TienPhat
     SELECT @TienPhat = ISNULL(SUM(bbvp.SoTienPhat), 0)
     FROM   BienBanViPham bbvp
     WHERE  bbvp.MaHopDong = @MaHopDong
-      AND  bbvp.TrangThai  = N'Chờ xử lý';
+      AND  bbvp.TrangThai = N'Chờ xử lý';
 
-    -- 9. TongKhauTru = tổng 4 khoản trừ
-    SET @TongKhauTru = @TienThueConNo + @TienDichVuConNo
-                     + @TongChiPhiSuaChua + @TienPhat;
+    -- 9. TongKhauTru
+    SET @TongKhauTru = ISNULL(@TienThueConNo, 0)
+                     + ISNULL(@TienDichVuConNo, 0)
+                     + ISNULL(@TongChiPhiSuaChua, 0)
+                     + ISNULL(@TienPhat, 0);
 
-    -- 10. SoTienHoanThucTe = MAX(TienCocDuocHoan - TongKhauTru, 0)
+    -- 10. SoTienHoanThucTe
     SET @SoTienHoanThucTe = CASE
         WHEN @TienCocDuocHoan > @TongKhauTru
         THEN @TienCocDuocHoan - @TongKhauTru
         ELSE 0
     END;
 
-    -- 11. SoTienKhachPhaiTT = MAX(TongKhauTru - TienCocDuocHoan, 0)
+    -- 11. SoTienKhachPhaiTT
     SET @SoTienKhachPhaiTT = CASE
         WHEN @TongKhauTru > @TienCocDuocHoan
         THEN @TongKhauTru - @TienCocDuocHoan
@@ -666,7 +689,6 @@ BEGIN
         ELSE                             N'Đã quyết toán'
     END;
 
-    -- ---- Ghi kết quả vào DoiSoat ----
     UPDATE DoiSoat
     SET
         TienCocBanDau      = @TienCocBanDau,
@@ -683,31 +705,77 @@ BEGIN
         TrangThai          = @TrangThai
     WHERE MaPhieuTra = @MaPhieuTra;
 
-    -- ---- In kết quả tóm tắt ----
-    PRINT N'';
-    PRINT N'=== DoiSoat: ' + @MaDoiSoat + '  |  PhieuTra: ' + @MaPhieuTra
-        + '  |  HopDong: ' + ISNULL(@MaHopDong, N'(chưa ký)') + N' ===';
-    PRINT N'  TienCocBanDau     : ' + FORMAT(@TienCocBanDau,     'N0', 'vi-VN') + N' đ';
-    PRINT N'  TyLeHoanCoc       : ' + CAST(@TyLeHoanCoc AS VARCHAR) + N'%'
-        + N'  →  TienCocDuocHoan: ' + FORMAT(@TienCocDuocHoan, 'N0', 'vi-VN') + N' đ';
-    PRINT N'  TienThueConNo     : ' + FORMAT(@TienThueConNo,     'N0', 'vi-VN') + N' đ';
-    PRINT N'  TienDichVuConNo   : ' + FORMAT(@TienDichVuConNo,   'N0', 'vi-VN') + N' đ';
-    PRINT N'  TongChiPhiSuaChua : ' + FORMAT(@TongChiPhiSuaChua, 'N0', 'vi-VN') + N' đ';
-    PRINT N'  TienPhat          : ' + FORMAT(@TienPhat,           'N0', 'vi-VN') + N' đ';
-    PRINT N'  TongKhauTru       : ' + FORMAT(@TongKhauTru,        'N0', 'vi-VN') + N' đ';
-    PRINT N'  ────────────────────────────────────────';
-    PRINT N'  SoTienHoanThucTe  : ' + FORMAT(@SoTienHoanThucTe,  'N0', 'vi-VN') + N' đ';
-    PRINT N'  SoTienKhachPhaiTT : ' + FORMAT(@SoTienKhachPhaiTT, 'N0', 'vi-VN') + N' đ';
-    PRINT N'  TrangThai         : ' + @TrangThai;
-    PRINT N'';
 END;
 GO
+IF OBJECT_ID('TRG_Phong_CapNhatGioiTinhChoPhep', 'TR') IS NOT NULL
+    DROP TRIGGER TRG_Phong_CapNhatGioiTinhChoPhep;
+GO
+
+CREATE TRIGGER TRG_Phong_CapNhatGioiTinhChoPhep
+ON ThanhVienHopDong
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @PhongBiAnhHuong TABLE (
+        MaPhong VARCHAR(4) PRIMARY KEY
+    );
+
+    INSERT INTO @PhongBiAnhHuong (MaPhong)
+    SELECT DISTINCT ctdc.MaPhong
+    FROM inserted i
+    JOIN HopDongThue hdt 
+        ON i.MaHopDong = hdt.MaHopDong
+    JOIN ChiTietDatCoc ctdc 
+        ON hdt.MaPhieuCoc = ctdc.MaPhieuDatCoc
+
+    UNION
+
+    SELECT DISTINCT ctdc.MaPhong
+    FROM deleted d
+    JOIN HopDongThue hdt 
+        ON d.MaHopDong = hdt.MaHopDong
+    JOIN ChiTietDatCoc ctdc 
+        ON hdt.MaPhieuCoc = ctdc.MaPhieuDatCoc;
 
 
+    IF EXISTS (
+        SELECT 1
+        FROM @PhongBiAnhHuong pbh
+        JOIN ChiTietDatCoc ctdc 
+            ON pbh.MaPhong = ctdc.MaPhong
+        JOIN HopDongThue hdt 
+            ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
+        JOIN ThanhVienHopDong tvhd 
+            ON hdt.MaHopDong = tvhd.MaHopDong
+        WHERE tvhd.TrangThai = N'Đang ở'
+          AND hdt.TrangThai = N'Hiệu lực'
+        GROUP BY pbh.MaPhong
+        HAVING COUNT(DISTINCT tvhd.GioiTinh) > 1
+    )
+    BEGIN
+        RAISERROR(N'Không thể xếp Nam và Nữ vào cùng một phòng.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
 
-EXEC SP_TinhDoiSoat 'TP0001';
-EXEC SP_TinhDoiSoat 'TP0002';
-EXEC SP_TinhDoiSoat 'TP0003';
-EXEC SP_TinhDoiSoat 'TP0004';
-EXEC SP_TinhDoiSoat 'TP0008';
-EXEC SP_TinhDoiSoat 'TP0009';
+
+    UPDATE p
+    SET p.GioiTinhChoPhep = COALESCE(CAST(gt.GioiTinh AS NVARCHAR(20)), N'Không phân biệt')
+    FROM Phong p
+    JOIN @PhongBiAnhHuong pbh 
+        ON p.MaPhong = pbh.MaPhong
+    OUTER APPLY (
+        SELECT MAX(CAST(tvhd.GioiTinh AS NVARCHAR(20))) AS GioiTinh
+        FROM ChiTietDatCoc ctdc
+        JOIN HopDongThue hdt 
+            ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
+        JOIN ThanhVienHopDong tvhd 
+            ON hdt.MaHopDong = tvhd.MaHopDong
+        WHERE ctdc.MaPhong = p.MaPhong
+          AND hdt.TrangThai = N'Hiệu lực'
+          AND tvhd.TrangThai = N'Đang ở'
+    ) gt;
+END;
+GO
