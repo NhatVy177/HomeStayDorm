@@ -153,6 +153,11 @@ const STATUS_CONFIG = {
     icon: 'pending',
     cls: 'lxp-status-pending',
   },
+  cancelRequested: {
+    label: 'Chờ xác nhận hủy',
+    icon: 'pending',
+    cls: 'lxp-status-cancel-requested',
+  },
   done: {
     label: 'Đã hoàn thành',
     icon: 'checkCircle',
@@ -164,6 +169,21 @@ const STATUS_CONFIG = {
     cls: 'lxp-status-cancelled',
   },
 };
+
+const RESCHEDULE_MIN_LEAD_MS = 2 * 60 * 60 * 1000;
+
+function getAppointmentDate(appt) {
+  const rawDate = appt?.rawSchedule?.thoiGianHen || appt?.appointmentAt;
+  if (!rawDate) return null;
+  const date = new Date(rawDate);
+  return Number.isNaN(date.valueOf()) ? null : date;
+}
+
+function canUseReschedule(appt) {
+  const appointmentDate = getAppointmentDate(appt);
+  if (!appointmentDate) return false;
+  return appointmentDate.getTime() - Date.now() >= RESCHEDULE_MIN_LEAD_MS;
+}
 
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
@@ -210,6 +230,7 @@ function RoomImage({ src, alt }) {
 /* ─── Appointment Card ─── */
 function AppointmentCard({ appt, onReschedule, onCancel, onViewDetail }) {
   const isPast = appt.status === 'done' || appt.status === 'cancelled';
+  const canReschedule = canUseReschedule(appt);
 
   return (
     <div className={`lxp-card ${isPast ? 'is-past' : ''}`}>
@@ -258,6 +279,13 @@ function AppointmentCard({ appt, onReschedule, onCancel, onViewDetail }) {
               <div>
                 <div className="lxp-info-label">Nhân viên hướng dẫn</div>
                 <div className="lxp-info-value">{appt.staffName}</div>
+                <div className="lxp-info-phone">
+                  {appt.staffPhone ? (
+                    <a href={`tel:${appt.staffPhone}`}>{appt.staffPhone}</a>
+                  ) : (
+                    'Chưa cập nhật SĐT'
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -279,7 +307,7 @@ function AppointmentCard({ appt, onReschedule, onCancel, onViewDetail }) {
         {appt.status === 'upcoming' && (
           <>
             <button
-              className="lxp-card-btn lxp-card-btn-primary"
+              className="lxp-card-btn lxp-card-btn-danger"
               type="button"
               onClick={() => onCancel?.(appt)}
             >
@@ -289,7 +317,9 @@ function AppointmentCard({ appt, onReschedule, onCancel, onViewDetail }) {
             <button
               className="lxp-card-btn lxp-card-btn-outline-primary"
               type="button"
-              onClick={() => onReschedule?.(appt)}
+              onClick={() => canReschedule && onReschedule?.(appt)}
+              disabled={!canReschedule}
+              title={canReschedule ? 'Yêu cầu đổi lịch' : 'Chỉ được đổi lịch trước giờ hẹn ít nhất 2 tiếng'}
             >
               <Icon name="refresh" />
               Yêu cầu đổi lịch
@@ -342,6 +372,12 @@ function AppointmentCard({ appt, onReschedule, onCancel, onViewDetail }) {
             Lịch này đã bị hủy.
           </span>
         )}
+
+        {appt.status === 'cancelRequested' && (
+          <span className="lxp-cancel-requested-message">
+            Lịch này đã gửi yêu cầu hủy và đang chờ nhân viên Sale xác nhận.
+          </span>
+        )}
       </div>
     </div>
   );
@@ -351,6 +387,7 @@ function AppointmentCard({ appt, onReschedule, onCancel, onViewDetail }) {
 const DOT_CLASS = {
   upcoming: 'lxp-dot-upcoming',
   pending: 'lxp-dot-pending',
+  cancelRequested: 'lxp-dot-pending',
   done: 'lxp-dot-past',
   cancelled: 'lxp-dot-past',
 };
@@ -358,6 +395,7 @@ const DOT_CLASS = {
 const DAY_CLASS = {
   upcoming: '',
   pending: 'is-pending',
+  cancelRequested: 'is-pending',
   done: 'is-past',
   cancelled: 'is-past',
 };
@@ -491,20 +529,90 @@ function NewAppointmentModal({ onClose, onSubmit }) {
 }
 
 /* ─── Reschedule modal ─── */
+function toLocalDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatSuggestedDateTime(dateValue, timeValue) {
+  const [year, month, day] = String(dateValue || '').split('-');
+  return `${day}/${month}/${year} ${timeValue}`;
+}
+
 function RescheduleModal({ appt, onClose, onSubmit }) {
-  const [timeText, setTimeText] = useState('');
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = toLocalDateInputValue(tomorrow);
+  const [suggestedSlots, setSuggestedSlots] = useState([{ date: '', time: '' }]);
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   if (!appt) return null;
 
+  function updateSuggestedSlot(index, field, value) {
+    setSuggestedSlots((current) => current.map((slot, slotIndex) => (
+      slotIndex === index ? { ...slot, [field]: value } : slot
+    )));
+  }
+
+  function addSuggestedSlot() {
+    setSuggestedSlots((current) => (
+      current.length >= 3 ? current : [...current, { date: '', time: '' }]
+    ));
+  }
+
+  function removeSuggestedSlot(index) {
+    setSuggestedSlots((current) => (
+      current.length === 1 ? current : current.filter((_, slotIndex) => slotIndex !== index)
+    ));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setSubmitting(true);
     setError('');
+    if (!canUseReschedule(appt)) {
+      setError('Chỉ được sử dụng tính năng đổi lịch trước giờ hẹn ít nhất 2 tiếng.');
+      return;
+    }
+
+    const normalizedSlots = suggestedSlots.map((slot) => ({
+      date: slot.date,
+      time: slot.time
+    }));
+
+    if (normalizedSlots.some((slot) => !slot.date || !slot.time)) {
+      setError('Vui lòng chọn đầy đủ ngày và giờ cho từng thời gian đề xuất.');
+      return;
+    }
+    if (normalizedSlots.some((slot) => slot.date < minDate)) {
+      setError('Mỗi ngày xem phải sau ngày hiện tại.');
+      return;
+    }
+    if (normalizedSlots.some((slot) => slot.time < '07:00' || slot.time > '17:00')) {
+      setError('Mỗi giờ xem phòng chỉ được chọn từ 07:00 đến 17:00.');
+      return;
+    }
+
+    const slotKeys = normalizedSlots.map((slot) => `${slot.date} ${slot.time}`);
+    if (new Set(slotKeys).size !== slotKeys.length) {
+      setError('Các thời gian đề xuất không được trùng nhau.');
+      return;
+    }
+
+    const timeText = normalizedSlots
+      .map((slot) => formatSuggestedDateTime(slot.date, slot.time))
+      .join('; ');
+
+    setSubmitting(true);
     try {
-      await onSubmit?.(appt, { timeText, reason });
+      await onSubmit?.(appt, {
+        timeText,
+        suggestedTimes: normalizedSlots,
+        reason
+      });
       onClose?.();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không thể gửi yêu cầu đổi lịch.');
@@ -524,18 +632,52 @@ function RescheduleModal({ appt, onClose, onSubmit }) {
           <div className="lxp-modal-body">
             <p style={{ fontSize: 14, color: 'var(--lxp-on-surface-var)', margin: 0 }}>
               Bạn đang đổi lịch cho <strong style={{ color: 'var(--lxp-on-surface)' }}>{appt.roomName}</strong>.
-              Lịch mới phải được đổi trước ít nhất 1 tiếng so với lịch hẹn cũ.
             </p>
             {error && <p style={{ color: 'var(--lxp-error)', fontSize: 13, margin: 0 }}>{error}</p>}
             <div className="lxp-modal-field">
-              <label htmlFor="lxp-new-timeText">Thời gian đề xuất (Có thể nhập nhiều thời gian)</label>
-              <textarea
-                id="lxp-new-timeText"
-                placeholder="VD: Chiều nay 3h hoặc Sáng mai 9h..."
-                value={timeText}
-                onChange={(e) => setTimeText(e.target.value)}
-                required
-              />
+              <label>Thời gian đề xuất</label>
+              <div className="lxp-suggested-times">
+                {suggestedSlots.map((slot, index) => (
+                  <div className="lxp-date-time-row" key={index}>
+                    <input
+                      aria-label={`Ngày xem đề xuất ${index + 1}`}
+                      type="date"
+                      min={minDate}
+                      value={slot.date}
+                      onChange={(e) => updateSuggestedSlot(index, 'date', e.target.value)}
+                      required
+                    />
+                    <input
+                      aria-label={`Giờ xem đề xuất ${index + 1}`}
+                      type="time"
+                      min="07:00"
+                      max="17:00"
+                      step="900"
+                      value={slot.time}
+                      onChange={(e) => updateSuggestedSlot(index, 'time', e.target.value)}
+                      required
+                    />
+                    {suggestedSlots.length > 1 && (
+                      <button
+                        className="lxp-time-remove"
+                        type="button"
+                        aria-label={`Xóa thời gian đề xuất ${index + 1}`}
+                        onClick={() => removeSuggestedSlot(index)}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="lxp-field-helper-row">
+                <small className="lxp-field-hint">Tối đa 3 thời gian. Ngày xem phải sau hôm nay, giờ xem từ 07:00 đến 17:00.</small>
+                {suggestedSlots.length < 3 && (
+                  <button className="lxp-add-time-btn" type="button" onClick={addSuggestedSlot}>
+                    + Thêm thời gian
+                  </button>
+                )}
+              </div>
             </div>
             <div className="lxp-modal-field">
               <label htmlFor="lxp-reason">Lý do đổi lịch</label>
@@ -560,7 +702,6 @@ function RescheduleModal({ appt, onClose, onSubmit }) {
 
 /* ─── Cancel modal ─── */
 function CancelModal({ appt, onClose, onSubmit }) {
-  const [timeText, setTimeText] = useState('');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -572,7 +713,7 @@ function CancelModal({ appt, onClose, onSubmit }) {
     setSubmitting(true);
     setError('');
     try {
-      await onSubmit?.(appt, { timeText, reason });
+      await onSubmit?.(appt, { reason });
       onClose?.();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không thể gửi yêu cầu hủy lịch.');
@@ -594,15 +735,6 @@ function CancelModal({ appt, onClose, onSubmit }) {
               Bạn đang yêu cầu hủy lịch cho <strong style={{ color: 'var(--lxp-on-surface)' }}>{appt.roomName}</strong>.
             </p>
             {error && <p style={{ color: 'var(--lxp-error)', fontSize: 13, margin: 0 }}>{error}</p>}
-            <div className="lxp-modal-field">
-              <label htmlFor="lxp-cancel-timeText">Thời gian đề xuất (tùy chọn)</label>
-              <textarea
-                id="lxp-cancel-timeText"
-                placeholder="VD: Nếu được xin chuyển sang chiều mai 3h..."
-                value={timeText}
-                onChange={(e) => setTimeText(e.target.value)}
-              />
-            </div>
             <div className="lxp-modal-field">
               <label htmlFor="lxp-cancel-reason">Lý do hủy</label>
               <textarea
@@ -651,14 +783,9 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail, onR
     let status = 'pending';
     if (schedule.trangThai === 'Chờ xem') status = 'upcoming';
     if (schedule.trangThai === 'Đã xem') status = 'done';
-    if (schedule.trangThai === 'Đã hủy' || schedule.trangThai === 'Yêu cầu hủy') status = 'cancelled';
+    if (schedule.trangThai === 'Yêu cầu hủy') status = 'cancelRequested';
+    if (schedule.trangThai === 'Đã hủy') status = 'cancelled';
     if (schedule.trangThai === 'Yêu cầu đổi lịch') status = 'pending';
-
-    // Bất kể trạng thái là gì (trừ Đã xem/Đã hủy), nếu quá hạn thì tự động chuyển thành Đã hủy
-    if (isValidDate && d.getTime() < Date.now() && status !== 'done' && status !== 'cancelled') {
-      status = 'cancelled';
-      schedule.trangThai = 'Quá hạn'; // Hoặc 'Đã hủy'
-    }
 
     const timeStr = isValidDate ? d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Chưa cập nhật';
     
@@ -673,6 +800,7 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail, onR
       address: 'Homestay Dorm',
       time: timeStr,
       staffName: schedule.tenNhanVienSale || 'Đang cập nhật',
+      staffPhone: schedule.sdtNhanVienSale || schedule.soDienThoaiNhanVienSale || '',
       staffImg: null,
       roomImg: schedule.hinhAnhPhong || null, // the component will handle fallback if null
       rating: null,
@@ -685,8 +813,13 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail, onR
   const doneCount = appointments.filter((a) => a.status === 'done').length;
 
   /* Filtered list */
-  const filtered =
-    activeFilter === 'all' ? appointments : appointments.filter((a) => a.status === activeFilter);
+  const filtered = activeFilter === 'all'
+    ? appointments
+    : appointments.filter((appointment) => (
+      activeFilter === 'pending'
+        ? appointment.status === 'pending' || appointment.status === 'cancelRequested'
+        : appointment.status === activeFilter
+    ));
 
   /* Handlers */
   function handleNewSubmit(form) {

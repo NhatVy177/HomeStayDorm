@@ -257,6 +257,7 @@ BEGIN
         lxp.GhiChu AS ghiChu,
         pdk.MaNhanVienSale AS maNhanVienSale,
         ndSale.HoTen AS tenNhanVienSale,
+        ndSale.SDT AS sdtNhanVienSale,
         phong.phongXem
     FROM dbo.LichXemPhong AS lxp
     INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
@@ -302,7 +303,8 @@ BEGIN
         lxp.TrangThai AS trangThai,
         lxp.GhiChu AS ghiChu,
         pdk.MaNhanVienSale AS maNhanVienSale,
-        ndSale.HoTen AS tenNhanVienSale
+        ndSale.HoTen AS tenNhanVienSale,
+        ndSale.SDT AS sdtNhanVienSale
     FROM dbo.LichXemPhong AS lxp
     INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
     LEFT JOIN dbo.NguoiDung AS ndSale ON ndSale.MaNguoiDung = pdk.MaNhanVienSale
@@ -372,8 +374,43 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM dbo.KhachHang WHERE MaKhachHang = @KhachHangId)
         THROW 50101, N'Không tìm thấy khách hàng.', 1;
 
-    IF EXISTS (SELECT 1 FROM dbo.PhieuDangKy WHERE MaKhachHang = @KhachHangId AND TrangThai = N'Chờ tiếp nhận')
-        THROW 50102, N'Bạn đang có phiếu đăng ký chờ tiếp nhận. Vui lòng đợi xử lý trước khi gửi yêu cầu mới.', 1;
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.HopDongThue
+        WHERE MaKhachHang = @KhachHangId
+          AND TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
+    )
+        THROW 50102, N'Bạn đang có hợp đồng thuê chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi hợp đồng kết thúc.', 1;
+
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.PhieuDatCoc AS pdc
+        WHERE pdc.MaKhachHang = @KhachHangId
+          AND pdc.TrangThaiCoc <> N'Đã hủy'
+          AND pdc.TrangThaiThanhToan <> N'Hết hạn'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.HopDongThue AS hd
+              WHERE hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+                AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+          )
+    )
+        THROW 50102, N'Bạn đang có phiếu đặt cọc chưa kết thúc. Không thể tạo phiếu đăng ký mới.', 1;
+
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.PhieuDangKy AS pdk
+        WHERE pdk.MaKhachHang = @KhachHangId
+          AND pdk.TrangThai <> N'Từ chối'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.PhieuDatCoc AS pdc
+              INNER JOIN dbo.HopDongThue AS hd ON hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+              WHERE pdc.MaPhieuYeuCauDangKy = pdk.MaDangKy
+                AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+          )
+    )
+        THROW 50102, N'Bạn đang có phiếu đăng ký chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi luồng thuê hiện tại kết thúc.', 1;
 
     SET @KhuVucMongMuon = NULLIF(LTRIM(RTRIM(@KhuVucMongMuon)), N'');
     SET @LoaiPhongYeuCau = NULLIF(LTRIM(RTRIM(@LoaiPhongYeuCau)), N'');

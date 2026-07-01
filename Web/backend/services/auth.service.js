@@ -167,7 +167,9 @@ export async function getSessionUser(token) {
     vaiTro: payload.vaiTro,
     trangThai: payload.trangThai,
     chucVu: payload.chucVu || null,
-    maChiNhanh: payload.maChiNhanh || null
+    maChiNhanh: payload.maChiNhanh || null,
+    quocTich: payload.quocTich || null,
+    cccd: payload.cccd || null
   };
 }
 

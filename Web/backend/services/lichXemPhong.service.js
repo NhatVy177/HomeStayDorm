@@ -66,6 +66,68 @@ function normalizeMoneyVnd(value) {
   return vnd;
 }
 
+function normalizeText(value) {
+  return String(value || '').trim().toLocaleLowerCase('vi-VN');
+}
+
+function isWholeRoomOption(row = {}) {
+  return ['nguyên căn', 'nguyên phòng'].includes(normalizeText(row.loaiThue || row.hinhThucThue));
+}
+
+function getAvailableSlots(row = {}) {
+  return Math.max(0, Number(row.soGiuongTrong ?? row.soGiuongDuKienXep ?? row.sucChua ?? 0));
+}
+
+function filterRoomsByProfileCapacity(rows = [], profile = {}) {
+  const total = Math.max(1, Number(profile.SoNguoiDuKienO || profile.soNguoiO || 1));
+  const male = Math.max(0, Number(profile.SoNam || profile.soNam || 0));
+  const female = Math.max(0, Number(profile.SoNu || profile.soNu || 0));
+
+  const typeGroups = new Map();
+  rows.forEach((row) => {
+    const key = row.maLoaiPhong || row.MaLoaiPhong || row.loaiPhong || row.TenLoaiPhong || 'unknown';
+    if (!typeGroups.has(key)) typeGroups.set(key, []);
+    typeGroups.get(key).push(row);
+  });
+
+  const validTypes = new Set();
+  typeGroups.forEach((items, key) => {
+    const wholeCapacity = items
+      .filter((row) => isWholeRoomOption(row) && normalizeText(row.gioiTinhChoPhep) === 'không phân biệt')
+      .reduce((sum, row) => sum + Number(row.sucChua || getAvailableSlots(row)), 0);
+
+    if (wholeCapacity >= total) {
+      validTypes.add(key);
+      return;
+    }
+
+    const sharedItems = items.filter((row) => !isWholeRoomOption(row));
+    const maleSlots = sharedItems
+      .filter((row) => normalizeText(row.gioiTinhChoPhep) === 'nam')
+      .reduce((sum, row) => sum + getAvailableSlots(row), 0);
+    const femaleSlots = sharedItems
+      .filter((row) => normalizeText(row.gioiTinhChoPhep) === 'nữ')
+      .reduce((sum, row) => sum + getAvailableSlots(row), 0);
+    const neutralSlots = sharedItems
+      .filter((row) => normalizeText(row.gioiTinhChoPhep) === 'không phân biệt')
+      .reduce((sum, row) => sum + getAvailableSlots(row), 0);
+
+    if (male > 0 || female > 0) {
+      const missingMale = Math.max(0, male - maleSlots);
+      const missingFemale = Math.max(0, female - femaleSlots);
+      if (missingMale + missingFemale <= neutralSlots) validTypes.add(key);
+      return;
+    }
+
+    if (maleSlots + femaleSlots + neutralSlots >= total) validTypes.add(key);
+  });
+
+  return rows.filter((row) => {
+    const key = row.maLoaiPhong || row.MaLoaiPhong || row.loaiPhong || row.TenLoaiPhong || 'unknown';
+    return validTypes.has(key);
+  });
+}
+
 export async function createLichXemPhong(data = {}, user = null) {
   const maDangKy = String(data.maDangKy || data.hoSoDangKyId || '').trim();
   const thoiGianHen = data.thoiGianXem || data.thoiGianHen || null;
@@ -279,20 +341,21 @@ export async function getPhongPhuHop(maDangKy) {
 
   try {
     const profile = await executeQuery(`
-      SELECT MucGiaToiDa
+      SELECT MucGiaToiDa, SoNguoiDuKienO, SoNam, SoNu
       FROM dbo.PhieuDangKy
       WHERE MaDangKy = @HoSoId
     `, [
       { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId }
     ]);
-    const mucGiaToiDa = normalizeMoneyVnd(profile.recordset[0]?.MucGiaToiDa);
+    const profileRecord = profile.recordset[0] || {};
+    const mucGiaToiDa = normalizeMoneyVnd(profileRecord.MucGiaToiDa);
 
     const result = await executeProcedure('dbo.SP_DanhSachPhongGiuongKhaDung', [
       { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: mucGiaToiDa },
       { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId }
     ]);
 
-    const rows = result.recordset || [];
+    const rows = filterRoomsByProfileCapacity(result.recordset || [], profileRecord);
     const khongCoChiNhanhPhuHop = rows.some((row) => Boolean(row.khongCoChiNhanhPhuHop));
     const rooms = rows
       .filter((row) => row.maPhong)

@@ -22,13 +22,6 @@ IF OBJECT_ID(N'dbo.PhieuDangKy', N'U') IS NULL
     THROW 50000, N'Chưa có schema HOMEDORM4. Hãy chạy app.sql trước.', 1;
 GO
 
-IF COL_LENGTH('dbo.NguoiDung', 'DiaChi') IS NULL
-BEGIN
-    ALTER TABLE dbo.NguoiDung
-        ADD DiaChi NVARCHAR(255) NULL;
-END;
-GO
-
 IF OBJECT_ID(N'dbo.PDK_LoaiPhong', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.PDK_LoaiPhong (
@@ -44,7 +37,8 @@ GO
 -- =============================================
 -- 1. SP_TaoHoSoDangKy
 -- Khách hàng gửi hồ sơ nhu cầu thuê phòng.
--- Mỗi khách chỉ được có 1 hồ sơ đang hoạt động (Chờ tiếp nhận / Chờ xác nhận cọc / Chấp nhận).
+-- Mỗi khách chỉ được có 1 luồng thuê đang hoạt động.
+-- Chỉ được tạo phiếu mới khi hồ sơ cũ bị từ chối hoặc hợp đồng đã hết hạn/đã thanh lý.
 -- =============================================
 IF OBJECT_ID(N'dbo.SP_TaoHoSoDangKy', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TaoHoSoDangKy AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
@@ -130,11 +124,42 @@ BEGIN
         BEGIN TRANSACTION;
 
         IF EXISTS (
-            SELECT 1 FROM dbo.PhieuDangKy WITH (UPDLOCK, HOLDLOCK)
+            SELECT 1
+            FROM dbo.HopDongThue WITH (UPDLOCK, HOLDLOCK)
             WHERE MaKhachHang = @KhachHangId
-              AND TrangThai IN (N'Chờ tiếp nhận', N'Chờ xác nhận cọc', N'Xác nhận cọc')
+              AND TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
         )
-            THROW 50011, N'Bạn đang có hồ sơ thuê chưa được kết thúc.', 1;
+            THROW 50011, N'Bạn đang có hợp đồng thuê chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi hợp đồng kết thúc.', 1;
+
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.PhieuDatCoc AS pdcLock WITH (UPDLOCK, HOLDLOCK)
+            WHERE pdcLock.MaKhachHang = @KhachHangId
+              AND pdcLock.TrangThaiCoc <> N'Đã hủy'
+              AND pdcLock.TrangThaiThanhToan <> N'Hết hạn'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM dbo.HopDongThue AS hd
+                  WHERE hd.MaPhieuCoc = pdcLock.MaPhieuDatCoc
+                    AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+              )
+        )
+            THROW 50011, N'Bạn đang có phiếu đặt cọc chưa kết thúc. Không thể tạo phiếu đăng ký mới.', 1;
+
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.PhieuDangKy AS pdkLock WITH (UPDLOCK, HOLDLOCK)
+            WHERE pdkLock.MaKhachHang = @KhachHangId
+              AND pdkLock.TrangThai <> N'Từ chối'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM dbo.PhieuDatCoc AS pdc
+                  INNER JOIN dbo.HopDongThue AS hd ON hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+                  WHERE pdc.MaPhieuYeuCauDangKy = pdkLock.MaDangKy
+                    AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+              )
+        )
+            THROW 50011, N'Bạn đang có phiếu đăng ký chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi luồng thuê hiện tại kết thúc.', 1;
 
         SELECT @SoThuTu = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaDangKy, 3, 4))), 0) + 1
         FROM dbo.PhieuDangKy WITH (UPDLOCK, HOLDLOCK)
@@ -296,7 +321,55 @@ END;
 GO
 
 -- =============================================
--- 7. SP_TaoHoSoKhachVangLai
+-- 7. SP_HuyTiepNhanHoSoDangKy
+-- Sale trả hồ sơ chưa lập lịch về hàng chờ tiếp nhận.
+-- =============================================
+IF OBJECT_ID(N'dbo.SP_HuyTiepNhanHoSoDangKy', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_HuyTiepNhanHoSoDangKy AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_HuyTiepNhanHoSoDangKy
+    @MaDangKy        VARCHAR(6),
+    @NhanVienSaleId  VARCHAR(6)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    SET @MaDangKy = NULLIF(LTRIM(RTRIM(@MaDangKy)), '');
+    SET @NhanVienSaleId = NULLIF(LTRIM(RTRIM(@NhanVienSaleId)), '');
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.PhieuDangKy WHERE MaDangKy = @MaDangKy)
+        THROW 50010, N'Không tìm thấy hồ sơ đăng ký.', 1;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM dbo.PhieuDangKy
+        WHERE MaDangKy = @MaDangKy
+          AND TrangThai = N'Đã tiếp nhận'
+          AND MaNhanVienSale = @NhanVienSaleId
+    )
+        THROW 50011, N'Hồ sơ không ở trạng thái có thể hủy tiếp nhận hoặc do Sale khác xử lý.', 1;
+
+    IF EXISTS (SELECT 1 FROM dbo.LichXemPhong WHERE MaDangKy = @MaDangKy)
+        THROW 50011, N'Hồ sơ đã có lịch xem phòng nên không thể hủy tiếp nhận.', 1;
+
+    UPDATE dbo.PhieuDangKy
+    SET TrangThai = N'Chờ tiếp nhận',
+        MaNhanVienSale = NULL
+    WHERE MaDangKy = @MaDangKy;
+
+    SELECT
+        MaDangKy AS maDangKy,
+        TrangThai AS trangThai,
+        MaNhanVienSale AS maNhanVienSale
+    FROM dbo.PhieuDangKy
+    WHERE MaDangKy = @MaDangKy;
+END;
+GO
+
+-- =============================================
+-- 8. SP_TaoHoSoKhachVangLai
 -- Sale tạo khách hàng mới và lập hồ sơ nhu cầu thuê trong cùng giao dịch.
 -- =============================================
 IF OBJECT_ID(N'dbo.SP_TaoHoSoKhachVangLai', N'P') IS NULL
@@ -309,7 +382,6 @@ CREATE OR ALTER PROCEDURE dbo.SP_TaoHoSoKhachVangLai
     @GioiTinh           NVARCHAR(5),
     @SDT                VARCHAR(20),
     @Email              VARCHAR(100)    = NULL,
-    @DiaChi             NVARCHAR(255)   = NULL,
     @QuocTich           NVARCHAR(50)    = NULL,
     @CCCD               VARCHAR(20),
     @KhuVucMongMuon     NVARCHAR(100),
@@ -332,7 +404,6 @@ BEGIN
     SET @GioiTinh           = NULLIF(LTRIM(RTRIM(@GioiTinh)), N'');
     SET @SDT                = NULLIF(LTRIM(RTRIM(@SDT)), '');
     SET @Email              = NULLIF(LTRIM(RTRIM(@Email)), '');
-    SET @DiaChi             = NULLIF(LTRIM(RTRIM(@DiaChi)), N'');
     SET @QuocTich           = COALESCE(NULLIF(LTRIM(RTRIM(@QuocTich)), N''), N'Việt Nam');
     SET @CCCD               = NULLIF(LTRIM(RTRIM(@CCCD)), '');
     SET @HinhThucThue       = NULLIF(LTRIM(RTRIM(@HinhThucThue)), N'');
@@ -408,10 +479,10 @@ BEGIN
         SET @MaKhachHang = CONCAT('KH', RIGHT(CONCAT('0000', @SoKhach), 4));
 
         INSERT INTO dbo.NguoiDung (
-            MaNguoiDung, HoTen, NgaySinh, GioiTinh, SDT, Email, DiaChi, UrlAvt, LoaiNguoiDung
+            MaNguoiDung, HoTen, NgaySinh, GioiTinh, SDT, Email, UrlAvt, LoaiNguoiDung
         )
         VALUES (
-            @MaKhachHang, @HoTen, @NgaySinh, @GioiTinh, @SDT, @Email, @DiaChi, NULL, 'KhachHang'
+            @MaKhachHang, @HoTen, @NgaySinh, @GioiTinh, @SDT, @Email, NULL, 'KhachHang'
         );
 
         INSERT INTO dbo.KhachHang (MaKhachHang, QuocTich, CCCD)
@@ -492,7 +563,6 @@ BEGIN
         nd.HoTen                AS hoTenKhach,
         nd.SDT                  AS sdtKhach,
         nd.Email                AS emailKhach,
-        nd.DiaChi               AS diaChi,
         kh.QuocTich             AS quocTich,
         kh.CCCD                 AS cccd,
         pdk.MaNhanVienSale      AS maNhanVienSale,
@@ -564,7 +634,6 @@ BEGIN
         nd.SDT                  AS soDienThoai,
         nd.Email                AS emailKhach,
         nd.Email                AS email,
-        nd.DiaChi               AS diaChi,
         kh.QuocTich             AS quocTich,
         kh.CCCD                 AS cccd,
         hoSo.MaDangKy           AS maDangKyGanNhat,
@@ -702,6 +771,33 @@ BEGIN
                WHERE cn.MaChiNhanh = @MaChiNhanh
                  AND cn.TenChiNhanh LIKE N'%' + pdk.KhuVucMongMuon + N'%'
            )
+           OR (
+               @MaChiNhanh = 'CN0001'
+               AND (
+                   pdk.KhuVucMongMuon LIKE N'%Quận 1%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Quận 3%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Quận 4%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Quận 5%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Quận 10%'
+               )
+           )
+           OR (
+               @MaChiNhanh = 'CN0002'
+               AND (
+                   pdk.KhuVucMongMuon LIKE N'%Bình Thạnh%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Phú Nhuận%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Gò Vấp%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Tân Bình%'
+               )
+           )
+           OR (
+               @MaChiNhanh = 'CN0003'
+               AND (
+                   pdk.KhuVucMongMuon LIKE N'%Thủ Đức%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Quận 2%'
+                   OR pdk.KhuVucMongMuon LIKE N'%Quận 9%'
+               )
+           )
       )
     ORDER BY pdk.NgayDangKy DESC, pdk.MaDangKy DESC;
 END;
@@ -828,6 +924,45 @@ BEGIN
         FROM dbo.ChiNhanh
         WHERE TrangThai = N'Hoạt động'
           AND (DiaChi LIKE N'%' + @KhuVuc + N'%' OR TenChiNhanh LIKE N'%' + @KhuVuc + N'%');
+
+        INSERT INTO #ChiNhanhPhuHop (MaChiNhanh)
+        SELECT cn.MaChiNhanh
+        FROM dbo.ChiNhanh AS cn
+        WHERE cn.TrangThai = N'Hoạt động'
+          AND (
+              (
+                  cn.MaChiNhanh = 'CN0001'
+                  AND (
+                      @KhuVuc LIKE N'%Quận 1%'
+                      OR @KhuVuc LIKE N'%Quận 3%'
+                      OR @KhuVuc LIKE N'%Quận 4%'
+                      OR @KhuVuc LIKE N'%Quận 5%'
+                      OR @KhuVuc LIKE N'%Quận 10%'
+                  )
+              )
+              OR (
+                  cn.MaChiNhanh = 'CN0002'
+                  AND (
+                      @KhuVuc LIKE N'%Bình Thạnh%'
+                      OR @KhuVuc LIKE N'%Phú Nhuận%'
+                      OR @KhuVuc LIKE N'%Gò Vấp%'
+                      OR @KhuVuc LIKE N'%Tân Bình%'
+                  )
+              )
+              OR (
+                  cn.MaChiNhanh = 'CN0003'
+                  AND (
+                      @KhuVuc LIKE N'%Thủ Đức%'
+                      OR @KhuVuc LIKE N'%Quận 2%'
+                      OR @KhuVuc LIKE N'%Quận 9%'
+                  )
+              )
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM #ChiNhanhPhuHop AS existed
+              WHERE existed.MaChiNhanh = cn.MaChiNhanh
+          );
     END;
 
     DECLARE @KhongCoChiNhanhPhuHop BIT =
@@ -1020,9 +1155,10 @@ BEGIN
             (
                 @LaNhomHonHop = 1
                 AND (
-                    (puv.LaTrongNguyenPhong = 1 AND puv.SoGiuongKhongPhanBiet >= @SoNguoiCanXep)
+                    (puv.LaTrongNguyenPhong = 1 AND puv.SoGiuongKhongPhanBiet > 0)
                     OR (@SoNam > 0 AND puv.SoGiuongNam > 0)
                     OR (@SoNu > 0 AND puv.SoGiuongNu > 0)
+                    OR (puv.LaTrongNguyenPhong = 0 AND puv.SoGiuongKhongPhanBiet > 0)
                 )
             )
     )

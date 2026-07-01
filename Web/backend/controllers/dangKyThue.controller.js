@@ -26,6 +26,14 @@ export async function getHoSoDangKy(req, res, next) {
   }
 }
 
+export async function kiemTraKhachHangTonTai(req, res, next) {
+  try {
+    res.json(await service.kiemTraKhachHangTonTai(req.query));
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getPhongGiuongKhaDung(req, res, next) {
   try {
     res.json(await service.getPhongGiuongKhaDung(req.query));
@@ -66,6 +74,15 @@ export async function tiepNhanHoSoDangKy(req, res, next) {
   try {
     const nhanVienSaleId = req.user?.maNguoiDung;
     res.json(await service.tiepNhanHoSoDangKy(req.params.id, nhanVienSaleId));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function huyTiepNhanHoSoDangKy(req, res, next) {
+  try {
+    const nhanVienSaleId = req.user?.maNguoiDung;
+    res.json(await service.huyTiepNhanHoSoDangKy(req.params.id, nhanVienSaleId));
   } catch (err) {
     next(err);
   }

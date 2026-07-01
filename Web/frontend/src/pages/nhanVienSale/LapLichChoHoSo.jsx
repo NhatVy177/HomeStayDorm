@@ -55,6 +55,69 @@ function normalizeRooms(payload) {
   return [...map.values()];
 }
 
+function normalizeText(value) {
+  return String(value || '').trim().toLocaleLowerCase('vi-VN');
+}
+
+function getAvailableSlots(room) {
+  return Math.max(0, Number(room.soGiuongTrong ?? room.sucChua ?? 0));
+}
+
+function isWholeRoomOption(room) {
+  return ['nguyên căn', 'nguyên phòng'].includes(normalizeText(room.loaiThue));
+}
+
+function evaluateRoomSelection(selectedRooms, profile) {
+  const total = Math.max(1, Number(profile?.soNguoiO || profile?.soNguoiDuKienO || 1));
+  const male = Math.max(0, Number(profile?.soNam || 0));
+  const female = Math.max(0, Number(profile?.soNu || 0));
+
+  const wholeCapacity = selectedRooms
+    .filter((room) => isWholeRoomOption(room) && normalizeText(room.gioiTinhChoPhep) === 'không phân biệt')
+    .reduce((sum, room) => sum + Number(room.sucChua || getAvailableSlots(room)), 0);
+
+  if (wholeCapacity >= total) {
+    return {
+      valid: true,
+      mode: 'Nguyên phòng',
+      message: `Đã chọn đủ ${wholeCapacity} chỗ nguyên phòng cho ${total} người.`
+    };
+  }
+
+  const sharedRooms = selectedRooms.filter((room) => !isWholeRoomOption(room));
+  const maleSlots = sharedRooms
+    .filter((room) => normalizeText(room.gioiTinhChoPhep) === 'nam')
+    .reduce((sum, room) => sum + getAvailableSlots(room), 0);
+  const femaleSlots = sharedRooms
+    .filter((room) => normalizeText(room.gioiTinhChoPhep) === 'nữ')
+    .reduce((sum, room) => sum + getAvailableSlots(room), 0);
+  const neutralSlots = sharedRooms
+    .filter((room) => normalizeText(room.gioiTinhChoPhep) === 'không phân biệt')
+    .reduce((sum, room) => sum + getAvailableSlots(room), 0);
+
+  if (male > 0 || female > 0) {
+    const missingMale = Math.max(0, male - maleSlots);
+    const missingFemale = Math.max(0, female - femaleSlots);
+    const valid = missingMale + missingFemale <= neutralSlots;
+    return {
+      valid,
+      mode: valid ? 'Ghép giường' : '',
+      message: valid
+        ? `Đã đủ chỗ ghép cho ${male} nam và ${female} nữ.`
+        : `Cần chọn đủ chỗ cho ${male} nam và ${female} nữ.`
+    };
+  }
+
+  const availableSlots = maleSlots + femaleSlots + neutralSlots;
+  return {
+    valid: availableSlots >= total,
+    mode: availableSlots >= total ? 'Ghép giường' : '',
+    message: availableSlots >= total
+      ? `Đã chọn đủ ${availableSlots} chỗ ghép cho ${total} người.`
+      : `Cần chọn thêm ${total - availableSlots} chỗ phù hợp.`
+  };
+}
+
 export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
   const [rooms, setRooms] = useState([]);
   const [selectedRoomIds, setSelectedRoomIds] = useState([]);
@@ -94,11 +157,10 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
     () => rooms.filter((room) => selectedRoomIds.includes(room.maPhong)),
     [rooms, selectedRoomIds]
   );
-  const requiredSlots = useMemo(() => {
-    const total = Number(profile?.soNguoiO || profile?.soNguoiDuKienO || 0);
-    const byGender = Number(profile?.soNam || 0) + Number(profile?.soNu || 0);
-    return total || byGender || 1;
-  }, [profile]);
+  const selectionPlan = useMemo(
+    () => evaluateRoomSelection(selectedRooms, profile),
+    [selectedRooms, profile]
+  );
 
   const toggleRoom = (roomId) => {
     setSelectedRoomIds((current) => (
@@ -109,7 +171,7 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
   };
 
   const handleCreateSchedule = async () => {
-    if (!formDate || !formTime || selectedRooms.length === 0) return;
+    if (!formDate || !formTime || !selectionPlan.valid) return;
 
     setSaving(true);
     try {
@@ -133,14 +195,6 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
     <div className="ktp-container">
       <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
         <div>
-          <button
-            type="button"
-            className="ktp-btn-cancel"
-            style={{ marginBottom: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            onClick={onBack}
-          >
-            <Icon name="arrow_back" /> Quay lại hồ sơ
-          </button>
           <h2 style={{ margin: 0, color: '#191c1d', fontSize: '24px' }}>Lập lịch xem phòng cho {profile?.maDangKy}</h2>
           <p style={{ margin: '6px 0 0', color: '#6f797a' }}>
             {profile?.hoTenKhach || profile?.customerName || 'Khách hàng'} · {profile?.sdtKhach || profile?.sdt || ''} · {formatGender(profile)}
@@ -170,22 +224,22 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
         </div>
       </section>
 
-      <section className="ktp-detail-card" style={{ padding: '18px', marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '16px' }}>
-        <div>
-          <div style={{ fontSize: '12px', color: '#6f797a', marginBottom: '4px' }}>Khu vực</div>
-          <strong style={{ color: '#191c1d' }}>{profile?.khuVucMongMuon || 'Chưa có'}</strong>
+      <section className="ll-profile-summary">
+        <div className="ll-profile-field">
+          <span>Khu vực</span>
+          <strong>{profile?.khuVucMongMuon || 'Chưa có'}</strong>
         </div>
-        <div>
-          <div style={{ fontSize: '12px', color: '#6f797a', marginBottom: '4px' }}>Loại phòng</div>
-          <strong style={{ color: '#191c1d' }}>{profile?.loaiPhongYeuCau || 'Chưa có'}</strong>
+        <div className="ll-profile-field">
+          <span>Loại phòng mong muốn</span>
+          <strong>{profile?.loaiPhongYeuCau || 'Chưa có'}</strong>
         </div>
-        <div>
-          <div style={{ fontSize: '12px', color: '#6f797a', marginBottom: '4px' }}>Số người</div>
-          <strong style={{ color: '#191c1d' }}>{profile?.soNguoiO || profile?.soNguoiDuKienO || 0} người</strong>
+        <div className="ll-profile-field">
+          <span>Người ở</span>
+          <strong>{profile?.soNguoiO || profile?.soNguoiDuKienO || 0} người · {formatGender(profile)}</strong>
         </div>
-        <div>
-          <div style={{ fontSize: '12px', color: '#6f797a', marginBottom: '4px' }}>Mức giá tối đa</div>
-          <strong style={{ color: '#191c1d' }}>{formatMoney(profile?.mucGia || profile?.mucGiaToiDa) || 'Chưa có'}</strong>
+        <div className="ll-profile-field">
+          <span>Mức giá tối đa</span>
+          <strong>{formatMoney(profile?.mucGia || profile?.mucGiaToiDa) || 'Chưa có'}</strong>
         </div>
       </section>
 
@@ -245,6 +299,9 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
                         <div>
                           <h3 style={{ margin: 0, fontSize: '16px', color: '#191c1d' }}>{room.tenPhong}</h3>
                           <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6f797a' }}>{room.loaiPhong}</p>
+                          <span className={`ll-room-mode ${isWholeRoomOption(room) ? 'is-whole' : 'is-shared'}`}>
+                            {isWholeRoomOption(room) ? 'Nguyên phòng' : 'Ghép giường'}
+                          </span>
                         </div>
                         <input
                           type="checkbox"
@@ -258,7 +315,7 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
                         <div><strong>Chi nhánh:</strong> {room.tenChiNhanh || room.diaChi}</div>
                         <div><strong>Giới tính:</strong> {room.gioiTinhChoPhep || 'Không phân biệt'}</div>
                         <div><strong>Giường trống:</strong> {room.soGiuongTrong ?? room.soGiuongDuKienXep ?? 0}</div>
-                        <div><strong>Số chỗ cần xếp:</strong> {room.soGiuongDuKienXep ?? requiredSlots} chỗ</div>
+                        <div><strong>Số chỗ có thể xếp:</strong> {getAvailableSlots(room)} chỗ</div>
                         {room.danhSachGiuong?.length > 0 && <div><strong>Giường:</strong> {room.danhSachGiuong.join(', ')}</div>}
                       </div>
                       <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -272,12 +329,18 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
             </div>
           )}
 
+          {selectedRooms.length > 0 && (
+            <div className={`ll-selection-status ${selectionPlan.valid ? 'is-valid' : 'is-invalid'}`}>
+              <Icon name={selectionPlan.valid ? 'check_circle' : 'warning'} />
+              <span>{selectionPlan.message}</span>
+            </div>
+          )}
+
           <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-            <button className="ktp-btn-cancel" onClick={onBack}>Hủy</button>
             <button
               className="ktp-btn-submit"
-              disabled={selectedRooms.length === 0}
-              style={{ opacity: selectedRooms.length === 0 ? 0.55 : 1 }}
+              disabled={!selectionPlan.valid}
+              style={{ opacity: selectionPlan.valid ? 1 : 0.55 }}
               onClick={() => setStep('time')}
             >
               Tiếp tục
@@ -342,7 +405,7 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
               <p style={{ margin: '0 0 22px', color: '#6f797a' }}>
                 Lịch {createdSchedule.id || `${profile.maDangKy}`} đã được lưu cho phiếu {profile.maDangKy}.
               </p>
-              <button className="ktp-btn-submit" style={{ width: '100%', justifyContent: 'center' }} onClick={onBack}>Quay lại hồ sơ</button>
+              <button className="ktp-btn-submit" style={{ width: '100%', justifyContent: 'center' }} onClick={onBack}>Hoàn tất</button>
             </div>
           </div>
         </div>

@@ -19,11 +19,13 @@ const rentInitial = {
   email: '',
   quocTich: '',
   cccd: '',
-  hinhThucThue: 'Ghép nam',
   khuVucMongMuon: '',
   loaiPhongYeuCau: '',
-  mucGia: '',
+  mucGiaToiDa: '',
   soNguoiO: '1',
+  gioiTinhThue: 'Nam',
+  soNam: 0,
+  soNu: 0,
   ngayDuKienVaoO: '',
   thoiHanThue: '',
   ghiChu: ''
@@ -40,6 +42,99 @@ const filterOptions = {
     { value: '5000000', label: 'Dưới 5 triệu' }
   ]
 };
+
+const branchContacts = [
+  {
+    name: 'Chi nhánh Quận 1',
+    area: '12 Nguyễn Trãi, Quận 1',
+    phone: '02811110001'
+  },
+  {
+    name: 'Chi nhánh Bình Thạnh',
+    area: '45 Điện Biên Phủ, Bình Thạnh',
+    phone: '02811110002'
+  },
+  {
+    name: 'Chi nhánh Thủ Đức',
+    area: '88 Võ Văn Ngân, Thủ Đức',
+    phone: '02811110003'
+  }
+];
+
+const ALLOWED_RENT_AREAS = [
+  'Quận 1', 'Quận 2', 'Quận 3', 'Quận 4', 'Quận 5', 'Quận 9', 'Quận 10',
+  'Bình Thạnh', 'Phú Nhuận', 'Gò Vấp', 'Tân Bình', 'Thủ Đức'
+];
+
+function normalizeAreaInput(value) {
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase('vi-VN')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/\s+/g, ' ');
+}
+
+function getAreaAliases(area) {
+  const normalized = normalizeAreaInput(area);
+  const aliases = [normalized];
+
+  if (!normalized.startsWith('quan ') && normalized !== 'thu duc') {
+    aliases.push(`quan ${normalized}`);
+  }
+  if (normalized === 'thu duc') {
+    aliases.push('quan thu duc', 'thanh pho thu duc', 'tp thu duc');
+  }
+
+  return aliases;
+}
+
+function resolveAllowedArea(value) {
+  const normalized = normalizeAreaInput(value);
+  return ALLOWED_RENT_AREAS.find((area) => getAreaAliases(area).includes(normalized)) || '';
+}
+
+function getPhoneError(value) {
+  if (!value) return '';
+  return /^\d{10}$/.test(value) ? '' : 'Số điện thoại phải có đúng 10 chữ số.';
+}
+
+function getCccdError(value) {
+  if (!value) return '';
+  return /^\d{12}$/.test(value) ? '' : 'CCCD phải có đúng 12 chữ số.';
+}
+
+function getAreaError(value) {
+  if (!value) return '';
+  return resolveAllowedArea(value) ? '' : 'Khu vực không hợp lệ. Vui lòng chọn một quận trong danh sách.';
+}
+
+function toLocalDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getMaxBirthDate() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return toLocalDateInputValue(yesterday);
+}
+
+function getBirthDateError(value) {
+  if (!value) return '';
+  return value <= getMaxBirthDate() ? '' : 'Ngày sinh phải trước ngày hiện tại.';
+}
+
+function validateContactAndArea(form) {
+  if (!form.ngaySinh || getBirthDateError(form.ngaySinh)) return 'Ngày sinh phải trước ngày hiện tại.';
+  if (!/^\d{10}$/.test(form.soDienThoai || '')) return 'Số điện thoại phải có đúng 10 chữ số.';
+  if (!/^\d{12}$/.test(form.cccd || '')) return 'CCCD phải có đúng 12 chữ số.';
+  if (!resolveAllowedArea(form.khuVucMongMuon)) return 'Khu vực mong muốn không hợp lệ.';
+  return '';
+}
 
 const DEMO_ROOM_IMAGES = [
   'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=85',
@@ -527,8 +622,12 @@ export default function KhachHangPortalPage() {
   const [datCocFilter, setDatCocFilter] = useState('Tất cả');
   const [hopDongDashboard, setHopDongDashboard] = useState(null);
   const [hopDongLoading, setHopDongLoading] = useState(false);
+  const [supportModal, setSupportModal] = useState(false);
 
   const locks = getNavLocks(overview?.trangThai || {});
+  const registrationLocked = Boolean(overview?.trangThai?.coQuyTrinhThueDangHoatDong);
+  const registrationLockedMessage = overview?.trangThai?.thongBaoKhoaDangKy
+    || 'Bạn đang có phiếu đăng ký/đặt cọc/hợp đồng chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi luồng thuê hiện tại kết thúc.';
 
   const navItems = [
     { id: 'kham-pha', icon: 'explore', title: 'Khám phá phòng' },
@@ -627,11 +726,65 @@ export default function KhachHangPortalPage() {
       soDienThoai: user?.soDienThoai || '',
       email: user?.email || '',
       quocTich: user?.quocTich || 'Việt Nam',
-      cccd: user?.cccd || user?.soCCCD || user?.cmnd || ''
+      cccd: user?.cccd || user?.CCCD || user?.soCCCD || user?.cmnd || ''
     };
   }
 
+  function firstFilled(...values) {
+    return values.find((value) => value !== undefined && value !== null && value !== '') ?? '';
+  }
+
+  function toDateInput(value) {
+    return value ? String(value).slice(0, 10) : '';
+  }
+
+  function getProfilePrice(profile = {}) {
+    const rawPrice = firstFilled(profile.mucGiaToiDa, profile.MucGiaToiDa, profile.mucGia, profile.MucGia);
+    return normalizeMoneyVnd(rawPrice) || rawPrice || '';
+  }
+
+  function getTenantGender(profile = {}) {
+    const soNam = Number(firstFilled(profile.soNam, profile.SoNam, 0)) || 0;
+    const soNu = Number(firstFilled(profile.soNu, profile.SoNu, 0)) || 0;
+    const rawGender = firstFilled(profile.gioiTinhThue, profile.GioiTinhThue, profile.GioiTinh);
+
+    if (rawGender === 'Nam' || rawGender === 'Nữ' || rawGender === 'Khác') return rawGender;
+    if (soNam > 0 && soNu === 0) return 'Nam';
+    if (soNu > 0 && soNam === 0) return 'Nữ';
+    return 'Khác';
+  }
+
+  function buildEditFormFromProfile(profile = {}) {
+    return {
+      hoTen: firstFilled(profile.hoTen, profile.HoTen, user?.hoTen),
+      ngaySinh: toDateInput(firstFilled(profile.ngaySinh, profile.NgaySinh, user?.ngaySinh)),
+      gioiTinh: firstFilled(profile.gioiTinhKhach, profile.GioiTinhKhach, user?.gioiTinh, profile.gioiTinh),
+      soDienThoai: firstFilled(profile.soDienThoai, profile.SDT, profile.Sdt, user?.soDienThoai),
+      email: firstFilled(profile.email, profile.Email, user?.email),
+      quocTich: firstFilled(profile.quocTich, profile.QuocTich, user?.quocTich, 'Việt Nam'),
+      cccd: firstFilled(profile.cccd, profile.CCCD, profile.soCCCD, user?.cccd, user?.CCCD, user?.soCCCD, user?.cmnd),
+      khuVucMongMuon: firstFilled(profile.khuVucMongMuon, profile.KhuVucMongMuon),
+      loaiPhongYeuCau: firstFilled(profile.loaiPhongYeuCau, profile.LoaiPhongYeuCau),
+      mucGiaToiDa: getProfilePrice(profile),
+      soNguoiO: firstFilled(profile.soNguoiO, profile.SoNguoiO, 1),
+      gioiTinhThue: getTenantGender(profile),
+      soNam: firstFilled(profile.soNam, profile.SoNam, 0),
+      soNu: firstFilled(profile.soNu, profile.SoNu, 0),
+      ngayDuKienVaoO: toDateInput(firstFilled(profile.ngayDuKienVaoO, profile.NgayDuKienVaoO, profile.ThoiGianDuKienVaoO)),
+      thoiHanThue: firstFilled(profile.thoiHanThue, profile.ThoiHanThue),
+      ghiChu: firstFilled(profile.ghiChu, profile.GhiChu, profile.YeuCauKhac)
+    };
+  }
+
+  function canOpenRentForm() {
+    if (!registrationLocked) return true;
+    setToast(registrationLockedMessage);
+    return false;
+  }
+
   function openRentForm(room) {
+    if (!canOpenRentForm()) return;
+
     const selected = room ? [room] : selectedRooms;
     if (!selected.length) {
       setToast('Chọn ít nhất một phòng trước khi gửi nhu cầu thuê.');
@@ -641,15 +794,37 @@ export default function KhachHangPortalPage() {
     setSelectedRooms(selected);
     setRentForm({
       ...getRentDefaultsFromUser(),
-      hinhThucThue: firstRoom.hinhThucThue || rentInitial.hinhThucThue,
       khuVucMongMuon: getArea(firstRoom),
       loaiPhongYeuCau: firstRoom.loaiPhong || '',
-      mucGia: firstRoom.giaThue ? String(firstRoom.giaThue) : ''
+      mucGiaToiDa: firstRoom.giaThue ? String(normalizeMoneyVnd(firstRoom.giaThue) || firstRoom.giaThue) : '',
+      gioiTinhThue: firstRoom.gioiTinhChoPhep || rentInitial.gioiTinhThue
+    });
+    setRentModal(true);
+  }
+
+  function openReRegisterForm(profile) {
+    if (!canOpenRentForm()) return;
+
+    setSelectedRooms([]);
+    setRentForm({
+      ...getRentDefaultsFromUser(),
+      khuVucMongMuon: profile.khuVucMongMuon || '',
+      loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
+      mucGiaToiDa: getProfilePrice(profile),
+      soNguoiO: profile.soNguoiO || '1',
+      gioiTinhThue: getTenantGender(profile),
+      soNam: profile.soNam || 0,
+      soNu: profile.soNu || 0,
+      ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
+      thoiHanThue: profile.thoiHanThue || '',
+      ghiChu: profile.ghiChu || ''
     });
     setRentModal(true);
   }
 
   function openGeneralRentForm() {
+    if (!canOpenRentForm()) return;
+
     setSelectedRooms([]);
     setRentForm(getRentDefaultsFromUser());
     setRentModal(true);
@@ -657,15 +832,34 @@ export default function KhachHangPortalPage() {
 
   async function submitRent(event) {
     event.preventDefault();
+
+    const validationError = validateContactAndArea(rentForm);
+    if (validationError) {
+      setToast(validationError);
+      return;
+    }
+
+    if (rentForm.gioiTinhThue === 'Khác') {
+      const soNguoiO = Number(rentForm.soNguoiO) || 0;
+      const soNam = Number(rentForm.soNam) || 0;
+      const soNu = Number(rentForm.soNu) || 0;
+      if (soNam + soNu !== soNguoiO) {
+        setToast('Tổng số lượng nam và nữ không khớp với số người dự kiến ở.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       await khachMoiApi.createHoSo({
         ...rentForm,
+        khuVucMongMuon: resolveAllowedArea(rentForm.khuVucMongMuon),
         phongQuanTam: selectedRooms.map((room) => room.tenPhong).join(', '),
-        ghiChu: [
-          rentForm.ghiChu,
-          rentForm.hinhThucThue !== 'Nguyên căn' ? `Hình thức mong muốn: ${rentForm.hinhThucThue}` : ''
-        ].filter(Boolean).join('\n')
+        mucGiaToiDa: normalizeMoneyVnd(rentForm.mucGiaToiDa) || '',
+        gioiTinhThue: rentForm.gioiTinhThue,
+        soNam: rentForm.soNam || 0,
+        soNu: rentForm.soNu || 0,
+        ghiChu: rentForm.ghiChu || ''
       });
       setRentModal(false);
       setSelectedRooms([]);
@@ -679,17 +873,21 @@ export default function KhachHangPortalPage() {
     }
   }
 
-  function openEditModal(profile) {
-    setEditForm({
-      khuVucMongMuon: profile.khuVucMongMuon || '',
-      loaiPhongYeuCau: profile.loaiPhongYeuCau || '',
-      mucGia: profile.mucGia || '',
-      soNguoiO: profile.soNguoiO || 1,
-      ngayDuKienVaoO: profile.ngayDuKienVaoO ? profile.ngayDuKienVaoO.slice(0, 10) : '',
-      thoiHanThue: profile.thoiHanThue || '',
-      ghiChu: profile.ghiChu || ''
-    });
+  async function openEditModal(profile) {
+    setEditForm(buildEditFormFromProfile(profile));
     setEditModal(profile);
+
+    if (!profile?.maDangKy) return;
+
+    try {
+      const { data } = await khachMoiApi.getHoSoDetail(profile.maDangKy);
+      const detail = unwrapApiPayload(data);
+      const mergedProfile = { ...profile, ...detail };
+      setEditModal(mergedProfile);
+      setEditForm(buildEditFormFromProfile(mergedProfile));
+    } catch {
+      setToast('Đang hiển thị thông tin hiện có của hồ sơ.');
+    }
   }
 
   async function openProfileDetail(profile) {
@@ -739,9 +937,32 @@ export default function KhachHangPortalPage() {
 
   async function submitEditModal(event) {
     event.preventDefault();
+
+    const validationError = validateContactAndArea(editForm);
+    if (validationError) {
+      setToast(validationError);
+      return;
+    }
+
+    if (editForm.gioiTinhThue === 'Khác') {
+      const soNguoiO = Number(editForm.soNguoiO) || 0;
+      const soNam = Number(editForm.soNam) || 0;
+      const soNu = Number(editForm.soNu) || 0;
+      if (soNam + soNu !== soNguoiO) {
+        setToast('Tổng số lượng nam và nữ không khớp với số người dự kiến ở.');
+        return;
+      }
+    }
+
     setEditSaving(true);
     try {
-      await khachMoiApi.updateHoSo(editModal.maDangKy, editForm);
+      let finalForm = {
+        ...editForm,
+        khuVucMongMuon: resolveAllowedArea(editForm.khuVucMongMuon),
+        mucGiaToiDa: normalizeMoneyVnd(editForm.mucGiaToiDa) || ''
+      };
+
+      await khachMoiApi.updateHoSo(editModal.maDangKy, finalForm);
       setEditModal(null);
       await loadPortal(filters);
       setToast('Đã cập nhật hồ sơ thành công.');
@@ -829,7 +1050,9 @@ export default function KhachHangPortalPage() {
               <div>
                 <h3>Cần tư vấn thêm?</h3>
                 <p>Chuyên viên HomestayDorm sẽ giúp bạn chọn phòng phù hợp nhất với nhu cầu.</p>
-                <a className="kp-btn kp-btn-light kp-full" href="tel:19006789"><Icon name="support" />Liên hệ ngay</a>
+                <button className="kp-btn kp-btn-light kp-full" type="button" onClick={() => setSupportModal(true)}>
+                  <Icon name="support" />Liên hệ ngay
+                </button>
               </div>
               <Icon name="support" className="kh-support-watermark" />
             </article>
@@ -956,11 +1179,22 @@ export default function KhachHangPortalPage() {
       <LichXemPhongPage
         schedules={overview?.lichXem || []}
         onViewRoomDetail={(schedule) => openScheduleDetail(schedule)}
+        onReschedule={async (appointment, form) => {
+          const schedule = appointment.rawSchedule || {};
+          await khachMoiApi.yeuCauDieuChinhLich(schedule.id || appointment.id, {
+            thaoTac: 'Đổi lịch',
+            thoiGianMoi: form.timeText,
+            lyDo: form.reason
+          });
+
+          const { data: summary } = await khachMoiApi.getTongQuan();
+          setOverview(summary);
+          setToast('Đã gửi yêu cầu đổi lịch. Vui lòng chờ nhân viên xác nhận.');
+        }}
         onCancel={async (appointment, form) => {
           const schedule = appointment.rawSchedule || {};
           await khachMoiApi.yeuCauDieuChinhLich(schedule.id || appointment.id, {
             thaoTac: 'Hủy',
-            thoiGianMoi: null,
             lyDo: form.reason
           });
 
@@ -1579,6 +1813,35 @@ export default function KhachHangPortalPage() {
         </main>
       </div>
 
+      {supportModal && (
+        <div className="kp-modal-backdrop" onMouseDown={() => setSupportModal(false)}>
+          <section className="kp-modal kh-contact-modal" role="dialog" aria-modal="true" aria-labelledby="kh-contact-title" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="kp-modal-head kh-contact-head">
+              <div>
+                <span>Liên hệ tư vấn</span>
+                <h2 id="kh-contact-title">Vui lòng liên hệ số điện thoại chi nhánh</h2>
+                <p>Liên hệ chi nhánh gần bạn nhất để được hỗ trợ nhanh hơn.</p>
+              </div>
+              <button type="button" aria-label="Đóng" onClick={() => setSupportModal(false)}>×</button>
+            </div>
+
+            <div className="kh-contact-list">
+              {branchContacts.map((branch) => (
+                <article className="kh-contact-item" key={branch.phone}>
+                  <div>
+                    <strong>{branch.name}</strong>
+                    <span>{branch.area}</span>
+                  </div>
+                  <a className="kp-btn kp-btn-primary" href={`tel:${branch.phone}`}>
+                    <Icon name="support" />{branch.phone}
+                  </a>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
       {rentModal && (
         <div className="kp-modal-backdrop" onMouseDown={() => setRentModal(false)}>
           <form className="kp-modal kh-rent-modal kh-register-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={submitRent}>
@@ -1593,28 +1856,121 @@ export default function KhachHangPortalPage() {
             <div className="kh-register-scroll">
               <section className="kh-register-section">
                 <h3><Icon name="profile" />Thông tin cá nhân</h3>
-                <div className="kh-register-grid">
+                <div className="kh-register-grid kh-balanced-grid">
                   <label className="is-half"><span>Họ và tên*</span><input value={rentForm.hoTen} onChange={(event) => setRentForm({ ...rentForm, hoTen: event.target.value })} placeholder="Nguyễn Văn A" required /></label>
-                  <label><span>Ngày sinh*</span><input type="date" value={rentForm.ngaySinh} onChange={(event) => setRentForm({ ...rentForm, ngaySinh: event.target.value })} required /></label>
+                  <label>
+                    <span>Ngày sinh*</span>
+                    <input
+                      className={getBirthDateError(rentForm.ngaySinh) ? 'is-invalid' : ''}
+                      type="date"
+                      max={getMaxBirthDate()}
+                      value={rentForm.ngaySinh}
+                      onChange={(event) => setRentForm({ ...rentForm, ngaySinh: event.target.value })}
+                      required
+                    />
+                    {getBirthDateError(rentForm.ngaySinh) && <small className="kh-field-error">{getBirthDateError(rentForm.ngaySinh)}</small>}
+                  </label>
                   <label><span>Giới tính*</span><select value={rentForm.gioiTinh} onChange={(event) => setRentForm({ ...rentForm, gioiTinh: event.target.value })} required><option value="">Chọn giới tính</option><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></label>
-                  <label className="is-half"><span>Số điện thoại*</span><input value={rentForm.soDienThoai} onChange={(event) => setRentForm({ ...rentForm, soDienThoai: event.target.value })} placeholder="Nhập số điện thoại liên hệ" required /></label>
+                  <label className="is-half">
+                    <span>Số điện thoại*</span>
+                    <input
+                      className={getPhoneError(rentForm.soDienThoai) ? 'is-invalid' : ''}
+                      inputMode="numeric"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      value={rentForm.soDienThoai}
+                      onChange={(event) => setRentForm({ ...rentForm, soDienThoai: event.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      placeholder="Nhập 10 chữ số"
+                      required
+                    />
+                    {getPhoneError(rentForm.soDienThoai) && <small className="kh-field-error">{getPhoneError(rentForm.soDienThoai)}</small>}
+                  </label>
                   <label className="is-half"><span>Email</span><input type="email" value={rentForm.email} onChange={(event) => setRentForm({ ...rentForm, email: event.target.value })} placeholder="example@gmail.com" /></label>
                   <label className="is-half"><span>Quốc tịch*</span><input value={rentForm.quocTich} onChange={(event) => setRentForm({ ...rentForm, quocTich: event.target.value })} placeholder="Ví dụ: Việt Nam" required /></label>
-                  <label className="is-half"><span>CCCD/Hộ chiếu*</span><input value={rentForm.cccd} onChange={(event) => setRentForm({ ...rentForm, cccd: event.target.value })} placeholder="Số căn cước công dân" required /></label>
+                  <label className="is-half">
+                    <span>CCCD*</span>
+                    <input
+                      className={getCccdError(rentForm.cccd) ? 'is-invalid' : ''}
+                      inputMode="numeric"
+                      maxLength={12}
+                      pattern="[0-9]{12}"
+                      value={rentForm.cccd}
+                      onChange={(event) => setRentForm({ ...rentForm, cccd: event.target.value.replace(/\D/g, '').slice(0, 12) })}
+                      placeholder="Nhập 12 chữ số"
+                      required
+                    />
+                    {getCccdError(rentForm.cccd) && <small className="kh-field-error">{getCccdError(rentForm.cccd)}</small>}
+                  </label>
                 </div>
               </section>
 
               <section className="kh-register-section">
                 <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
-                <div className="kh-register-grid">
+                <div className="kh-register-grid kh-balanced-grid">
                   <label><span>Số lượng người ở*</span><input type="number" min="1" value={rentForm.soNguoiO} onChange={(event) => setRentForm({ ...rentForm, soNguoiO: event.target.value })} required /></label>
-                  <label><span>Hình thức thuê*</span><select value={rentForm.hinhThucThue} onChange={(event) => setRentForm({ ...rentForm, hinhThucThue: event.target.value })} required>{filterOptions.hinhThucThue.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <label className="is-half"><span>Khu vực mong muốn*</span><input value={rentForm.khuVucMongMuon} onChange={(event) => setRentForm({ ...rentForm, khuVucMongMuon: event.target.value })} placeholder="Ví dụ: Quận 3, gần trường học..." required /></label>
-                  <label className="is-half"><span>Loại phòng mong muốn*</span><select value={rentForm.loaiPhongYeuCau} onChange={(event) => setRentForm({ ...rentForm, loaiPhongYeuCau: event.target.value })} required><option value="">Chọn loại phòng</option>{filterOptions.loaiPhong.filter(Boolean).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-                  <label className="is-half"><span>Mức giá mong muốn*</span><input type="number" min="0" value={rentForm.mucGia} onChange={(event) => setRentForm({ ...rentForm, mucGia: event.target.value })} placeholder="Ví dụ: 2000000" required /></label>
+                  <label><span>Giới tính thuê*</span><select value={rentForm.gioiTinhThue} onChange={(event) => setRentForm({ ...rentForm, gioiTinhThue: event.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></label>
+                  {rentForm.gioiTinhThue === 'Khác' && (
+                    <div className="is-half" style={{ display: 'flex', gap: '16px' }}>
+                      <label style={{ margin: 0, flex: 1 }}><span>Số lượng nam*</span><input type="number" min="0" value={rentForm.soNam ?? ''} onChange={(event) => setRentForm({ ...rentForm, soNam: event.target.value })} required /></label>
+                      <label style={{ margin: 0, flex: 1 }}><span>Số lượng nữ*</span><input type="number" min="0" value={rentForm.soNu ?? ''} onChange={(event) => setRentForm({ ...rentForm, soNu: event.target.value })} required /></label>
+                    </div>
+                  )}
+                  <label className="is-half">
+                    <span>Khu vực mong muốn*</span>
+                    <input
+                      className={getAreaError(rentForm.khuVucMongMuon) ? 'is-invalid' : ''}
+                      type="text"
+                      list="kh-rent-area-options"
+                      value={rentForm.khuVucMongMuon}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        event.target.setCustomValidity(getAreaError(value));
+                        setRentForm({ ...rentForm, khuVucMongMuon: value });
+                      }}
+                      placeholder="VD: Quận 1, quan 3, Thu Duc..."
+                      required
+                    />
+                    <datalist id="kh-rent-area-options">
+                      {ALLOWED_RENT_AREAS.map((area) => <option key={area} value={area} />)}
+                    </datalist>
+                    {getAreaError(rentForm.khuVucMongMuon) && <small className="kh-field-error">{getAreaError(rentForm.khuVucMongMuon)}</small>}
+                  </label>
+                  <div className="is-half kh-room-type-field" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start' }}>
+                    <span className="kh-register-field-title">Loại phòng mong muốn*</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      {filterOptions.loaiPhong.filter(Boolean).map((option) => {
+                        const isChecked = rentForm.loaiPhongYeuCau ? rentForm.loaiPhongYeuCau.split(', ').includes(option) : false;
+                        return (
+                          <label key={option} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal', fontSize: '14px', color: '#191c1d', padding: 0, background: 'none', border: 'none' }}>
+                            <input
+                              type="checkbox"
+                              style={{ width: '16px', height: '16px', margin: 0 }}
+                              checked={isChecked}
+                              onChange={(e) => {
+                                let currentArr = rentForm.loaiPhongYeuCau ? rentForm.loaiPhongYeuCau.split(', ').filter(Boolean) : [];
+                                if (e.target.checked) {
+                                  currentArr.push(option);
+                                } else {
+                                  currentArr = currentArr.filter(v => v !== option);
+                                }
+                                setRentForm({ ...rentForm, loaiPhongYeuCau: currentArr.join(', ') });
+                              }}
+                            />
+                            {option}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={rentForm.mucGiaToiDa} onChange={(event) => setRentForm({ ...rentForm, mucGiaToiDa: event.target.value })} placeholder="VD: 3.000.000" required /></label>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={rentForm.ngayDuKienVaoO} onChange={(event) => setRentForm({ ...rentForm, ngayDuKienVaoO: event.target.value })} required /></label>
-                  <label className="is-half"><span>Thời hạn thuê*</span><input type="number" min="1" value={rentForm.thoiHanThue} onChange={(event) => setRentForm({ ...rentForm, thoiHanThue: event.target.value })} placeholder="Ví dụ: 6" required /></label>
-                  <label className="is-wide"><span>Yêu cầu khác</span><textarea value={rentForm.ghiChu} onChange={(event) => setRentForm({ ...rentForm, ghiChu: event.target.value })} placeholder="Giờ giấc sinh hoạt, yêu cầu yên tĩnh, gửi xe..." /></label>
+                  <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={rentForm.thoiHanThue} onChange={(event) => setRentForm({ ...rentForm, thoiHanThue: event.target.value })} placeholder="Ví dụ: 6" required /></label>
+                  <div className="is-wide" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span className="kh-register-field-title">Yêu cầu khác</span>
+                    <label style={{ margin: 0 }}>
+                      <textarea value={rentForm.ghiChu} onChange={(event) => setRentForm({ ...rentForm, ghiChu: event.target.value })} placeholder="Giờ giấc sinh hoạt, yêu cầu yên tĩnh, gửi xe..." style={{ width: '100%', minHeight: '46px' }} />
+                    </label>
+                  </div>
                 </div>
               </section>
             </div>
@@ -1699,39 +2055,65 @@ export default function KhachHangPortalPage() {
 
       {scheduleDetailModal && (
         <div className="kp-modal-backdrop" onMouseDown={() => setScheduleDetailModal(null)}>
-          <div className="kp-modal kh-rent-modal kh-profile-detail-modal" onMouseDown={(e) => e.stopPropagation()}>
+          <div className="kp-modal kh-rent-modal kh-profile-detail-modal kh-schedule-detail-modal" onMouseDown={(e) => e.stopPropagation()}>
             <div className="kp-modal-head">
               <div>
                 <span className="kp-eyebrow">Chi tiết lịch hẹn</span>
                 <h2>Lịch xem #{scheduleDetailModal.maDangKy}</h2>
               </div>
-              <button type="button" onClick={() => setScheduleDetailModal(null)}>×</button>
+              <div className="kh-schedule-head-actions">
+                <span className={`kh-status-chip kh-status-chip--${statusTone(scheduleDetailModal.trangThai)}`}>
+                  {statusIcon(scheduleDetailModal.trangThai)} {scheduleDetailModal.trangThai}
+                </span>
+                <button type="button" onClick={() => setScheduleDetailModal(null)}>×</button>
+              </div>
             </div>
 
             {scheduleDetailLoading && (
               <div className="kh-profile-detail-loading">Đang tải chi tiết lịch xem...</div>
             )}
 
-            <div className="kh-profile-detail-summary">
-              <span className={`kh-status-chip kh-status-chip--${statusTone(scheduleDetailModal.trangThai)}`}>
-                {statusIcon(scheduleDetailModal.trangThai)} {scheduleDetailModal.trangThai}
-              </span>
-              <p>Thời gian hẹn: {formatDate(scheduleDetailModal.thoiGianHen, true)}</p>
-            </div>
-
-            <div className="kh-profile-detail-grid">
-              <div><span>Mã hồ sơ</span><strong>{displayValue(scheduleDetailModal.maDangKy)}</strong></div>
-              <div><span>Nhân viên hỗ trợ</span><strong>{displayValue(scheduleDetailModal.tenNhanVienSale || scheduleDetailModal.maNhanVienSale)}</strong></div>
+            <div className="kh-schedule-info-panel">
+              <div className="kh-profile-detail-grid kh-schedule-detail-grid">
+                <div className="kh-schedule-time">
+                  <Icon name="calendar" />
+                  <span>Thời gian hẹn</span>
+                  <strong>{formatDate(scheduleDetailModal.thoiGianHen, true)}</strong>
+                </div>
+                <div><span>Nhân viên hỗ trợ</span><strong>{displayValue(scheduleDetailModal.tenNhanVienSale || scheduleDetailModal.maNhanVienSale)}</strong></div>
+                <div>
+                  <span>SĐT nhân viên hướng dẫn</span>
+                  <strong>
+                    {scheduleDetailModal.sdtNhanVienSale
+                      ? <a href={`tel:${scheduleDetailModal.sdtNhanVienSale}`}>{scheduleDetailModal.sdtNhanVienSale}</a>
+                      : displayValue(null)}
+                  </strong>
+                </div>
+              </div>
             </div>
 
             {Array.isArray(scheduleDetailModal.phongXem) && scheduleDetailModal.phongXem.length > 0 ? (
               <div className="kh-profile-detail-rooms">
                 <h3>Danh sách phòng sẽ xem</h3>
                 {scheduleDetailModal.phongXem.map((room) => (
-                  <div className="kh-profile-room-row" key={`${room.maPhong}-${room.maGiuong || 'room'}`}>
-                    <strong>{room.tenPhong || room.maPhong}</strong>
-                    <span>{room.maGiuong ? `Giường ${room.maGiuong}` : 'Nguyên phòng'}</span>
-                  </div>
+                  <button
+                    className="kh-profile-room-row kh-profile-room-row-button"
+                    key={`${room.maPhong}-${room.maGiuong || 'room'}`}
+                    type="button"
+                    onClick={() => openScheduledRoomDetail(room)}
+                  >
+                    <span className="kh-profile-room-main">
+                      <strong>{room.tenPhong || room.maPhong}</strong>
+                      <small className="kh-profile-room-branch">{room.tenChiNhanh || room.chiNhanh || room.loaiPhong || 'Chi tiết phòng'}</small>
+                      <small className="kh-profile-room-address">
+                        <Icon name="map" />
+                        {room.diaChi || 'Địa chỉ đang được cập nhật'}
+                      </small>
+                    </span>
+                    <span className="kh-profile-room-action">
+                      {room.maGiuong ? `Giường ${room.maGiuong}` : 'Xem phòng'}
+                    </span>
+                  </button>
                 ))}
               </div>
             ) : (
@@ -1755,14 +2137,121 @@ export default function KhachHangPortalPage() {
               <div><span className="kp-eyebrow">Cập nhật hồ sơ</span><h2>Hồ sơ #{editModal.maDangKy}</h2></div>
               <button type="button" onClick={() => setEditModal(null)}>×</button>
             </div>
-            <div className="kh-form-grid">
-              <label><span>Khu vực mong muốn</span><input value={editForm.khuVucMongMuon} onChange={(e) => setEditForm({ ...editForm, khuVucMongMuon: e.target.value })} /></label>
-              <label><span>Loại phòng yêu cầu</span><input value={editForm.loaiPhongYeuCau} onChange={(e) => setEditForm({ ...editForm, loaiPhongYeuCau: e.target.value })} /></label>
-              <label><span>Ngày dự kiến vào ở</span><input type="date" value={editForm.ngayDuKienVaoO} onChange={(e) => setEditForm({ ...editForm, ngayDuKienVaoO: e.target.value })} required /></label>
-              <label><span>Số người ở</span><input type="number" min="1" value={editForm.soNguoiO} onChange={(e) => setEditForm({ ...editForm, soNguoiO: e.target.value })} required /></label>
-              <label><span>Ngân sách tối đa (VNĐ)</span><input type="number" min="0" value={editForm.mucGia} onChange={(e) => setEditForm({ ...editForm, mucGia: e.target.value })} /></label>
-              <label><span>Thời hạn thuê (tháng)</span><input type="number" min="1" value={editForm.thoiHanThue} onChange={(e) => setEditForm({ ...editForm, thoiHanThue: e.target.value })} placeholder="VD: 6" /></label>
-              <label className="is-wide"><span>Ghi chú / Yêu cầu khác</span><textarea value={editForm.ghiChu} onChange={(e) => setEditForm({ ...editForm, ghiChu: e.target.value })} /></label>
+            <div className="kh-register-scroll">
+              <section className="kh-register-section">
+                <h3><Icon name="profile" />Thông tin cá nhân</h3>
+                <div className="kh-register-grid kh-balanced-grid">
+                  <label className="is-half"><span>Họ và tên*</span><input value={editForm.hoTen} onChange={(event) => setEditForm({ ...editForm, hoTen: event.target.value })} placeholder="Nguyễn Văn A" required /></label>
+                  <label>
+                    <span>Ngày sinh*</span>
+                    <input
+                      className={getBirthDateError(editForm.ngaySinh) ? 'is-invalid' : ''}
+                      type="date"
+                      max={getMaxBirthDate()}
+                      value={editForm.ngaySinh || ''}
+                      onChange={(event) => setEditForm({ ...editForm, ngaySinh: event.target.value })}
+                      required
+                    />
+                    {getBirthDateError(editForm.ngaySinh) && <small className="kh-field-error">{getBirthDateError(editForm.ngaySinh)}</small>}
+                  </label>
+                  <label><span>Giới tính*</span><select value={editForm.gioiTinh} onChange={(event) => setEditForm({ ...editForm, gioiTinh: event.target.value })} required><option value="">Chọn giới tính</option><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></label>
+                  <label className="is-half">
+                    <span>Số điện thoại*</span>
+                    <input
+                      className={getPhoneError(editForm.soDienThoai) ? 'is-invalid' : ''}
+                      inputMode="numeric"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      value={editForm.soDienThoai || ''}
+                      onChange={(event) => setEditForm({ ...editForm, soDienThoai: event.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      placeholder="Nhập 10 chữ số"
+                      required
+                    />
+                    {getPhoneError(editForm.soDienThoai) && <small className="kh-field-error">{getPhoneError(editForm.soDienThoai)}</small>}
+                  </label>
+                  <label className="is-half"><span>Email</span><input type="email" value={editForm.email} onChange={(event) => setEditForm({ ...editForm, email: event.target.value })} placeholder="example@gmail.com" /></label>
+                  <label className="is-half"><span>Quốc tịch*</span><input value={editForm.quocTich} onChange={(event) => setEditForm({ ...editForm, quocTich: event.target.value })} placeholder="Ví dụ: Việt Nam" required /></label>
+                  <label className="is-half">
+                    <span>CCCD*</span>
+                    <input
+                      className={getCccdError(editForm.cccd) ? 'is-invalid' : ''}
+                      inputMode="numeric"
+                      maxLength={12}
+                      pattern="[0-9]{12}"
+                      value={editForm.cccd || ''}
+                      onChange={(event) => setEditForm({ ...editForm, cccd: event.target.value.replace(/\D/g, '').slice(0, 12) })}
+                      placeholder="Nhập 12 chữ số"
+                      required
+                    />
+                    {getCccdError(editForm.cccd) && <small className="kh-field-error">{getCccdError(editForm.cccd)}</small>}
+                  </label>
+                </div>
+              </section>
+
+              <section className="kh-register-section">
+                <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
+                <div className="kh-register-grid kh-balanced-grid">
+                  <label><span>Số lượng người ở*</span><input type="number" min="1" value={editForm.soNguoiO} onChange={(e) => setEditForm({ ...editForm, soNguoiO: e.target.value })} required /></label>
+                  <label><span>Giới tính thuê*</span><select value={editForm.gioiTinhThue} onChange={(e) => setEditForm({ ...editForm, gioiTinhThue: e.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></label>
+                  {editForm.gioiTinhThue === 'Khác' && (
+                    <div className="is-half" style={{ display: 'flex', gap: '16px' }}>
+                      <label style={{ margin: 0, flex: 1 }}><span>Số lượng nam*</span><input type="number" min="0" value={editForm.soNam ?? ''} onChange={(e) => setEditForm({ ...editForm, soNam: e.target.value })} required /></label>
+                      <label style={{ margin: 0, flex: 1 }}><span>Số lượng nữ*</span><input type="number" min="0" value={editForm.soNu ?? ''} onChange={(e) => setEditForm({ ...editForm, soNu: e.target.value })} required /></label>
+                    </div>
+                  )}
+                  <label className="is-half">
+                    <span>Khu vực mong muốn*</span>
+                    <input
+                      className={getAreaError(editForm.khuVucMongMuon) ? 'is-invalid' : ''}
+                      type="text"
+                      list="kh-edit-area-options"
+                      value={editForm.khuVucMongMuon || ''}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        event.target.setCustomValidity(getAreaError(value));
+                        setEditForm({ ...editForm, khuVucMongMuon: value });
+                      }}
+                      placeholder="VD: Quận 1, quan 3, Thu Duc..."
+                      required
+                    />
+                    <datalist id="kh-edit-area-options">
+                      {ALLOWED_RENT_AREAS.map((area) => <option key={area} value={area} />)}
+                    </datalist>
+                    {getAreaError(editForm.khuVucMongMuon) && <small className="kh-field-error">{getAreaError(editForm.khuVucMongMuon)}</small>}
+                  </label>
+                  <div className="is-half kh-room-type-field" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start' }}>
+                    <span className="kh-register-field-title">Loại phòng mong muốn*</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      {filterOptions.loaiPhong.filter(Boolean).map((option) => {
+                        const isChecked = editForm.loaiPhongYeuCau ? editForm.loaiPhongYeuCau.split(', ').includes(option) : false;
+                        return (
+                          <label key={option} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal', fontSize: '14px', color: '#191c1d', padding: 0, background: 'none', border: 'none' }}>
+                            <input
+                              type="checkbox"
+                              style={{ width: '16px', height: '16px', margin: 0 }}
+                              checked={isChecked}
+                              onChange={(e) => {
+                                let currentArr = editForm.loaiPhongYeuCau ? editForm.loaiPhongYeuCau.split(', ').filter(Boolean) : [];
+                                if (e.target.checked) {
+                                  currentArr.push(option);
+                                } else {
+                                  currentArr = currentArr.filter(v => v !== option);
+                                }
+                                setEditForm({ ...editForm, loaiPhongYeuCau: currentArr.join(', ') });
+                              }}
+                            />
+                            {option}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={editForm.mucGiaToiDa} onChange={(e) => setEditForm({ ...editForm, mucGiaToiDa: e.target.value })} placeholder="VD: 3.000.000" required /></label>
+                  <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={editForm.ngayDuKienVaoO} onChange={(e) => setEditForm({ ...editForm, ngayDuKienVaoO: e.target.value })} required /></label>
+                  <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={editForm.thoiHanThue} onChange={(e) => setEditForm({ ...editForm, thoiHanThue: e.target.value })} placeholder="Ví dụ: 6" required /></label>
+                  <label className="is-wide"><span>Yêu cầu khác</span><textarea value={editForm.ghiChu} onChange={(e) => setEditForm({ ...editForm, ghiChu: e.target.value })} placeholder="Giờ giấc sinh hoạt, yêu cầu yên tĩnh, gửi xe..." /></label>
+                </div>
+              </section>
             </div>
             <div className="kp-modal-actions">
               <button className="kp-btn kp-btn-soft" type="button" onClick={() => setEditModal(null)}>Đóng</button>
