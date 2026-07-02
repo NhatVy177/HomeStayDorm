@@ -117,7 +117,7 @@ export default function LapPhieuDatCocTab() {
 
   // hồ sơ đang lập phiếu + dữ liệu form
   const [selected, setSelected] = useState(null);
-  const [phuongThuc, setPhuongThuc] = useState('Tiền mặt');
+  // Kế toán KHÔNG chọn phương thức nữa (khách chọn ở DC04) — đã bỏ state phuongThuc.
   const [hinhThuc, setHinhThuc] = useState('Ghep');       // 'Ghep' | 'Nguyen' (chỉ áp dụng nhóm cùng giới)
   const [giuongTrong, setGiuongTrong] = useState([]);
   const [chonGiuong, setChonGiuong] = useState([]);
@@ -206,7 +206,6 @@ export default function LapPhieuDatCocTab() {
 
   const openCreate = async (item) => {
     setSelected(item);
-    setPhuongThuc('Tiền mặt');
     setChonGiuong([]);
     const khac = item.khacGioi === 1 || item.khacGioi === true;
     setHinhThuc(khac ? 'Nguyen' : 'Ghep');   // khác giới → buộc nguyên phòng
@@ -244,7 +243,7 @@ export default function LapPhieuDatCocTab() {
       await datCocApi.create({
         maDangKy: selected.maDangKy,
         maNhanVienKeToan: user?.maNguoiDung,
-        phuongThucThanhToan: phuongThuc,
+        // Không gửi phương thức: khách sẽ chọn ở DC04 (cột PhuongThucThanhToan cho phép NULL).
         danhSachGiuong: ghep ? chonGiuong : []   // [] = thuê nguyên phòng
       });
       setSelected(null);
@@ -489,52 +488,9 @@ export default function LapPhieuDatCocTab() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
                       <label className="ktp-mini-label" style={{ marginBottom: '8px', display: 'block' }}>Phương thức thanh toán</label>
-                      <div className="kp-radio-card-group">
-                        <label className={`kp-radio-card ${phuongThuc === 'Tiền mặt' ? 'is-selected' : ''}`}>
-                          <input
-                            type="radio"
-                            name="phuongThuc"
-                            value="Tiền mặt"
-                            checked={phuongThuc === 'Tiền mặt'}
-                            onChange={(e) => setPhuongThuc(e.target.value)}
-                            className="kp-radio-input-hidden"
-                          />
-                          <div className="kp-radio-card-content">
-                            <div className="kp-radio-card-icon">
-                              <Icon name="account_balance_wallet" />
-                            </div>
-                            <div className="kp-radio-card-text">
-                              <div className="kp-radio-card-title">Tiền mặt</div>
-                              <div className="kp-radio-card-desc">Thanh toán trực tiếp</div>
-                            </div>
-                          </div>
-                          <div className="kp-radio-card-check">
-                            <Icon name="check" />
-                          </div>
-                        </label>
-
-                        <label className={`kp-radio-card ${phuongThuc === 'Chuyển khoản' ? 'is-selected' : ''}`}>
-                          <input
-                            type="radio"
-                            name="phuongThuc"
-                            value="Chuyển khoản"
-                            checked={phuongThuc === 'Chuyển khoản'}
-                            onChange={(e) => setPhuongThuc(e.target.value)}
-                            className="kp-radio-input-hidden"
-                          />
-                          <div className="kp-radio-card-content">
-                            <div className="kp-radio-card-icon">
-                              <Icon name="account_balance" />
-                            </div>
-                            <div className="kp-radio-card-text">
-                              <div className="kp-radio-card-title">Chuyển khoản</div>
-                              <div className="kp-radio-card-desc">Qua thẻ ngân hàng</div>
-                            </div>
-                          </div>
-                          <div className="kp-radio-card-check">
-                            <Icon name="check" />
-                          </div>
-                        </label>
+                      <div className="ktp-warning-box">
+                        <Icon name="warning" />
+                        <span>Khách hàng sẽ tự chọn phương thức thanh toán (tiền mặt / chuyển khoản) sau khi phiếu được lập.</span>
                       </div>
                     </div>
                   </div>

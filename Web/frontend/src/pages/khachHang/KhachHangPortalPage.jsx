@@ -1167,17 +1167,8 @@ export default function KhachHangPortalPage() {
     }
     setUploading(true);
     try {
-      // Gộp thông tin giao dịch vào ghi chú (cột GhiChuChungTu giới hạn 200 ký tự).
-      const ghiChu = [
-        uploadForm.nganHang && `Ngân hàng: ${uploadForm.nganHang}`,
-        uploadForm.maGiaoDich && `Mã GD: ${uploadForm.maGiaoDich}`,
-        uploadForm.ngayGiaoDich && `Ngày GD: ${uploadForm.ngayGiaoDich}`,
-        uploadForm.ghiChu
-      ].filter(Boolean).join(' · ').slice(0, 200);
-
       const fd = new FormData();
       fd.append('file', uploadForm.file);
-      if (ghiChu) fd.append('ghiChu', ghiChu);
 
       // Endpoint khách: gửi file thật + qua SP_CapNhatMinhChungThanhToanCoc (check hạn 24h + sở hữu).
       await datCocApi.capNhatMinhChungKhach(datCocSelected.maPhieuCoc, fd);
@@ -1189,6 +1180,22 @@ export default function KhachHangPortalPage() {
       setToast(err.response?.data?.message || 'Không thể gửi chứng từ.');
     } finally {
       setUploading(false);
+    }
+  }
+
+  // DC04 - khách chọn phương thức thanh toán (Chuyển khoản / Tiền mặt) cho phiếu "Chờ TT".
+  async function chonPhuongThucCoc(method) {
+    if (!datCocSelected) return;
+    try {
+      await datCocApi.chonPhuongThucKhach(datCocSelected.maPhieuCoc, { phuongThucThanhToan: method });
+      const updated = { ...datCocSelected, phuongThucThanhToan: method };
+      setDatCocSelected(updated);
+      setDatCocList((prev) => prev.map((p) => p.maPhieuCoc === updated.maPhieuCoc ? updated : p));
+      setToast(method === 'Tiền mặt'
+        ? 'Đã chọn thanh toán tiền mặt. Vui lòng đến quầy để nộp tiền cọc.'
+        : 'Đã chọn chuyển khoản. Vui lòng chuyển khoản rồi gửi chứng từ.');
+    } catch (err) {
+      setToast(err.response?.data?.message || 'Không thể chọn phương thức thanh toán.');
     }
   }
 
@@ -1342,34 +1349,28 @@ export default function KhachHangPortalPage() {
               </div>
             </div>
 
-            {/* Case 1: Chờ thanh toán → Form upload + Thông tin CK */}
-            {isWaiting && (
+            {/* Case 1a: Chờ thanh toán, CHƯA chọn phương thức → cho khách chọn */}
+            {isWaiting && !phieu.phuongThucThanhToan && (
+              <div className="dc-section-card">
+                <h3 className="dc-section-title"><Icon name="invoice" />Chọn phương thức thanh toán</h3>
+                <p className="dc-bank-note">Vui lòng chọn cách bạn muốn thanh toán tiền cọc.</p>
+                <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                  <button type="button" className="kp-btn kp-btn-primary kp-full" onClick={() => chonPhuongThucCoc('Chuyển khoản')}>
+                    <Icon name="invoice" /> Chuyển khoản
+                  </button>
+                  <button type="button" className="kp-btn kp-btn-primary kp-full" onClick={() => chonPhuongThucCoc('Tiền mặt')}>
+                    <Icon name="profile" /> Tiền mặt tại quầy
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Case 1b: Chờ thanh toán + Chuyển khoản → Form upload + Thông tin CK */}
+            {isWaiting && phieu.phuongThucThanhToan === 'Chuyển khoản' && (
               <>
                 <div className="dc-section-card">
                   <h3 className="dc-section-title"><Icon name="profile" />Gửi chứng từ thanh toán</h3>
                   <form onSubmit={submitMinhChung} className="dc-upload-form">
-                    <div className="dc-form-row">
-                      <label>
-                        <span>Mã giao dịch (Nếu có)</span>
-                        <input placeholder="VD: VCB12345678" value={uploadForm.maGiaoDich} onChange={(e) => setUploadForm((p) => ({ ...p, maGiaoDich: e.target.value }))} />
-                      </label>
-                      <label>
-                        <span>Ngày giờ giao dịch</span>
-                        <input type="datetime-local" value={uploadForm.ngayGiaoDich} onChange={(e) => setUploadForm((p) => ({ ...p, ngayGiaoDich: e.target.value }))} />
-                      </label>
-                    </div>
-                    <div className="dc-form-row">
-                      <label className="dc-form-full">
-                        <span>Ngân hàng / Ví điện tử</span>
-                        <select value={uploadForm.nganHang} onChange={(e) => setUploadForm((p) => ({ ...p, nganHang: e.target.value }))}>
-                          {['Vietcombank','VietinBank','BIDV','Agribank','TPBank','MB Bank','Techcombank','MoMo','ZaloPay'].map((b) => <option key={b}>{b}</option>)}
-                        </select>
-                      </label>
-                      <label className="dc-form-full">
-                        <span>Ghi chú</span>
-                        <textarea placeholder="Thêm ghi chú nếu cần..." value={uploadForm.ghiChu} onChange={(e) => setUploadForm((p) => ({ ...p, ghiChu: e.target.value }))} rows={2} />
-                      </label>
-                    </div>
                     <label className="dc-file-drop">
                       <input type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleFileUpload} />
                       {uploadForm.fileName
@@ -1393,6 +1394,23 @@ export default function KhachHangPortalPage() {
                   <p className="dc-bank-note">Vui lòng chuyển đúng nội dung để hệ thống tự động xác nhận nhanh hơn.</p>
                 </div>
               </>
+            )}
+
+            {/* Case 1c: Chờ thanh toán + Tiền mặt → hướng dẫn ra quầy, KHÔNG upload */}
+            {isWaiting && phieu.phuongThucThanhToan === 'Tiền mặt' && (
+              <div className="dc-section-card">
+                <h3 className="dc-section-title"><Icon name="profile" />Thanh toán tiền mặt tại quầy</h3>
+                <p className="dc-bank-note">
+                  Bạn đã chọn thanh toán bằng tiền mặt. Vui lòng đến văn phòng nộp tiền cọc trước hạn.
+                  Nhân viên sẽ lập biên nhận đặt cọc để hai bên ký và ghi nhận chứng từ giúp bạn — bạn không cần tự tải lên chứng từ.
+                </p>
+                <div className="dc-info-grid" style={{ marginTop: 12 }}>
+                  <div><span>Cơ sở</span><strong>{phieu.tenChiNhanh || 'Chưa cập nhật'}</strong></div>
+                  <div><span>Địa chỉ</span><strong>{phieu.diaChi || 'Liên hệ nhân viên phụ trách'}</strong></div>
+                  <div><span>Số tiền cần nộp</span><strong style={{ color: 'var(--dc-primary)' }}>{Number(phieu.soTienCoc).toLocaleString('vi-VN')} VNĐ</strong></div>
+                  {phieu.thoiHanThanhToan && <div><span>Hạn thanh toán</span><strong>{formatDate(phieu.thoiHanThanhToan, true)}</strong></div>}
+                </div>
+              </div>
             )}
 
             {/* Case 2: Hết hạn */}

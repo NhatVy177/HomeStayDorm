@@ -17,6 +17,8 @@ router.put('/:id/phat-hanh-thanh-toan', controller.phatHanhYeuCauThanhToanCoc);
 router.put('/:id/minh-chung-thanh-toan', uploadChungTu.single('file'), controller.capNhatMinhChungThanhToanCoc);
 // DC04 - khách hàng tự ghi nhận chứng từ (cùng multer + SP, có check quyền sở hữu trong service).
 router.put('/:id/minh-chung-khach', uploadChungTu.single('file'), controller.capNhatMinhChungCocKhach);
+// DC04 - khách hàng chọn phương thức thanh toán (Tiền mặt / Chuyển khoản).
+router.put('/:id/phuong-thuc-khach', controller.chonPhuongThucCocKhach);
 router.put('/:id/xac-nhan-thanh-toan', controller.xacNhanThanhToanCoc);
 
 export default router;

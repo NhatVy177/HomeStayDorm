@@ -11,6 +11,18 @@ IF OBJECT_ID(N'dbo.PhieuDangKy', N'U') IS NULL
     THROW 50200, N'Chưa có schema HOMEDORM4. Hãy chạy app.sql trước khi chạy dat-coc.sql.', 1;
 GO
 
+-- Cho phép PhuongThucThanhToan = NULL: kế toán KHÔNG chọn phương thức khi lập phiếu (DC03);
+-- khách hàng sẽ chọn phương thức sau (DC04). CHECK cũ vẫn cho qua NULL.
+-- Idempotent: chỉ ALTER khi cột đang NOT NULL.
+IF EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'dbo.PhieuDatCoc')
+      AND name = 'PhuongThucThanhToan'
+      AND is_nullable = 0
+)
+    ALTER TABLE dbo.PhieuDatCoc ALTER COLUMN PhuongThucThanhToan NVARCHAR(20) NULL;
+GO
+
 -- ============================================================
 -- SP_NhaChoCocHetHan — nhả 'Giữ chỗ' về 'Trống' cho các phiếu cọc quá hạn 24h
 -- (đồng thời đặt phiếu sang 'Hết hạn' + 'Đã hủy'). Gọi ở DC03/DC04/DC05.
@@ -374,7 +386,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_LapPhieuDatCoc
     @MaDangKy            VARCHAR(6),
     @MaNhanVienKeToan    VARCHAR(6),
     @SoTienCoc           DECIMAL(15,2),          -- bỏ qua: cọc tự tính = tổng giá thuê × 2 (khớp trigger)
-    @PhuongThucThanhToan NVARCHAR(20),
+    @PhuongThucThanhToan NVARCHAR(20) = NULL,    -- kế toán KHÔNG chọn ở DC03; khách chọn sau ở DC04
     @DanhSachGiuong      NVARCHAR(MAX) = NULL,   -- CSV mã giường 'G01,G02' (ghép); NULL/'' = nguyên phòng
     @ThoiHanThanhToan    DATETIME = NULL
 AS
@@ -686,6 +698,56 @@ END;
 GO
 
 -- ============================================================
+-- DC04 - SP_ChonPhuongThucThanhToanCoc
+-- Khách hàng (hoặc nhân viên) chọn phương thức thanh toán cho phiếu "Chờ TT".
+-- Kế toán không còn chọn phương thức ở DC03 (cột PhuongThucThanhToan cho phép NULL).
+-- ============================================================
+IF OBJECT_ID(N'dbo.SP_ChonPhuongThucThanhToanCoc', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_ChonPhuongThucThanhToanCoc AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_ChonPhuongThucThanhToanCoc
+    @PhieuId             NVARCHAR(30),
+    @PhuongThucThanhToan NVARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @Ma VARCHAR(6) = CAST(@PhieuId AS VARCHAR(6));
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.PhieuDatCoc WHERE MaPhieuDatCoc = @Ma)
+        THROW 50240, N'Không tìm thấy phiếu đặt cọc.', 1;
+
+    SET @PhuongThucThanhToan = NULLIF(LTRIM(RTRIM(@PhuongThucThanhToan)), N'');
+    IF @PhuongThucThanhToan IS NULL OR @PhuongThucThanhToan NOT IN (N'Tiền mặt', N'Chuyển khoản')
+        THROW 50241, N'Phương thức thanh toán không hợp lệ.', 1;
+
+    DECLARE @TrangThai NVARCHAR(20), @ThoiHan DATETIME;
+    SELECT @TrangThai = TrangThaiThanhToan, @ThoiHan = ThoiHanThanhToan
+    FROM dbo.PhieuDatCoc WHERE MaPhieuDatCoc = @Ma;
+
+    IF @TrangThai <> N'Chờ TT'
+        THROW 50242, N'Phiếu đặt cọc không ở trạng thái "Chờ TT".', 1;
+
+    IF @ThoiHan < GETDATE()
+    BEGIN
+        EXEC dbo.SP_NhaChoCocHetHan; -- nhả 'Giữ chỗ' + đặt phiếu 'Hết hạn'
+        THROW 50243, N'Phiếu đặt cọc đã hết hạn thanh toán 24 giờ và bị hủy tự động.', 1;
+    END
+
+    UPDATE dbo.PhieuDatCoc
+    SET PhuongThucThanhToan = @PhuongThucThanhToan
+    WHERE MaPhieuDatCoc = @Ma;
+
+    SELECT
+        pdc.MaPhieuDatCoc       AS maPhieuDatCoc,
+        pdc.PhuongThucThanhToan AS phuongThucThanhToan,
+        pdc.TrangThaiThanhToan  AS trangThaiThanhToan
+    FROM dbo.PhieuDatCoc AS pdc
+    WHERE pdc.MaPhieuDatCoc = @Ma;
+END;
+GO
+
+-- ============================================================
 -- DC05 - SP_DanhSachChoXacNhanThanhToan
 -- Danh sách phiếu "Chờ TT" đã có chứng từ, cho Quản lý đối chiếu & xác nhận.
 -- ============================================================
@@ -794,7 +856,14 @@ BEGIN
             THROW;
         END CATCH
     END
-    -- @HopLe = 0: giữ nguyên 'Chờ TT' để khách cung cấp lại chứng từ.
+    ELSE
+    BEGIN
+        -- @HopLe = 0: từ chối chứng từ -> XÓA chứng từ cũ để khách/Sale gửi lại.
+        -- Phiếu vẫn 'Chờ TT' nhưng ChungTuThanhToan = NULL nên quay lại hàng đợi gửi chứng từ.
+        UPDATE dbo.PhieuDatCoc
+        SET ChungTuThanhToan = NULL
+        WHERE MaPhieuDatCoc = @Ma;
+    END
 
     SELECT
         pdc.MaPhieuDatCoc      AS maPhieuDatCoc,
