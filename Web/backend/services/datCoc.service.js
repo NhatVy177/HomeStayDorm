@@ -1,18 +1,24 @@
-import { executeProcedure, sql } from '../database/connection.js';
+import { executeProcedure, getPool, sql } from '../database/connection.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 
 function handleDatabaseError(error) {
   mapDatabaseError(error, {
-    50010: 404
+    50010: 404,
+    // DC04 - cập nhật minh chứng
+    50220: 404, 50221: 409, 50222: 409, 50223: 400,
+    // DC05 - xác nhận thanh toán
+    50230: 404, 50231: 409, 50232: 409, 50233: 400, 50234: 409
   });
 }
 
-function serializeJsonValue(value) {
-  if (value == null) {
-    return null;
-  }
+export async function getDanhSachChoGhiNhanChungTu() {
+  const result = await executeProcedure('dbo.SP_DanhSachChoGhiNhanChungTu');
+  return result.recordset;
+}
 
-  return typeof value === 'string' ? value : JSON.stringify(value);
+export async function getDanhSachChoXacNhanThanhToan() {
+  const result = await executeProcedure('dbo.SP_DanhSachChoXacNhanThanhToan');
+  return result.recordset;
 }
 
 export async function getDanhSachChoLapPhieu() {
@@ -26,27 +32,39 @@ export async function createPhieuDatCoc(data = {}) {
   if (!maDangKy || !maNhanVienKeToan) {
     throw createServiceError('Thiếu mã phiếu đăng ký hoặc mã nhân viên kế toán');
   }
-  const soTienCoc = Number(data.soTienCoc);
-  if (!soTienCoc || soTienCoc <= 0) {
-    throw createServiceError('Số tiền cọc không hợp lệ');
-  }
   const phuongThuc = String(data.phuongThucThanhToan || '').trim();
   if (!['Tiền mặt', 'Chuyển khoản'].includes(phuongThuc)) {
     throw createServiceError('Phương thức thanh toán không hợp lệ');
   }
+  // Tiền cọc = giá thuê × 2 do SP/trigger tự tính; @SoTienCoc chỉ là placeholder (truyền 0).
+  // danhSachGiuong: mảng mã giường ['G01','G02'] (ghép) hoặc rỗng/null (nguyên phòng).
+  const danhSachGiuong = Array.isArray(data.danhSachGiuong)
+    ? data.danhSachGiuong.filter(Boolean).join(',')
+    : String(data.danhSachGiuong || '').trim();
 
   try {
     const result = await executeProcedure('dbo.SP_LapPhieuDatCoc', [
       { name: 'MaDangKy',            type: sql.VarChar(6),        value: maDangKy },
       { name: 'MaNhanVienKeToan',    type: sql.VarChar(6),        value: maNhanVienKeToan },
-      { name: 'SoTienCoc',           type: sql.Decimal(15, 2),    value: soTienCoc },
+      { name: 'SoTienCoc',           type: sql.Decimal(15, 2),    value: 0 },
       { name: 'PhuongThucThanhToan', type: sql.NVarChar(20),      value: phuongThuc },
+      { name: 'DanhSachGiuong',      type: sql.NVarChar(sql.MAX), value: danhSachGiuong || null },
       { name: 'ThoiHanThanhToan',    type: sql.DateTime,          value: data.thoiHanThanhToan ? new Date(data.thoiHanThanhToan) : null }
     ]);
     return result.recordset[0] || null;
   } catch (error) {
-    mapDatabaseError(error, { 50210: 404, 50211: 409, 50212: 409, 50213: 404, 50214: 422 });
+    mapDatabaseError(error, {
+      50210: 404, 50211: 409, 50212: 409, 50213: 404, 50214: 422, 50215: 409,
+      50216: 422, 50217: 422, 50218: 409, 50219: 422
+    });
   }
+}
+
+export async function getGiuongTrong(maPhong) {
+  const result = await executeProcedure('dbo.SP_DanhSachGiuongTrong', [
+    { name: 'MaPhong', type: sql.VarChar(4), value: String(maPhong || '').trim() }
+  ]);
+  return result.recordset;
 }
 
 export async function getPhieuDatCoc(maNhanVienSale) {
@@ -117,13 +135,39 @@ export async function capNhatMinhChungThanhToanCoc(id, data = {}) {
   try {
     const result = await executeProcedure('dbo.SP_CapNhatMinhChungThanhToanCoc', [
       { name: 'PhieuId', type: sql.NVarChar(30), value: String(id || '').trim() },
-      { name: 'MinhChungThanhToan', type: sql.NVarChar(sql.MAX), value: serializeJsonValue(data.minhChungThanhToan) }
+      { name: 'ChungTuThanhToan', type: sql.NVarChar(500), value: data.chungTuThanhToan || null },
+      { name: 'GhiChu', type: sql.NVarChar(200), value: data.ghiChu || null }
     ]);
 
     return result.recordset[0] || null;
   } catch (error) {
     handleDatabaseError(error);
   }
+}
+
+// DC04 - Khách hàng tự ghi nhận chứng từ thanh toán cọc.
+// Khác đường Sale ở chỗ kiểm tra quyền sở hữu (khách chỉ up phiếu của chính mình),
+// rồi tái dùng đúng SP_CapNhatMinhChungThanhToanCoc (đã có check hạn 24h + trạng thái).
+export async function capNhatMinhChungCocKhach(user, id, data = {}) {
+  if (!user || user.vaiTro !== 'KhachHang') {
+    throw createServiceError('Chức năng này chỉ dành cho khách hàng', 403);
+  }
+  const maPhieuCoc = String(id || '').trim();
+  if (!maPhieuCoc) throw createServiceError('Thiếu mã phiếu đặt cọc');
+  if (!data.chungTuThanhToan) throw createServiceError('Thiếu file chứng từ thanh toán');
+
+  // Kiểm tra phiếu thuộc về chính khách đang đăng nhập (KhachHang.MaKhachHang = NguoiDung.MaNguoiDung).
+  const pool = await getPool();
+  const owned = await pool.request()
+    .input('MaPhieuCoc', sql.VarChar(6), maPhieuCoc)
+    .input('MaKhachHang', sql.VarChar(6), user.maNguoiDung)
+    .query(`
+      SELECT 1 FROM dbo.PhieuDatCoc
+      WHERE MaPhieuDatCoc = @MaPhieuCoc AND MaKhachHang = @MaKhachHang;
+    `);
+  if (!owned.recordset[0]) throw createServiceError('Không tìm thấy phiếu đặt cọc của bạn', 404);
+
+  return capNhatMinhChungThanhToanCoc(maPhieuCoc, data);
 }
 
 export async function xacNhanThanhToanCoc(id, data = {}) {

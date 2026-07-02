@@ -1,0 +1,66 @@
+/* ===== Chip "Số người" + tooltip chi tiết nam/nữ (dùng chung) ===== */
+.kp-people { position: relative; display: inline-flex; align-items: center; cursor: default; }
+
+.kp-people-chip {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 6px;
+  background-color: #f3f4f5; color: #3f494a;
+  padding: 5px 12px; border-radius: 8px;
+  border: 1px solid #bec8c9;
+  font-weight: 600; font-size: 14px; line-height: 1;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.kp-people:hover .kp-people-chip {
+  background-color: #e4f1f0; border-color: #7fb8b4; color: #2f6765;
+}
+.kp-people-chip svg { width: 16px; height: 16px; }
+
+/* Dấu chấm cảnh báo nhóm khác giới */
+.kp-people-chip.is-mixed { border-color: #3b8280; }
+.kp-people-warn {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background-color: #3b8280;
+  border: 2px solid #ffffff;
+  box-sizing: content-box;
+}
+
+/* Tooltip */
+.kp-people-tip {
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  margin-bottom: 8px; width: max-content; max-width: 240px; z-index: 30;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+.kp-people:hover .kp-people-tip { opacity: 1; visibility: visible; }
+
+.kp-people-tip-inner {
+  background-color: #28323a; color: #ffffff;
+  border-radius: 10px; padding: 8px 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.kp-people-tip-title {
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: #9aa6ae; text-align: center; font-weight: 700;
+  border-bottom: 1px solid #3d4853; padding-bottom: 5px;
+}
+.kp-people-tip-row { display: flex; gap: 8px; justify-content: center; }
+.kp-gender-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background-color: #3a4650; padding: 4px 9px; border-radius: 6px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.kp-gender-pill svg { width: 13px; height: 13px; }
+.kp-gender-nam svg { color: #6ea8ff; }
+.kp-gender-nam span { color: #dceaff; }
+.kp-gender-nu svg { color: #ff97c2; }
+.kp-gender-nu span { color: #ffe1ee; }
+
+.kp-people-tip-arrow {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  margin-top: -1px;
+  border: 5px solid transparent; border-top-color: #28323a;
+}

@@ -1728,3 +1728,213 @@
     flex-direction: column;
   }
 }
+
+/* Deposit form selection cards */
+.kp-radio-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kp-radio-input-hidden,
+.kp-bed-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.kp-radio-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #ffffff;
+  border: 2px solid #bec8c9;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.kp-radio-card:hover {
+  border-color: #3b8280;
+}
+
+.kp-radio-card-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kp-radio-card-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f5;
+  color: #6f797a;
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.kp-radio-card-icon svg {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.kp-radio-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kp-radio-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #191c1d;
+  transition: color 0.2s ease-in-out;
+}
+
+.kp-radio-card-desc {
+  font-size: 12px;
+  color: #6f797a;
+}
+
+.kp-radio-card-check,
+.kp-bed-check {
+  border: 2px solid #bec8c9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  transition: all 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+.kp-radio-card-check {
+  width: 20px;
+  height: 20px;
+}
+
+.kp-radio-card-check svg,
+.kp-bed-check svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 3px;
+}
+
+.kp-radio-card.is-selected {
+  border-color: #3b8280;
+  background-color: rgba(59, 130, 128, 0.08);
+}
+
+.kp-radio-card.is-selected .kp-radio-card-icon {
+  background-color: rgba(59, 130, 128, 0.2);
+  color: #2f6765;
+}
+
+.kp-radio-card.is-selected .kp-radio-card-title {
+  color: #2f6765;
+}
+
+.kp-radio-card.is-selected .kp-radio-card-check,
+.kp-bed-card.is-selected .kp-bed-check {
+  background-color: #3b8280;
+  border-color: #3b8280;
+  color: #ffffff;
+}
+
+.kp-bed-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.kp-bed-card {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background-color: #ffffff;
+  border: 2px solid #bec8c9;
+  border-radius: 10px;
+  cursor: pointer;
+  min-width: 110px;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+}
+
+.kp-bed-card:hover {
+  border-color: #3b8280;
+  background-color: #f8f9fa;
+}
+
+.kp-bed-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kp-bed-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6f797a;
+  font-size: 20px;
+  transition: color 0.2s ease-in-out;
+}
+
+.kp-bed-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #191c1d;
+  transition: color 0.2s ease-in-out;
+}
+
+.kp-bed-check {
+  width: 18px;
+  height: 18px;
+}
+
+.kp-bed-card.is-selected {
+  border-color: #3b8280;
+  background-color: rgba(59, 130, 128, 0.08);
+}
+
+.kp-bed-card.is-selected .kp-bed-icon,
+.kp-bed-card.is-selected .kp-bed-label {
+  color: #2f6765;
+}
+
+.kp-bed-card.is-disabled,
+.kp-bed-card.is-disabled:hover {
+  background-color: #f3f4f5;
+  border-color: #e1e3e4;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.kp-bed-card.is-disabled .kp-bed-icon {
+  color: #a7afb0;
+}
+
+.kp-bed-card.is-disabled .kp-bed-label {
+  color: #6f797a;
+}
+
+.kp-bed-card.is-disabled .kp-bed-check {
+  border-color: #e1e3e4;
+  background-color: #f3f4f5;
+}

@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '../../auth/AuthContext.jsx';
+import { datCocApi } from '../datCoc/datCoc.api.js';
+import ResultModal from '../../components/common/ResultModal.jsx';
+import SoNguoiBadge from '../../components/common/SoNguoiBadge.jsx';
 
 export function Icon({ name, className = '' }) {
   const shapes = {
@@ -12,6 +16,7 @@ export function Icon({ name, className = '' }) {
     home: <><path d="M3.5 11.2 12 4l8.5 7.2" /><path d="M5.5 10.4V20h13v-9.6" /><path d="M9.5 20v-5.8h5V20" /></>,
     close: <><path d="M18 6 6 18M6 6l12 12" /></>,
     person: <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+    group: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
     description: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></>,
     apartment: <><path d="M22 20V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v16" /><path d="M9 20V9h6v11" /><path d="M22 20H2" /></>,
     bed: <><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9" /></>,
@@ -35,6 +40,8 @@ export function Icon({ name, className = '' }) {
     build: <><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></>,
     image: <><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></>,
     upload: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></>,
+    cloud_upload: <><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /><path d="M12 12v9" /><path d="m16 16-4-4-4 4" /></>,
+    verified_user: <><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></>,
     add_circle: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></>,
     delete: <><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></>,
     assignment_turned_in: <><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><polyline points="9 14 11 16 15 12" /></>,
@@ -63,224 +70,540 @@ export function Icon({ name, className = '' }) {
   );
 }
 
+const formatTien = (v) => (v == null || v === '' || isNaN(Number(v)) ? '' : Number(v).toLocaleString('vi-VN'));
+const moTaPhong = (item) => item.tenPhong || item.maPhong || '—';
+const formatNgay = (v) => {
+  if (!v) return '—';
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('vi-VN');
+};
+
+// Cấu hình trạng thái xử lý phía kế toán
+const STATUS_CONFIG = {
+  'Chờ lập': { chip: 'Chờ lập', badgeLabel: 'Chờ lập', badge: { bg: '#fff4e5', fg: '#b45309' }, action: 'lap' },
+  'Đã lập':  { chip: 'Đã lập',  badgeLabel: 'Đã lập',  badge: { bg: '#e6f6ec', fg: '#15803d' }, action: 'chi-tiet' },
+};
+const STATUS_ORDER = ['Chờ lập', 'Đã lập'];
+
+const StatusBadge = ({ trangThai }) => {
+  const cfg = STATUS_CONFIG[trangThai];
+  const s = cfg ? cfg.badge : { bg: '#eef2f3', fg: '#3f494a' };
+  return (
+    <span style={{ background: s.bg, color: s.fg, padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+      {cfg ? cfg.badgeLabel : trangThai}
+    </span>
+  );
+};
+
+const PAGE_SIZE = 10;
+const pageBtnStyle = (active, disabled) => ({
+  minWidth: '34px', height: '34px', padding: '0 10px', borderRadius: '8px',
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  border: active ? '1px solid #2f6765' : '1px solid #d7dcdc',
+  background: active ? '#2f6765' : '#fff',
+  color: active ? '#fff' : (disabled ? '#c4c7c8' : '#3f494a'),
+  fontSize: '13px', fontWeight: 600
+});
+
+// DC03 - Lập phiếu đặt cọc (tác nhân: Nhân viên kế toán).
+// GUI: HienThi() = loadDanhSach() -> getDanhSachChoLapPhieu() -> SP_DanhSachChoLapPhieuDatCoc.
+// GUI: btnLapPhieu_Click() -> createPhieuDatCoc() -> SP_LapPhieuDatCoc.
 export default function LapPhieuDatCocTab() {
-  const [modalType, setModalType] = useState(null);
+  const { user } = useAuth();
+
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
+
+  // hồ sơ đang lập phiếu + dữ liệu form
+  const [selected, setSelected] = useState(null);
+  const [phuongThuc, setPhuongThuc] = useState('Tiền mặt');
+  const [hinhThuc, setHinhThuc] = useState('Ghep');       // 'Ghep' | 'Nguyen' (chỉ áp dụng nhóm cùng giới)
+  const [giuongTrong, setGiuongTrong] = useState([]);
+  const [chonGiuong, setChonGiuong] = useState([]);
+  const [loadingGiuong, setLoadingGiuong] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState(null);
+
+  // Lọc / tìm kiếm / sắp xếp / phân trang + modal xem chi tiết (phiếu đã lập)
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [tuNgay, setTuNgay] = useState('');
+  const [denNgay, setDenNgay] = useState('');
+  const [sortDir, setSortDir] = useState('desc');
+  const [detailItem, setDetailItem] = useState(null);
+  const [page, setPage] = useState(1);
+
+  const loadDanhSach = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const { data } = await datCocApi.getDanhSachChoLapPhieu();
+      setList(data || []);
+    } catch (err) {
+      setLoadError(err.response?.data?.message || 'Không tải được danh sách chờ lập phiếu');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadDanhSach(); }, [loadDanhSach]);
+
+  // Lọc theo tìm kiếm + khoảng ngày (chưa áp chip) — để đếm chip
+  const baseFiltered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const tuMs = tuNgay ? new Date(tuNgay).setHours(0, 0, 0, 0) : null;
+    const denMs = denNgay ? new Date(denNgay).setHours(23, 59, 59, 999) : null;
+    return list.filter((it) => {
+      const okSearch = !q
+        || (it.hoTen || '').toLowerCase().includes(q)
+        || String(it.soDienThoai || '').toLowerCase().includes(q)
+        || (it.maDangKy || '').toLowerCase().includes(q)
+        || (it.maPhieuDatCoc || '').toLowerCase().includes(q);
+      const t = it.ngayDangKy ? new Date(it.ngayDangKy).getTime() : null;
+      const okTu = tuMs == null || (t != null && t >= tuMs);
+      const okDen = denMs == null || (t != null && t <= denMs);
+      return okSearch && okTu && okDen;
+    });
+  }, [list, search, tuNgay, denNgay]);
+
+  const counts = useMemo(() => {
+    const c = { all: baseFiltered.length };
+    STATUS_ORDER.forEach((s) => { c[s] = 0; });
+    baseFiltered.forEach((it) => { if (c[it.trangThai] != null) c[it.trangThai] += 1; });
+    return c;
+  }, [baseFiltered]);
+
+  const filteredList = useMemo(() => {
+    const arr = statusFilter === 'all' ? baseFiltered : baseFiltered.filter((it) => it.trangThai === statusFilter);
+    return [...arr].sort((a, b) => {
+      const da = a.ngayDangKy ? new Date(a.ngayDangKy).getTime() : 0;
+      const db = b.ngayDangKy ? new Date(b.ngayDangKy).getTime() : 0;
+      return sortDir === 'asc' ? da - db : db - da;
+    });
+  }, [baseFiltered, statusFilter, sortDir]);
+
+  const coLoc = !!(search || tuNgay || denNgay);
+  const xoaLoc = () => { setSearch(''); setTuNgay(''); setDenNgay(''); };
+  const defaultSortFor = (key) => (key === 'Chờ lập' ? 'asc' : 'desc');
+  const chonChip = (key) => { setStatusFilter(key); setSortDir(defaultSortFor(key)); };
+
+  useEffect(() => { setPage(1); }, [statusFilter, search, tuNgay, denNgay, sortDir]);
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
+  const pageSafe = Math.min(page, totalPages);
+  const pagedList = useMemo(
+    () => filteredList.slice((pageSafe - 1) * PAGE_SIZE, pageSafe * PAGE_SIZE),
+    [filteredList, pageSafe]
+  );
+  const pageNumbers = useMemo(() => {
+    const arr = [];
+    let start = Math.max(1, pageSafe - 2);
+    const end = Math.min(totalPages, start + 4);
+    start = Math.max(1, end - 4);
+    for (let i = start; i <= end; i += 1) arr.push(i);
+    return arr;
+  }, [pageSafe, totalPages]);
+
+  const openCreate = async (item) => {
+    setSelected(item);
+    setPhuongThuc('Tiền mặt');
+    setChonGiuong([]);
+    const khac = item.khacGioi === 1 || item.khacGioi === true;
+    setHinhThuc(khac ? 'Nguyen' : 'Ghep');   // khác giới → buộc nguyên phòng
+    setGiuongTrong([]);
+    if (item.maPhong) {
+      setLoadingGiuong(true);
+      try {
+        const { data } = await datCocApi.getGiuongTrong(item.maPhong);
+        setGiuongTrong(data || []);
+      } catch {
+        setGiuongTrong([]);
+      } finally {
+        setLoadingGiuong(false);
+      }
+    }
+  };
+
+  const toggleGiuong = (maGiuong) => {
+    setChonGiuong((prev) => prev.includes(maGiuong)
+      ? prev.filter((g) => g !== maGiuong)
+      : [...prev, maGiuong]);
+  };
+
+  const handleLapPhieu = async () => {
+    if (!selected) return;
+    const khac = selected.khacGioi === 1 || selected.khacGioi === true;
+    const ghep = !khac && hinhThuc === 'Ghep';
+    if (ghep && chonGiuong.length !== selected.soNguoiDuKienO) {
+      setResult({ type: 'error', title: 'Chọn giường chưa đúng.',
+        message: `Cần chọn đúng ${selected.soNguoiDuKienO} giường (bằng số người dự kiến ở).` });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await datCocApi.create({
+        maDangKy: selected.maDangKy,
+        maNhanVienKeToan: user?.maNguoiDung,
+        phuongThucThanhToan: phuongThuc,
+        danhSachGiuong: ghep ? chonGiuong : []   // [] = thuê nguyên phòng
+      });
+      setSelected(null);
+      await loadDanhSach();
+      setResult({
+        type: 'success',
+        title: 'Lập phiếu thành công!',
+        message: 'Đã tạo phiếu đặt cọc (hạn thanh toán 24h). Tiền cọc = 2 tháng tiền thuê.'
+      });
+    } catch (err) {
+      setResult({ type: 'error', title: 'Lập phiếu thất bại.', message: err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Giá trị suy diễn cho form (an toàn khi selected = null)
+  const khacGioi = selected ? (selected.khacGioi === 1 || selected.khacGioi === true) : false;
+  const isGhep = !khacGioi && hinhThuc === 'Ghep';
+  const donGiaThue = isGhep ? Number(selected?.giaThueTheoGiuong || 0) : Number(selected?.giaThueNguyenPhong || 0);
+  const soGiuongHienTai = isGhep ? chonGiuong.length : 1;
+  const soTienCocTinh = donGiaThue * soGiuongHienTai * 2;
 
   return (
     <div className="ktp-container">
-      {/* Filter Section */}
-      <section className="ktp-filter-section">
-        <div className="ktp-filter-group">
-          <label className="ktp-filter-label">Trạng thái lập phiếu</label>
-          <select className="ktp-input">
-            <option>Tất cả</option>
-            <option>Chờ lập phiếu</option>
-            <option>Đã lập phiếu</option>
-            <option>Đã hủy</option>
-            <option>Thiếu thông tin</option>
-          </select>
-        </div>
-        <div className="ktp-filter-group">
-          <label className="ktp-filter-label">Khách hàng</label>
-          <input className="ktp-input" type="text" placeholder="Tên khách hàng..." />
-        </div>
-        <div className="ktp-filter-group">
-          <label className="ktp-filter-label">Phòng/Giường</label>
-          <input className="ktp-input" type="text" placeholder="Mã phòng..." />
-        </div>
-        <div className="ktp-filter-group" style={{ justifyContent: 'flex-end' }}>
-          <div className="ktp-input-icon-wrap">
-            <span className="ktp-input-icon"><Icon name="search" /></span>
-            <input className="ktp-input ktp-input-with-icon" type="text" placeholder="Mã hồ sơ/Tên KH" />
-          </div>
-        </div>
-      </section>
-
-      {/* Table Section */}
       <section className="ktp-table-section">
+        {/* Thanh tìm kiếm + lọc ngày + sắp xếp */}
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ flex: '2 1 240px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên khách hàng, SĐT, mã hồ sơ/phiếu cọc..." className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
+          </div>
+          <div style={{ flex: '1 1 140px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Từ ngày</label>
+            <input type="date" value={tuNgay} onChange={(e) => setTuNgay(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
+          </div>
+          <div style={{ flex: '1 1 140px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Đến ngày</label>
+            <input type="date" value={denNgay} onChange={(e) => setDenNgay(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
+          </div>
+          <div style={{ flex: '1 1 170px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Sắp xếp</label>
+            <select value={sortDir} onChange={(e) => setSortDir(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }}>
+              <option value="desc">Ngày đăng ký: mới nhất</option>
+              <option value="asc">Ngày đăng ký: cũ nhất</option>
+            </select>
+          </div>
+          {coLoc && (
+            <button type="button" onClick={xoaLoc} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          )}
+        </div>
+
+        {/* Segmented control: lọc theo trạng thái + số đếm */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px', paddingLeft: '16px' }}>
+          {[{ key: 'all', label: 'Tất cả' }, ...STATUS_ORDER.map((s) => ({ key: s, label: STATUS_CONFIG[s].chip }))].map((tab) => {
+            const active = statusFilter === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => chonChip(tab.key)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
+                  fontSize: '13px', fontWeight: 600, transition: 'all .15s',
+                  border: active ? '1px solid #2f6765' : '1px solid #d7dcdc',
+                  background: active ? '#2f6765' : '#fff',
+                  color: active ? '#fff' : '#3f494a'
+                }}
+              >
+                {tab.label}
+                <span style={{ background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3', color: active ? '#fff' : '#6f797a', borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 700, minWidth: '20px', textAlign: 'center' }}>
+                  {counts[tab.key] ?? 0}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <table className="ktp-table">
           <thead>
             <tr>
               <th>Mã hồ sơ</th>
               <th>Khách hàng</th>
-              <th>Phòng/Giường</th>
-              <th>Thời điểm đặt cọc</th>
+              <th>SĐT</th>
+              <th>Phòng</th>
+              <th>Số người</th>
+              <th>Giá thuê/giường</th>
               <th className="text-center">Trạng thái</th>
               <th className="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>HS-88321</td>
-              <td>Lê Hoàng Nam</td>
-              <td>P.402 - B1</td>
-              <td style={{ fontStyle: 'italic', color: '#6f797a' }}>--</td>
-              <td className="text-center">
-                <span className="ktp-badge ktp-badge-primary">Chờ lập phiếu</span>
-              </td>
-              <td className="text-center">
-                <button className="ktp-btn-action-fill" onClick={() => setModalType('create')}>Lập phiếu</button>
-              </td>
-            </tr>
-            <tr style={{ backgroundColor: 'rgba(46, 125, 50, 0.05)' }}>
-              <td>HS-88322</td>
-              <td>Nguyễn Thùy Linh</td>
-              <td>P.301 - A</td>
-              <td>10:30 25/10/2023</td>
-              <td className="text-center">
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <span className="ktp-badge ktp-badge-secondary">Chờ thanh toán</span>
-                  <span className="ktp-text-error" style={{ fontSize: '12px', fontWeight: '500' }}>Còn lại: 23:45:12</span>
-                </div>
-              </td>
-              <td className="text-center">
-                <button className="ktp-btn-action-fill" onClick={() => setModalType('detail')}>Chi tiết</button>
-              </td>
-            </tr>
-            <tr style={{ opacity: 0.7 }}>
-              <td>HS-88400</td>
-              <td>Vũ Minh Tuấn</td>
-              <td>P.505 - B</td>
-              <td>15:45 22/10/2023</td>
-              <td className="text-center">
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <span className="ktp-badge ktp-badge-outline">Đã hủy</span>
-                  <span className="ktp-text-error" style={{ fontSize: '10px' }}>Hết hạn thanh toán</span>
-                </div>
-              </td>
-              <td className="text-center">
-                <button className="ktp-btn-action-fill" onClick={() => setModalType('detail')}>Chi tiết</button>
-              </td>
-            </tr>
+            {loading ? (
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Đang tải...</td></tr>
+            ) : loadError ? (
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#b3261e' }}>{loadError}</td></tr>
+            ) : filteredList.length === 0 ? (
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Không có hồ sơ nào ở nhóm này</td></tr>
+            ) : pagedList.map((item) => {
+              const action = STATUS_CONFIG[item.trangThai]?.action;
+              return (
+                <tr key={item.maDangKy}>
+                  <td style={{ fontWeight: '600', color: '#2f6765' }}>{item.maDangKy}</td>
+                  <td>{item.hoTen}</td>
+                  <td>{item.soDienThoai}</td>
+                  <td>{moTaPhong(item)}</td>
+                  <td>
+                    <SoNguoiBadge
+                      soNguoi={item.soNguoiDuKienO}
+                      soNam={item.soNam}
+                      soNu={item.soNu}
+                      khacGioi={item.khacGioi === 1 || item.khacGioi === true}
+                    />
+                  </td>
+                  <td className="ktp-text-primary" style={{ fontWeight: 600 }}>{item.giaThueTheoGiuong != null ? `${formatTien(item.giaThueTheoGiuong)}đ` : '—'}</td>
+                  <td className="text-center"><StatusBadge trangThai={item.trangThai} /></td>
+                  <td className="text-center">
+                    {action === 'lap' ? (
+                      <button className="ktp-btn-action-fill" onClick={() => openCreate(item)}>Lập phiếu</button>
+                    ) : (
+                      <button className="ktp-btn-action" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#2f6765', padding: '6px 12px', fontSize: '13px' }} onClick={() => setDetailItem(item)}>Xem chi tiết</button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-        
-        <div className="ktp-pagination">
-          <button className="ktp-page-btn"><Icon name="chevron_left" /></button>
-          <button className="ktp-page-btn is-active">1</button>
-          <button className="ktp-page-btn">2</button>
-          <button className="ktp-page-btn">3</button>
-          <button className="ktp-page-btn"><Icon name="chevron_right" /></button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '13px', color: '#6f797a', marginRight: 'auto' }}>
+            {filteredList.length === 0
+              ? 'Không có hồ sơ'
+              : `Hiển thị ${(pageSafe - 1) * PAGE_SIZE + 1}–${Math.min(pageSafe * PAGE_SIZE, filteredList.length)} / ${filteredList.length} hồ sơ`}
+          </span>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              <button type="button" disabled={pageSafe <= 1} onClick={() => setPage(pageSafe - 1)} style={pageBtnStyle(false, pageSafe <= 1)}>‹</button>
+              {pageNumbers.map((n) => (
+                <button key={n} type="button" onClick={() => setPage(n)} style={pageBtnStyle(n === pageSafe, false)}>{n}</button>
+              ))}
+              <button type="button" disabled={pageSafe >= totalPages} onClick={() => setPage(pageSafe + 1)} style={pageBtnStyle(false, pageSafe >= totalPages)}>›</button>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Modal Overlay */}
-      {modalType && (
-        <div className="ktp-modal-overlay" onClick={() => setModalType(null)}>
+      {/* Modal Lập phiếu đặt cọc */}
+      {selected && (
+        <div className="ktp-modal-overlay" onClick={() => !submitting && setSelected(null)}>
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()}>
-            {modalType === 'detail' ? (
-              <>
-                <div className="ktp-modal-header">
+            <div className="ktp-modal-header" style={{ alignItems: 'center', backgroundColor: '#3b8280', color: '#ffffff', borderBottom: 'none' }}>
+              <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff' }}>Lập phiếu đặt cọc</h3>
+              <button className="ktp-modal-close" onClick={() => setSelected(null)} style={{ color: '#ffffff' }}><Icon name="close" /></button>
+            </div>
+            <div className="ktp-modal-body">
+              <div className="ktp-grid-2">
+                <div className="ktp-section ktp-info-box-outline">
+                  <h4 className="ktp-section-title"><Icon name="person" /> 1. Thông tin khách hàng</h4>
                   <div>
-                    <h3>Chi tiết phiếu đặt cọc</h3>
-                    <p className="ktp-modal-header-sub">Mã chứng từ: <span>DCT-2023-88322</span></p>
-                  </div>
-                  <div className="ktp-badge-warning">Chờ thanh toán</div>
-                </div>
-                <div className="ktp-modal-body">
-                  <div className="ktp-detail-section">
-                    <h4 className="ktp-detail-title"><Icon name="person" /> THÔNG TIN KHÁCH HÀNG</h4>
-                    <div className="ktp-detail-card ktp-detail-grid">
-                      <div className="ktp-detail-item"><span className="ktp-detail-label">HỌ VÀ TÊN</span><span className="ktp-detail-value">Nguyễn Thùy Linh</span></div>
-                      <div className="ktp-detail-item"><span className="ktp-detail-label">SỐ ĐIỆN THOẠI</span><span className="ktp-detail-value">0901234567</span></div>
-                      <div className="ktp-detail-item"><span className="ktp-detail-label">SỐ CCCD</span><span className="ktp-detail-value">034098001234</span></div>
-                      <div className="ktp-detail-item"><span className="ktp-detail-label">EMAIL</span><span className="ktp-detail-value">thuylinh.ng@gmail.com</span></div>
-                    </div>
-                  </div>
-                  <div className="ktp-detail-section">
-                    <h4 className="ktp-detail-title"><Icon name="description" /> THÔNG TIN HỒ SƠ</h4>
-                    <div className="ktp-detail-card ktp-detail-grid">
-                      <div className="ktp-detail-item"><span className="ktp-detail-label">MÃ HỒ SƠ</span><span className="ktp-detail-value">HS-88322</span></div>
-                      <div className="ktp-detail-item"><span className="ktp-detail-label">NGÀY LẬP PHIẾU</span><span className="ktp-detail-value">25/10/2023</span></div>
-                      <div className="ktp-detail-item" style={{ gridColumn: '1 / -1' }}><span className="ktp-detail-label">CHI TIẾT YÊU CẦU</span><span className="ktp-detail-value" style={{ fontStyle: 'italic' }}>Khách hàng yêu cầu lắp thêm rèm cửa và thanh toán cọc giữ chỗ trong vòng 24h.</span></div>
-                    </div>
-                  </div>
-                  <div className="ktp-detail-section">
-                    <h4 className="ktp-detail-title"><Icon name="apartment" /> THÔNG TIN PHÒNG & GIÁ</h4>
-                    <div className="ktp-room-card">
-                      <div className="ktp-room-card-top">
-                        <div className="ktp-room-info"><div className="ktp-room-icon"><Icon name="bed" /></div><div className="ktp-room-text"><p>PHÒNG ĐÃ CHỌN</p><h4>P.301 - A</h4></div></div>
-                        <div className="ktp-room-price"><p>GIÁ THUÊ CƠ BẢN</p><h4>9.000.000đ<span>/tháng</span></h4></div>
-                      </div>
-                      <div className="ktp-room-card-bottom"><span>Số tiền đặt cọc (50%)</span><strong>4.500.000đ</strong></div>
-                    </div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Họ tên:</span> <span className="ktp-info-value">{selected.hoTen}</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">SĐT:</span> <span className="ktp-info-value">{selected.soDienThoai || '—'}</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Mã khách hàng:</span> <span className="ktp-info-value">{selected.maKhachHang || '—'}</span></div>
                   </div>
                 </div>
-                <div className="ktp-modal-footer">
-                  <button className="ktp-btn-submit" onClick={() => setModalType(null)}><Icon name="close" /> Đóng</button>
+                <div className="ktp-section ktp-info-box-outline">
+                  <h4 className="ktp-section-title"><Icon name="description" /> 2. Thông tin hồ sơ</h4>
+                  <div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Mã hồ sơ:</span> <span className="ktp-info-value">{selected.maDangKy}</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Số người:</span> <span className="ktp-info-value">{selected.soNguoiDuKienO} ({selected.soNam ?? 0} nam, {selected.soNu ?? 0} nữ){khacGioi ? ' · khác giới' : ''}</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Trạng thái:</span> <span className="ktp-info-value ktp-text-success">Xác nhận cọc</span></div>
+                  </div>
                 </div>
-              </>
-            ) : (
-              <>
-                <div className="ktp-modal-header" style={{ alignItems: 'center', backgroundColor: '#3b8280', color: '#ffffff', borderBottom: 'none' }}>
-                  <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff' }}>Lập phiếu đặt cọc</h3>
-                  <button className="ktp-modal-close" onClick={() => setModalType(null)} style={{ color: '#ffffff' }}><Icon name="close" /></button>
+              </div>
+              <div className="ktp-section ktp-info-box-outline">
+                <h4 className="ktp-section-title"><Icon name="apartment" /> 3. Phòng & hình thức thuê</h4>
+                <div className="ktp-grid-3" style={{ marginBottom: 12 }}>
+                  <div><p className="ktp-mini-label">Phòng</p><p className="ktp-mini-value">{moTaPhong(selected)} ({selected.gioiTinhChoPhep})</p></div>
+                  <div><p className="ktp-mini-label">Sức chứa</p><p className="ktp-mini-value">{selected.sucChuaToiDa}</p></div>
+                  <div><p className="ktp-mini-label">Còn trống</p><p className="ktp-mini-value">{selected.soChoTrong}</p></div>
                 </div>
-                <div className="ktp-modal-body">
-                  <div className="ktp-grid-2">
-                    <div className="ktp-section ktp-info-box-outline">
-                      <h4 className="ktp-section-title"><Icon name="person" /> 1. Thông tin khách hàng</h4>
-                      <div>
-                        <div className="ktp-info-row"><span className="ktp-info-label">Họ tên:</span> <span className="ktp-info-value">Lê Hoàng Nam</span></div>
-                        <div className="ktp-info-row"><span className="ktp-info-label">SĐT:</span> <span className="ktp-info-value">0987 654 321</span></div>
-                        <div className="ktp-info-row"><span className="ktp-info-label">Email:</span> <span className="ktp-info-value">hoangnam.le@gmail.com</span></div>
-                        <div className="ktp-info-row"><span className="ktp-info-label">CCCD:</span> <span className="ktp-info-value">001201009876</span></div>
-                      </div>
-                    </div>
-                    <div className="ktp-section ktp-info-box-outline">
-                      <h4 className="ktp-section-title"><Icon name="description" /> 2. Thông tin hồ sơ</h4>
-                      <div>
-                        <div className="ktp-info-row"><span className="ktp-info-label">Mã hồ sơ:</span> <span className="ktp-info-value">HS-88321</span></div>
-                        <div className="ktp-info-row"><span className="ktp-info-label">Mã yêu cầu:</span> <span className="ktp-info-value ktp-text-primary">REQ-2024-001</span></div>
-                        <div className="ktp-info-row"><span className="ktp-info-label">Trạng thái:</span> <span className="ktp-info-value ktp-text-success">Chấp nhận</span></div>
-                        <div className="ktp-info-row"><span className="ktp-info-label">Sale phụ trách:</span> <span className="ktp-info-value">Phạm Minh Anh</span></div>
-                      </div>
-                    </div>
+
+                {khacGioi ? (
+                  <div className="ktp-warning-box"><Icon name="warning" /><span>Nhóm có cả nam và nữ → bắt buộc thuê <strong>nguyên phòng</strong> (phòng phải trống hoàn toàn).</span></div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+                    <label><input type="radio" name="hinhThuc" checked={hinhThuc === 'Ghep'} onChange={() => setHinhThuc('Ghep')} /> Ghép giường</label>
+                    <label><input type="radio" name="hinhThuc" checked={hinhThuc === 'Nguyen'} onChange={() => setHinhThuc('Nguyen')} /> Nguyên phòng</label>
                   </div>
-                  <div className="ktp-section ktp-info-box-outline">
-                    <h4 className="ktp-section-title"><Icon name="apartment" /> 3. Thông tin phòng</h4>
-                    <div className="ktp-grid-5">
-                      <div><p className="ktp-mini-label">Phòng</p><p className="ktp-mini-value">P.402 - B1</p></div>
-                      <div><p className="ktp-mini-label">Loại phòng</p><p className="ktp-mini-value">Phòng đơn Cao cấp</p></div>
-                      <div><p className="ktp-mini-label">Giá thuê</p><p className="ktp-mini-value ktp-text-primary">5,500,000đ</p></div>
-                      <div><p className="ktp-mini-label">Ngày vào ở</p><p className="ktp-mini-value">01/11/2023</p></div>
-                      <div><p className="ktp-mini-label">Thời hạn</p><p className="ktp-mini-value">12 tháng</p></div>
-                    </div>
-                  </div>
-                  <div className="ktp-section ktp-section-primary">
-                    <h4 className="ktp-section-title"><Icon name="calculate" /> 4. Điều khoản & Cọc</h4>
-                    <div className="ktp-grid-2">
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div className="ktp-flex-between"><span style={{ color: '#6f797a' }}>Số tháng cọc:</span><strong>02 tháng</strong></div>
-                        <div className="ktp-flex-between"><span style={{ color: '#6f797a' }}>Tổng cọc hệ thống:</span><strong className="ktp-text-primary" style={{ fontSize: '18px' }}>11,000,000đ</strong></div>
-                        <div className="ktp-warning-box"><Icon name="warning" /><span>Chỉ điều chỉnh khi có thỏa thuận đã được phê duyệt</span></div>
+                )}
+
+                {isGhep && (
+                  <div>
+                    <p className="ktp-mini-label">Chọn giường — cần đúng {selected.soNguoiDuKienO} giường (phòng dành cho {selected.gioiTinhChoPhep})</p>
+                    {loadingGiuong ? (
+                      <p style={{ color: '#6f797a' }}>Đang tải giường trống...</p>
+                    ) : giuongTrong.length === 0 ? (
+                      <p style={{ color: '#b3261e' }}>Phòng không còn giường trống.</p>
+                    ) : (
+                      <div className="kp-bed-grid">
+                        {giuongTrong.map((g) => {
+                          const isSelected = chonGiuong.includes(g.maGiuong);
+                          const isFull = chonGiuong.length >= selected.soNguoiDuKienO;
+                          const isDisabled = !isSelected && isFull;
+                          return (
+                            <label key={g.maGiuong} className={`kp-bed-card ${isSelected ? 'is-selected' : ''} ${isDisabled ? 'is-disabled' : ''}`}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                disabled={isDisabled}
+                                onChange={() => {
+                                  if (!isDisabled) toggleGiuong(g.maGiuong);
+                                }}
+                                className="kp-bed-input-hidden"
+                              />
+                              <div className="kp-bed-card-inner">
+                                <span className="kp-bed-icon"><Icon name="bed" /></span>
+                                <span className="kp-bed-label">{g.maGiuong}</span>
+                              </div>
+                              <span className="kp-bed-check"><Icon name="check" /></span>
+                            </label>
+                          );
+                        })}
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div><label className="ktp-mini-label ktp-text-primary">Số tiền xác nhận</label><input className="ktp-input-large" type="text" defaultValue="11,000,000" /></div>
-                        <div><label className="ktp-mini-label">Ghi chú</label><textarea className="ktp-textarea" rows="2"></textarea></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '2px dashed #bec8c9', paddingTop: '16px' }}>
-                    <div className="ktp-summary-box ktp-grid-3">
-                      <div><p className="ktp-mini-label">Mã phiếu</p><p style={{ fontSize: '14px', fontStyle: 'italic', color: '#6f797a', margin: 0 }}>Tự động sinh sau khi lập</p></div>
-                      <div><p className="ktp-mini-label">Hạn thanh toán</p><p className="ktp-text-error" style={{ fontSize: '14px', fontWeight: '700', margin: 0 }}>24h kể từ khi lập</p></div>
-                      <div><p className="ktp-mini-label">Trạng thái sau lập</p><p style={{ fontSize: '14px', fontWeight: '700', color: '#a43c12', textTransform: 'uppercase', margin: 0 }}>Chờ thanh toán</p></div>
-                    </div>
-                    <p style={{ textAlign: 'center', fontSize: '11px', color: '#6f797a', marginTop: '12px' }}>
-                      Thông báo sẽ được gửi tự động đến: <strong>Khách hàng</strong> & <strong>Nhân viên Sale</strong>
+                    )}
+                    <p style={{ fontSize: 12, marginTop: 6, fontWeight: chonGiuong.length === selected.soNguoiDuKienO ? '600' : 'normal', color: chonGiuong.length === selected.soNguoiDuKienO ? '#2f6765' : '#a43c12' }}>
+                      Đã chọn {chonGiuong.length}/{selected.soNguoiDuKienO} giường {chonGiuong.length === selected.soNguoiDuKienO ? '· Đã đủ giường' : ''}
                     </p>
                   </div>
+                )}
+              </div>
+              <div className="ktp-section ktp-section-primary">
+                <h4 className="ktp-section-title"><Icon name="calculate" /> 4. Điều khoản & Cọc</h4>
+                <div className="ktp-grid-2">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="ktp-flex-between"><span style={{ color: '#6f797a' }}>Hình thức:</span><strong>{khacGioi ? 'Nguyên phòng (khác giới)' : (isGhep ? 'Ghép giường' : 'Nguyên phòng')}</strong></div>
+                    <div className="ktp-flex-between"><span style={{ color: '#6f797a' }}>Đơn giá thuê:</span><strong>{formatTien(donGiaThue)}đ{isGhep ? '/giường' : ''}</strong></div>
+                    <div className="ktp-flex-between"><span style={{ color: '#6f797a' }}>Tiền cọc (2 tháng):</span><strong className="ktp-text-primary" style={{ fontSize: '18px' }}>{formatTien(soTienCocTinh)}đ</strong></div>
+                    <div className="ktp-warning-box"><Icon name="warning" /><span>Tiền cọc tự tính = đơn giá × số giường × 2, không chỉnh tay.</span></div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label className="ktp-mini-label" style={{ marginBottom: '8px', display: 'block' }}>Phương thức thanh toán</label>
+                      <div className="kp-radio-card-group">
+                        <label className={`kp-radio-card ${phuongThuc === 'Tiền mặt' ? 'is-selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="phuongThuc"
+                            value="Tiền mặt"
+                            checked={phuongThuc === 'Tiền mặt'}
+                            onChange={(e) => setPhuongThuc(e.target.value)}
+                            className="kp-radio-input-hidden"
+                          />
+                          <div className="kp-radio-card-content">
+                            <div className="kp-radio-card-icon">
+                              <Icon name="account_balance_wallet" />
+                            </div>
+                            <div className="kp-radio-card-text">
+                              <div className="kp-radio-card-title">Tiền mặt</div>
+                              <div className="kp-radio-card-desc">Thanh toán trực tiếp</div>
+                            </div>
+                          </div>
+                          <div className="kp-radio-card-check">
+                            <Icon name="check" />
+                          </div>
+                        </label>
+
+                        <label className={`kp-radio-card ${phuongThuc === 'Chuyển khoản' ? 'is-selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="phuongThuc"
+                            value="Chuyển khoản"
+                            checked={phuongThuc === 'Chuyển khoản'}
+                            onChange={(e) => setPhuongThuc(e.target.value)}
+                            className="kp-radio-input-hidden"
+                          />
+                          <div className="kp-radio-card-content">
+                            <div className="kp-radio-card-icon">
+                              <Icon name="account_balance" />
+                            </div>
+                            <div className="kp-radio-card-text">
+                              <div className="kp-radio-card-title">Chuyển khoản</div>
+                              <div className="kp-radio-card-desc">Qua thẻ ngân hàng</div>
+                            </div>
+                          </div>
+                          <div className="kp-radio-card-check">
+                            <Icon name="check" />
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="ktp-modal-footer">
-                  <button className="ktp-btn-cancel" onClick={() => setModalType(null)}>Hủy</button>
-                  <button className="ktp-btn-submit" onClick={() => setModalType(null)}>Lập phiếu đặt cọc</button>
+              </div>
+              <div style={{ borderTop: '2px dashed #bec8c9', paddingTop: '16px' }}>
+                <div className="ktp-summary-box ktp-grid-3">
+                  <div><p className="ktp-mini-label">Mã phiếu</p><p style={{ fontSize: '14px', fontStyle: 'italic', color: '#6f797a', margin: 0 }}>Tự động sinh sau khi lập</p></div>
+                  <div><p className="ktp-mini-label">Hạn thanh toán</p><p className="ktp-text-error" style={{ fontSize: '14px', fontWeight: '700', margin: 0 }}>24h kể từ khi lập</p></div>
+                  <div><p className="ktp-mini-label">Trạng thái sau lập</p><p style={{ fontSize: '14px', fontWeight: '700', color: '#a43c12', textTransform: 'uppercase', margin: 0 }}>Chờ TT</p></div>
                 </div>
-              </>
-            )}
+                <p style={{ textAlign: 'center', fontSize: '11px', color: '#6f797a', marginTop: '12px' }}>
+                  Thông báo sẽ được gửi tự động đến: <strong>Khách hàng</strong> & <strong>Nhân viên Sale</strong>
+                </p>
+              </div>
+            </div>
+            <div className="ktp-modal-footer">
+              <button className="ktp-btn-cancel" onClick={() => setSelected(null)} disabled={submitting}>Hủy</button>
+              <button className="ktp-btn-submit" onClick={handleLapPhieu} disabled={submitting}>{submitting ? 'Đang lập...' : 'Lập phiếu đặt cọc'}</button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Modal xem chi tiết phiếu đã lập (read-only) */}
+      {detailItem && (
+        <div className="ktp-modal-overlay" onClick={() => setDetailItem(null)}>
+          <div className="ktp-modal" style={{ maxWidth: '480px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
+            <div className="ktp-modal-header">
+              <h3 style={{ margin: 0, color: '#191c1d', fontSize: '16px' }}>Chi tiết phiếu đặt cọc</h3>
+              <button className="ktp-btn-close" onClick={() => setDetailItem(null)}><Icon name="close" /></button>
+            </div>
+            <div className="ktp-modal-body" style={{ padding: '0 24px 24px 24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <span style={{ fontWeight: 700, color: '#2f6765', fontSize: '18px' }}>{detailItem.maPhieuDatCoc || detailItem.maDangKy}</span>
+                <StatusBadge trangThai={detailItem.trangThai} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {[
+                  ['Mã hồ sơ', detailItem.maDangKy],
+                  ['Khách hàng', detailItem.hoTen],
+                  ['Số điện thoại', detailItem.soDienThoai || '—'],
+                  ['Phòng', moTaPhong(detailItem)],
+                  ['Hình thức thuê', detailItem.hinhThucThuePhieu || '—'],
+                  ['Số tiền cọc', detailItem.soTienCocPhieu != null ? `${formatTien(detailItem.soTienCocPhieu)}đ` : '—'],
+                  ['Trạng thái thanh toán', detailItem.trangThaiThanhToan || '—'],
+                  ['Ngày lập phiếu', formatNgay(detailItem.thoiDiemDatCoc)]
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f0f2f2' }}>
+                    <span style={{ color: '#6f797a', fontSize: '14px' }}>{k}</span>
+                    <span style={{ color: '#191c1d', fontSize: '14px', fontWeight: 600, textAlign: 'right' }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+                <button className="ktp-btn-cancel" onClick={() => setDetailItem(null)} style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '8px 24px' }}>Đóng</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ResultModal
+        open={!!result}
+        type={result?.type}
+        title={result?.title}
+        message={result?.message}
+        onClose={() => setResult(null)}
+      />
     </div>
   );
 }
