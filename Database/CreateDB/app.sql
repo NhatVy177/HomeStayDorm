@@ -154,7 +154,7 @@ CREATE TABLE PhieuDatCoc (
     ThoiDiemDatCoc          DATETIME        NOT NULL,
     ThoiHanThanhToan        DATETIME        NOT NULL,
     SoTienCoc               DECIMAL(15,2),
-    PhuongThucThanhToan     NVARCHAR(20)     NOT NULL,
+    PhuongThucThanhToan     NVARCHAR(20)    
     TrangThaiThanhToan      NVARCHAR(20)     NOT NULL DEFAULT N'Chờ TT',
     ThoiGianXacNhanTT       DATETIME,
     ChungTuThanhToan        VARCHAR(500),
@@ -377,12 +377,14 @@ CREATE TABLE DoiSoat (
 	ChungTuThanhToan	VARCHAR(500),
 	NgayThanhToan		DATE,
 	GhiChuPhanHoiKhach  NVARCHAR(500),
-    TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ xác nhận',
+    LoaiQuyetToan      NVARCHAR(30)     NOT NULL DEFAULT N'Không phát sinh',
+    TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ quản lý xác nhận',
     MaNhanVienKeToan    VARCHAR(6),
     MaPhieuTra          VARCHAR(6)      NOT NULL,
     MaQuyDinhHoanCoc    VARCHAR(6),
     CONSTRAINT CHK_DS_PhuongThuc CHECK (PhuongThucThanhToan IN (N'Tiền mặt', N'Chuyển khoản')),
-    CONSTRAINT CHK_DS_TrangThai  CHECK (TrangThai IN (N'Chờ xác nhận', N'Chờ hoàn cọc', N'Đã hoàn cọc', N'Chờ thanh toán thêm', N'Đã quyết toán', N'Cần điều chỉnh'))
+    CONSTRAINT CHK_DS_LoaiQuyetToan CHECK (LoaiQuyetToan IN (N'Hoàn cọc', N'Thu thêm', N'Không phát sinh')),
+    CONSTRAINT CHK_DS_TrangThai  CHECK (TrangThai IN (N'Chờ phản hồi', N'Chờ xác nhận', N'Cần điều chỉnh', N'Chờ hoàn cọc', N'Chờ thanh toán thêm', N'Đã quyết toán'))
 );
 
 -- 29. QUY ĐỊNH

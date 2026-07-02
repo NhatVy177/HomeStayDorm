@@ -12,5 +12,9 @@ export const khachMoiApi = {
   yeuCauDieuChinhLich: (id, data) => httpClient.put(`/khach-moi/lich-xem/${id}/yeu-cau-dieu-chinh`, data),
   getDatCoc: () => httpClient.get('/khach-moi/dat-coc'),
   uploadMinhChung: (id, data) => httpClient.post(`/khach-moi/dat-coc/${id}/minh-chung`, data),
-  getHopDongDashboard: () => httpClient.get('/khach-moi/hop-dong-dashboard')
+  getHopDongDashboard: () => httpClient.get('/khach-moi/hop-dong-dashboard'),
+  guiYeuCauTraPhong: (data) => httpClient.post('/khach-moi/hop-dong-dashboard/tra-phong', data),
+  huyYeuCauTraPhong: (id) => httpClient.delete(`/khach-moi/hop-dong-dashboard/tra-phong/${id}`),
+  phanHoiDoiSoatTraPhong: (id, data) => httpClient.post(`/khach-moi/hop-dong-dashboard/doi-soat/${id}/phan-hoi`, data),
+  ghiNhanThanhToanDoiSoatTraPhong: (id, formData) => httpClient.post(`/khach-moi/hop-dong-dashboard/doi-soat/${id}/thanh-toan`, formData, { headers: { 'Content-Type': undefined } })
 };

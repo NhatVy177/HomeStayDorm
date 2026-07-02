@@ -1,5 +1,6 @@
 import * as service from '../services/khachMoi.service.js';
 import { getChiTietPhong } from '../services/phongKhamPha.service.js';
+import { publicUrlFor } from '../middleware/upload.middleware.js';
 
 export async function getChiTietPhongHandler(req, res, next) {
   try {
@@ -95,6 +96,46 @@ export async function uploadMinhChung(req, res, next) {
 export async function getHopDongDashboard(req, res, next) {
   try {
     res.json(await service.getHopDongDashboard(req.user));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function guiYeuCauTraPhong(req, res, next) {
+  try {
+    const data = await service.guiYeuCauTraPhong(req.user, req.body);
+    res.status(201).json({ data, message: 'Đã gửi yêu cầu trả phòng.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function huyYeuCauTraPhong(req, res, next) {
+  try {
+    const data = await service.huyYeuCauTraPhong(req.user, req.params.id);
+    res.json({ data, message: 'Đã hủy yêu cầu trả phòng.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function phanHoiDoiSoatTraPhong(req, res, next) {
+  try {
+    const data = await service.phanHoiDoiSoatTraPhong(req.user, req.params.id, req.body);
+    res.json({ data, message: 'Đã ghi nhận phản hồi đối soát.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function ghiNhanThanhToanDoiSoatTraPhong(req, res, next) {
+  try {
+    const chungTuThanhToan = req.file ? publicUrlFor(req.file.filename) : (req.body.chungTuThanhToan || null);
+    const data = await service.ghiNhanThanhToanDoiSoatTraPhong(req.user, req.params.id, {
+      ...req.body,
+      chungTuThanhToan
+    });
+    res.json({ data, message: 'Đã ghi nhận thông tin thanh toán.' });
   } catch (error) {
     next(error);
   }

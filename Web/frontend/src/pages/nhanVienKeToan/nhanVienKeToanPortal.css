@@ -54,6 +54,19 @@
   box-shadow: 0 0 0 1px #00666d;
 }
 
+.ktp-readonly-field {
+  align-items: center;
+  background-color: #f8fbfb;
+  border: 1px solid #bec8c9;
+  border-radius: 8px;
+  color: #191c1d;
+  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
 .ktp-input-icon-wrap {
   position: relative;
   display: flex;

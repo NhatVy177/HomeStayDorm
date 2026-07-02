@@ -28,7 +28,7 @@ export async function getPhieuTraPhongById(db, maPhieuTra, lockForUpdate = false
     { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null }
   ]);
 
-  return result.recordset[0] || null;
+  return result.recordset?.[0] || null;
 }
 
 export async function hasDoiSoatDangXuLy(db, maPhieuTra) {
@@ -44,7 +44,7 @@ export async function getHopDongHoSo(db, maHopDong) {
     { name: 'MaHopDong', type: sql.VarChar(6), value: maHopDong }
   ]);
 
-  return result.recordset[0] || null;
+  return result.recordset?.[0] || null;
 }
 
 export async function getPhieuDatCocHoSo(db, maPhieuDatCoc) {
@@ -141,6 +141,29 @@ export async function insertDoiSoat(db, data) {
     { name: 'MaPhieuTra', type: sql.VarChar(6), value: data.maPhieuTra },
     { name: 'MaQuyDinhHoanCoc', type: sql.VarChar(6), value: data.maQuyDinhHoanCoc }
   ]);
+}
+
+export async function updateDoiSoatCanDieuChinh(db, data) {
+  const result = await execute(db, 'SP_TraPhong_KeToan_UpdateDoiSoatCanDieuChinh', [
+    { name: 'MaDoiSoat', type: sql.VarChar(6), value: data.maDoiSoat },
+    { name: 'TienCocBanDau', type: sql.Decimal(15, 2), value: data.tienCocBanDau },
+    { name: 'SoThangLuuTru', type: sql.Decimal(5, 1), value: data.soThangLuuTru },
+    { name: 'TyLeHoanCocHienTai', type: sql.Decimal(5, 2), value: data.tyLeHoanCocHienTai },
+    { name: 'TienCocDuocHoan', type: sql.Decimal(15, 2), value: data.tienCocDuocHoan },
+    { name: 'TienThueConNo', type: sql.Decimal(15, 2), value: data.tienThueConNo },
+    { name: 'TienDichVuConNo', type: sql.Decimal(15, 2), value: data.tienDichVuConNo },
+    { name: 'TongChiPhiSuaChua', type: sql.Decimal(15, 2), value: data.tongChiPhiSuaChua },
+    { name: 'TienPhat', type: sql.Decimal(15, 2), value: data.tienPhat },
+    { name: 'TongKhauTru', type: sql.Decimal(15, 2), value: data.tongKhauTru },
+    { name: 'SoTienHoanThucTe', type: sql.Decimal(15, 2), value: data.soTienHoanThucTe },
+    { name: 'SoTienKhachPhaiTT', type: sql.Decimal(15, 2), value: data.soTienKhachPhaiTT },
+    { name: 'GhiChuPhanHoiKhach', type: sql.NVarChar(500), value: data.ghiChuPhanHoiKhach || null },
+    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: data.maNhanVienKeToan },
+    { name: 'MaPhieuTra', type: sql.VarChar(6), value: data.maPhieuTra },
+    { name: 'MaQuyDinhHoanCoc', type: sql.VarChar(6), value: data.maQuyDinhHoanCoc }
+  ]);
+
+  return result.recordset[0] || null;
 }
 
 export async function getDanhSachChoHoanCoc(db, maNhanVienKeToan) {
