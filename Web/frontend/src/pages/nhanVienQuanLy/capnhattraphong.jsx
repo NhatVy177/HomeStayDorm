@@ -6,7 +6,9 @@ import '../nhanVienSale/dangKyTraPhongTab.css';
 function fmtDate(d) {
   if (!d) return '';
   const date = new Date(d);
-  return date.toLocaleDateString('vi-VN');
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}/${date.getFullYear()}`;
 }
 
 export default function CapNhatTraPhong() {
@@ -14,6 +16,7 @@ export default function CapNhatTraPhong() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('Chờ hoàn tất');
   const [toast, setToast] = useState('');
 
   // Modal State
@@ -35,14 +38,14 @@ export default function CapNhatTraPhong() {
   const loadDanhSach = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await capNhatTraPhongApi.getDanhSachHoanTat();
+      const res = await capNhatTraPhongApi.getDanhSachHoanTat(filterStatus);
       setDsHoanTat(res.data.danhSach || []);
     } catch (err) {
       setToast(err?.response?.data?.message || 'Lỗi tải danh sách hoàn tất');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filterStatus]);
 
   useEffect(() => {
     loadDanhSach();
@@ -53,19 +56,19 @@ export default function CapNhatTraPhong() {
     setModalOpen(true);
     setLoadingDetail(true);
     setIsSubmitted(false);
-    setXacNhanRoi(false);
+    setXacNhanRoi(row.trangThai === 'Hoàn tất');
     setErrorMsg('');
 
     try {
       const res = await capNhatTraPhongApi.getChiTietHoanTat(row.maPhieuTra);
       setChiTiet(res.data.data.chiTiet);
-      
+
       // Khởi tạo state cho danh sách tài sản (thêm trường thu hồi và ghi chú)
       const ds = res.data.data.danhSachTaiSanBanGiao || [];
       const dsWithInput = ds.map(ts => ({
         ...ts,
-        soLuongThuHoi: ts.soLuongBanGiaoVao, // Mặc định thu hồi đủ
-        ghiChu: '' 
+        soLuongThuHoi: ts.soLuongThuHoi !== undefined && ts.soLuongThuHoi !== null ? ts.soLuongThuHoi : ts.soLuongBanGiaoVao, // Dùng số lượng cũ nếu có
+        ghiChu: ts.ghiChu || ''
       }));
       setDsTaiSan(dsWithInput);
     } catch (err) {
@@ -118,14 +121,14 @@ export default function CapNhatTraPhong() {
   return (
     <div>
       <div className="tp-search-container">
-        <form 
-          className="tp-search-row" 
+        <form
+          className="tp-search-row"
           onSubmit={(e) => {
             e.preventDefault();
             setActiveSearch(searchQuery);
           }}
         >
-          <div className="tp-search-col">
+          <div className="tp-search-col" style={{ flex: 2 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
               <input
@@ -137,7 +140,21 @@ export default function CapNhatTraPhong() {
               />
             </div>
           </div>
-          <button type="submit" className="tp-btn-search">
+          <div className="tp-search-col" style={{ flex: 1 }}>
+            <div className="tp-search-label">TRẠNG THÁI</div>
+            <div className="tp-search-wrap">
+              <select
+                className="ktp-input"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="Chờ hoàn tất">Chờ hoàn tất</option>
+                <option value="Hoàn tất">Hoàn tất</option>
+                <option value="Tất cả">Tất cả</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="tp-btn-search" style={{ alignSelf: 'flex-end', height: '42px' }}>
             Tìm kiếm
           </button>
         </form>
@@ -160,14 +177,14 @@ export default function CapNhatTraPhong() {
               </tr>
             </thead>
             <tbody>
-              {dsHoanTat.filter(p => 
-                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) || 
+              {dsHoanTat.filter(p =>
+                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
                 p.maDoiSoat?.toLowerCase().includes(activeSearch.toLowerCase()) ||
                 p.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase())
               ).length === 0 ? (
                 <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Không có hồ sơ nào chờ hoàn tất.</td></tr>
-              ) : dsHoanTat.filter(p => 
-                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) || 
+              ) : dsHoanTat.filter(p =>
+                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
                 p.maDoiSoat?.toLowerCase().includes(activeSearch.toLowerCase()) ||
                 p.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase())
               ).map((row) => (
@@ -188,15 +205,34 @@ export default function CapNhatTraPhong() {
                   </td>
                   <td>{fmtDate(row.ngayDangKyTra)}</td>
                   <td className="text-center">
-                    <span className="ktp-badge ktp-badge-info" style={{ backgroundColor: '#cce5ff', color: '#004085', borderColor: '#b8daff' }}>Chờ hoàn tất</span>
+                    <span
+                      className="ktp-badge"
+                      style={{
+                        backgroundColor: row.trangThai === 'Chờ hoàn tất' ? '#cce5ff' : '#e5f3eb',
+                        color: row.trangThai === 'Chờ hoàn tất' ? '#004085' : '#137333',
+                        borderColor: row.trangThai === 'Chờ hoàn tất' ? '#b8daff' : '#c3e6cb'
+                      }}
+                    >
+                      {row.trangThai}
+                    </span>
                   </td>
                   <td className="text-center">
-                    <button 
-                      className="ktp-btn-action-fill" 
-                      onClick={() => openModal(row)}
-                    >
-                      Cập nhật
-                    </button>
+                    {row.trangThai === 'Chờ hoàn tất' ? (
+                      <button
+                        className="ktp-btn-action-fill"
+                        onClick={() => openModal(row)}
+                      >
+                        Cập nhật
+                      </button>
+                    ) : (
+                      <button
+                        className="ktp-btn-action-fill"
+                        style={{ backgroundColor: 'transparent', border: '1px solid #004c52', color: '#004c52' }}
+                        onClick={() => openModal(row)}
+                      >
+                        Xem chi tiết
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -215,7 +251,7 @@ export default function CapNhatTraPhong() {
               </div>
               <button className="ktp-modal-close" onClick={() => setModalOpen(false)} style={{ color: '#ffffff', background: 'transparent', border: 'none', cursor: 'pointer' }}><Icon name="close" /></button>
             </div>
-            
+
             <div className="ktp-modal-body" style={{ padding: '20px 24px', overflowY: 'auto', backgroundColor: '#f8f9fa', flex: 1 }}>
               {loadingDetail ? (
                 <div style={{ textAlign: 'center', padding: '20px' }}>Đang tải dữ liệu...</div>
@@ -241,8 +277,20 @@ export default function CapNhatTraPhong() {
                       </h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Mã {chiTiet.hasHopDong ? 'HĐ' : 'PĐC'}:</span><span style={{ fontWeight: 500 }}>{chiTiet.hasHopDong ? chiTiet.maHopDong : chiTiet.maPhieuDatCoc}</span></div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Thời hạn:</span><span style={{ fontWeight: 500 }}>{chiTiet.hasHopDong ? `${fmtDate(chiTiet.ngayBatDauHopDong)} - ${fmtDate(chiTiet.ngayKetThucHopDong)}` : '-'}</span></div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ color: '#6f797a' }}>Trạng thái {chiTiet.hasHopDong ? 'HĐ' : 'PĐC'}:</span><span style={{ padding: '2px 8px', backgroundColor: '#e6f4ea', color: '#137333', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{chiTiet.hasHopDong ? chiTiet.trangThaiHopDong : 'Hiệu lực'}</span></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>{chiTiet.hasHopDong ? 'Thời hạn:' : 'Ngày đặt cọc:'}</span><span style={{ fontWeight: 500 }}>{chiTiet.hasHopDong ? `${fmtDate(chiTiet.ngayBatDauHopDong)} - ${fmtDate(chiTiet.ngayKetThucHopDong)}` : fmtDate(chiTiet.ngayDatCoc)}</span></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: '#6f797a' }}>Trạng thái {chiTiet.hasHopDong ? 'HĐ' : 'PĐC'}:</span>
+                          <span style={{ 
+                            padding: '2px 8px', 
+                            backgroundColor: (chiTiet.hasHopDong ? chiTiet.trangThaiHopDong === 'Đã thanh lý' : chiTiet.trangThaiCoc === 'Đã hủy') ? '#f1f3f4' : '#e6f4ea', 
+                            color: (chiTiet.hasHopDong ? chiTiet.trangThaiHopDong === 'Đã thanh lý' : chiTiet.trangThaiCoc === 'Đã hủy') ? '#5f6368' : '#137333', 
+                            borderRadius: '4px', 
+                            fontSize: '12px', 
+                            fontWeight: 500 
+                          }}>
+                            {chiTiet.hasHopDong ? chiTiet.trangThaiHopDong : chiTiet.trangThaiCoc}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -266,10 +314,10 @@ export default function CapNhatTraPhong() {
                         <table className="ktp-table" style={{ margin: 0 }}>
                           <thead>
                             <tr>
-                              <th style={{ width: '40%' }}>Tên tài sản</th>
-                              <th className="text-center" style={{ width: '15%' }}>Đã giao</th>
-                              <th className="text-center" style={{ width: '15%' }}>Thu hồi</th>
-                              <th style={{ width: '30%' }}>Ghi chú</th>
+                              <th style={{ width: '20%', whiteSpace: 'nowrap' }}>Tên tài sản</th>
+                              <th className="text-center" style={{ width: '8%', whiteSpace: 'nowrap' }}>Đã giao</th>
+                              <th className="text-center" style={{ width: '8%', whiteSpace: 'nowrap' }}>Thu hồi</th>
+                              <th style={{ width: '64%' }}>Ghi chú</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -278,24 +326,27 @@ export default function CapNhatTraPhong() {
                                 <td>{ts.tenTaiSan}</td>
                                 <td className="text-center">{ts.soLuongBanGiaoVao}</td>
                                 <td className="text-center">
-                                  <input 
-                                    type="number" 
-                                    className="ktp-input no-spin" 
+                                  <input
+                                    type="number"
+                                    className="ktp-input no-spin"
                                     style={{ width: '60px', textAlign: 'center', padding: '4px' }}
-                                    min="0" 
+                                    min="0"
                                     max={ts.soLuongBanGiaoVao}
                                     value={ts.soLuongThuHoi}
                                     onChange={(e) => handleTaiSanChange(idx, 'soLuongThuHoi', e.target.value)}
+                                    disabled={selectedPhieu?.trangThai !== 'Chờ hoàn tất'}
                                   />
                                 </td>
                                 <td>
-                                  <input 
-                                    type="text" 
-                                    className="ktp-input" 
+                                  <input
+                                    type="text"
+                                    className="ktp-input"
                                     style={{ width: '100%', padding: '4px 8px' }}
                                     // placeholder="Ghi chú (Tốt, Mất...)"
                                     value={ts.ghiChu}
+                                    title={ts.ghiChu}
                                     onChange={(e) => handleTaiSanChange(idx, 'ghiChu', e.target.value)}
+                                    disabled={selectedPhieu?.trangThai !== 'Chờ hoàn tất'}
                                   />
                                 </td>
                               </tr>
@@ -307,12 +358,13 @@ export default function CapNhatTraPhong() {
                       )}
 
                       <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px dashed #e1e3e4', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <input 
-                          type="checkbox" 
-                          id="chkXacNhanRoi" 
+                        <input
+                          type="checkbox"
+                          id="chkXacNhanRoi"
                           checked={xacNhanRoi}
                           onChange={(e) => setXacNhanRoi(e.target.checked)}
-                          style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                          style={{ width: '18px', height: '18px', cursor: selectedPhieu?.trangThai !== 'Chờ hoàn tất' ? 'not-allowed' : 'pointer' }}
+                          disabled={selectedPhieu?.trangThai !== 'Chờ hoàn tất'}
                         />
                         <label htmlFor="chkXacNhanRoi" style={{ fontWeight: 600, color: '#191c1d', cursor: 'pointer', fontSize: '15px' }}>
                           Xác nhận khách hàng đã kết thúc lưu trú.
@@ -336,11 +388,11 @@ export default function CapNhatTraPhong() {
                 </>
               ) : null}
             </div>
-            
+
             <div className="ktp-modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e1e3e4', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#ffffff', borderRadius: '0 0 12px 12px', flexShrink: 0 }}>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={() => setModalOpen(false)} style={{ backgroundColor: '#ffffff', border: '1px solid #004c52', color: '#004c52', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Đóng</button>
-                {!isSubmitted && (
+                {!isSubmitted && selectedPhieu?.trangThai === 'Chờ hoàn tất' && (
                   <button className="ktp-btn-action-fill" onClick={submitXacNhan} style={{ padding: '10px 24px', opacity: (chiTiet?.hasHopDong && !xacNhanRoi) ? 0.6 : 1, cursor: (chiTiet?.hasHopDong && !xacNhanRoi) ? 'not-allowed' : 'pointer' }}>
                     Cập nhật hoàn tất trả phòng
                   </button>
@@ -364,8 +416,8 @@ export default function CapNhatTraPhong() {
             <p style={{ fontSize: '15px', color: '#3f494a', margin: '0 0 24px 0' }}>
               Hồ sơ đã được cập nhật hoàn tất. Khách hàng đã kết thúc lưu trú.
             </p>
-            <button 
-              onClick={() => { setIsSubmitted(false); setModalOpen(false); }} 
+            <button
+              onClick={() => { setIsSubmitted(false); setModalOpen(false); }}
               style={{ backgroundColor: '#004c52', color: '#ffffff', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', border: 'none', width: '100%', fontSize: '15px' }}
             >
               Đóng

@@ -1,8 +1,8 @@
 import { httpClient } from '../../api/httpClient.js';
 
 export const kiemTraTraPhongApi = {
-  quanLyDanhSachChoXuLy: () =>
-    httpClient.get('/kiem-tra-tra-phong/quan-ly/cho-xu-ly'),
+  quanLyDanhSachChoXuLy: (trangThaiLoc = 'Chờ xử lý') =>
+    httpClient.get('/kiem-tra-tra-phong/quan-ly/cho-xu-ly', { params: { trangThaiLoc } }),
 
   quanLyChiTietPhieu: (maPhieuTra) =>
     httpClient.get(`/kiem-tra-tra-phong/quan-ly/chi-tiet/${maPhieuTra}`),

@@ -6,7 +6,9 @@ import '../nhanVienSale/dangKyTraPhongTab.css';
 function fmtDate(d) {
   if (!d) return '';
   const date = new Date(d);
-  return date.toLocaleDateString('vi-VN');
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}/${date.getFullYear()}`;
 }
 
 export default function ThanhLyTraPhong() {
@@ -201,8 +203,20 @@ export default function ThanhLyTraPhong() {
                       </h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Mã {chiTiet.hasHopDong ? 'HĐ' : 'PĐC'}:</span><span style={{ fontWeight: 500 }}>{chiTiet.hasHopDong ? chiTiet.maHopDong : chiTiet.maPhieuDatCoc}</span></div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Thời hạn:</span><span style={{ fontWeight: 500 }}>{chiTiet.hasHopDong ? `${fmtDate(chiTiet.ngayBatDauHopDong)} - ${fmtDate(chiTiet.ngayKetThucHopDong)}` : '-'}</span></div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ color: '#6f797a' }}>Trạng thái {chiTiet.hasHopDong ? 'HĐ' : 'PĐC'}:</span><span style={{ padding: '2px 8px', backgroundColor: '#e6f4ea', color: '#137333', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{chiTiet.hasHopDong ? chiTiet.trangThaiHopDong : 'Hiệu lực'}</span></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>{chiTiet.hasHopDong ? 'Thời hạn:' : 'Ngày đặt cọc:'}</span><span style={{ fontWeight: 500 }}>{chiTiet.hasHopDong ? `${fmtDate(chiTiet.ngayBatDauHopDong)} - ${fmtDate(chiTiet.ngayKetThucHopDong)}` : fmtDate(chiTiet.ngayDatCoc)}</span></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: '#6f797a' }}>Trạng thái {chiTiet.hasHopDong ? 'HĐ' : 'PĐC'}:</span>
+                          <span style={{ 
+                            padding: '2px 8px', 
+                            backgroundColor: (chiTiet.hasHopDong ? chiTiet.trangThaiHopDong === 'Đã thanh lý' : chiTiet.trangThaiCoc === 'Đã hủy') ? '#f1f3f4' : '#e6f4ea', 
+                            color: (chiTiet.hasHopDong ? chiTiet.trangThaiHopDong === 'Đã thanh lý' : chiTiet.trangThaiCoc === 'Đã hủy') ? '#5f6368' : '#137333', 
+                            borderRadius: '4px', 
+                            fontSize: '12px', 
+                            fontWeight: 500 
+                          }}>
+                            {chiTiet.hasHopDong ? chiTiet.trangThaiHopDong : chiTiet.trangThaiCoc}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

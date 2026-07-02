@@ -64,6 +64,8 @@ BEGIN
         nd.SDT AS soDienThoai,
         pt.MaHopDong AS maHopDong,
         pt.MaPhieuDatCoc AS maPhieuDatCoc,
+        pdc.TrangThaiCoc AS trangThaiCoc,
+        CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120) AS ngayDatCoc,
         p.TenPhong AS tenPhong,
         p.TinhTrang AS trangThaiPhong,
         g.MaGiuong AS maGiuong,
