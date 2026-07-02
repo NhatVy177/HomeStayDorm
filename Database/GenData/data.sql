@@ -1431,17 +1431,18 @@ INSERT INTO DoiSoat (
     ChungTuThanhToan,
     NgayThanhToan,
     GhiChuPhanHoiKhach,
+    LoaiQuyetToan,
     TrangThai,
     MaNhanVienKeToan,
     MaPhieuTra,
     MaQuyDinhHoanCoc
 ) VALUES
-    ('DS0001', '2026-05-02', 1400000.00, 3.0, 100.00, 1400000.00, 0.00, 1048800.00, 360000.00, 600000.00, 2008800.00, 0.00, 608800.00, N'Chuyển khoản', '/uploads/chung-tu-doi-soat/DS0001_thu-them.pdf', '2026-05-02', N'Khách hàng đồng ý với kết quả đối soát.', N'Đã quyết toán', 'NV0012', 'TP0001', 'QH0004'),
-    ('DS0002', '2026-05-06', 7980000.00, 3.0, 100.00, 7980000.00, 0.00, 707600.00, 240000.00, 0.00, 947600.00, 7032400.00, 0.00, N'Tiền mặt', '/uploads/chung-tu-doi-soat/DS0002_hoan-coc.pdf', '2026-05-06', N'Khách hàng đồng ý với kết quả đối soát.', N'Đã hoàn cọc', 'NV0012', 'TP0002', 'QH0004'),
-    ('DS0003', '2026-05-06', 1800000.00, 3.0, 100.00, 1800000.00, 0.00, 1651200.00, 0.00, 0.00, 1651200.00, 148800.00, 0.00, N'Chuyển khoản', '/uploads/chung-tu-doi-soat/DS0003_hoan-coc.pdf', '2026-05-06', N'Khách hàng đồng ý với kết quả đối soát.', N'Đã hoàn cọc', 'NV0008', 'TP0003', 'QH0004'),
-    ('DS0004', '2026-05-07', 1800000.00, 3.0, 100.00, 1800000.00, 0.00, 2164000.00, 0.00, 0.00, 2164000.00, 0.00, 364000.00, N'Tiền mặt', '/uploads/chung-tu-doi-soat/DS0004_thu-them.pdf', '2026-05-07', N'Khách hàng đồng ý với kết quả đối soát.', N'Đã quyết toán', 'NV0012', 'TP0004', 'QH0004'),
-    ('DS0008', '2026-02-05', 3000000.00, 0.0, 80.00, 2400000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 2400000.00, 0.00, N'Chuyển khoản', NULL, NULL, N'Khách hàng đồng ý với kết quả đối soát.', N'Chờ hoàn cọc', 'NV0012', 'TP0008', 'QH0001'),
-    ('DS0009', '2026-02-06', 1800000.00, 0.0, 80.00, 1440000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1440000.00, 0.00, N'Chuyển khoản', '/uploads/chung-tu-doi-soat/DS0009_hoan-coc.pdf', '2026-02-06', N'Khách hàng đồng ý với kết quả đối soát.', N'Đã hoàn cọc', 'NV0012', 'TP0009', 'QH0001');
+    ('DS0001', '2026-05-02', 1400000.00, 3.0, 100.00, 1400000.00, 0.00, 1048800.00, 360000.00, 600000.00, 2008800.00, 0.00, 608800.00, N'Chuyển khoản', '/uploads/chung-tu-doi-soat/DS0001_thu-them.pdf', '2026-05-02', N'Khách hàng đồng ý với kết quả đối soát.', N'Thu thêm', N'Đã quyết toán', 'NV0012', 'TP0001', 'QH0004'),
+    ('DS0002', '2026-05-06', 7980000.00, 3.0, 100.00, 7980000.00, 0.00, 707600.00, 240000.00, 0.00, 947600.00, 7032400.00, 0.00, N'Tiền mặt', '/uploads/chung-tu-doi-soat/DS0002_hoan-coc.pdf', '2026-05-06', N'Khách hàng đồng ý với kết quả đối soát.', N'Hoàn cọc', N'Đã quyết toán', 'NV0012', 'TP0002', 'QH0004'),
+    ('DS0003', '2026-05-06', 1800000.00, 3.0, 100.00, 1800000.00, 0.00, 1651200.00, 0.00, 0.00, 1651200.00, 148800.00, 0.00, N'Chuyển khoản', '/uploads/chung-tu-doi-soat/DS0003_hoan-coc.pdf', '2026-05-06', N'Khách hàng đồng ý với kết quả đối soát.', N'Hoàn cọc', N'Đã quyết toán', 'NV0008', 'TP0003', 'QH0004'),
+    ('DS0004', '2026-05-07', 1800000.00, 3.0, 100.00, 1800000.00, 0.00, 2164000.00, 0.00, 0.00, 2164000.00, 0.00, 364000.00, N'Tiền mặt', '/uploads/chung-tu-doi-soat/DS0004_thu-them.pdf', '2026-05-07', N'Khách hàng đồng ý với kết quả đối soát.', N'Thu thêm', N'Đã quyết toán', 'NV0012', 'TP0004', 'QH0004'),
+    ('DS0008', '2026-02-05', 3000000.00, 0.0, 80.00, 2400000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 2400000.00, 0.00, N'Chuyển khoản', NULL, NULL, N'Khách hàng đồng ý với kết quả đối soát.', N'Hoàn cọc', N'Chờ hoàn cọc', 'NV0012', 'TP0008', 'QH0001'),
+    ('DS0009', '2026-02-06', 1800000.00, 0.0, 80.00, 1440000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1440000.00, 0.00, N'Chuyển khoản', '/uploads/chung-tu-doi-soat/DS0009_hoan-coc.pdf', '2026-02-06', N'Khách hàng đồng ý với kết quả đối soát.', N'Hoàn cọc', N'Đã quyết toán', 'NV0012', 'TP0009', 'QH0001');
 GO
 
 -- BienBanBanGiao loại Bàn giao ra

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { khachMoiApi } from '../khachMoi/khachMoi.api.js';
 import { datCocApi } from '../datCoc/datCoc.api.js';
+import ResultModal from '../../components/common/ResultModal.jsx';
 import '../khamPhaPhong/khamPhaPhong.css';
 import './khachHangPortal.css';
 import LichXemPhongPage from '../lichXemPhong/LichXemPhongPage.jsx';
@@ -59,6 +60,10 @@ function Icon({ name, className = '' }) {
     deposit: <><rect x="3.5" y="6" width="17" height="12" rx="2" /><path d="M3.5 10h17M7 14h4" /></>,
     contract: <><path d="M6 3.8h8l4 4V20H6z" /><path d="M14 4v5h5M9 13h6M9 17h6" /></>,
     invoice: <><path d="M7 4h10v17l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2z" /><path d="M10 9h4M10 13h4M10 17h2" /></>,
+    payment: <><rect x="3.5" y="6.5" width="17" height="11" rx="2" /><path d="M3.5 10h17M15.5 14h2" /></>,
+    upload: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M17 8 12 3 7 8" /><path d="M12 3v12" /></>,
+    bank: <><path d="M4 10h16" /><path d="m12 4 8 4H4z" /><path d="M6 10v7M10 10v7M14 10v7M18 10v7" /><path d="M4 20h16" /></>,
+    copy: <><rect x="8" y="8" width="11" height="11" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" /></>,
     repair: <path d="M14.5 6.2a4.2 4.2 0 0 0-5.2 5.2L4 16.7 7.3 20l5.3-5.3a4.2 4.2 0 0 0 5.2-5.2l-2.9 2.9-2.3-2.3z" />,
     support: <><path d="M5 5.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-5 3v-3a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z" /><path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01" /></>,
     lock: <><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
@@ -94,6 +99,18 @@ function formatMoney(value) {
   return amount.toLocaleString('vi-VN') + 'đ/tháng';
 }
 
+function formatSettlementMoney(value) {
+  const amount = Number(value);
+  if (value == null || value === '' || !Number.isFinite(amount)) return '0đ';
+  return `${Math.round(amount).toLocaleString('vi-VN')}đ`;
+}
+
+function formatPercent(value) {
+  const amount = Number(value);
+  if (value == null || value === '' || !Number.isFinite(amount)) return '0%';
+  return `${amount.toLocaleString('vi-VN')}%`;
+}
+
 function formatServiceMoney(value, unit) {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return 'Chưa cập nhật';
@@ -122,6 +139,20 @@ function getDemoRoomImage(maPhong, index = 0) {
   const numberPart = String(maPhong || '').match(/\d+/)?.[0];
   const offset = Number(numberPart || 0);
   return DEMO_ROOM_IMAGES[(offset + index) % DEMO_ROOM_IMAGES.length];
+}
+
+function getTraPhongActiveStep(yeuCauTraPhong) {
+  if (!yeuCauTraPhong) return 1;
+
+  const trangThai = yeuCauTraPhong.trangThai || '';
+  const trangThaiDoiSoat = yeuCauTraPhong.doiSoat?.trangThai || '';
+  const daGuiPhuongThucThanhToan = Boolean(yeuCauTraPhong.doiSoat?.phuongThucThanhToan);
+
+  if (trangThai === 'Hoàn tất' || trangThai === 'Chờ hoàn tất') return 4;
+  if (['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThaiDoiSoat) && daGuiPhuongThucThanhToan) return 4;
+  if (['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThai) || ['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThaiDoiSoat)) return 3;
+  if (trangThai === 'Chờ đối soát' || trangThai === 'Chờ ký biên bản' || yeuCauTraPhong.doiSoat) return 2;
+  return 1;
 }
 
 function unwrapApiPayload(payload) {
@@ -527,6 +558,14 @@ export default function KhachHangPortalPage() {
   const [datCocFilter, setDatCocFilter] = useState('Tất cả');
   const [hopDongDashboard, setHopDongDashboard] = useState(null);
   const [hopDongLoading, setHopDongLoading] = useState(false);
+  const [traPhongSubmitting, setTraPhongSubmitting] = useState(false);
+  const [doiSoatSubmitting, setDoiSoatSubmitting] = useState(false);
+  const [showDoiSoatReject, setShowDoiSoatReject] = useState(false);
+  const [doiSoatRejectReason, setDoiSoatRejectReason] = useState('');
+  const [doiSoatPaymentMethod, setDoiSoatPaymentMethod] = useState('Chuyển khoản');
+  const [doiSoatPaymentFile, setDoiSoatPaymentFile] = useState(null);
+  const [doiSoatPaymentSubmitting, setDoiSoatPaymentSubmitting] = useState(false);
+  const [resultModal, setResultModal] = useState(null);
 
   const locks = getNavLocks(overview?.trangThai || {});
 
@@ -1001,6 +1040,128 @@ export default function KhachHangPortalPage() {
     }
   }
 
+  async function guiYeuCauTraPhong(hd) {
+    setTraPhongSubmitting(true);
+    try {
+      const { data } = await khachMoiApi.guiYeuCauTraPhong({ maHopDong: hd.MaHopDong });
+      setHopDongDashboard((current) => ({
+        ...current,
+        yeuCauTraPhong: data?.data || data || null
+      }));
+      setResultModal({
+        type: 'success',
+        title: 'Đã gửi yêu cầu trả phòng',
+        message: 'Yêu cầu của bạn đã được ghi nhận. Nhân viên sẽ kiểm tra và liên hệ khi cần.',
+        confirmText: 'Đã hiểu'
+      });
+    } catch (requestError) {
+      setToast(requestError.response?.data?.message || 'Không thể gửi yêu cầu trả phòng lúc này.');
+    } finally {
+      setTraPhongSubmitting(false);
+    }
+  }
+
+  async function huyYeuCauTraPhong(yeuCau) {
+    if (!yeuCau?.maPhieuTra) return;
+    setTraPhongSubmitting(true);
+    try {
+      await khachMoiApi.huyYeuCauTraPhong(yeuCau.maPhieuTra);
+      setHopDongDashboard((current) => ({
+        ...current,
+        yeuCauTraPhong: null
+      }));
+      setResultModal({
+        type: 'success',
+        title: 'Đã hủy yêu cầu trả phòng',
+        message: 'Yêu cầu trả phòng đã được hủy. Bạn có thể gửi lại khi cần.',
+        confirmText: 'Đóng'
+      });
+    } catch (requestError) {
+      setToast(requestError.response?.data?.message || 'Không thể hủy yêu cầu trả phòng lúc này.');
+    } finally {
+      setTraPhongSubmitting(false);
+    }
+  }
+
+  async function phanHoiDoiSoat(doiSoat, dongY) {
+    if (!doiSoat?.maDoiSoat) return;
+    if (!dongY && !doiSoatRejectReason.trim()) {
+      setToast('Vui lòng nhập lý do không đồng ý.');
+      return;
+    }
+
+    setDoiSoatSubmitting(true);
+    try {
+      await khachMoiApi.phanHoiDoiSoatTraPhong(doiSoat.maDoiSoat, {
+        dongY,
+        lyDoKhongDongY: dongY ? null : doiSoatRejectReason.trim()
+      });
+      setShowDoiSoatReject(false);
+      setDoiSoatRejectReason('');
+      await loadHopDongDashboard();
+      setResultModal({
+        type: 'success',
+        title: dongY ? 'Đã đồng ý kết quả đối soát' : 'Đã gửi yêu cầu điều chỉnh',
+        message: dongY
+          ? 'Kết quả đối soát đã được ghi nhận. Hệ thống sẽ chuyển sang bước xử lý khoản tiền phù hợp.'
+          : 'Lý do không đồng ý đã được gửi cho quản lý để kiểm tra lại.',
+        confirmText: 'Đóng'
+      });
+    } catch (requestError) {
+      setToast(requestError.response?.data?.message || 'Không thể gửi phản hồi đối soát lúc này.');
+    } finally {
+      setDoiSoatSubmitting(false);
+    }
+  }
+
+  async function ghiNhanThanhToanDoiSoat(doiSoat) {
+    if (!doiSoat?.maDoiSoat) return;
+    const trangThaiDoiSoat = String(doiSoat.trangThai || '').toLowerCase();
+    const loaiQuyetToan = String(doiSoat.loaiQuyetToan || '').toLowerCase();
+    const laHoanCoc = loaiQuyetToan.includes('hoàn cọc')
+      || trangThaiDoiSoat.includes('hoàn cọc')
+      || Number(doiSoat.soTienHoanThucTe || 0) > 0;
+    if (!laHoanCoc && doiSoatPaymentMethod === 'Chuyển khoản' && !doiSoatPaymentFile) {
+      setToast('Vui lòng chọn file minh chứng khi thanh toán chuyển khoản.');
+      return;
+    }
+
+    setDoiSoatPaymentSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('phuongThucThanhToan', doiSoatPaymentMethod);
+      if (laHoanCoc) formData.append('loaiGhiNhan', 'hoan-coc');
+      if (!laHoanCoc && doiSoatPaymentFile) formData.append('file', doiSoatPaymentFile);
+      await khachMoiApi.ghiNhanThanhToanDoiSoatTraPhong(doiSoat.maDoiSoat, formData);
+      setDoiSoatPaymentFile(null);
+      await loadHopDongDashboard();
+      const officeAddress = hopDongDashboard?.DiaChi || hopDongDashboard?.TenChiNhanh || 'văn phòng HomestayDorm';
+      setResultModal({
+        type: 'success',
+        title: laHoanCoc ? 'Đã ghi nhận phương thức hoàn tiền' : 'Đã ghi nhận thông tin thanh toán',
+        message: laHoanCoc
+          ? 'Phương thức bạn muốn nhận hoàn tiền đã được ghi nhận. Vui lòng liên hệ quản lý để tiếp tục trả phòng.'
+          : doiSoatPaymentMethod === 'Chuyển khoản'
+            ? 'Đã thanh toán thành công. Vui lòng liên hệ với quản lý để tiếp tục trả phòng sau.'
+            : `Vui lòng đến văn phòng tại ${officeAddress} để thanh toán tiền mặt và tiếp tục thủ tục trả phòng.`,
+        confirmText: 'Đóng'
+      });
+    } catch (requestError) {
+      setToast(requestError.response?.data?.message || 'Không thể ghi nhận thanh toán lúc này.');
+    } finally {
+      setDoiSoatPaymentSubmitting(false);
+    }
+  }
+
+  async function copyPaymentText(text) {
+    try {
+      await navigator.clipboard.writeText(String(text || ''));
+      setToast('Đã sao chép.');
+    } catch {
+      setToast('Không thể sao chép tự động.');
+    }
+  }
+
   function renderHopDong() {
     if (locks['hop-dong']) return renderLocked('hop-dong');
     if (hopDongLoading) return <div className="kp-loading"><span /><p>Đang tải hợp đồng...</p></div>;
@@ -1015,124 +1176,522 @@ export default function KhachHangPortalPage() {
     }
 
     const hd = hopDongDashboard;
+    const taiSan = hd.taiSan || [];
+    const quyDinh = hd.quyDinh || [];
+    const hinhThucThue = hd.HinhThucThue || (hd.MaGiuong ? 'Ghép giường' : 'Nguyên phòng');
+    const yeuCauTraPhong = hd.yeuCauTraPhong || null;
+    const coYeuCauChoXuLy = yeuCauTraPhong?.trangThai === 'Chờ xử lý';
+    const coYeuCauTraPhong = Boolean(yeuCauTraPhong);
+    const coYeuCauDaTiepNhan = coYeuCauTraPhong && !coYeuCauChoXuLy;
+    const doiSoatTraPhong = yeuCauTraPhong?.doiSoat || null;
+    const traPhongActiveStep = getTraPhongActiveStep(yeuCauTraPhong);
+    const doiSoatInfoRows = doiSoatTraPhong
+      ? [
+          ['Ngày lập đối soát', formatDate(doiSoatTraPhong.ngayLap, true)],
+          ['Ngày trả thực tế', formatDate(yeuCauTraPhong.ngayTraThucTe)],
+          ['Trạng thái đối soát', doiSoatTraPhong.trangThai]
+        ]
+      : [];
+    const doiSoatMoneyGroups = doiSoatTraPhong
+      ? [
+          {
+            title: 'Tiền cọc và tỷ lệ hoàn',
+            rows: [
+              ['Tiền cọc ban đầu', formatSettlementMoney(doiSoatTraPhong.tienCocBanDau)],
+              ['Số tháng lưu trú', `${Number(doiSoatTraPhong.soThangLuuTru || 0).toLocaleString('vi-VN')} tháng`],
+              ['Tỷ lệ hoàn cọc hiện tại', formatPercent(doiSoatTraPhong.tyLeHoanCocHienTai)],
+              ['Tiền cọc được hoàn theo quy định', formatSettlementMoney(doiSoatTraPhong.tienCocDuocHoan)]
+            ]
+          },
+          {
+            title: 'Các khoản khấu trừ',
+            rows: [
+              ['Tiền thuê còn nợ', formatSettlementMoney(doiSoatTraPhong.tienThueConNo)],
+              ['Tiền dịch vụ còn nợ', formatSettlementMoney(doiSoatTraPhong.tienDichVuConNo)],
+              ['Chi phí sửa chữa', formatSettlementMoney(doiSoatTraPhong.tongChiPhiSuaChua)],
+              ['Tiền phạt vi phạm', formatSettlementMoney(doiSoatTraPhong.tienPhat)],
+              ['Tổng khấu trừ', formatSettlementMoney(doiSoatTraPhong.tongKhauTru)]
+            ]
+          },
+          {
+            title: 'Kết quả quyết toán',
+            rows: [
+              ['Số tiền hoàn thực tế', formatSettlementMoney(doiSoatTraPhong.soTienHoanThucTe)],
+              ['Số tiền khách phải thanh toán', formatSettlementMoney(doiSoatTraPhong.soTienKhachPhaiTT)]
+            ]
+          }
+        ]
+      : [];
+    const doiSoatKetQuaText = doiSoatTraPhong
+      ? Number(doiSoatTraPhong.soTienKhachPhaiTT || 0) > 0
+        ? `Bạn cần thanh toán thêm ${formatSettlementMoney(doiSoatTraPhong.soTienKhachPhaiTT)}.`
+        : Number(doiSoatTraPhong.soTienHoanThucTe || 0) > 0
+          ? `Bạn được hoàn ${formatSettlementMoney(doiSoatTraPhong.soTienHoanThucTe)}.`
+          : 'Phiếu này không phát sinh thu thêm hoặc hoàn cọc.'
+      : '';
+    const doiSoatCanRespond = ['Chờ phản hồi', 'Chờ xác nhận'].includes(doiSoatTraPhong?.trangThai || '') && !doiSoatTraPhong?.ghiChuPhanHoiKhach;
+    const doiSoatFinalLabel = Number(doiSoatTraPhong?.soTienKhachPhaiTT || 0) > 0
+      ? 'Khách cần thanh toán'
+      : Number(doiSoatTraPhong?.soTienHoanThucTe || 0) > 0
+        ? 'Khách được hoàn'
+        : 'Kết quả quyết toán';
+    const doiSoatFinalAmount = Number(doiSoatTraPhong?.soTienKhachPhaiTT || 0) > 0
+      ? doiSoatTraPhong.soTienKhachPhaiTT
+      : Number(doiSoatTraPhong?.soTienHoanThucTe || 0) > 0
+        ? doiSoatTraPhong.soTienHoanThucTe
+        : 0;
+    const taiKhoanThanhToan = hd.taiKhoanThanhToan || {};
+    const noiDungChuyenKhoan = doiSoatTraPhong
+      ? `${doiSoatTraPhong.maDoiSoat || ''} ${hd.MaKhachHang || ''}`.trim()
+      : '';
+    const laHoanCocDoiSoat = doiSoatTraPhong?.trangThai === 'Chờ hoàn cọc' && Number(doiSoatTraPhong?.soTienHoanThucTe || 0) > 0;
+    const laThuThemDoiSoat = doiSoatTraPhong?.trangThai === 'Chờ thanh toán thêm' && Number(doiSoatTraPhong?.soTienKhachPhaiTT || 0) > 0;
+    const daGuiPhuongThucDoiSoat = Boolean(doiSoatTraPhong?.phuongThucThanhToan);
+    const showDoiSoatPayment = (laThuThemDoiSoat || laHoanCocDoiSoat) && !daGuiPhuongThucDoiSoat;
+    const diaChiVanPhong = hd.DiaChi || hd.TenChiNhanh || 'văn phòng HomestayDorm';
+    const doiSoatCompletionTitle = laHoanCocDoiSoat
+      ? 'Đã ghi nhận phương thức hoàn tiền'
+      : doiSoatTraPhong?.phuongThucThanhToan === 'Chuyển khoản'
+        ? 'Đã thanh toán thành công'
+        : 'Thanh toán tại văn phòng';
+    const doiSoatCompletionMessage = laHoanCocDoiSoat
+      ? 'Phương thức bạn muốn nhận hoàn tiền đã được ghi nhận. Vui lòng liên hệ quản lý để tiếp tục trả phòng.'
+      : doiSoatTraPhong?.phuongThucThanhToan === 'Chuyển khoản'
+        ? 'Đã thanh toán thành công. Vui lòng liên hệ với quản lý để tiếp tục trả phòng sau.'
+        : `Vui lòng đến văn phòng tại ${diaChiVanPhong} để thanh toán tiền mặt và tiếp tục thủ tục trả phòng.`;
+    const doiSoatChungTu = doiSoatTraPhong?.chungTuThanhToan
+      ? {
+          fileName: String(doiSoatTraPhong.chungTuThanhToan).split('/').pop(),
+          fileUrl: String(doiSoatTraPhong.chungTuThanhToan).startsWith('http')
+            ? doiSoatTraPhong.chungTuThanhToan
+            : `${FILE_BASE}${doiSoatTraPhong.chungTuThanhToan}`
+        }
+      : null;
+    const chiTietKhauTruTraPhong = doiSoatTraPhong?.chiTietKhauTru || {};
+    const hoaDonConNo = chiTietKhauTruTraPhong.hoaDonConNo || [];
+    const chiTietHoaDon = chiTietKhauTruTraPhong.chiTietHoaDon || [];
+    const chiTietHuHong = chiTietKhauTruTraPhong.chiTietHuHong || [];
+    const bienBanKiemTra = chiTietKhauTruTraPhong.bienBanKiemTra || [];
+    const bienBanViPham = chiTietKhauTruTraPhong.bienBanViPham || [];
     
     return (
       <section className="hd-dashboard">
-        <div className="hd-grid">
-          {/* Main Photo Banner */}
+        <div className="hd-process">
+          {[
+            { number: 1, title: 'Yêu cầu trả phòng', note: 'Đăng ký ngày trả' },
+            { number: 2, title: 'Kết quả đối soát', note: 'Xem và phản hồi' },
+            { number: 3, title: 'Thanh toán', note: 'Xử lý khoản tiền' },
+            { number: 4, title: 'Hoàn tất', note: 'Kết thúc hợp đồng' }
+          ].map((step) => (
+            <div className={`hd-process-step ${step.number === traPhongActiveStep ? 'is-active' : ''}`} key={step.number}>
+              <span className="hd-process-circle">{step.number}</span>
+              <strong>{step.title}</strong>
+              <small>{step.note}</small>
+            </div>
+          ))}
+        </div>
+
+        {!doiSoatTraPhong && (
+        <div className="hd-overview-top">
           <div className="hd-banner" style={{ backgroundImage: `url(${hd.UrlImg || getDemoRoomImage(hd.MaPhong, 0)})` }}>
             <div className="hd-banner-overlay" />
             <div className="hd-banner-content">
-              <span className="hd-badge">ĐANG THUÊ</span>
-              <h2>{hd.TenPhong} - {hd.TenLoaiPhong}</h2>
-              <p>{hd.TenChiNhanh} • Tầng {getRoomFloor(hd.MaPhong) || 1} • {hd.MaGiuong ? `Giường ${hd.MaGiuong}` : 'Phòng nguyên căn'}</p>
+              <span className={`hd-badge ${hd.TrangThai === 'Hiệu lực' ? 'is-active' : ''}`}>{hd.TrangThai || 'Hợp đồng'}</span>
+              <h2>{hd.TenPhong || 'Phòng đang thuê'} - {hd.TenLoaiPhong || 'Loại phòng'}</h2>
+              <p>{hd.TenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(hd.MaPhong) || 1} • {hd.MaGiuong ? `Giường ${hd.MaGiuong}` : 'Nguyên phòng'}</p>
             </div>
           </div>
 
-          {/* Right Card: Hợp đồng của bạn */}
           <div className="hd-card hd-contract-summary">
-            <h3>HỢP ĐỒNG CỦA BẠN</h3>
-            <p>MS: {hd.MaHopDong}</p>
-            <p>Ngày hết hạn: {formatDate(hd.NgayKetThuc)}</p>
-            <div className="hd-success-badge">
-              <Icon name="check" /> Hợp đồng chính chủ
-            </div>
+            <h3>Hợp đồng của bạn</h3>
+            <div className="hd-summary-row"><span>Mã hợp đồng</span><strong>{hd.MaHopDong}</strong></div>
+            <div className="hd-summary-row"><span>Ngày bắt đầu</span><strong>{formatDate(hd.NgayBatDau)}</strong></div>
+            <div className="hd-summary-row"><span>Ngày hết hạn</span><strong>{formatDate(hd.NgayKetThuc)}</strong></div>
+            <span className="hd-success-badge"><Icon name="check" />Hợp đồng chính chủ</span>
           </div>
+        </div>
+        )}
 
-          {/* Chi tiết thuê */}
-          <div className="hd-card hd-rent-details">
-            <div className="hd-card-header">
-              <Icon name="payment" /> <h3>CHI TIẾT THUÊ</h3>
+        {doiSoatTraPhong && traPhongActiveStep === 4 && (
+          <section className="hd-completion-view">
+            <div className="hd-card hd-completion-card">
+              <div className="hd-completion-icon">
+                <Icon name={doiSoatTraPhong.phuongThucThanhToan === 'Chuyển khoản' ? 'check' : 'map'} />
+              </div>
+              <h3>{doiSoatCompletionTitle}</h3>
+              <p>{doiSoatCompletionMessage}</p>
             </div>
-            <div className="hd-detail-row">
-              <span>Giá thuê hàng tháng:</span>
-              <strong className="hd-price">{formatMoney(hd.GiaThue)}</strong>
-            </div>
-            <div className="hd-detail-row">
-              <span>Loại phòng:</span>
-              <span className="hd-chip-gray">{hd.TenLoaiPhong}</span>
-            </div>
-            <div className="hd-action-buttons">
-              <button className="kp-btn hd-btn-teal" onClick={() => goTo('bao-tri')}><Icon name="repair" /> Bảo trì</button>
-              <a className="kp-btn hd-btn-outline" href="tel:19006789"><Icon name="support" /> Liên hệ</a>
-            </div>
-          </div>
+          </section>
+        )}
 
-          {/* Tiện ích phòng */}
-          <div className="hd-card hd-amenities">
-            <div className="hd-card-header">
-              <Icon name="room" /> <h3>TIỆN ÍCH PHÒNG</h3>
-            </div>
-            <div className="hd-amenity-chips">
-              {(hd.taiSan || []).map(ts => (
-                <span key={ts.MaTaiSan} className="hd-chip-gray"><Icon name="check" /> {ts.TenTaiSan}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Quy định phòng */}
-          <div className="hd-card hd-rules">
-            <div className="hd-card-header" style={{ justifyContent: 'space-between' }}>
-              <h3>Quy định phòng</h3>
-              <Icon name="info" />
-            </div>
-            <div className="hd-rule-list">
-              {(hd.quyDinh || []).map(qd => (
-                <div key={qd.MaQuyDinh} className="hd-rule-item">
-                  <Icon name="check" />
-                  <div>
-                    <strong>{qd.TieuDeNoiQuy}</strong>
-                    <p>{qd.NoiDung}</p>
-                  </div>
+        {doiSoatTraPhong && traPhongActiveStep !== 4 && (
+          <section className="hd-settlement-review">
+            <div className="hd-settlement-info">
+              {doiSoatInfoRows.map(([label, value]) => (
+                <div key={label}>
+                  <Icon name={label.includes('Ngày') ? 'calendar' : label.includes('Trạng thái') ? 'info' : 'invoice'} />
+                  <span>{label}</span>
+                  <strong>{value || 'Chưa cập nhật'}</strong>
                 </div>
               ))}
             </div>
+
+            <div className="hd-settlement-review-grid">
+              <div className="hd-card hd-settlement-card">
+                <div className="hd-card-header">
+                  <Icon name="invoice" />
+                  <h3>Chi tiết đối soát</h3>
+                </div>
+                <div className="hd-settlement-money">
+                  {doiSoatMoneyGroups.slice(0, 2).map((group) => (
+                    <section key={group.title}>
+                      <h4>{group.title}</h4>
+                      {group.rows.map(([label, value]) => (
+                        <React.Fragment key={label}>
+                          <div className="hd-money-row">
+                            <span>{label}</span>
+                            <strong>{value}</strong>
+                          </div>
+                          {group.title === 'Các khoản khấu trừ' && label === 'Tiền thuê còn nợ' && hoaDonConNo.length > 0 && (
+                            <div className="hd-deduction-detail-list">
+                              {hoaDonConNo.map((hoaDon) => (
+                                <div className="hd-deduction-detail" key={hoaDon.maHoaDon || `${hoaDon.maHopDong}-${hoaDon.kyThanhToan}`}>
+                                  <span>{hoaDon.tenKhoanThue || `Tiền thuê kỳ ${hoaDon.kyThanhToan || '--'}`}</span>
+                                  <small>Hạn TT: {formatDate(hoaDon.ngayHanTT)} · Trạng thái: {hoaDon.trangThai || '--'}</small>
+                                  <strong>{formatSettlementMoney(hoaDon.thanhTien)}</strong>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {group.title === 'Các khoản khấu trừ' && label === 'Tiền dịch vụ còn nợ' && chiTietHoaDon.length > 0 && (
+                            <div className="hd-deduction-detail-list">
+                              {chiTietHoaDon.map((line) => (
+                                <div className="hd-deduction-detail" key={line.maChiTietHD || `${line.maHoaDon}-${line.tenDichVu}`}>
+                                  <span>{line.tenDichVu || 'Dịch vụ'}</span>
+                                  <small>
+                                    SL: {Number(line.soLuong || 0).toLocaleString('vi-VN')} {line.donViTinh || ''}
+                                    {' '}· Đơn giá: {formatSettlementMoney(line.donGia)}
+                                  </small>
+                                  <strong>{formatSettlementMoney(line.thanhTien)}</strong>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {group.title === 'Các khoản khấu trừ' && label === 'Chi phí sửa chữa' && (chiTietHuHong.length > 0 || bienBanKiemTra.length > 0) && (
+                            <div className="hd-deduction-detail-list">
+                              {chiTietHuHong.length > 0 ? chiTietHuHong.map((item) => (
+                                <div className="hd-deduction-detail" key={item.maChiTietHH || `${item.maBienBanKT}-${item.maTaiSan}`}>
+                                  <span>{item.tenTaiSan || item.maTaiSan || 'Hư hỏng phòng'}</span>
+                                  <small>{item.moTaHuHong || 'Chưa có mô tả'}</small>
+                                  <strong>{formatSettlementMoney(item.chiPhiSuaChua)}</strong>
+                                </div>
+                              )) : bienBanKiemTra.map((item) => (
+                                <div className="hd-deduction-detail" key={item.maBienBanKT}>
+                                  <span>Kiểm tra phòng</span>
+                                  <small>Ngày kiểm tra: {formatDate(item.ngayKiemTra)} · {item.tinhTrangPhong || '--'}</small>
+                                  <strong>{formatSettlementMoney(item.tongChiPhiSuaChua)}</strong>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {group.title === 'Các khoản khấu trừ' && label === 'Tiền phạt vi phạm' && bienBanViPham.length > 0 && (
+                            <div className="hd-deduction-detail-list">
+                              {bienBanViPham.map((item) => (
+                                <div className="hd-deduction-detail" key={item.maBBViPham}>
+                                  <span>{item.tenDieuKhoan || 'Vi phạm'}</span>
+                                  <small>Ngày vi phạm: {formatDate(item.ngayViPham)} · {item.moTaViPham || item.hinhThucXuPhat || '--'}</small>
+                                  <strong>{formatSettlementMoney(item.soTienPhat)}</strong>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </section>
+                  ))}
+                </div>
+              </div>
+
+              <div className="hd-card hd-settlement-summary-card">
+                <div className="hd-card-header">
+                  <Icon name="payment" />
+                  <h3>Tóm tắt quyết toán</h3>
+                </div>
+                <div className="hd-summary-money-row">
+                  <span>Tiền cọc được hoàn</span>
+                  <strong>{formatSettlementMoney(doiSoatTraPhong.tienCocDuocHoan)}</strong>
+                </div>
+                <div className="hd-summary-money-row is-deduct">
+                  <span>Tổng khấu trừ</span>
+                  <strong>{formatSettlementMoney(doiSoatTraPhong.tongKhauTru)}</strong>
+                </div>
+                <div className="hd-settlement-result">
+                  <span>{doiSoatFinalLabel}</span>
+                  <strong>{formatSettlementMoney(doiSoatFinalAmount)}</strong>
+                </div>
+
+                {doiSoatCanRespond ? (
+                  <>
+                    <div className="hd-settlement-actions">
+                      <button
+                        className="kp-btn hd-btn-teal"
+                        type="button"
+                        disabled={doiSoatSubmitting}
+                        onClick={() => phanHoiDoiSoat(doiSoatTraPhong, true)}
+                      >
+                        <Icon name="check" />
+                        Đồng ý kết quả
+                      </button>
+                      <button
+                        className="kp-btn hd-btn-orange"
+                        type="button"
+                        disabled={doiSoatSubmitting}
+                        onClick={() => setShowDoiSoatReject((current) => !current)}
+                      >
+                        × Không đồng ý
+                      </button>
+                    </div>
+                    {showDoiSoatReject && (
+                      <div className="hd-reject-box">
+                        <label>
+                          <span>Lý do không đồng ý</span>
+                          <textarea
+                            value={doiSoatRejectReason}
+                            onChange={(event) => setDoiSoatRejectReason(event.target.value)}
+                            placeholder="Nhập lý do cần điều chỉnh..."
+                            rows={3}
+                          />
+                        </label>
+                        <button
+                          className="kp-btn hd-btn-orange is-solid"
+                          type="button"
+                          disabled={doiSoatSubmitting}
+                          onClick={() => phanHoiDoiSoat(doiSoatTraPhong, false)}
+                        >
+                          {doiSoatSubmitting ? 'Đang gửi...' : 'Gửi lý do từ chối'}
+                        </button>
+                      </div>
+                    )}
+                    <div className="hd-settlement-note">
+                      <Icon name="info" />
+                      <p>Nếu bạn không đồng ý với kết quả, hãy gửi yêu cầu điều chỉnh cho quản lý.</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="hd-settlement-note">
+                    <Icon name="info" />
+                    <p>Trạng thái hiện tại: {doiSoatTraPhong.trangThai}. {doiSoatTraPhong.ghiChuPhanHoiKhach ? `Ghi chú: ${doiSoatTraPhong.ghiChuPhanHoiKhach}` : ''}</p>
+                  </div>
+                )}
+
+                {showDoiSoatPayment && (
+                  <div className="hd-payment-panel">
+                    <div className="hd-card-header">
+                      <Icon name="payment" />
+                      <h3>{laHoanCocDoiSoat ? 'Thông tin hoàn cọc' : 'Thông tin thanh toán'}</h3>
+                    </div>
+
+                    <div className="hd-payment-section-title">
+                      1. {laHoanCocDoiSoat ? 'Chọn phương thức bạn muốn nhận hoàn tiền' : 'Chọn phương thức thanh toán'}
+                    </div>
+                    <div className="hd-payment-methods">
+                      {['Chuyển khoản', 'Tiền mặt'].map((method) => (
+                        <button
+                          type="button"
+                          key={method}
+                          className={`hd-payment-method ${doiSoatPaymentMethod === method ? 'is-selected' : ''}`}
+                          onClick={() => {
+                            setDoiSoatPaymentMethod(method);
+                            if (method === 'Tiền mặt') setDoiSoatPaymentFile(null);
+                          }}
+                        >
+                          <Icon name={method === 'Chuyển khoản' ? 'bank' : 'payment'} />
+                          <span>{method}</span>
+                          <strong>{doiSoatPaymentMethod === method ? '✓' : ''}</strong>
+                        </button>
+                      ))}
+                    </div>
+
+                    {!laHoanCocDoiSoat && doiSoatPaymentMethod === 'Chuyển khoản' && (
+                      <>
+                        <div className="hd-payment-section-title">2. Thông tin chuyển khoản</div>
+                        <div className="hd-bank-box">
+                          <div><span>Ngân hàng:</span><strong>{taiKhoanThanhToan.nganHang || 'Vietcombank'}</strong></div>
+                          <div>
+                            <span>Số tài khoản:</span>
+                            <strong>{taiKhoanThanhToan.soTaiKhoan || '1234567890'}</strong>
+                            <button type="button" onClick={() => copyPaymentText(taiKhoanThanhToan.soTaiKhoan || '1234567890')}><Icon name="copy" /></button>
+                          </div>
+                          <div><span>Chủ tài khoản:</span><strong>{taiKhoanThanhToan.chuTaiKhoan || 'CONG TY HOMESTAY DORM'}</strong></div>
+                          <div>
+                            <span>Nội dung CK:</span>
+                            <strong>{noiDungChuyenKhoan}</strong>
+                            <button type="button" onClick={() => copyPaymentText(noiDungChuyenKhoan)}><Icon name="copy" /></button>
+                          </div>
+                        </div>
+
+                        <div className="hd-payment-section-title">3. Tải minh chứng thanh toán</div>
+                        <label className="hd-payment-upload">
+                          <Icon name="upload" />
+                          <span>{doiSoatPaymentFile ? doiSoatPaymentFile.name : 'Kéo thả file vào đây hoặc chọn file'}</span>
+                          <strong>Chọn file</strong>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(event) => setDoiSoatPaymentFile(event.target.files?.[0] || null)}
+                          />
+                        </label>
+                        {doiSoatChungTu && (
+                          <a className="hd-payment-proof" href={doiSoatChungTu.fileUrl} target="_blank" rel="noreferrer">
+                            <Icon name="profile" />
+                            <span>Minh chứng đã gửi: {doiSoatChungTu.fileName}</span>
+                          </a>
+                        )}
+                      </>
+                    )}
+
+                    {!laHoanCocDoiSoat && doiSoatPaymentMethod === 'Tiền mặt' && (
+                      <div className="hd-settlement-note">
+                        <Icon name="info" />
+                        <p>Vui lòng đến văn phòng tại {hd.DiaChi || hd.TenChiNhanh || 'HomestayDorm'} để thanh toán tiền mặt. Không cần tải minh chứng khi chọn tiền mặt.</p>
+                      </div>
+                    )}
+
+                    {laHoanCocDoiSoat && (
+                      <div className="hd-settlement-note">
+                        <Icon name="info" />
+                        <p>Hệ thống sẽ ghi nhận phương thức bạn muốn nhận hoàn tiền. Quản lý sẽ liên hệ để tiếp tục thủ tục trả phòng.</p>
+                      </div>
+                    )}
+
+                    <button
+                      className="kp-btn hd-btn-teal hd-payment-submit"
+                      type="button"
+                      disabled={doiSoatPaymentSubmitting}
+                      onClick={() => ghiNhanThanhToanDoiSoat(doiSoatTraPhong)}
+                    >
+                      <Icon name="check" />
+                      {doiSoatPaymentSubmitting ? 'Đang xác nhận...' : laHoanCocDoiSoat ? 'Xác nhận phương thức hoàn tiền' : 'Xác nhận đã thanh toán'}
+                    </button>
+                  </div>
+                )}
+
+                {!showDoiSoatPayment && daGuiPhuongThucDoiSoat && (laThuThemDoiSoat || laHoanCocDoiSoat) && (
+                  <div className="hd-settlement-note">
+                    <Icon name="info" />
+                    <p>{doiSoatCompletionMessage}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {!doiSoatTraPhong && (
+        <>
+        <div className="hd-overview-middle">
+          <div className="hd-card hd-rent-details">
+            <div className="hd-card-header">
+              <Icon name="payment" />
+              <h3>Chi tiết thuê</h3>
+            </div>
+            <div className="hd-detail-row">
+              <span>Giá thuê hàng tháng</span>
+              <strong className="hd-price">{formatMoney(hd.GiaThue)}</strong>
+            </div>
+            <div className="hd-detail-row">
+              <span>Loại phòng</span>
+              <span className="hd-chip-gray">{hd.TenLoaiPhong}</span>
+            </div>
+            <div className="hd-detail-row">
+              <span>Hình thức thuê</span>
+              <strong>{hinhThucThue}{hd.MaGiuong ? ` • ${hd.MaGiuong}` : ''}</strong>
+            </div>
+            <div className="hd-detail-row">
+              <span>Kỳ thanh toán</span>
+              <strong>{hd.KyThanhToan || 'Chưa cập nhật'}</strong>
+            </div>
+            <div className="hd-action-buttons">
+              <button
+                className={`kp-btn ${coYeuCauChoXuLy ? 'hd-btn-danger' : coYeuCauDaTiepNhan ? 'hd-btn-outline' : 'hd-btn-teal'}`}
+                type="button"
+                disabled={traPhongSubmitting || coYeuCauDaTiepNhan}
+                onClick={() => coYeuCauChoXuLy ? huyYeuCauTraPhong(yeuCauTraPhong) : guiYeuCauTraPhong(hd)}
+              >
+                <Icon name={coYeuCauTraPhong ? 'lock' : 'contract'} />
+                {traPhongSubmitting ? 'Đang xử lý...' : coYeuCauChoXuLy ? 'Hủy yêu cầu' : coYeuCauDaTiepNhan ? 'Đang xử lý trả phòng' : 'Gửi yêu cầu trả phòng'}
+              </button>
+              <a className="kp-btn hd-btn-outline" href="tel:19006789"><Icon name="support" />Liên hệ quản lý</a>
+            </div>
+            {coYeuCauTraPhong && (
+              <p className="hd-request-note">
+                Đã gửi yêu cầu trả phòng. Trạng thái: {yeuCauTraPhong.trangThai}.
+              </p>
+            )}
           </div>
 
-          {/* Danh sách tài sản */}
-          <div className="hd-card hd-assets">
-            <h3>Danh sách tài sản</h3>
-            <table className="hd-table">
-              <thead>
-                <tr>
-                  <th>TÊN TÀI SẢN</th>
-                  <th>SỐ LƯỢNG</th>
-                  <th>TÌNH TRẠNG</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(hd.taiSan || []).map(ts => (
-                  <tr key={ts.MaTaiSan}>
-                    <td><Icon name="layers" /> {ts.TenTaiSan}</td>
-                    <td>{(ts.SoLuong || 1).toString().padStart(2, '0')}</td>
-                    <td className="hd-status-good">Tốt</td>
-                  </tr>
+          <div className="hd-card hd-amenities">
+            <div className="hd-card-header">
+              <Icon name="room" />
+              <h3>Tiện ích phòng</h3>
+            </div>
+            {taiSan.length ? (
+              <div className="hd-amenity-chips">
+                {taiSan.slice(0, 8).map(ts => (
+                <span key={ts.MaTaiSan} className="hd-chip-gray"><Icon name="check" /> {ts.TenTaiSan}</span>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : <p className="hd-muted">Chưa có tài sản được ghi nhận.</p>}
           </div>
 
-          {/* Địa chỉ cư trú */}
-          <div className="hd-card hd-map-card">
-            <div className="hd-map-placeholder">
-              <iframe 
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(hd.DiaChi)}&t=&z=15&ie=UTF8&iwloc=&output=embed`} 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                allowFullScreen="" 
-                loading="lazy">
-              </iframe>
+          <div className="hd-card hd-rules">
+            <div className="hd-card-header">
+              <Icon name="info" />
+              <h3>Quy định phòng</h3>
             </div>
-            <div className="hd-map-info">
-              <h4>Địa chỉ cư trú</h4>
-              <p>{hd.DiaChi}</p>
-              <a href={`https://maps.google.com/?q=${encodeURIComponent(hd.DiaChi)}`} target="_blank" rel="noreferrer" className="kp-btn hd-btn-outline">
-                <Icon name="map" /> Chỉ đường đến đây
-              </a>
-            </div>
+            {quyDinh.length ? (
+              <div className="hd-rule-list">
+                {quyDinh.map(qd => (
+                  <div key={qd.MaQuyDinh} className="hd-rule-item">
+                    <Icon name="check" />
+                    <div>
+                      <strong>{qd.TieuDeNoiQuy}</strong>
+                      <p>{qd.NoiDung}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="hd-muted">Chưa có quy định đang áp dụng.</p>}
           </div>
         </div>
+
+        <div className="hd-overview-bottom">
+          <div className="hd-card hd-assets">
+            <h3>Danh sách tài sản</h3>
+            {taiSan.length ? (
+              <table className="hd-table">
+                <thead>
+                  <tr>
+                    <th>Tên tài sản</th>
+                    <th>Số lượng</th>
+                    <th>Tình trạng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taiSan.map(ts => (
+                    <tr key={ts.MaTaiSan}>
+                      <td><Icon name="layers" />{ts.TenTaiSan}</td>
+                      <td>{String(ts.SoLuong || 1).padStart(2, '0')}</td>
+                      <td className="hd-status-good">Tốt</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : <p className="hd-muted">Chưa có danh sách tài sản cho phòng này.</p>}
+          </div>
+        </div>
+        </>
+        )}
       </section>
     );
   }
@@ -1631,6 +2190,14 @@ export default function KhachHangPortalPage() {
       )}
 
       <div className={`kh-toast ${toast ? 'show' : ''}`}>{toast}</div>
+      <ResultModal
+        open={Boolean(resultModal)}
+        type={resultModal?.type || 'success'}
+        title={resultModal?.title}
+        message={resultModal?.message}
+        confirmText={resultModal?.confirmText}
+        onClose={() => setResultModal(null)}
+      />
 
       {profileDetailModal && (
         <div className="kp-modal-backdrop" onMouseDown={() => setProfileDetailModal(null)}>

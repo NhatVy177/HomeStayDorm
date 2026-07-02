@@ -163,3 +163,203 @@ RequestError: Could not find stored procedure 'sp_GetHopDongDashboard'.
     at Readable.push (node:internal/streams/readable:391:5)
     at nextAsync (node:internal/streams/from:194:22)
 
+2026-07-02T05:25:51.460Z
+RequestError: Invalid column name 'GioiTinh'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T06:23:26.617Z
+RequestError: Hợp đồng không hợp lệ hoặc không thuộc khách hàng hiện tại.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T06:23:29.220Z
+RequestError: Hợp đồng không hợp lệ hoặc không thuộc khách hàng hiện tại.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T06:23:29.423Z
+RequestError: Hợp đồng không hợp lệ hoặc không thuộc khách hàng hiện tại.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T06:45:12.286Z
+RequestError: Invalid column name 'GioiTinh'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T08:32:59.672Z
+Error: Phiếu trả phòng chưa có biên bản kiểm tra phòng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:147:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Object.taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:314:21)
+    at async taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:37:18)
+
+2026-07-02T10:32:22.380Z
+RequestError: Invalid column name 'GioiTinh'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T13:15:49.739Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:21:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:147:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-02T13:21:58.832Z
+Error: Vui lòng tải minh chứng thanh toán khi chọn chuyển khoản.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.ghiNhanThanhToanDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:900:11)
+    at ghiNhanThanhToanDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:134:32)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at done (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:70:7)
+    at indicateDone (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:74:68)
+    at Multipart.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:258:7)
+    at Multipart.emit (node:events:508:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+
+2026-07-02T13:22:06.615Z
+Error: Vui lòng tải minh chứng thanh toán khi chọn chuyển khoản.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.ghiNhanThanhToanDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:900:11)
+    at ghiNhanThanhToanDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:134:32)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at done (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:70:7)
+    at indicateDone (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:74:68)
+    at Multipart.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:258:7)
+    at Multipart.emit (node:events:508:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+
+2026-07-02T13:22:07.952Z
+Error: Vui lòng tải minh chứng thanh toán khi chọn chuyển khoản.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.ghiNhanThanhToanDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:900:11)
+    at ghiNhanThanhToanDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:134:32)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at done (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:70:7)
+    at indicateDone (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:74:68)
+    at Multipart.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:258:7)
+    at Multipart.emit (node:events:508:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+
+2026-07-02T13:26:11.145Z
+Error: Vui lòng tải minh chứng thanh toán khi chọn chuyển khoản.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.ghiNhanThanhToanDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:900:11)
+    at ghiNhanThanhToanDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:134:32)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at done (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:70:7)
+    at indicateDone (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:74:68)
+    at Multipart.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\multer\lib\make-middleware.js:258:7)
+    at Multipart.emit (node:events:508:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+
+2026-07-02T13:27:01.883Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:21:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:147:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-02T13:45:08.445Z
+RequestError: The UPDATE statement conflicted with the CHECK constraint "CHK_DS_TrangThai". The conflict occurred in database "HOMEDORM4", table "dbo.DoiSoat", column 'TrangThai'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T13:54:54.844Z
+Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:185:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:250:19)
+    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+
+2026-07-02T14:00:14.705Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:21:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:147:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-02T14:05:20.884Z
+Error: Phiếu trả phòng này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Object.taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:317:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:37:18)
+
+2026-07-02T14:06:14.411Z
+Error: Phiếu trả phòng này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Object.taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:317:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:37:18)
+

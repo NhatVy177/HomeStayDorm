@@ -10,6 +10,8 @@ import {
 import * as doiSoatRepository from '../repositories/doiSoat.repository.js';
 
 const TRANG_THAI_CHO_DOI_SOAT = 'Chờ đối soát';
+const MESSAGE_NOT_READY_FOR_DOI_SOAT =
+  'Phiếu trả phòng chưa được quản lý xử lý nên chưa thể lập đối soát.';
 const MESSAGE_STALE =
   'Phiếu trả phòng này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.';
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads/chung-tu-doi-soat');
@@ -241,6 +243,10 @@ export async function getChiTietPhieuTraPhong(maPhieuTraInput, maNhanVienKeToan)
     throw createServiceError('Không tìm thấy phiếu trả phòng.', 404);
   }
 
+  if (phieuTraPhong.trangThai !== TRANG_THAI_CHO_DOI_SOAT) {
+    throw createServiceError(MESSAGE_NOT_READY_FOR_DOI_SOAT, 409);
+  }
+
   const context = await buildHoSoContext(pool, phieuTraPhong);
   const chiTietKhauTru = await doiSoatRepository.getChiTietKhauTru(
     pool,
@@ -277,6 +283,7 @@ export async function getChiTietPhieuTraPhong(maPhieuTraInput, maNhanVienKeToan)
 
 export async function taoDoiSoat(data, maNhanVienKeToan) {
   const maPhieuTra = requireMaPhieuTra(data?.maPhieuTra);
+  const maDoiSoatDieuChinh = data?.maDoiSoat ? requireMaDoiSoat(data.maDoiSoat) : null;
 
   validateNonNegativeMoney({
     'Tiền thuê còn nợ': data?.tienThueConNo,
@@ -302,12 +309,7 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
       throw createServiceError('Không tìm thấy phiếu trả phòng.', 404);
     }
 
-    if (phieuTraPhong.trangThai !== TRANG_THAI_CHO_DOI_SOAT) {
-      throw createServiceError(MESSAGE_STALE, 409);
-    }
-
-    const existed = await doiSoatRepository.hasDoiSoatDangXuLy(transaction, maPhieuTra);
-    if (existed) {
+    if (!maDoiSoatDieuChinh && phieuTraPhong.trangThai !== TRANG_THAI_CHO_DOI_SOAT) {
       throw createServiceError(MESSAGE_STALE, 409);
     }
 
@@ -317,6 +319,39 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
       transaction,
       result.tyLeHoanCocHienTai
     );
+
+    if (maDoiSoatDieuChinh) {
+      const updated = await doiSoatRepository.updateDoiSoatCanDieuChinh(transaction, {
+        maDoiSoat: maDoiSoatDieuChinh,
+        maPhieuTra,
+        maNhanVienKeToan,
+        maQuyDinhHoanCoc,
+        ghiChuPhanHoiKhach: data?.ghiChuPhanHoiKhach,
+        tienCocBanDau: context.tienCocBanDau,
+        ...result
+      });
+
+      if (!updated) {
+        throw createServiceError(MESSAGE_STALE, 409);
+      }
+
+      await transaction.commit();
+
+      return {
+        maDoiSoat: maDoiSoatDieuChinh,
+        maPhieuTra,
+        trangThai: updated.trangThai || 'Chờ phản hồi',
+        maQuyDinhHoanCoc,
+        tienCocBanDau: context.tienCocBanDau,
+        ...result
+      };
+    }
+
+    const existed = await doiSoatRepository.hasDoiSoatDangXuLy(transaction, maPhieuTra);
+    if (existed) {
+      throw createServiceError(MESSAGE_STALE, 409);
+    }
+
     const maDoiSoat = await doiSoatRepository.generateMaDoiSoat(transaction);
 
     if (!maDoiSoat) {
