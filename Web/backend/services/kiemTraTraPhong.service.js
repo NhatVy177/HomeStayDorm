@@ -2,10 +2,11 @@ import sql from 'mssql';
 import { getPool } from '../database/connection.js';
 
 export const kiemTraTraPhongService = {
-  quanLyDanhSachChoXuLy: async (maNhanVien) => {
+  quanLyDanhSachChoXuLy: async (maNhanVien, trangThaiLoc) => {
     const pool = await getPool();
     const result = await pool.request()
       .input('MaNhanVien', sql.VarChar(6), maNhanVien)
+      .input('TrangThaiLoc', sql.NVarChar(50), trangThaiLoc)
       .execute('SP_TraPhong_QuanLy_DanhSachChoXuLy');
     return result.recordset;
   },

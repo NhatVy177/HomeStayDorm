@@ -11,7 +11,8 @@ IF OBJECT_ID(N'dbo.SP_TraPhong_QuanLy_DanhSachChoXuLy', N'P') IS NULL
 GO
 
 CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_QuanLy_DanhSachChoXuLy
-    @MaNhanVien VARCHAR(6)
+    @MaNhanVien VARCHAR(6),
+    @TrangThaiLoc NVARCHAR(50) = N'Chờ xử lý'
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -36,7 +37,8 @@ BEGIN
         nd.HoTen                                    AS hoTenKhach,
         nd.SDT                                      AS sdtKhach,
         p.TenPhong                                  AS tenPhong,
-        ctdc.MaGiuong                               AS maGiuong
+        ctdc.MaGiuong                               AS maGiuong,
+        ptp.TrangThai                               AS trangThai
     FROM dbo.PhieuTraPhong ptp
     LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = ptp.MaHopDong
     LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hdt.MaPhieuCoc)
@@ -44,8 +46,12 @@ BEGIN
     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
     INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hdt.MaKhachHang, pdc.MaKhachHang)
     INNER JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
-    WHERE ptp.TrangThai = N'Chờ xử lý' 
-      AND p.MaChiNhanh = @MaChiNhanh
+    WHERE p.MaChiNhanh = @MaChiNhanh
+      AND (
+          (@TrangThaiLoc = N'Chờ xử lý' AND ptp.TrangThai = N'Chờ xử lý') OR
+          (@TrangThaiLoc = N'Đã xử lý'  AND ptp.TrangThai IN (N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Chờ hoàn tất', N'Hoàn tất')) OR
+          (@TrangThaiLoc = N'Tất cả'    AND ptp.TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Chờ hoàn tất', N'Hoàn tất'))
+      )
     ORDER BY ptp.NgayDuKienTra ASC;
 END;
 GO
@@ -88,12 +94,17 @@ BEGIN
         pdc.HinhThucThue                            AS hinhThucThue,
         COALESCE(hdt.GiaThue, ctdc.GiaThue)         AS giaThue,
         CONVERT(VARCHAR(10), hdt.NgayBatDau, 120)   AS ngayBatDauThue,
-        CONVERT(VARCHAR(10), hdt.NgayKetThuc, 120)  AS ngayKetThucThue
+        CONVERT(VARCHAR(10), hdt.NgayKetThuc, 120)  AS ngayKetThucThue,
+        cn.TenChiNhanh                              AS tenChiNhanh,
+        CONVERT(VARCHAR(19), pdc.ThoiDiemDatCoc, 120) AS ngayDatCoc,
+        hdt.TrangThai                               AS trangThaiHopDong,
+        pdc.TrangThaiCoc                            AS trangThaiCoc
     FROM dbo.PhieuTraPhong ptp
     LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = ptp.MaHopDong
     LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hdt.MaPhieuCoc)
     INNER JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
+    INNER JOIN dbo.ChiNhanh cn ON cn.MaChiNhanh = p.MaChiNhanh
     INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hdt.MaKhachHang, pdc.MaKhachHang)
     INNER JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
     WHERE ptp.MaPhieuTra = @MaPhieuTra AND p.MaChiNhanh = @MaChiNhanh;
@@ -122,7 +133,8 @@ BEGIN
             'HoaDon' AS LoaiNghiaVu,
             hd.MaHoaDon AS Ma,
             N'Hóa đơn kỳ ' + hd.KyThanhToan AS Ten,
-            hd.TongTien AS SoTien
+            hd.TongTien AS SoTien,
+            CAST(NULL AS VARCHAR(10)) AS ThoiGian
         FROM dbo.HoaDon hd
         WHERE hd.MaHopDong = @MaHopDong AND (hd.TrangThai = N'Chưa TT' OR hd.TrangThai = N'Nợ')
         
@@ -132,9 +144,10 @@ BEGIN
             'ViPham' AS LoaiNghiaVu,
             bbvp.MaBBViPham AS Ma,
             bbvp.MoTaViPham AS Ten,
-            bbvp.SoTienPhat AS SoTien
+            bbvp.SoTienPhat AS SoTien,
+            CONVERT(VARCHAR(10), bbvp.NgayViPham, 103) AS ThoiGian
         FROM dbo.BienBanViPham bbvp
-        WHERE bbvp.MaHopDong = @MaHopDong AND bbvp.TrangThai = N'Chưa xử lý';
+        WHERE bbvp.MaHopDong = @MaHopDong AND bbvp.TrangThai = N'Chờ xử lý';
     END
     ELSE
     BEGIN
