@@ -33,6 +33,10 @@ export async function capNhatMinhChungCocKhach(req, res, next) {
     }));
   } catch (err) { next(err); }
 }
+export async function chonPhuongThucCocKhach(req, res, next) {
+  // Khách chọn phương thức thanh toán cho phiếu cọc của mình (DC04). Kiểm tra sở hữu trong service.
+  try { res.json(await service.chonPhuongThucCocKhach(req.user, req.params.id, req.body)); } catch (err) { next(err); }
+}
 export async function xacNhanThanhToanCoc(req, res, next) {
   try { res.json(await service.xacNhanThanhToanCoc(req.params.id, req.body)); } catch (err) { next(err); }
 }

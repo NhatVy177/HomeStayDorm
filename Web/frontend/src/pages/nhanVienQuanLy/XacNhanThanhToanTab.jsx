@@ -326,9 +326,6 @@ export default function XacNhanThanhToanTab() {
                       ) : (
                         <span style={{ fontSize: '13px', color: '#9b4922' }}>Khách chưa đính kèm chứng từ.</span>
                       )}
-                      {selected.ghiChuChungTu ? (
-                        <div><p style={{ color: '#6f797a', fontSize: '13px', margin: '4px 0 4px 0' }}>Ghi chú của khách/Sale:</p><p style={{ fontSize: '13px', color: '#191c1d', margin: 0, backgroundColor: '#edeeef', padding: '8px 10px', borderRadius: '6px' }}>{selected.ghiChuChungTu}</p></div>
-                      ) : null}
                     </div>
                   </div>
 
