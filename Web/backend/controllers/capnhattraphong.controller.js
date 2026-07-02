@@ -2,8 +2,9 @@ import { capNhatTraPhongService } from '../services/capnhattraphong.service.js';
 
 export const getDanhSachHoanTat = async (req, res, next) => {
   try {
-    const maNhanVien = req.user?.maNguoiDung || 'NV0011';
-    const danhSach = await capNhatTraPhongService.getDanhSachHoanTat(maNhanVien);
+    const maNhanVien = req.user.maNguoiDung;
+    const status = req.query.status || 'Chờ hoàn tất';
+    const danhSach = await capNhatTraPhongService.getDanhSachHoanTat(maNhanVien, status);
     res.json({ success: true, danhSach });
   } catch (error) {
     next(error);
@@ -12,7 +13,7 @@ export const getDanhSachHoanTat = async (req, res, next) => {
 
 export const getChiTietHoanTat = async (req, res, next) => {
   try {
-    const maNhanVien = req.user?.maNguoiDung || 'NV0011';
+    const maNhanVien = req.user.maNguoiDung;
     const { maPhieuTra } = req.params;
     if (!maPhieuTra) {
       return res.status(400).json({ success: false, message: 'Thiếu mã phiếu trả' });
@@ -26,7 +27,7 @@ export const getChiTietHoanTat = async (req, res, next) => {
 
 export const capNhatHoanTat = async (req, res, next) => {
   try {
-    const maNhanVien = req.user?.maNguoiDung || 'NV0011';
+    const maNhanVien = req.user.maNguoiDung;
     const { maPhieuTra, danhSachBanGiao } = req.body;
 
     if (!maPhieuTra) {

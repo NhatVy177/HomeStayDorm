@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 
 import KiemTraTraPhong from './KiemTraTraPhong.jsx';
-import XacNhanKetQua from './xacnhanketqua.jsx';
+import XacNhanPhanHoi from './XacNhanPhanHoi.jsx';
 import ThanhLyTraPhong from './thanhlytraphong.jsx';
 import CapNhatTraPhong from './capnhattraphong.jsx';
 
@@ -27,9 +27,9 @@ export default function XuLyTraPhongTab() {
           Kiểm tra trả phòng
         </button>
         <button 
-          onClick={() => setActiveSubTab('cho-xac-nhan-quyet-toan')}
-          style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'cho-xac-nhan-quyet-toan' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'cho-xac-nhan-quyet-toan' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
-          Xác nhận đối soát
+          onClick={() => setActiveSubTab('xu-ly-phan-hoi')}
+          style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'xu-ly-phan-hoi' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'xu-ly-phan-hoi' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+          Xử lý phản hồi
         </button>
         <button 
           onClick={() => setActiveSubTab('thanh-ly-tra-phong')}
@@ -44,7 +44,7 @@ export default function XuLyTraPhongTab() {
       </div>
 
       {activeSubTab === 'cho-lap-bien-ban' && <KiemTraTraPhong />}
-      {activeSubTab === 'cho-xac-nhan-quyet-toan' && <XacNhanKetQua />}
+      {activeSubTab === 'xu-ly-phan-hoi' && <XacNhanPhanHoi />}
       {activeSubTab === 'thanh-ly-tra-phong' && <ThanhLyTraPhong />}
       {activeSubTab === 'cap-nhat-hoan-tat' && <CapNhatTraPhong />}
 

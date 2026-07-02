@@ -6,7 +6,8 @@ IF OBJECT_ID(N'dbo.SP_TraPhong_QuanLy_DanhSachHoanTat', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_QuanLy_DanhSachHoanTat AS BEGIN SET NOCOUNT ON; END;');
 GO
 CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_QuanLy_DanhSachHoanTat
-    @MaNhanVien VARCHAR(6)
+    @MaNhanVien VARCHAR(6),
+    @TrangThaiLoc NVARCHAR(50) = N'Chờ hoàn tất'
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -38,7 +39,12 @@ BEGIN
     LEFT JOIN dbo.Giuong g ON ctdc.MaGiuong = g.MaGiuong AND ctdc.MaPhong = g.MaPhong
     INNER JOIN dbo.KhachHang kh ON pdc.MaKhachHang = kh.MaKhachHang
     INNER JOIN dbo.NguoiDung nd ON kh.MaKhachHang = nd.MaNguoiDung
-    WHERE pt.TrangThai = N'Chờ hoàn tất' AND p.MaChiNhanh = @MaChiNhanh;
+    WHERE p.MaChiNhanh = @MaChiNhanh
+      AND (
+          (@TrangThaiLoc = N'Chờ hoàn tất' AND pt.TrangThai = N'Chờ hoàn tất') OR
+          (@TrangThaiLoc = N'Hoàn tất'     AND pt.TrangThai = N'Hoàn tất') OR
+          (@TrangThaiLoc = N'Tất cả'       AND pt.TrangThai IN (N'Chờ hoàn tất', N'Hoàn tất'))
+      );
 END;
 GO
 
@@ -67,6 +73,8 @@ BEGIN
         CASE WHEN pt.MaHopDong IS NOT NULL THEN 1 ELSE 0 END AS hasHopDong,
         pt.MaHopDong AS maHopDong,
         pdc.MaPhieuDatCoc AS maPhieuDatCoc,
+        pdc.TrangThaiCoc AS trangThaiCoc,
+        CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120) AS ngayDatCoc,
         CONVERT(VARCHAR(10), hd.NgayBatDau, 120) AS ngayBatDauHopDong,
         CONVERT(VARCHAR(10), hd.NgayKetThuc, 120) AS ngayKetThucHopDong,
         hd.TrangThai AS trangThaiHopDong,
@@ -98,11 +106,15 @@ BEGIN
         SELECT DISTINCT
             ts.MaTaiSan AS maTaiSan,
             ts.TenTaiSan AS tenTaiSan,
-            ct.SoLuongThucTe AS soLuongBanGiaoVao
-        FROM dbo.BienBanBanGiao bg
-        INNER JOIN dbo.ChiTietBanGiao ct ON bg.MaBienBan = ct.MaBienBan
-        INNER JOIN dbo.TaiSan ts ON ct.MaTaiSan = ts.MaTaiSan
-        WHERE bg.MaHopDong = @MaHopDong AND bg.LoaiBanGiao = N'Bàn giao vào';
+            ctVao.SoLuongThucTe AS soLuongBanGiaoVao,
+            ctRa.SoLuongThucTe AS soLuongThuHoi,
+            ctRa.GhiChu AS ghiChu
+        FROM dbo.BienBanBanGiao bgVao
+        INNER JOIN dbo.ChiTietBanGiao ctVao ON bgVao.MaBienBan = ctVao.MaBienBan
+        INNER JOIN dbo.TaiSan ts ON ctVao.MaTaiSan = ts.MaTaiSan
+        LEFT JOIN dbo.BienBanBanGiao bgRa ON bgRa.MaHopDong = @MaHopDong AND bgRa.LoaiBanGiao = N'Bàn giao ra'
+        LEFT JOIN dbo.ChiTietBanGiao ctRa ON bgRa.MaBienBan = ctRa.MaBienBan AND ctRa.MaTaiSan = ts.MaTaiSan
+        WHERE bgVao.MaHopDong = @MaHopDong AND bgVao.LoaiBanGiao = N'Bàn giao vào';
     END
 END;
 GO
@@ -121,11 +133,12 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        DECLARE @TrangThaiPT NVARCHAR(30), @MaHopDong VARCHAR(6), @MaPhong VARCHAR(6), @MaGiuong VARCHAR(6);
+        DECLARE @TrangThaiPT NVARCHAR(30), @MaHopDong VARCHAR(6), @MaPhong VARCHAR(6), @MaGiuong VARCHAR(6), @MaPhieuDatCoc VARCHAR(6);
         
         SELECT 
             @TrangThaiPT = pt.TrangThai, 
             @MaHopDong = pt.MaHopDong,
+            @MaPhieuDatCoc = pt.MaPhieuDatCoc,
             @MaPhong = ctdc.MaPhong,
             @MaGiuong = ctdc.MaGiuong
         FROM dbo.PhieuTraPhong pt

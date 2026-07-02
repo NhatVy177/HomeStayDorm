@@ -3,7 +3,8 @@ import { kiemTraTraPhongService } from '../services/kiemTraTraPhong.service.js';
 export const quanLyDanhSachChoXuLy = async (req, res, next) => {
   try {
     const maNhanVien = req.user.maNguoiDung;
-    const data = await kiemTraTraPhongService.quanLyDanhSachChoXuLy(maNhanVien);
+    const trangThaiLoc = req.query.trangThaiLoc || 'Chờ xử lý';
+    const data = await kiemTraTraPhongService.quanLyDanhSachChoXuLy(maNhanVien, trangThaiLoc);
     res.json({ danhSach: data });
   } catch (error) {
     next(error);
