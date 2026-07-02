@@ -1,4 +1,4 @@
-import { executeProcedure, getPool, sql } from '../database/connection.js';
+import { executeProcedure, executeQuery, getPool, sql } from '../database/connection.js';
 import { getDanhSachPhongKhamPha } from './phongKhamPha.service.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 
@@ -50,12 +50,156 @@ function normalizeMoneyVnd(value) {
   return vnd;
 }
 
+const ACTIVE_RENT_FLOW_MESSAGE = 'Bạn đang có phiếu đăng ký/đặt cọc/hợp đồng chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi luồng thuê hiện tại kết thúc.';
+
+async function getActiveRentFlow(khachHangId) {
+  const id = String(khachHangId || '').trim();
+  if (!id) return null;
+
+  const result = await executeQuery(`
+    SELECT TOP (1) *
+    FROM (
+      SELECT
+        N'Hợp đồng thuê' AS loai,
+        hd.MaHopDong AS maThamChieu,
+        hd.TrangThai AS trangThai,
+        hd.NgayKyHD AS ngayTao,
+        1 AS thuTu
+      FROM dbo.HopDongThue AS hd
+      WHERE hd.MaKhachHang = @KhachHangId
+        AND hd.TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
+
+      UNION ALL
+
+      SELECT
+        N'Phiếu đặt cọc' AS loai,
+        pdc.MaPhieuDatCoc AS maThamChieu,
+        CONCAT(pdc.TrangThaiCoc, N' / ', pdc.TrangThaiThanhToan) AS trangThai,
+        CAST(pdc.ThoiDiemDatCoc AS DATE) AS ngayTao,
+        2 AS thuTu
+      FROM dbo.PhieuDatCoc AS pdc
+      WHERE pdc.MaKhachHang = @KhachHangId
+        AND pdc.TrangThaiCoc <> N'Đã hủy'
+        AND pdc.TrangThaiThanhToan <> N'Hết hạn'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM dbo.HopDongThue AS hd
+          WHERE hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+            AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+        )
+
+      UNION ALL
+
+      SELECT
+        N'Phiếu đăng ký' AS loai,
+        pdk.MaDangKy AS maThamChieu,
+        pdk.TrangThai AS trangThai,
+        pdk.NgayDangKy AS ngayTao,
+        3 AS thuTu
+      FROM dbo.PhieuDangKy AS pdk
+      WHERE pdk.MaKhachHang = @KhachHangId
+        AND (
+          NOT EXISTS (
+            SELECT 1
+            FROM dbo.LichXemPhong AS lxpAny
+            WHERE lxpAny.MaDangKy = pdk.MaDangKy
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM dbo.LichXemPhong AS lxpActive
+            WHERE lxpActive.MaDangKy = pdk.MaDangKy
+              AND lxpActive.TrangThai <> N'Đã hủy'
+          )
+        )
+        AND pdk.TrangThai <> N'Từ chối'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM dbo.PhieuDatCoc AS pdc
+          INNER JOIN dbo.HopDongThue AS hd ON hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+          WHERE pdc.MaPhieuYeuCauDangKy = pdk.MaDangKy
+            AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+        )
+    ) AS activeFlow
+    ORDER BY thuTu, ngayTao DESC;
+  `, [
+    { name: 'KhachHangId', type: sql.VarChar(6), value: id }
+  ]);
+
+  return result.recordset[0] || null;
+}
+
+async function assertCanCreateRentRegistration(khachHangId) {
+  const activeFlow = await getActiveRentFlow(khachHangId);
+  if (activeFlow) {
+    throw createServiceError(
+      `${ACTIVE_RENT_FLOW_MESSAGE} Đang tồn tại ${activeFlow.loai} ${activeFlow.maThamChieu} (${activeFlow.trangThai}).`,
+      409
+    );
+  }
+}
+
+function assertContactFormat(data = {}) {
+  const phone = String(data.soDienThoai || '').trim();
+  const cccd = String(data.cccd || '').trim();
+
+  if (phone && !/^\d{10}$/.test(phone)) {
+    throw createServiceError('Số điện thoại phải có đúng 10 chữ số.');
+  }
+  if (cccd && !/^\d{12}$/.test(cccd)) {
+    throw createServiceError('CCCD phải có đúng 12 chữ số.');
+  }
+}
+
+async function assertUniqueCustomerContact(data = {}, khachHangId) {
+  const phone = String(data.soDienThoai || '').trim() || null;
+  const cccd = String(data.cccd || '').trim() || null;
+  if (!phone && !cccd) return;
+
+  const result = await executeQuery(`
+    SELECT TOP (1)
+      CASE
+        WHEN @SDT IS NOT NULL AND nd.SDT = @SDT THEN N'SDT'
+        WHEN @CCCD IS NOT NULL AND kh.CCCD = @CCCD THEN N'CCCD'
+      END AS duplicateField
+    FROM dbo.KhachHang AS kh
+    INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = kh.MaKhachHang
+    WHERE kh.MaKhachHang <> @KhachHangId
+      AND (
+        (@SDT IS NOT NULL AND nd.SDT = @SDT)
+        OR (@CCCD IS NOT NULL AND kh.CCCD = @CCCD)
+      );
+  `, [
+    { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
+    { name: 'SDT', type: sql.VarChar(20), value: phone },
+    { name: 'CCCD', type: sql.VarChar(20), value: cccd }
+  ]);
+
+  const duplicateField = result.recordset[0]?.duplicateField;
+  if (duplicateField === 'SDT') {
+    throw createServiceError('Số điện thoại đã tồn tại trong hồ sơ khách hàng khác.', 409);
+  }
+  if (duplicateField === 'CCCD') {
+    throw createServiceError('CCCD đã tồn tại trong hồ sơ khách hàng khác.', 409);
+  }
+}
+
 async function getCustomerState(khachHangId) {
   try {
     const result = await executeProcedure('dbo.SP_KhachMoi_TrangThai', [
       { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId }
     ]);
-    return result.recordset[0] || null;
+    const state = result.recordset[0] || null;
+    if (!state) return null;
+
+    const activeFlow = await getActiveRentFlow(khachHangId);
+    return {
+      ...state,
+      coQuyTrinhThueDangHoatDong: Boolean(activeFlow),
+      luongThueDangHoatDong: activeFlow || null,
+      thongBaoKhoaDangKy: activeFlow
+        ? `${ACTIVE_RENT_FLOW_MESSAGE} Đang tồn tại ${activeFlow.loai} ${activeFlow.maThamChieu} (${activeFlow.trangThai}).`
+        : null
+    };
   } catch (error) {
     handleDatabaseError(error);
   }
@@ -75,7 +219,35 @@ async function getProfiles(khachHangId) {
   const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachHoSo', [
     { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId }
   ]);
-  return result.recordset;
+  const cancelledResult = await executeQuery(`
+    SELECT pdk.MaDangKy
+    FROM dbo.PhieuDangKy AS pdk
+    WHERE pdk.MaKhachHang = @KhachHangId
+      AND pdk.TrangThai = N'Từ chối'
+      AND EXISTS (
+        SELECT 1
+        FROM dbo.LichXemPhong AS lxpAny
+        WHERE lxpAny.MaDangKy = pdk.MaDangKy
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM dbo.LichXemPhong AS lxpActive
+        WHERE lxpActive.MaDangKy = pdk.MaDangKy
+          AND lxpActive.TrangThai <> N'Đã hủy'
+      );
+  `, [
+    { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId }
+  ]);
+  const cancelledIds = new Set(cancelledResult.recordset.map((row) => row.MaDangKy));
+
+  return result.recordset.map((row) => {
+    const biHuyDoTatCaLich = cancelledIds.has(row.maDangKy);
+    return {
+      ...row,
+      biHuyDoTatCaLich,
+      trangThaiHienThi: biHuyDoTatCaLich ? 'Hủy' : row.trangThai
+    };
+  });
 }
 
 async function getSchedules(khachHangId) {
@@ -123,10 +295,14 @@ export async function createHoSo(user, data = {}) {
   const khachHangId = requireCustomer(user);
   const soNguoiO = Number(data.soNguoiO || 1);
   const ngayDuKienVaoO = data.ngayDuKienVaoO || null;
+  assertContactFormat(data);
 
   if (!ngayDuKienVaoO || !Number.isInteger(soNguoiO) || soNguoiO < 1) {
     throw createServiceError('Vui long nhap ngay du kien va so nguoi o');
   }
+
+  await assertCanCreateRentRegistration(khachHangId);
+  await assertUniqueCustomerContact(data, khachHangId);
 
   try {
     let finalGhiChu = data.ghiChu || '';
@@ -137,7 +313,7 @@ export async function createHoSo(user, data = {}) {
       { name: 'SoNamInput', type: sql.Int, value: data.soNam || 0 },
       { name: 'SoNuInput', type: sql.Int, value: data.soNu || 0 },
       { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || null },
-      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(50), value: data.loaiPhongYeuCau || null },
+      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(200), value: data.loaiPhongYeuCau || null },
       { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: normalizeMoneyVnd(data.mucGiaToiDa) },
       { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
       { name: 'NgayDuKienVaoO', type: sql.Date, value: ngayDuKienVaoO },
@@ -172,15 +348,65 @@ export async function getHoSoDetail(user, maDangKy) {
         pdk.MaDangKy,
         pdk.NgayDangKy,
         pdk.KhuVucMongMuon,
-        pdk.LoaiPhongYeuCau,
+        (SELECT STRING_AGG(lp.TenLoaiPhong, ', ')
+         FROM dbo.PDK_LoaiPhong AS pdklp
+         JOIN dbo.LoaiPhong AS lp ON lp.MaLoaiPhong = pdklp.MaLoaiPhong
+         WHERE pdklp.MaDangKy = pdk.MaDangKy) AS LoaiPhongYeuCau,
         pdk.MucGiaToiDa,
+        pdk.MucGiaToiDa AS mucGia,
         pdk.SoNguoiDuKienO  AS soNguoiO,
-        pdk.GioiTinh,
+        pdk.SoNam AS soNam,
+        pdk.SoNu AS soNu,
+        CASE
+          WHEN ISNULL(pdk.SoNam, 0) > 0 AND ISNULL(pdk.SoNu, 0) = 0 THEN N'Nam'
+          WHEN ISNULL(pdk.SoNu, 0) > 0 AND ISNULL(pdk.SoNam, 0) = 0 THEN N'Nữ'
+          ELSE N'Khác'
+        END AS GioiTinhThue,
         pdk.ThoiGianDuKienVaoO AS ngayDuKienVaoO,
         pdk.ThoiHanThue,
         pdk.YeuCauKhac AS ghiChu,
-        pdk.TrangThai
+        pdk.TrangThai,
+        CAST(CASE
+          WHEN pdk.TrangThai = N'Từ chối'
+            AND EXISTS (
+              SELECT 1
+              FROM dbo.LichXemPhong AS lxpAny
+              WHERE lxpAny.MaDangKy = pdk.MaDangKy
+            )
+            AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.LichXemPhong AS lxpActive
+              WHERE lxpActive.MaDangKy = pdk.MaDangKy
+                AND lxpActive.TrangThai <> N'Đã hủy'
+            )
+          THEN 1 ELSE 0
+        END AS bit) AS biHuyDoTatCaLich,
+        CASE
+          WHEN pdk.TrangThai = N'Từ chối'
+            AND EXISTS (
+              SELECT 1
+              FROM dbo.LichXemPhong AS lxpAny
+              WHERE lxpAny.MaDangKy = pdk.MaDangKy
+            )
+            AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.LichXemPhong AS lxpActive
+              WHERE lxpActive.MaDangKy = pdk.MaDangKy
+                AND lxpActive.TrangThai <> N'Đã hủy'
+            )
+          THEN N'Hủy'
+          ELSE pdk.TrangThai
+        END AS trangThaiHienThi,
+        nd.HoTen AS hoTen,
+        nd.NgaySinh AS ngaySinh,
+        nd.GioiTinh AS gioiTinhKhach,
+        nd.SDT AS soDienThoai,
+        nd.Email AS email,
+        kh.QuocTich AS quocTich,
+        kh.CCCD AS cccd
       FROM dbo.PhieuDangKy AS pdk
+      JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = pdk.MaKhachHang
+      LEFT JOIN dbo.KhachHang AS kh ON kh.MaKhachHang = pdk.MaKhachHang
       WHERE pdk.MaDangKy = @MaDangKy
         AND pdk.MaKhachHang = @KhachHangId;
     `);
@@ -192,6 +418,7 @@ export async function getHoSoDetail(user, maDangKy) {
 
 export async function updateHoSo(user, maDangKy, data = {}) {
   const khachHangId = requireCustomer(user);
+  assertContactFormat(data);
   if (!maDangKy) throw createServiceError('Mã đăng ký không hợp lệ', 400);
 
   const pool = await getPool();
@@ -208,6 +435,8 @@ export async function updateHoSo(user, maDangKy, data = {}) {
 
 
 
+  await assertUniqueCustomerContact(data, khachHangId);
+
   const transaction = new sql.Transaction(pool);
   await transaction.begin();
 
@@ -215,13 +444,14 @@ export async function updateHoSo(user, maDangKy, data = {}) {
     let soNam = data.soNam ? Number(data.soNam) : 0;
     let soNu = data.soNu ? Number(data.soNu) : 0;
     const soNguoiO = data.soNguoiO ? Number(data.soNguoiO) : null;
-    if (data.gioiTinh === 'Nam') {
+    const gioiTinhThue = data.gioiTinhThue || data.gioiTinh;
+    if (gioiTinhThue === 'Nam') {
       soNam = soNguoiO || 0;
       soNu = 0;
-    } else if (data.gioiTinh === 'Nữ') {
+    } else if (gioiTinhThue === 'Nữ') {
       soNu = soNguoiO || 0;
       soNam = 0;
-    } else if (data.gioiTinh === 'Khác' || data.gioiTinh === 'Hỗn hợp') {
+    } else if (gioiTinhThue === 'Khác' || gioiTinhThue === 'Hỗn hợp') {
       if (soNam === 0 && soNu === 0) soNam = soNguoiO || 0;
     } else {
       soNam = soNguoiO || 0;
@@ -230,11 +460,9 @@ export async function updateHoSo(user, maDangKy, data = {}) {
 
     await transaction.request()
       .input('MaDangKy', sql.VarChar(6), maDangKy)
-      .input('GioiTinh', sql.NVarChar(10), data.gioiTinh || null)
       .input('SoNam', sql.Int, soNam)
       .input('SoNu', sql.Int, soNu)
       .input('KhuVucMongMuon', sql.NVarChar(100), data.khuVucMongMuon || null)
-      .input('LoaiPhongYeuCau', sql.NVarChar(50), data.loaiPhongYeuCau || null)
       .input('MucGiaToiDa', sql.Decimal(15, 2), normalizeMoneyVnd(data.mucGiaToiDa))
       .input('SoNguoiO', sql.Int, soNguoiO)
       .input('NgayDuKienVaoO', sql.Date, data.ngayDuKienVaoO || null)
@@ -242,11 +470,9 @@ export async function updateHoSo(user, maDangKy, data = {}) {
       .input('GhiChu', sql.NVarChar(sql.MAX), data.ghiChu || null)
       .query(`
         UPDATE dbo.PhieuDangKy SET
-          GioiTinh            = @GioiTinh,
           SoNam               = @SoNam,
           SoNu                = @SoNu,
           KhuVucMongMuon      = @KhuVucMongMuon,
-          LoaiPhongYeuCau     = @LoaiPhongYeuCau,
           MucGiaToiDa         = @MucGiaToiDa,
           SoNguoiDuKienO      = @SoNguoiO,
           ThoiGianDuKienVaoO  = @NgayDuKienVaoO,
@@ -254,6 +480,28 @@ export async function updateHoSo(user, maDangKy, data = {}) {
           YeuCauKhac          = @GhiChu
         WHERE MaDangKy = @MaDangKy;
       `);
+
+    await transaction.request()
+      .input('MaDangKy', sql.VarChar(6), maDangKy)
+      .query(`
+        DELETE FROM dbo.PDK_LoaiPhong
+        WHERE MaDangKy = @MaDangKy;
+      `);
+
+    if (data.loaiPhongYeuCau) {
+      await transaction.request()
+        .input('MaDangKy', sql.VarChar(6), maDangKy)
+        .input('LoaiPhongYeuCau', sql.NVarChar(200), data.loaiPhongYeuCau)
+        .query(`
+          INSERT INTO dbo.PDK_LoaiPhong (MaDangKy, MaLoaiPhong)
+          SELECT @MaDangKy, lp.MaLoaiPhong
+          FROM dbo.LoaiPhong AS lp
+          WHERE lp.TenLoaiPhong IN (
+            SELECT LTRIM(RTRIM(value))
+            FROM STRING_SPLIT(@LoaiPhongYeuCau, ',')
+          );
+        `);
+    }
 
     if (data.hoTen) {
       await transaction.request()

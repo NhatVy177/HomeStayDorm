@@ -21,6 +21,14 @@ export async function dangNhap(req, res, next) {
   }
 }
 
+export async function kiemTraSoDienThoai(req, res, next) {
+  try {
+    res.json(await service.kiemTraSoDienThoai(req.query.sdt));
+  } catch (err) {
+    next(err);
+  }
+}
+
 export function getToi(req, res) {
   res.json(req.user);
 }

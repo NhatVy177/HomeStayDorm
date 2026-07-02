@@ -54,6 +54,52 @@ export default function TraCuuPhongTab() {
     setTimeout(fetchRooms, 0);
   };
 
+  const filterCardStyle = {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '20px',
+    border: '1px solid #d6e0e0',
+    marginBottom: '24px',
+    boxShadow: '0 8px 20px rgba(31, 56, 57, 0.04)'
+  };
+
+  const filterHeaderStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '16px',
+    flexWrap: 'wrap'
+  };
+
+  const filterGridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '14px'
+  };
+
+  const filterFieldStyle = {
+    border: '1px solid #d4dddd',
+    borderRadius: '8px',
+    padding: '10px 12px 12px',
+    backgroundColor: '#fbfdfd'
+  };
+
+  const filterLabelStyle = {
+    fontSize: '12px',
+    color: '#3f494a',
+    display: 'block',
+    marginBottom: '8px',
+    fontWeight: '700'
+  };
+
+  const filterSelectStyle = {
+    backgroundColor: '#fff',
+    border: '1px solid #bec8c9',
+    minHeight: '42px',
+    borderRadius: '7px'
+  };
+
   return (
     <div className="ktp-container">
       
@@ -66,29 +112,34 @@ export default function TraCuuPhongTab() {
         </div>
       </div>
 
-      <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #e0e3e3', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700', color: '#3f494a' }}>
-            <Icon name="tune" style={{ color: '#2f6765' }} /> Bộ lọc tìm kiếm
+      <div style={filterCardStyle}>
+        <div style={filterHeaderStyle}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', color: '#191c1d', fontSize: '15px' }}>
+              <Icon name="tune" style={{ color: '#2f6765', fontSize: '18px' }} /> Bộ lọc tìm kiếm
+            </div>
+            <div style={{ color: '#6f797a', fontSize: '12px', marginTop: '4px' }}>
+              Lọc theo khu vực, loại phòng, hình thức thuê và mức giá.
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <span onClick={handleClearFilters} style={{ color: '#2f6765', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>Xóa bộ lọc</span>
-            <button onClick={fetchRooms} style={{ padding: '10px 24px', borderRadius: '6px', border: 'none', backgroundColor: '#347a78', color: '#fff', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}>Áp dụng bộ lọc</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button type="button" onClick={handleClearFilters} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd7d7', backgroundColor: '#fff', color: '#2f6765', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>Xóa bộ lọc</button>
+            <button type="button" onClick={fetchRooms} style={{ padding: '10px 22px', borderRadius: '8px', border: 'none', backgroundColor: '#347a78', color: '#fff', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>Áp dụng bộ lọc</button>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-          <div>
-            <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Khu vực</label>
-            <select className="ktp-input" value={filters.khuVuc} onChange={e => setFilters({...filters, khuVuc: e.target.value})} style={{ backgroundColor: '#f4f7f7', border: 'none' }}>
+        <div style={filterGridStyle}>
+          <div style={filterFieldStyle}>
+            <label style={filterLabelStyle}>Khu vực</label>
+            <select className="ktp-input" value={filters.khuVuc} onChange={e => setFilters({...filters, khuVuc: e.target.value})} style={filterSelectStyle}>
               <option>Tất cả khu vực</option>
               <option>Quận 1</option>
               <option>Bình Thạnh</option>
               <option>Thủ Đức</option>
             </select>
           </div>
-          <div>
-            <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Loại phòng</label>
-            <select className="ktp-input" value={filters.loaiPhong} onChange={e => setFilters({...filters, loaiPhong: e.target.value})} style={{ backgroundColor: '#f4f7f7', border: 'none' }}>
+          <div style={filterFieldStyle}>
+            <label style={filterLabelStyle}>Loại phòng</label>
+            <select className="ktp-input" value={filters.loaiPhong} onChange={e => setFilters({...filters, loaiPhong: e.target.value})} style={filterSelectStyle}>
               <option>Tất cả loại phòng</option>
               <option>Phòng 2 người</option>
               <option>Phòng 4 người</option>
@@ -97,18 +148,18 @@ export default function TraCuuPhongTab() {
               <option>Dorm 8 người</option>
             </select>
           </div>
-          <div>
-            <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Hình thức thuê</label>
-            <select className="ktp-input" value={filters.hinhThucThue} onChange={e => setFilters({...filters, hinhThucThue: e.target.value})} style={{ backgroundColor: '#f4f7f7', border: 'none' }}>
+          <div style={filterFieldStyle}>
+            <label style={filterLabelStyle}>Hình thức thuê</label>
+            <select className="ktp-input" value={filters.hinhThucThue} onChange={e => setFilters({...filters, hinhThucThue: e.target.value})} style={filterSelectStyle}>
               <option>Tất cả hình thức</option>
               <option>Nguyên căn</option>
               <option>Ghép nam</option>
               <option>Ghép nữ</option>
             </select>
           </div>
-          <div>
-            <label style={{ fontSize: '12px', color: '#6f797a', display: 'block', marginBottom: '6px' }}>Mức giá (Triệu VNĐ)</label>
-            <select className="ktp-input" value={filters.mucGiaToiDa} onChange={e => setFilters({...filters, mucGiaToiDa: e.target.value})} style={{ backgroundColor: '#f4f7f7', border: 'none' }}>
+          <div style={filterFieldStyle}>
+            <label style={filterLabelStyle}>Mức giá (Triệu VNĐ)</label>
+            <select className="ktp-input" value={filters.mucGiaToiDa} onChange={e => setFilters({...filters, mucGiaToiDa: e.target.value})} style={filterSelectStyle}>
               <option>Tất cả</option>
               <option>Dưới 2 triệu</option>
               <option>Dưới 3 triệu</option>
@@ -134,9 +185,9 @@ export default function TraCuuPhongTab() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Đang tải dữ liệu...</td></tr>
+              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Đang tải dữ liệu...</td></tr>
             ) : rooms.length === 0 ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Không tìm thấy phòng phù hợp.</td></tr>
+              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Không tìm thấy phòng phù hợp.</td></tr>
             ) : rooms.map(r => (
               <tr key={r.id}>
                 <td style={{ fontWeight: '800', color: '#2f6765', fontSize: '13px' }}>{r.id}</td>

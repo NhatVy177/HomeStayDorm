@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getPool } from './database/connection.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
@@ -20,6 +21,7 @@ import capNhatTraPhongRoutes from './routes/capnhattraphong.routes.js';
 import suaChuaBaoTriRoutes from './routes/suaChuaBaoTri.routes.js';
 import khachMoiRoutes from './routes/khachMoi.routes.js';
 import trangChuRoutes from './routes/trangChu.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import doiSoatRoutes from './routes/doiSoat.routes.js';
 import { startHoaDonQuaHanScheduler } from './services/hoaDonQuaHan.service.js';
 import hopDongRoutes from './routes/hopDong.routes.js';
@@ -27,6 +29,7 @@ import hopDongRoutes from './routes/hopDong.routes.js';
 // Load bien moi truong trong file .env
 dotenv.config();
 
+const backendDir = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 5000;
 const clientOrigins = String(process.env.CLIENT_URL || '*')
@@ -47,8 +50,8 @@ app.use(cors({
     return callback(null, false);
   }
 }));
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 app.use(express.json({ limit: '8mb' }));
+app.use('/uploads', express.static(path.join(backendDir, 'uploads')));
 app.use((req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   next();
@@ -73,6 +76,7 @@ app.use('/api/thanh-ly-tra-phong', requireAuth, thanhLyTraPhongRoutes);
 app.use('/api/cap-nhat-tra-phong', requireAuth, capNhatTraPhongRoutes);
 app.use('/api/sua-chua-bao-tri', requireAuth, suaChuaBaoTriRoutes);
 app.use('/api/khach-moi', requireAuth, khachMoiRoutes);
+app.use('/api/admin', requireAuth, adminRoutes);
 app.use('/api/accountant/doi-soat', requireAuth, doiSoatRoutes);
 app.use('/api/hop-dong', requireAuth, hopDongRoutes);
 

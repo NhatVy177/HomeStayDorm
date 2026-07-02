@@ -35,6 +35,63 @@ IF OBJECT_ID('TRG_HoaDon_TinhTongTien_OnDelete',      'TR') IS NOT NULL DROP TRI
 IF OBJECT_ID('TRG_HoaDon_ChuyenNoQuaHan',             'TR') IS NOT NULL DROP TRIGGER TRG_HoaDon_ChuyenNoQuaHan;
 IF OBJECT_ID('TRG_ChiTietHuHong_CapNhatTongSuaChua',  'TR') IS NOT NULL DROP TRIGGER TRG_ChiTietHuHong_CapNhatTongSuaChua;
 IF OBJECT_ID('TRG_BienBanViPham_TinhSoTienPhat',      'TR') IS NOT NULL DROP TRIGGER TRG_BienBanViPham_TinhSoTienPhat;
+IF OBJECT_ID('TRG_LichXemPhong_TuChoiPhieuKhiTatCaLichHuy','TR') IS NOT NULL DROP TRIGGER TRG_LichXemPhong_TuChoiPhieuKhiTatCaLichHuy;
+GO
+
+
+-- ================================================================
+-- TRIGGER: TRG_LichXemPhong_TuChoiPhieuKhiTatCaLichHuy
+-- Bang : LichXemPhong | Su kien: AFTER INSERT, UPDATE
+-- Neu tat ca lich xem phong cua mot phieu dang ky da huy thi
+-- chuyen phieu dang ky do sang trang thai Tu choi.
+-- ================================================================
+CREATE TRIGGER TRG_LichXemPhong_TuChoiPhieuKhiTatCaLichHuy
+ON LichXemPhong
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE pdk
+    SET TrangThai = N'Từ chối'
+    FROM PhieuDangKy AS pdk
+    INNER JOIN (
+        SELECT DISTINCT MaDangKy
+        FROM inserted
+        WHERE TrangThai = N'Đã hủy'
+    ) AS changed ON changed.MaDangKy = pdk.MaDangKy
+    WHERE pdk.TrangThai <> N'Từ chối'
+      AND EXISTS (
+          SELECT 1
+          FROM LichXemPhong AS lxpAny
+          WHERE lxpAny.MaDangKy = pdk.MaDangKy
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM LichXemPhong AS lxpActive
+          WHERE lxpActive.MaDangKy = pdk.MaDangKy
+            AND lxpActive.TrangThai <> N'Đã hủy'
+      );
+END;
+GO
+
+
+-- Dong bo du lieu hien co theo rule moi
+UPDATE pdk
+SET TrangThai = N'Từ chối'
+FROM PhieuDangKy AS pdk
+WHERE pdk.TrangThai <> N'Từ chối'
+  AND EXISTS (
+      SELECT 1
+      FROM LichXemPhong AS lxpAny
+      WHERE lxpAny.MaDangKy = pdk.MaDangKy
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM LichXemPhong AS lxpActive
+      WHERE lxpActive.MaDangKy = pdk.MaDangKy
+        AND lxpActive.TrangThai <> N'Đã hủy'
+  );
 GO
 
 

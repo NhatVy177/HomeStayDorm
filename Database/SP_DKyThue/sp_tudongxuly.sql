@@ -356,9 +356,10 @@ BEGIN
             (
                 @LaNhomHonHop = 1
                 AND (
-                    (puv.LaTrongNguyenPhong = 1 AND puv.SoGiuongKhongPhanBiet >= @SoNguoiCanXep)
+                    (puv.LaTrongNguyenPhong = 1 AND puv.SoGiuongKhongPhanBiet > 0)
                     OR (@SoNam > 0 AND puv.SoGiuongNam > 0)
                     OR (@SoNu > 0 AND puv.SoGiuongNu > 0)
+                    OR (puv.LaTrongNguyenPhong = 0 AND puv.SoGiuongKhongPhanBiet > 0)
                 )
             )
     )

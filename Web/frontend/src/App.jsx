@@ -17,6 +17,7 @@ import KhachHangPortalPage from './pages/khachHang/KhachHangPortalPage.jsx';
 import NhanVienSalePage from './pages/nhanVienSale/NhanVienSalePage.jsx';
 import NhanVienQuanLyPage from './pages/nhanVienQuanLy/NhanVienQuanLyPage.jsx';
 import NhanVienKeToanPage from './pages/nhanVienKeToan/NhanVienKeToanPage.jsx';
+import AdminPage from './pages/admin/AdminPage.jsx';
 
 function LoadingScreen() {
   return <div className="auth-loading">Đang kiểm tra phiên đăng nhập...</div>;
@@ -116,6 +117,16 @@ export default function App() {
           <ProtectedRoute>
             <EmployeePositionRoute position="Kế toán">
               <NhanVienKeToanPage />
+            </EmployeePositionRoute>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/nhan-vien-admin"
+        element={(
+          <ProtectedRoute>
+            <EmployeePositionRoute position="Admin">
+              <AdminPage />
             </EmployeePositionRoute>
           </ProtectedRoute>
         )}

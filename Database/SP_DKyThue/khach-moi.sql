@@ -257,6 +257,7 @@ BEGIN
         lxp.GhiChu AS ghiChu,
         pdk.MaNhanVienSale AS maNhanVienSale,
         ndSale.HoTen AS tenNhanVienSale,
+        ndSale.SDT AS sdtNhanVienSale,
         phong.phongXem
     FROM dbo.LichXemPhong AS lxp
     INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
@@ -302,7 +303,8 @@ BEGIN
         lxp.TrangThai AS trangThai,
         lxp.GhiChu AS ghiChu,
         pdk.MaNhanVienSale AS maNhanVienSale,
-        ndSale.HoTen AS tenNhanVienSale
+        ndSale.HoTen AS tenNhanVienSale,
+        ndSale.SDT AS sdtNhanVienSale
     FROM dbo.LichXemPhong AS lxp
     INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
     LEFT JOIN dbo.NguoiDung AS ndSale ON ndSale.MaNguoiDung = pdk.MaNhanVienSale
@@ -372,8 +374,56 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM dbo.KhachHang WHERE MaKhachHang = @KhachHangId)
         THROW 50101, N'Không tìm thấy khách hàng.', 1;
 
-    IF EXISTS (SELECT 1 FROM dbo.PhieuDangKy WHERE MaKhachHang = @KhachHangId AND TrangThai = N'Chờ tiếp nhận')
-        THROW 50102, N'Bạn đang có phiếu đăng ký chờ tiếp nhận. Vui lòng đợi xử lý trước khi gửi yêu cầu mới.', 1;
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.HopDongThue
+        WHERE MaKhachHang = @KhachHangId
+          AND TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
+    )
+        THROW 50102, N'Bạn đang có hợp đồng thuê chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi hợp đồng kết thúc.', 1;
+
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.PhieuDatCoc AS pdc
+        WHERE pdc.MaKhachHang = @KhachHangId
+          AND pdc.TrangThaiCoc <> N'Đã hủy'
+          AND pdc.TrangThaiThanhToan <> N'Hết hạn'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.HopDongThue AS hd
+              WHERE hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+                AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+          )
+    )
+        THROW 50102, N'Bạn đang có phiếu đặt cọc chưa kết thúc. Không thể tạo phiếu đăng ký mới.', 1;
+
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.PhieuDangKy AS pdk
+        WHERE pdk.MaKhachHang = @KhachHangId
+          AND (
+              NOT EXISTS (
+                  SELECT 1
+                  FROM dbo.LichXemPhong AS lxpAny
+                  WHERE lxpAny.MaDangKy = pdk.MaDangKy
+              )
+              OR EXISTS (
+                  SELECT 1
+                  FROM dbo.LichXemPhong AS lxpActive
+                  WHERE lxpActive.MaDangKy = pdk.MaDangKy
+                    AND lxpActive.TrangThai <> N'Đã hủy'
+              )
+          )
+          AND pdk.TrangThai <> N'Từ chối'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.PhieuDatCoc AS pdc
+              INNER JOIN dbo.HopDongThue AS hd ON hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+              WHERE pdc.MaPhieuYeuCauDangKy = pdk.MaDangKy
+                AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+          )
+    )
+        THROW 50102, N'Bạn đang có phiếu đăng ký chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi luồng thuê hiện tại kết thúc.', 1;
 
     SET @KhuVucMongMuon = NULLIF(LTRIM(RTRIM(@KhuVucMongMuon)), N'');
     SET @LoaiPhongYeuCau = NULLIF(LTRIM(RTRIM(@LoaiPhongYeuCau)), N'');
@@ -390,6 +440,9 @@ BEGIN
         THROW 50104, N'Vui lòng nhập đầy đủ thông tin nhu cầu thuê.', 1;
 
     -- Update thông tin cá nhân nếu có truyền vào
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
     UPDATE dbo.NguoiDung
     SET HoTen = ISNULL(NULLIF(LTRIM(RTRIM(@HoTenKhach)), N''), HoTen),
         NgaySinh = ISNULL(@NgaySinhKhach, NgaySinh),
@@ -444,9 +497,6 @@ BEGIN
         CASE WHEN NULLIF(@PhongQuanTam, N'') IS NULL THEN N'' ELSE CONCAT(N'Phòng quan tâm: ', @PhongQuanTam, N'. ') END,
         COALESCE(@GhiChu, N'')
     );
-
-    BEGIN TRY
-        BEGIN TRANSACTION;
 
         SELECT @SoThuTu = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaDangKy, 3, 4))), 0) + 1
         FROM dbo.PhieuDangKy WITH (UPDLOCK, HOLDLOCK)
@@ -512,12 +562,18 @@ BEGIN
 
     -- Kiểm tra thời gian: Chỉ cho phép yêu cầu nếu còn >= 1 tiếng so với lịch hẹn
     DECLARE @ThoiGianHen DATETIME;
-    SELECT @ThoiGianHen = ThoiGianHen 
+    DECLARE @TrangThaiHienTai NVARCHAR(30);
+    SELECT
+        @ThoiGianHen = ThoiGianHen,
+        @TrangThaiHienTai = TrangThai
     FROM dbo.LichXemPhong 
     WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich;
 
-    IF DATEDIFF(MINUTE, GETDATE(), @ThoiGianHen) < 60
-        THROW 50107, N'Lịch hẹn sẽ diễn ra trong chưa tới 1 giờ. Vui lòng liên hệ trực tiếp nhân viên để được hỗ trợ.', 1;
+    IF @TrangThaiHienTai <> N'Chờ xem'
+        THROW 50107, N'Chỉ được gửi yêu cầu điều chỉnh lịch đang chờ xem.', 1;
+
+    IF DATEDIFF(MINUTE, GETDATE(), @ThoiGianHen) < 120
+        THROW 50107, N'Lịch hẹn sẽ diễn ra trong chưa tới 2 giờ. Vui lòng liên hệ trực tiếp nhân viên để được hỗ trợ.', 1;
 
     DECLARE @GhiChuKhach NVARCHAR(MAX) = N'';
 
