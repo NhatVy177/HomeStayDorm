@@ -39,3 +39,6 @@ build/
 logic_tinh_tien*.md
 uc_*.md
 de_cuong*.md
+
+
+Web/backend/*.cjs

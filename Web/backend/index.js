@@ -22,6 +22,7 @@ import khachMoiRoutes from './routes/khachMoi.routes.js';
 import trangChuRoutes from './routes/trangChu.routes.js';
 import doiSoatRoutes from './routes/doiSoat.routes.js';
 import { startHoaDonQuaHanScheduler } from './services/hoaDonQuaHan.service.js';
+import hopDongRoutes from './routes/hopDong.routes.js';
 
 // Load bien moi truong trong file .env
 dotenv.config();
@@ -73,6 +74,7 @@ app.use('/api/cap-nhat-tra-phong', requireAuth, capNhatTraPhongRoutes);
 app.use('/api/sua-chua-bao-tri', requireAuth, suaChuaBaoTriRoutes);
 app.use('/api/khach-moi', requireAuth, khachMoiRoutes);
 app.use('/api/accountant/doi-soat', requireAuth, doiSoatRoutes);
+app.use('/api/hop-dong', requireAuth, hopDongRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

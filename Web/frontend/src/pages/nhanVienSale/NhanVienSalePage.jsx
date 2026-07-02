@@ -11,6 +11,7 @@ import LapHopDongTab from './LapHopDongTab.jsx';
 import KhachHangTab from './KhachHangTab.jsx';
 import TraCuuPhongTab from './TraCuuPhongTab.jsx';
 import DangKyTraPhongTab from './DangKyTraPhongTab.jsx';
+import NhanPhongTab from './NhanPhongTab.jsx';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 
 function Brand() {
@@ -52,6 +53,7 @@ export default function NhanVienSalePage() {
     { id: 'tra-cuu', label: 'Kiểm tra phòng/giường', icon: 'meeting_room' },
     { id: 'lich-xem', label: 'Lịch xem phòng', icon: 'pending_actions' },
     { id: 'dat-coc', label: 'Đặt cọc', icon: 'account_balance_wallet' },
+    { id: 'nhan-phong', label: 'Ghi nhận cư trú', icon: 'badge' },
     { id: 'hop-dong-thue', label: 'Hợp đồng thuê', icon: 'article' },
     { id: 'tra-phong', label: 'Trả phòng', icon: 'logout' },
     { id: 'khach-hang', label: 'Khách hàng', icon: 'person' }
@@ -128,6 +130,7 @@ export default function NhanVienSalePage() {
           {activeTab === 'tra-cuu' && <TraCuuPhongTab />}
           {activeTab === 'lich-xem' && <LichXemPhongTab onNavigate={setActiveTab} />}
           {activeTab === 'dat-coc' && <DatCocTab />}
+          {activeTab === 'nhan-phong' && <NhanPhongTab />}
           {activeTab === 'hop-dong-thue' && <LapHopDongTab />}
           {activeTab === 'tra-phong' && <DangKyTraPhongTab />}
           {activeTab === 'khach-hang' && <KhachHangTab />}

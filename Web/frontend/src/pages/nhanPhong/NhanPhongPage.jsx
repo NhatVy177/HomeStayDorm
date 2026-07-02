@@ -5,7 +5,7 @@ export default function NhanPhongPage() {
     <section>
       <PageHeader
         title="Quản lý nhận phòng"
-        description="Cập nhật cư trú, lập hợp đồng thuê, ghi nhận thu đầu kỳ và bàn giao phòng/giường."
+        description="Ghi nhận thông tin cư trú, lập hợp đồng thuê, ghi nhận thu đầu kỳ và bàn giao phòng/giường."
       />
 
       <div className="card">
