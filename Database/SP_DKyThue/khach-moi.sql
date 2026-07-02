@@ -401,6 +401,19 @@ BEGIN
         SELECT 1
         FROM dbo.PhieuDangKy AS pdk
         WHERE pdk.MaKhachHang = @KhachHangId
+          AND (
+              NOT EXISTS (
+                  SELECT 1
+                  FROM dbo.LichXemPhong AS lxpAny
+                  WHERE lxpAny.MaDangKy = pdk.MaDangKy
+              )
+              OR EXISTS (
+                  SELECT 1
+                  FROM dbo.LichXemPhong AS lxpActive
+                  WHERE lxpActive.MaDangKy = pdk.MaDangKy
+                    AND lxpActive.TrangThai <> N'Đã hủy'
+              )
+          )
           AND pdk.TrangThai <> N'Từ chối'
           AND NOT EXISTS (
               SELECT 1
@@ -427,6 +440,9 @@ BEGIN
         THROW 50104, N'Vui lòng nhập đầy đủ thông tin nhu cầu thuê.', 1;
 
     -- Update thông tin cá nhân nếu có truyền vào
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
     UPDATE dbo.NguoiDung
     SET HoTen = ISNULL(NULLIF(LTRIM(RTRIM(@HoTenKhach)), N''), HoTen),
         NgaySinh = ISNULL(@NgaySinhKhach, NgaySinh),
@@ -481,9 +497,6 @@ BEGIN
         CASE WHEN NULLIF(@PhongQuanTam, N'') IS NULL THEN N'' ELSE CONCAT(N'Phòng quan tâm: ', @PhongQuanTam, N'. ') END,
         COALESCE(@GhiChu, N'')
     );
-
-    BEGIN TRY
-        BEGIN TRANSACTION;
 
         SELECT @SoThuTu = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaDangKy, 3, 4))), 0) + 1
         FROM dbo.PhieuDangKy WITH (UPDLOCK, HOLDLOCK)
@@ -549,12 +562,18 @@ BEGIN
 
     -- Kiểm tra thời gian: Chỉ cho phép yêu cầu nếu còn >= 1 tiếng so với lịch hẹn
     DECLARE @ThoiGianHen DATETIME;
-    SELECT @ThoiGianHen = ThoiGianHen 
+    DECLARE @TrangThaiHienTai NVARCHAR(30);
+    SELECT
+        @ThoiGianHen = ThoiGianHen,
+        @TrangThaiHienTai = TrangThai
     FROM dbo.LichXemPhong 
     WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich;
 
-    IF DATEDIFF(MINUTE, GETDATE(), @ThoiGianHen) < 60
-        THROW 50107, N'Lịch hẹn sẽ diễn ra trong chưa tới 1 giờ. Vui lòng liên hệ trực tiếp nhân viên để được hỗ trợ.', 1;
+    IF @TrangThaiHienTai <> N'Chờ xem'
+        THROW 50107, N'Chỉ được gửi yêu cầu điều chỉnh lịch đang chờ xem.', 1;
+
+    IF DATEDIFF(MINUTE, GETDATE(), @ThoiGianHen) < 120
+        THROW 50107, N'Lịch hẹn sẽ diễn ra trong chưa tới 2 giờ. Vui lòng liên hệ trực tiếp nhân viên để được hỗ trợ.', 1;
 
     DECLARE @GhiChuKhach NVARCHAR(MAX) = N'';
 

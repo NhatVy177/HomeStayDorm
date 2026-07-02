@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FormInput from '../../components/common/FormInput.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
+import { authApi } from './auth.api.js';
 
 const initialForm = {
   tenDangNhap: '',
@@ -20,9 +21,39 @@ export default function DangKyPage() {
   const [formData, setFormData] = useState(initialForm);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneCheck, setPhoneCheck] = useState(null);
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+
+  useEffect(() => {
+    const sdt = formData.soDienThoai;
+    setPhoneCheck(null);
+    if (sdt.length !== 10) return undefined;
+
+    let alive = true;
+    setIsCheckingPhone(true);
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await authApi.kiemTraSoDienThoai(sdt);
+        if (alive) setPhoneCheck(data);
+      } catch (requestError) {
+        if (alive) setPhoneCheck({ error: requestError.response?.data?.message || 'Không thể kiểm tra SĐT lúc này.' });
+      } finally {
+        if (alive) setIsCheckingPhone(false);
+      }
+    }, 350);
+
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [formData.soDienThoai]);
 
   function updateField(event) {
-    setFormData({ ...formData, [event.target.name]: event.target.value });
+    const { name, value } = event.target;
+    setFormData({
+      ...formData,
+      [name]: name === 'soDienThoai' ? value.replace(/\D/g, '').slice(0, 10) : value
+    });
   }
 
   async function handleSubmit(event) {
@@ -31,6 +62,16 @@ export default function DangKyPage() {
 
     if (formData.matKhau !== formData.xacNhanMatKhau) {
       setError('Mat khau xac nhan khong khop');
+      return;
+    }
+
+    if (!/^\d{10}$/.test(formData.soDienThoai)) {
+      setError('Số điện thoại phải có đúng 10 chữ số.');
+      return;
+    }
+
+    if (phoneCheck?.daCoTaiKhoan) {
+      setError('Số điện thoại này đã được liên kết với một tài khoản. Vui lòng đăng nhập.');
       return;
     }
 
@@ -147,9 +188,19 @@ export default function DangKyPage() {
                   value={formData.soDienThoai}
                   onChange={updateField}
                   placeholder="0901234567"
+                  inputMode="numeric"
+                  maxLength={10}
                   required
                 />
               </div>
+              {(isCheckingPhone || phoneCheck?.thongBao || phoneCheck?.error) && (
+                <p
+                  className={`auth-phone-check ${phoneCheck?.daCoTaiKhoan || phoneCheck?.error ? 'is-error' : 'is-linked'}`}
+                  role="status"
+                >
+                  {isCheckingPhone ? 'Đang kiểm tra số điện thoại...' : (phoneCheck?.error || phoneCheck?.thongBao)}
+                </p>
+              )}
               <div className="auth-row">
                 <FormInput
                   label="Mật khẩu"

@@ -98,6 +98,19 @@ async function getActiveRentFlow(khachHangId) {
         3 AS thuTu
       FROM dbo.PhieuDangKy AS pdk
       WHERE pdk.MaKhachHang = @KhachHangId
+        AND (
+          NOT EXISTS (
+            SELECT 1
+            FROM dbo.LichXemPhong AS lxpAny
+            WHERE lxpAny.MaDangKy = pdk.MaDangKy
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM dbo.LichXemPhong AS lxpActive
+            WHERE lxpActive.MaDangKy = pdk.MaDangKy
+              AND lxpActive.TrangThai <> N'Đã hủy'
+          )
+        )
         AND pdk.TrangThai <> N'Từ chối'
         AND NOT EXISTS (
           SELECT 1
@@ -122,6 +135,51 @@ async function assertCanCreateRentRegistration(khachHangId) {
       `${ACTIVE_RENT_FLOW_MESSAGE} Đang tồn tại ${activeFlow.loai} ${activeFlow.maThamChieu} (${activeFlow.trangThai}).`,
       409
     );
+  }
+}
+
+function assertContactFormat(data = {}) {
+  const phone = String(data.soDienThoai || '').trim();
+  const cccd = String(data.cccd || '').trim();
+
+  if (phone && !/^\d{10}$/.test(phone)) {
+    throw createServiceError('Số điện thoại phải có đúng 10 chữ số.');
+  }
+  if (cccd && !/^\d{12}$/.test(cccd)) {
+    throw createServiceError('CCCD phải có đúng 12 chữ số.');
+  }
+}
+
+async function assertUniqueCustomerContact(data = {}, khachHangId) {
+  const phone = String(data.soDienThoai || '').trim() || null;
+  const cccd = String(data.cccd || '').trim() || null;
+  if (!phone && !cccd) return;
+
+  const result = await executeQuery(`
+    SELECT TOP (1)
+      CASE
+        WHEN @SDT IS NOT NULL AND nd.SDT = @SDT THEN N'SDT'
+        WHEN @CCCD IS NOT NULL AND kh.CCCD = @CCCD THEN N'CCCD'
+      END AS duplicateField
+    FROM dbo.KhachHang AS kh
+    INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = kh.MaKhachHang
+    WHERE kh.MaKhachHang <> @KhachHangId
+      AND (
+        (@SDT IS NOT NULL AND nd.SDT = @SDT)
+        OR (@CCCD IS NOT NULL AND kh.CCCD = @CCCD)
+      );
+  `, [
+    { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
+    { name: 'SDT', type: sql.VarChar(20), value: phone },
+    { name: 'CCCD', type: sql.VarChar(20), value: cccd }
+  ]);
+
+  const duplicateField = result.recordset[0]?.duplicateField;
+  if (duplicateField === 'SDT') {
+    throw createServiceError('Số điện thoại đã tồn tại trong hồ sơ khách hàng khác.', 409);
+  }
+  if (duplicateField === 'CCCD') {
+    throw createServiceError('CCCD đã tồn tại trong hồ sơ khách hàng khác.', 409);
   }
 }
 
@@ -161,7 +219,35 @@ async function getProfiles(khachHangId) {
   const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachHoSo', [
     { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId }
   ]);
-  return result.recordset;
+  const cancelledResult = await executeQuery(`
+    SELECT pdk.MaDangKy
+    FROM dbo.PhieuDangKy AS pdk
+    WHERE pdk.MaKhachHang = @KhachHangId
+      AND pdk.TrangThai = N'Từ chối'
+      AND EXISTS (
+        SELECT 1
+        FROM dbo.LichXemPhong AS lxpAny
+        WHERE lxpAny.MaDangKy = pdk.MaDangKy
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM dbo.LichXemPhong AS lxpActive
+        WHERE lxpActive.MaDangKy = pdk.MaDangKy
+          AND lxpActive.TrangThai <> N'Đã hủy'
+      );
+  `, [
+    { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId }
+  ]);
+  const cancelledIds = new Set(cancelledResult.recordset.map((row) => row.MaDangKy));
+
+  return result.recordset.map((row) => {
+    const biHuyDoTatCaLich = cancelledIds.has(row.maDangKy);
+    return {
+      ...row,
+      biHuyDoTatCaLich,
+      trangThaiHienThi: biHuyDoTatCaLich ? 'Hủy' : row.trangThai
+    };
+  });
 }
 
 async function getSchedules(khachHangId) {
@@ -209,12 +295,14 @@ export async function createHoSo(user, data = {}) {
   const khachHangId = requireCustomer(user);
   const soNguoiO = Number(data.soNguoiO || 1);
   const ngayDuKienVaoO = data.ngayDuKienVaoO || null;
+  assertContactFormat(data);
 
   if (!ngayDuKienVaoO || !Number.isInteger(soNguoiO) || soNguoiO < 1) {
     throw createServiceError('Vui long nhap ngay du kien va so nguoi o');
   }
 
   await assertCanCreateRentRegistration(khachHangId);
+  await assertUniqueCustomerContact(data, khachHangId);
 
   try {
     let finalGhiChu = data.ghiChu || '';
@@ -278,6 +366,37 @@ export async function getHoSoDetail(user, maDangKy) {
         pdk.ThoiHanThue,
         pdk.YeuCauKhac AS ghiChu,
         pdk.TrangThai,
+        CAST(CASE
+          WHEN pdk.TrangThai = N'Từ chối'
+            AND EXISTS (
+              SELECT 1
+              FROM dbo.LichXemPhong AS lxpAny
+              WHERE lxpAny.MaDangKy = pdk.MaDangKy
+            )
+            AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.LichXemPhong AS lxpActive
+              WHERE lxpActive.MaDangKy = pdk.MaDangKy
+                AND lxpActive.TrangThai <> N'Đã hủy'
+            )
+          THEN 1 ELSE 0
+        END AS bit) AS biHuyDoTatCaLich,
+        CASE
+          WHEN pdk.TrangThai = N'Từ chối'
+            AND EXISTS (
+              SELECT 1
+              FROM dbo.LichXemPhong AS lxpAny
+              WHERE lxpAny.MaDangKy = pdk.MaDangKy
+            )
+            AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.LichXemPhong AS lxpActive
+              WHERE lxpActive.MaDangKy = pdk.MaDangKy
+                AND lxpActive.TrangThai <> N'Đã hủy'
+            )
+          THEN N'Hủy'
+          ELSE pdk.TrangThai
+        END AS trangThaiHienThi,
         nd.HoTen AS hoTen,
         nd.NgaySinh AS ngaySinh,
         nd.GioiTinh AS gioiTinhKhach,
@@ -299,6 +418,7 @@ export async function getHoSoDetail(user, maDangKy) {
 
 export async function updateHoSo(user, maDangKy, data = {}) {
   const khachHangId = requireCustomer(user);
+  assertContactFormat(data);
   if (!maDangKy) throw createServiceError('Mã đăng ký không hợp lệ', 400);
 
   const pool = await getPool();
@@ -314,6 +434,8 @@ export async function updateHoSo(user, maDangKy, data = {}) {
   }
 
 
+
+  await assertUniqueCustomerContact(data, khachHangId);
 
   const transaction = new sql.Transaction(pool);
   await transaction.begin();

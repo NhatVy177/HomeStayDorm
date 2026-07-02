@@ -67,6 +67,19 @@ function isWholeRoomOption(room) {
   return ['nguyên căn', 'nguyên phòng'].includes(normalizeText(room.loaiThue));
 }
 
+function getTomorrowDateInputValue() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function formatGenderSlotText(male, female) {
+  const parts = [];
+  if (male > 0) parts.push(`${male} nam`);
+  if (female > 0) parts.push(`${female} nữ`);
+  return parts.join(' và ');
+}
+
 function evaluateRoomSelection(selectedRooms, profile) {
   const total = Math.max(1, Number(profile?.soNguoiO || profile?.soNguoiDuKienO || 1));
   const male = Math.max(0, Number(profile?.soNam || 0));
@@ -99,12 +112,13 @@ function evaluateRoomSelection(selectedRooms, profile) {
     const missingMale = Math.max(0, male - maleSlots);
     const missingFemale = Math.max(0, female - femaleSlots);
     const valid = missingMale + missingFemale <= neutralSlots;
+    const genderSlotText = formatGenderSlotText(male, female);
     return {
       valid,
       mode: valid ? 'Ghép giường' : '',
       message: valid
-        ? `Đã đủ chỗ ghép cho ${male} nam và ${female} nữ.`
-        : `Cần chọn đủ chỗ cho ${male} nam và ${female} nữ.`
+        ? `Đã đủ chỗ ghép cho ${genderSlotText}.`
+        : `Cần chọn đủ chỗ cho ${genderSlotText}.`
     };
   }
 
@@ -161,6 +175,7 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
     () => evaluateRoomSelection(selectedRooms, profile),
     [selectedRooms, profile]
   );
+  const minScheduleDate = useMemo(() => getTomorrowDateInputValue(), []);
 
   const toggleRoom = (roomId) => {
     setSelectedRoomIds((current) => (
@@ -172,6 +187,14 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
 
   const handleCreateSchedule = async () => {
     if (!formDate || !formTime || !selectionPlan.valid) return;
+    if (formDate < minScheduleDate) {
+      alert('Ngày xem phòng phải sau ngày hiện tại.');
+      return;
+    }
+    if (formTime < '07:00' || formTime > '17:00') {
+      alert('Giờ xem phòng chỉ được chọn từ 07:00 đến 17:00.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -358,11 +381,11 @@ export default function LapLichChoHoSo({ profile, onBack, onCreated }) {
             <div className="ktp-grid-2" style={{ gap: '18px' }}>
               <div>
                 <label className="ktp-filter-label">Ngày xem phòng</label>
-                <input className="ktp-input" type="date" value={formDate} onChange={(event) => setFormDate(event.target.value)} />
+                <input className="ktp-input" type="date" min={minScheduleDate} value={formDate} onChange={(event) => setFormDate(event.target.value)} />
               </div>
               <div>
                 <label className="ktp-filter-label">Giờ hẹn</label>
-                <input className="ktp-input" type="time" value={formTime} onChange={(event) => setFormTime(event.target.value)} />
+                <input className="ktp-input" type="time" min="07:00" max="17:00" step="900" value={formTime} onChange={(event) => setFormTime(event.target.value)} />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label className="ktp-filter-label">Ghi chú</label>

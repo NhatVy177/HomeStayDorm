@@ -475,6 +475,25 @@ select {
   width: 100%;
 }
 
+.auth-phone-check {
+  border-left: 3px solid var(--auth-green);
+  color: var(--auth-green-dark);
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin: -4px 0 12px;
+  padding: 8px 10px;
+}
+
+.auth-phone-check.is-linked {
+  background: var(--auth-green-soft);
+}
+
+.auth-phone-check.is-error {
+  background: #fff5f5;
+  border-left-color: #c53030;
+  color: #c53030;
+}
+
 .auth-switch {
   color: var(--auth-muted);
   font-size: 13.5px;

@@ -86,6 +86,19 @@ async function getActiveRentFlow(khachHangId) {
         3 AS thuTu
       FROM dbo.PhieuDangKy AS pdk
       WHERE pdk.MaKhachHang = @KhachHangId
+        AND (
+          NOT EXISTS (
+            SELECT 1
+            FROM dbo.LichXemPhong AS lxpAny
+            WHERE lxpAny.MaDangKy = pdk.MaDangKy
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM dbo.LichXemPhong AS lxpActive
+            WHERE lxpActive.MaDangKy = pdk.MaDangKy
+              AND lxpActive.TrangThai <> N'Đã hủy'
+          )
+        )
         AND pdk.TrangThai <> N'Từ chối'
         AND NOT EXISTS (
           SELECT 1
@@ -168,7 +181,33 @@ export async function getHoSoDangKy(filter = {}) {
     { name: 'NhanVienSaleId', type: sql.VarChar(6), value: filter.nhanVienSaleId || null },
     { name: 'KhachHangId', type: sql.VarChar(6), value: filter.khachHangId || null }
   ]);
-  return result.recordset;
+
+  const cancelledResult = await executeQuery(`
+    SELECT pdk.MaDangKy
+    FROM dbo.PhieuDangKy AS pdk
+    WHERE pdk.TrangThai = N'Từ chối'
+      AND EXISTS (
+        SELECT 1
+        FROM dbo.LichXemPhong AS lxpAny
+        WHERE lxpAny.MaDangKy = pdk.MaDangKy
+      )
+      AND NOT EXISTS (
+        SELECT 1
+        FROM dbo.LichXemPhong AS lxpActive
+        WHERE lxpActive.MaDangKy = pdk.MaDangKy
+          AND lxpActive.TrangThai <> N'Đã hủy'
+      );
+  `);
+  const cancelledIds = new Set(cancelledResult.recordset.map((row) => row.MaDangKy));
+
+  return result.recordset.map((row) => {
+    const biHuyDoTatCaLich = cancelledIds.has(row.maDangKy);
+    return {
+      ...row,
+      biHuyDoTatCaLich,
+      trangThaiHienThi: biHuyDoTatCaLich ? 'Hủy' : row.trangThai
+    };
+  });
 }
 
 export async function kiemTraKhachHangTonTai(filter = {}) {
@@ -195,22 +234,50 @@ export async function kiemTraKhachHangTonTai(filter = {}) {
 
   const base = result.recordset[0] || { sdtTonTai: false, cccdTonTai: false };
   const customer = await executeQuery(`
-    SELECT TOP (1) kh.MaKhachHang
+    SELECT TOP (1)
+      kh.MaKhachHang,
+      nd.HoTen,
+      nd.NgaySinh,
+      nd.GioiTinh,
+      nd.SDT,
+      nd.Email,
+      kh.QuocTich,
+      kh.CCCD
     FROM dbo.KhachHang AS kh
     INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = kh.MaKhachHang
-    WHERE (@SDT IS NOT NULL AND nd.SDT = @SDT)
-       OR (@CCCD IS NOT NULL AND kh.CCCD = @CCCD)
+    WHERE @SDT IS NOT NULL AND nd.SDT = @SDT
   `, [
-    { name: 'SDT', type: sql.VarChar(20), value: sdt || null },
-    { name: 'CCCD', type: sql.VarChar(20), value: cccd || null }
+    { name: 'SDT', type: sql.VarChar(20), value: sdt || null }
   ]);
 
-  const maKhachHang = customer.recordset[0]?.MaKhachHang || null;
+  const matchedCustomer = customer.recordset[0] || null;
+  const maKhachHang = matchedCustomer?.MaKhachHang || null;
+  const cccdOwner = cccd ? await executeQuery(`
+    SELECT TOP (1) MaKhachHang
+    FROM dbo.KhachHang
+    WHERE CCCD = @CCCD
+  `, [
+    { name: 'CCCD', type: sql.VarChar(20), value: cccd }
+  ]) : null;
+  const maKhachHangTheoCccd = cccdOwner?.recordset[0]?.MaKhachHang || null;
   const activeFlow = maKhachHang ? await getActiveRentFlow(maKhachHang) : null;
 
   return {
     ...base,
     maKhachHang,
+    khachHang: matchedCustomer ? {
+      maKhachHang,
+      hoTen: matchedCustomer.HoTen,
+      ngaySinh: matchedCustomer.NgaySinh,
+      gioiTinh: matchedCustomer.GioiTinh,
+      sdt: matchedCustomer.SDT,
+      email: matchedCustomer.Email,
+      quocTich: matchedCustomer.QuocTich,
+      cccd: matchedCustomer.CCCD
+    } : null,
+    cccdThuocKhachKhac: Boolean(
+      maKhachHangTheoCccd && (!maKhachHang || maKhachHangTheoCccd !== maKhachHang)
+    ),
     dangCoLuongThueDangHoatDong: Boolean(activeFlow),
     luongThueDangHoatDong: activeFlow || null,
     thongBao: activeFlow
@@ -363,15 +430,70 @@ export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
     const thoiHanThue = Number(data.thoiHanThue || data.thoiHan || 1);
     const mucGia = normalizeMoneyVnd(data.mucGiaToiDa ?? data.mucGiaDen ?? data.mucGia);
     const hinhThucThue = data.hinhThucThue || data.hinhThuc || null;
+    const sdt = String(data.sdt || '').trim();
+    const cccd = String(data.cccd || '').trim();
+
+    if (!/^\d{10}$/.test(sdt)) {
+      throw createServiceError('Số điện thoại phải có đúng 10 chữ số.');
+    }
+    if (!/^\d{12}$/.test(cccd)) {
+      throw createServiceError('CCCD phải có đúng 12 chữ số.');
+    }
+
+    const customerResult = await executeQuery(`
+      SELECT TOP (1) kh.MaKhachHang, kh.CCCD
+      FROM dbo.KhachHang AS kh
+      INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = kh.MaKhachHang
+      WHERE nd.SDT = @SDT
+        AND nd.LoaiNguoiDung = 'KhachHang'
+    `, [
+      { name: 'SDT', type: sql.VarChar(20), value: sdt || null }
+    ]);
+    const existingCustomer = customerResult.recordset[0] || null;
+
+    if (existingCustomer) {
+      if (String(existingCustomer.CCCD || '').trim() !== cccd) {
+        throw createServiceError('CCCD không khớp với khách hàng đã đăng ký bằng SĐT này.', 409);
+      }
+
+      await assertCanCreateRentRegistration(existingCustomer.MaKhachHang);
+      const result = await executeProcedure('dbo.SP_TaoHoSoDangKy', [
+        { name: 'KhachHangId', type: sql.NVarChar(20), value: existingCustomer.MaKhachHang },
+        { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
+        { name: 'SoNamInput', type: sql.Int, value: data.soNam || 0 },
+        { name: 'SoNuInput', type: sql.Int, value: data.soNu || 0 },
+        { name: 'NgayDuKienVaoO', type: sql.Date, value: data.ngayVao || data.ngayDuKienVaoO },
+        { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || data.yeuCau || null },
+        { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || data.khuVuc },
+        { name: 'LoaiPhongYeuCau', type: sql.NVarChar(200), value: data.loaiPhongYeuCau || data.loaiPhong },
+        { name: 'MucGiaToiDa', type: sql.Decimal(18, 2), value: mucGia },
+        { name: 'ThoiHanThue', type: sql.Int, value: thoiHanThue },
+        { name: 'GioiTinh', type: sql.NVarChar(10), value: data.gioiTinhO || data.gioiTinh }
+      ]);
+      const registration = result.recordset[0] || null;
+
+      if (registration?.maDangKy) {
+        await executeQuery(`
+          UPDATE dbo.PhieuDangKy
+          SET MaNhanVienSale = @NhanVienSaleId
+          WHERE MaDangKy = @MaDangKy
+        `, [
+          { name: 'NhanVienSaleId', type: sql.VarChar(6), value: nhanVienSaleId },
+          { name: 'MaDangKy', type: sql.VarChar(6), value: registration.maDangKy }
+        ]);
+      }
+
+      return registration ? { ...registration, maNhanVienSale: nhanVienSaleId } : null;
+    }
 
     const result = await executeProcedure('dbo.SP_TaoHoSoKhachVangLai', [
       { name: 'HoTen', type: sql.NVarChar(100), value: data.hoTen },
       { name: 'NgaySinh', type: sql.Date, value: data.ngaySinh },
       { name: 'GioiTinh', type: sql.NVarChar(5), value: data.gioiTinhO || data.gioiTinh },
-      { name: 'SDT', type: sql.VarChar(20), value: data.sdt },
+      { name: 'SDT', type: sql.VarChar(20), value: sdt },
       { name: 'Email', type: sql.VarChar(100), value: data.email || null },
       { name: 'QuocTich', type: sql.NVarChar(50), value: data.quocTich || 'Việt Nam' },
-      { name: 'CCCD', type: sql.VarChar(20), value: data.cccd },
+      { name: 'CCCD', type: sql.VarChar(20), value: cccd },
       { name: 'HinhThucThue', type: sql.NVarChar(20), value: hinhThucThue },
       { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || data.khuVuc },
       { name: 'LoaiPhongYeuCau', type: sql.NVarChar(200), value: data.loaiPhongYeuCau || data.loaiPhong },

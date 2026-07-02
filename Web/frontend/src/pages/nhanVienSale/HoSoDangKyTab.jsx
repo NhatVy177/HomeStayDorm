@@ -119,6 +119,10 @@ function resolveAllowedArea(value) {
   return ALLOWED_RENT_AREAS.find((area) => getAreaAliases(area).includes(normalized)) || '';
 }
 
+function isSaleUser(user = {}) {
+  return (user?.vaiTro === 'NhanVien' && user?.chucVu === 'Sale') || user?.vaiTro === 'NhanVienSale';
+}
+
 function onlyDigits(value, maxLength) {
   return String(value || '').replace(/\D/g, '').slice(0, maxLength);
 }
@@ -254,6 +258,11 @@ function isPendingRegistration(reg) {
   return reg?.trangThai === 'Chờ tiếp nhận';
 }
 
+function getRegistrationDisplayStatus(reg = {}) {
+  if (reg?.biHuyDoTatCaLich) return 'Hủy';
+  return reg?.trangThaiHienThi || reg?.trangThai || '';
+}
+
 export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
   const { user } = useAuth();
   const [filterStatus, setFilterStatus] = useState('Chờ tiếp nhận');
@@ -306,9 +315,7 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
           ...current,
           sdt: data?.dangCoLuongThueDangHoatDong
             ? data.thongBao
-            : data?.sdtTonTai
-              ? 'SĐT đã tồn tại trong hồ sơ khách hàng.'
-              : ''
+            : ''
         }));
       } catch (err) {
         if (!alive) return;
@@ -330,21 +337,22 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
 
     setCreateDuplicateErrors((current) => ({ ...current, cccd: '' }));
     setCreateDuplicateChecking((current) => ({ ...current, cccd: false }));
-    if (cccd.length !== 12) return;
+    if (cccd.length !== 12 || createForm.sdt.length !== 10) return;
 
     let alive = true;
     setCreateDuplicateChecking((current) => ({ ...current, cccd: true }));
     const timer = setTimeout(async () => {
       try {
-        const { data } = await dangKyThueApi.kiemTraKhachHangTonTai({ cccd });
+        const { data } = await dangKyThueApi.kiemTraKhachHangTonTai({
+          sdt: createForm.sdt,
+          cccd
+        });
         if (!alive) return;
         setCreateDuplicateErrors((current) => ({
           ...current,
-          cccd: data?.dangCoLuongThueDangHoatDong
-            ? data.thongBao
-            : data?.cccdTonTai
-              ? 'CCCD đã tồn tại trong hồ sơ khách hàng.'
-              : ''
+          cccd: data?.cccdThuocKhachKhac
+            ? 'CCCD đã thuộc một khách hàng có SĐT khác.'
+            : ''
         }));
       } catch (err) {
         if (!alive) return;
@@ -358,11 +366,11 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
       alive = false;
       clearTimeout(timer);
     };
-  }, [createForm.cccd, showCreateModal]);
+  }, [createForm.cccd, createForm.sdt, showCreateModal]);
 
   // Lọc theo chi nhánh
   const branchFilteredList = useMemo(() => {
-    if (user?.vaiTro !== 'NhanVienSale' || !user?.maChiNhanh) return list;
+    if (!isSaleUser(user) || !user?.maChiNhanh) return list;
 
     return list.filter((item) => areaBelongsToBranch(item.khuVucMongMuon, user.maChiNhanh));
   }, [list, user]);
@@ -370,14 +378,15 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
   const stats = {
     choTiepNhan: branchFilteredList.filter(x => x.trangThai === 'Chờ tiếp nhận').length,
     daTiepNhan: branchFilteredList.filter(x => x.trangThai === 'Đã tiếp nhận' || x.trangThai === 'Chấp nhận').length,
-    tuChoi: branchFilteredList.filter(x => x.trangThai === 'Từ chối').length
+    tuChoi: branchFilteredList.filter(x => getRegistrationDisplayStatus(x) === 'Từ chối').length,
+    huy: branchFilteredList.filter(x => getRegistrationDisplayStatus(x) === 'Hủy').length
   };
 
   const filteredList = filterStatus === 'Tất cả'
     ? branchFilteredList
     : branchFilteredList.filter(item => {
         if (filterStatus === 'Đã tiếp nhận') return item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận';
-        return item.trangThai === filterStatus;
+        return getRegistrationDisplayStatus(item) === filterStatus;
       });
 
   const fetchData = async () => {
@@ -625,6 +634,7 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
     : [];
   const selectedNeedsAreaConsultation = needsAreaConsultation(selectedReg?.khuVucMongMuon, user?.maChiNhanh);
   const selectedIsPending = isPendingRegistration(selectedReg);
+  const selectedDisplayStatus = getRegistrationDisplayStatus(selectedReg);
   const createSdtError = createErrors.sdt || createDuplicateErrors.sdt || getPhoneError(createForm.sdt);
   const createCccdError = createErrors.cccd || createDuplicateErrors.cccd || getCccdError(createForm.cccd);
 
@@ -636,7 +646,8 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
           {[
             { id: 'Chờ tiếp nhận', label: `Chờ tiếp nhận (${stats.choTiepNhan})` },
             { id: 'Đã tiếp nhận', label: `Đã tiếp nhận (${stats.daTiepNhan})` },
-            { id: 'Từ chối', label: `Từ chối (${stats.tuChoi})` }
+            { id: 'Từ chối', label: `Từ chối (${stats.tuChoi})` },
+            { id: 'Hủy', label: `Hủy (${stats.huy})` }
           ].map(tab => (
             <button
               key={tab.id}
@@ -688,6 +699,8 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
             <tbody>
               {filteredList.map(item => {
                 const itemIsPending = isPendingRegistration(item);
+                const itemDisplayStatus = getRegistrationDisplayStatus(item);
+                const itemIsRejectedOrCancelled = ['Từ chối', 'Hủy'].includes(itemDisplayStatus);
                 return (
                 <tr key={item.maDangKy}>
                   <td style={{ fontWeight: '600' }}>{item.maDangKy}</td>
@@ -712,7 +725,15 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
                   </td>
                   <td>{item.ngayDangKy ? new Date(item.ngayDangKy).toLocaleDateString('en-GB') : ''}</td>
                   <td className="text-center">
-                    <span className={`ktp-badge ${item.trangThai === 'Chờ tiếp nhận' ? 'ktp-badge-warning' : ((item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận') ? 'ktp-badge-success' : (item.trangThai === 'Từ chối' ? 'ktp-badge-danger' : 'ktp-badge-info'))}`} style={{ backgroundColor: (item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận') ? '#e8f5e9' : (item.trangThai === 'Từ chối' ? '#ffebee' : undefined), color: (item.trangThai === 'Đã tiếp nhận' || item.trangThai === 'Chấp nhận') ? '#2e7d32' : (item.trangThai === 'Từ chối' ? '#c62828' : undefined) }}>{item.trangThai}</span>
+                    <span
+                      className={`ktp-badge ${itemDisplayStatus === 'Chờ tiếp nhận' ? 'ktp-badge-warning' : ((itemDisplayStatus === 'Đã tiếp nhận' || itemDisplayStatus === 'Chấp nhận') ? 'ktp-badge-success' : (itemIsRejectedOrCancelled ? 'ktp-badge-danger' : 'ktp-badge-info'))}`}
+                      style={{
+                        backgroundColor: (itemDisplayStatus === 'Đã tiếp nhận' || itemDisplayStatus === 'Chấp nhận') ? '#e8f5e9' : (itemIsRejectedOrCancelled ? '#ffebee' : undefined),
+                        color: (itemDisplayStatus === 'Đã tiếp nhận' || itemDisplayStatus === 'Chấp nhận') ? '#2e7d32' : (itemIsRejectedOrCancelled ? '#c62828' : undefined)
+                      }}
+                    >
+                      {itemDisplayStatus}
+                    </span>
                   </td>
                   <td className="text-center">
                     <button
@@ -747,13 +768,13 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div
-                  className={`ktp-badge ${selectedReg.trangThai === 'Chờ tiếp nhận' ? 'ktp-badge-warning' : ((selectedReg.trangThai === 'Đã tiếp nhận' || selectedReg.trangThai === 'Chấp nhận') ? 'ktp-badge-success' : (selectedReg.trangThai === 'Từ chối' ? 'ktp-badge-danger' : 'ktp-badge-info'))}`}
+                  className={`ktp-badge ${selectedDisplayStatus === 'Chờ tiếp nhận' ? 'ktp-badge-warning' : ((selectedDisplayStatus === 'Đã tiếp nhận' || selectedDisplayStatus === 'Chấp nhận') ? 'ktp-badge-success' : (['Từ chối', 'Hủy'].includes(selectedDisplayStatus) ? 'ktp-badge-danger' : 'ktp-badge-info'))}`}
                   style={{
-                    backgroundColor: (selectedReg.trangThai === 'Đã tiếp nhận' || selectedReg.trangThai === 'Chấp nhận') ? '#e8f5e9' : (selectedReg.trangThai === 'Từ chối' ? '#ffebee' : undefined),
-                    color: (selectedReg.trangThai === 'Đã tiếp nhận' || selectedReg.trangThai === 'Chấp nhận') ? '#2e7d32' : (selectedReg.trangThai === 'Từ chối' ? '#c62828' : undefined)
+                    backgroundColor: (selectedDisplayStatus === 'Đã tiếp nhận' || selectedDisplayStatus === 'Chấp nhận') ? '#e8f5e9' : (['Từ chối', 'Hủy'].includes(selectedDisplayStatus) ? '#ffebee' : undefined),
+                    color: (selectedDisplayStatus === 'Đã tiếp nhận' || selectedDisplayStatus === 'Chấp nhận') ? '#2e7d32' : (['Từ chối', 'Hủy'].includes(selectedDisplayStatus) ? '#c62828' : undefined)
                   }}
                 >
-                  {selectedReg.trangThai}
+                  {selectedDisplayStatus}
                 </div>
                 <button className="ktp-modal-close" onClick={() => { setSelectedReg(null); setRoomResults(null); setShowAreaConfirmModal(false); }}><Icon name="close" /></button>
               </div>

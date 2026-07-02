@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { executeProcedure, sql } from '../database/connection.js';
+import { executeProcedure, executeQuery, sql } from '../database/connection.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 
 function getAuthSecret() {
@@ -84,7 +84,8 @@ function handleDatabaseError(error) {
     50002: 409,
     50003: 400,
     50004: 401,
-    50005: 401
+    50005: 401,
+    50006: 409
   });
 }
 
@@ -109,6 +110,10 @@ export async function dangKy(data = {}) {
     throw createServiceError('Gioi tinh khong hop le');
   }
 
+  if (!/^\d{10}$/.test(soDienThoai)) {
+    throw createServiceError('Số điện thoại phải có đúng 10 chữ số.');
+  }
+
   try {
     const result = await executeProcedure('dbo.SP_DangKy', [
       { name: 'TenDangNhap', type: sql.VarChar(50), value: tenDangNhap },
@@ -125,6 +130,43 @@ export async function dangKy(data = {}) {
   } catch (error) {
     handleDatabaseError(error);
   }
+}
+
+export async function kiemTraSoDienThoai(value) {
+  const soDienThoai = String(value || '').replace(/\D/g, '').slice(0, 10);
+  if (!/^\d{10}$/.test(soDienThoai)) {
+    throw createServiceError('Số điện thoại phải có đúng 10 chữ số.');
+  }
+
+  const result = await executeQuery(`
+    SELECT TOP (1)
+      nd.MaNguoiDung AS maKhachHang,
+      nd.HoTen AS hoTen,
+      CAST(CASE WHEN tk.MaNguoiDung IS NOT NULL THEN 1 ELSE 0 END AS bit) AS daCoTaiKhoan,
+      (SELECT COUNT(*) FROM dbo.PhieuDangKy pdk WHERE pdk.MaKhachHang = nd.MaNguoiDung) AS soPhieuDangKy
+    FROM dbo.NguoiDung nd
+    INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = nd.MaNguoiDung
+    LEFT JOIN dbo.TaiKhoan tk ON tk.MaNguoiDung = nd.MaNguoiDung
+    WHERE nd.SDT = @SDT
+      AND nd.LoaiNguoiDung = 'KhachHang'
+  `, [
+    { name: 'SDT', type: sql.VarChar(20), value: soDienThoai }
+  ]);
+  const customer = result.recordset[0] || null;
+
+  return {
+    tonTaiKhachHang: Boolean(customer),
+    daCoTaiKhoan: Boolean(customer?.daCoTaiKhoan),
+    maKhachHang: customer?.maKhachHang || null,
+    hoTen: customer?.hoTen || null,
+    soPhieuDangKy: Number(customer?.soPhieuDangKy || 0),
+    seLienKetDuLieu: Boolean(customer && !customer.daCoTaiKhoan),
+    thongBao: customer?.daCoTaiKhoan
+      ? 'Số điện thoại này đã được liên kết với một tài khoản.'
+      : customer
+        ? `Đã tìm thấy khách hàng${customer.soPhieuDangKy ? ` và ${customer.soPhieuDangKy} phiếu đăng ký` : ''}. Dữ liệu cũ sẽ được liên kết sau khi tạo tài khoản.`
+        : null
+  };
 }
 
 export async function dangNhap(data = {}) {

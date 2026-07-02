@@ -150,6 +150,19 @@ BEGIN
             SELECT 1
             FROM dbo.PhieuDangKy AS pdkLock WITH (UPDLOCK, HOLDLOCK)
             WHERE pdkLock.MaKhachHang = @KhachHangId
+              AND (
+                  NOT EXISTS (
+                      SELECT 1
+                      FROM dbo.LichXemPhong AS lxpAny
+                      WHERE lxpAny.MaDangKy = pdkLock.MaDangKy
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM dbo.LichXemPhong AS lxpActive
+                      WHERE lxpActive.MaDangKy = pdkLock.MaDangKy
+                        AND lxpActive.TrangThai <> N'Đã hủy'
+                  )
+              )
               AND pdkLock.TrangThai <> N'Từ chối'
               AND NOT EXISTS (
                   SELECT 1
@@ -451,42 +464,118 @@ BEGIN
     )
         THROW 50011, N'Không tìm thấy nhân viên Sale.', 1;
 
-    IF EXISTS (SELECT 1 FROM dbo.KhachHang WHERE CCCD = @CCCD)
-        THROW 50011, N'CCCD đã tồn tại trong hồ sơ khách hàng.', 1;
+    DECLARE @MaKhachHang VARCHAR(6);
 
-    IF EXISTS (SELECT 1 FROM dbo.NguoiDung WHERE SDT = @SDT AND LoaiNguoiDung = 'KhachHang')
-        THROW 50011, N'Số điện thoại đã tồn tại trong hồ sơ khách hàng.', 1;
+    SELECT TOP (1) @MaKhachHang = kh.MaKhachHang
+    FROM dbo.KhachHang AS kh
+    INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = kh.MaKhachHang
+    WHERE nd.SDT = @SDT
+      AND nd.LoaiNguoiDung = 'KhachHang';
+
+    IF @MaKhachHang IS NOT NULL
+       AND EXISTS (
+           SELECT 1
+           FROM dbo.KhachHang
+           WHERE MaKhachHang = @MaKhachHang
+             AND ISNULL(CCCD, '') <> @CCCD
+       )
+        THROW 50011, N'CCCD không khớp với khách hàng đã đăng ký bằng số điện thoại này.', 1;
+
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.KhachHang
+        WHERE CCCD = @CCCD
+          AND (@MaKhachHang IS NULL OR MaKhachHang <> @MaKhachHang)
+    )
+        THROW 50011, N'CCCD đã thuộc một khách hàng có số điện thoại khác.', 1;
 
     IF @Email IS NOT NULL
-       AND EXISTS (SELECT 1 FROM dbo.NguoiDung WHERE Email = @Email AND LoaiNguoiDung = 'KhachHang')
+       AND EXISTS (
+           SELECT 1
+           FROM dbo.NguoiDung
+           WHERE Email = @Email
+             AND LoaiNguoiDung = 'KhachHang'
+             AND (@MaKhachHang IS NULL OR MaNguoiDung <> @MaKhachHang)
+       )
         THROW 50011, N'Email đã tồn tại trong hồ sơ khách hàng.', 1;
 
     DECLARE @SoKhach INT;
-    DECLARE @MaKhachHang VARCHAR(6);
     DECLARE @SoDangKy INT;
     DECLARE @MaDangKy VARCHAR(6);
 
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        SELECT @SoKhach = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaNguoiDung, 3, 4))), 0) + 1
-        FROM dbo.NguoiDung WITH (UPDLOCK, HOLDLOCK)
-        WHERE MaNguoiDung LIKE 'KH[0-9][0-9][0-9][0-9]';
+        IF @MaKhachHang IS NULL
+        BEGIN
+            SELECT @SoKhach = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaNguoiDung, 3, 4))), 0) + 1
+            FROM dbo.NguoiDung WITH (UPDLOCK, HOLDLOCK)
+            WHERE MaNguoiDung LIKE 'KH[0-9][0-9][0-9][0-9]';
 
-        IF @SoKhach > 9999
-            THROW 50011, N'Không thể sinh thêm mã khách hàng mới.', 1;
+            IF @SoKhach > 9999
+                THROW 50011, N'Không thể sinh thêm mã khách hàng mới.', 1;
 
-        SET @MaKhachHang = CONCAT('KH', RIGHT(CONCAT('0000', @SoKhach), 4));
+            SET @MaKhachHang = CONCAT('KH', RIGHT(CONCAT('0000', @SoKhach), 4));
 
-        INSERT INTO dbo.NguoiDung (
-            MaNguoiDung, HoTen, NgaySinh, GioiTinh, SDT, Email, UrlAvt, LoaiNguoiDung
+            INSERT INTO dbo.NguoiDung (
+                MaNguoiDung, HoTen, NgaySinh, GioiTinh, SDT, Email, UrlAvt, LoaiNguoiDung
+            )
+            VALUES (
+                @MaKhachHang, @HoTen, @NgaySinh, @GioiTinh, @SDT, @Email, NULL, 'KhachHang'
+            );
+
+            INSERT INTO dbo.KhachHang (MaKhachHang, QuocTich, CCCD)
+            VALUES (@MaKhachHang, @QuocTich, @CCCD);
+        END;
+
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.HopDongThue WITH (UPDLOCK, HOLDLOCK)
+            WHERE MaKhachHang = @MaKhachHang
+              AND TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
         )
-        VALUES (
-            @MaKhachHang, @HoTen, @NgaySinh, @GioiTinh, @SDT, @Email, NULL, 'KhachHang'
-        );
+            THROW 50011, N'Khách hàng đang có hợp đồng thuê chưa kết thúc.', 1;
 
-        INSERT INTO dbo.KhachHang (MaKhachHang, QuocTich, CCCD)
-        VALUES (@MaKhachHang, @QuocTich, @CCCD);
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.PhieuDatCoc AS pdcLock WITH (UPDLOCK, HOLDLOCK)
+            WHERE pdcLock.MaKhachHang = @MaKhachHang
+              AND pdcLock.TrangThaiCoc <> N'Đã hủy'
+              AND pdcLock.TrangThaiThanhToan <> N'Hết hạn'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM dbo.HopDongThue AS hd
+                  WHERE hd.MaPhieuCoc = pdcLock.MaPhieuDatCoc
+                    AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+              )
+        )
+            THROW 50011, N'Khách hàng đang có phiếu đặt cọc chưa kết thúc.', 1;
+
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.PhieuDangKy AS pdkLock WITH (UPDLOCK, HOLDLOCK)
+            WHERE pdkLock.MaKhachHang = @MaKhachHang
+              AND (
+                  NOT EXISTS (
+                      SELECT 1 FROM dbo.LichXemPhong AS lxpAny
+                      WHERE lxpAny.MaDangKy = pdkLock.MaDangKy
+                  )
+                  OR EXISTS (
+                      SELECT 1 FROM dbo.LichXemPhong AS lxpActive
+                      WHERE lxpActive.MaDangKy = pdkLock.MaDangKy
+                        AND lxpActive.TrangThai <> N'Đã hủy'
+                  )
+              )
+              AND pdkLock.TrangThai <> N'Từ chối'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM dbo.PhieuDatCoc AS pdc
+                  INNER JOIN dbo.HopDongThue AS hd ON hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+                  WHERE pdc.MaPhieuYeuCauDangKy = pdkLock.MaDangKy
+                    AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
+              )
+        )
+            THROW 50011, N'Khách hàng đang có phiếu đăng ký chưa kết thúc.', 1;
 
         SELECT @SoDangKy = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaDangKy, 3, 4))), 0) + 1
         FROM dbo.PhieuDangKy WITH (UPDLOCK, HOLDLOCK)

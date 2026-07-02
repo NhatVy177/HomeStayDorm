@@ -156,6 +156,7 @@ function Icon({ name, className = '' }) {
     invoice: <><path d="M7 4h10v17l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2z" /><path d="M10 9h4M10 13h4M10 17h2" /></>,
     repair: <path d="M14.5 6.2a4.2 4.2 0 0 0-5.2 5.2L4 16.7 7.3 20l5.3-5.3a4.2 4.2 0 0 0 5.2-5.2l-2.9 2.9-2.3-2.3z" />,
     support: <><path d="M5 5.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-5 3v-3a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z" /><path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01" /></>,
+    phone: <path d="M7.1 3.5 9.7 7.8 7.9 9.6c1.3 2.6 3.4 4.7 6 6l1.8-1.8 4.3 2.6v2.8c0 1-0.8 1.8-1.8 1.8C9.8 20.5 3.5 14.2 3 5.8 3 4.8 3.8 4 4.8 4h2.3Z" />,
     lock: <><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
     people: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></>,
     room: <><path d="M4 20V8.5L12 4l8 4.5V20" /><path d="M8 20v-7h8v7M9 9.5h.01M15 9.5h.01" /></>,
@@ -187,6 +188,32 @@ function formatMoney(value) {
   const amount = Number(value);
   if (value == null || value === '' || !Number.isFinite(amount) || amount <= 0) return 'Chưa cập nhật';
   return amount.toLocaleString('vi-VN') + 'đ/tháng';
+}
+
+function parseMoney(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const numericText = raw.replace(/[^\d,.-]/g, '');
+  const commaAsDecimal = numericText.includes(',') && numericText.lastIndexOf(',') > numericText.lastIndexOf('.');
+  const cleaned = commaAsDecimal
+    ? numericText.replace(/\./g, '').replace(',', '.')
+    : numericText.replace(/,/g, '');
+  const compact = (cleaned.match(/\./g) || []).length > 1
+    ? cleaned.replace(/\./g, '')
+    : cleaned;
+  const amount = Number(compact);
+
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function normalizeMoneyVnd(value) {
+  const amount = parseMoney(value);
+  if (amount == null || amount <= 0) return null;
+  return Math.round(amount);
 }
 
 function formatServiceMoney(value, unit) {
@@ -305,16 +332,21 @@ function normalizeRoomDetail(payload, fallback = {}) {
 
 function statusTone(status = '') {
   if (['Xác nhận cọc', 'Đã xem', 'Đã lên lịch', 'Đã TT', 'Hiệu lực', 'Đã tiếp nhận', 'Chờ xác nhận cọc'].includes(status)) return 'done';
-  if (['Từ chối', 'Đã hủy', 'Yêu cầu hủy', 'Hết hạn'].includes(status)) return 'danger';
+  if (['Từ chối', 'Hủy', 'Đã hủy', 'Yêu cầu hủy', 'Hết hạn'].includes(status)) return 'danger';
   return 'warn';
 }
 
 function statusIcon(status = '') {
   if (['Xác nhận cọc', 'Đã xem', 'Đã tiếp nhận', 'Chờ xác nhận cọc'].includes(status)) return '✅';
-  if (['Từ chối', 'Đã hủy'].includes(status)) return '❌';
+  if (['Từ chối', 'Hủy', 'Đã hủy'].includes(status)) return '❌';
   if (status === 'Chờ tiếp nhận') return '⏳';
   if (status === 'Đã tiếp nhận') return '📥';
   return '⏳';
+}
+
+function getProfileDisplayStatus(profile = {}) {
+  if (profile?.biHuyDoTatCaLich) return 'Hủy';
+  return profile?.trangThaiHienThi || profile?.trangThai || '';
 }
 
 function getNavLocks(state = {}) {
@@ -623,6 +655,7 @@ export default function KhachHangPortalPage() {
   const [hopDongDashboard, setHopDongDashboard] = useState(null);
   const [hopDongLoading, setHopDongLoading] = useState(false);
   const [supportModal, setSupportModal] = useState(false);
+  const [registrationNoticeOpen, setRegistrationNoticeOpen] = useState(false);
 
   const locks = getNavLocks(overview?.trangThai || {});
   const registrationLocked = Boolean(overview?.trangThai?.coQuyTrinhThueDangHoatDong);
@@ -666,6 +699,15 @@ export default function KhachHangPortalPage() {
     const timeout = setTimeout(() => setToast(''), 3200);
     return () => clearTimeout(timeout);
   }, [toast]);
+
+  useEffect(() => {
+    if (!registrationNoticeOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setRegistrationNoticeOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [registrationNoticeOpen]);
 
   function goTo(tab) {
     if (locks[tab]) {
@@ -778,7 +820,7 @@ export default function KhachHangPortalPage() {
 
   function canOpenRentForm() {
     if (!registrationLocked) return true;
-    setToast(registrationLockedMessage);
+    setRegistrationNoticeOpen(true);
     return false;
   }
 
@@ -867,7 +909,7 @@ export default function KhachHangPortalPage() {
       setActiveTab('ho-so');
       setToast('Đã gửi hồ sơ nhu cầu thuê.');
     } catch (requestError) {
-      setToast(requestError.response?.data?.message || 'Không thể gửi hồ sơ lúc này.');
+      setToast(requestError.response?.data?.message || requestError.message || 'Không thể gửi hồ sơ lúc này.');
     } finally {
       setSubmitting(false);
     }
@@ -911,7 +953,9 @@ export default function KhachHangPortalPage() {
         ngayDuKienVaoO: detail.ngayDuKienVaoO || detail.NgayDuKienVaoO || profile.ngayDuKienVaoO,
         thoiHanThue: detail.thoiHanThue ?? detail.ThoiHanThue ?? profile.thoiHanThue,
         ghiChu: detail.ghiChu || detail.GhiChu || profile.ghiChu,
-        trangThai: detail.trangThai || detail.TrangThai || profile.trangThai
+        trangThai: detail.trangThai || detail.TrangThai || profile.trangThai,
+        trangThaiHienThi: detail.trangThaiHienThi || profile.trangThaiHienThi,
+        biHuyDoTatCaLich: detail.biHuyDoTatCaLich ?? profile.biHuyDoTatCaLich
       });
     } catch {
       setToast('Đang hiển thị thông tin hiện có của hồ sơ.');
@@ -1066,7 +1110,7 @@ export default function KhachHangPortalPage() {
     const allProfiles = overview?.hoSo || [];
     const profiles = profileFilter === 'Tất cả' 
       ? allProfiles 
-      : allProfiles.filter(p => p.trangThai === profileFilter);
+      : allProfiles.filter(p => getProfileDisplayStatus(p) === profileFilter);
       
     return (
       <section>
@@ -1093,7 +1137,8 @@ export default function KhachHangPortalPage() {
                 { key: 'Chờ tiếp nhận', label: 'Chờ tiếp nhận' },
                 { key: 'Chờ xác nhận cọc', label: 'Chờ xác nhận cọc' },
                 { key: 'Xác nhận cọc', label: 'Xác nhận cọc' },
-                { key: 'Từ chối', label: 'Từ chối' }
+                { key: 'Từ chối', label: 'Từ chối' },
+                { key: 'Hủy', label: 'Hủy' }
               ].map(f => (
                 <button
                   key={f.key}
@@ -1114,8 +1159,8 @@ export default function KhachHangPortalPage() {
               <div className="kh-profile-header">
                 <div className="kh-profile-title-row">
                   <h3>Hồ sơ đăng ký #{profile.maDangKy}</h3>
-                  <span className={`kh-status-chip kh-status-chip--${statusTone(profile.trangThai)}`}>
-                    {statusIcon(profile.trangThai)} {profile.trangThai}
+                  <span className={`kh-status-chip kh-status-chip--${statusTone(getProfileDisplayStatus(profile))}`}>
+                    {statusIcon(getProfileDisplayStatus(profile))} {getProfileDisplayStatus(profile)}
                   </span>
                 </div>
                 <span className="kh-profile-date">Ngày tạo: {formatDate(profile.ngayDangKy)}</span>
@@ -1146,7 +1191,7 @@ export default function KhachHangPortalPage() {
                 )}
               </div>
 
-              {profile.trangThai === 'Từ chối' && profile.ghiChu && (
+              {getProfileDisplayStatus(profile) === 'Từ chối' && profile.ghiChu && (
                 <div className="kh-profile-reject-reason">
                   <Icon name="lock" />
                   <span>Lý do: {profile.ghiChu}</span>
@@ -1813,14 +1858,48 @@ export default function KhachHangPortalPage() {
         </main>
       </div>
 
+      {registrationNoticeOpen && (
+        <div className="kp-modal-backdrop" onMouseDown={() => setRegistrationNoticeOpen(false)}>
+          <section
+            className="kp-modal kh-registration-notice"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="kh-registration-notice-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="kh-registration-notice-head">
+              <span className="kh-registration-notice-icon" aria-hidden="true">
+                <Icon name="info" />
+              </span>
+              <div>
+                <span>Thông báo đăng ký</span>
+                <h2 id="kh-registration-notice-title">Chưa thể tạo phiếu đăng ký mới</h2>
+              </div>
+              <button type="button" aria-label="Đóng" onClick={() => setRegistrationNoticeOpen(false)}>×</button>
+            </div>
+            <div className="kh-registration-notice-body">
+              <p>{registrationLockedMessage}</p>
+              <div className="kh-registration-notice-note">
+                Bạn có thể tạo phiếu mới sau khi quy trình thuê hiện tại kết thúc.
+              </div>
+            </div>
+            <div className="kh-registration-notice-actions">
+              <button className="kp-btn kp-btn-primary" type="button" onClick={() => setRegistrationNoticeOpen(false)}>
+                Đã hiểu
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {supportModal && (
         <div className="kp-modal-backdrop" onMouseDown={() => setSupportModal(false)}>
           <section className="kp-modal kh-contact-modal" role="dialog" aria-modal="true" aria-labelledby="kh-contact-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="kp-modal-head kh-contact-head">
               <div>
                 <span>Liên hệ tư vấn</span>
-                <h2 id="kh-contact-title">Vui lòng liên hệ số điện thoại chi nhánh</h2>
-                <p>Liên hệ chi nhánh gần bạn nhất để được hỗ trợ nhanh hơn.</p>
+                <h2 id="kh-contact-title">Liên hệ chi nhánh</h2>
+                <p>Chọn chi nhánh gần bạn để được hỗ trợ nhanh chóng.</p>
               </div>
               <button type="button" aria-label="Đóng" onClick={() => setSupportModal(false)}>×</button>
             </div>
@@ -1828,12 +1907,15 @@ export default function KhachHangPortalPage() {
             <div className="kh-contact-list">
               {branchContacts.map((branch) => (
                 <article className="kh-contact-item" key={branch.phone}>
-                  <div>
+                  <span className="kh-contact-location" aria-hidden="true">
+                    <Icon name="map" />
+                  </span>
+                  <div className="kh-contact-info">
                     <strong>{branch.name}</strong>
                     <span>{branch.area}</span>
                   </div>
                   <a className="kp-btn kp-btn-primary" href={`tel:${branch.phone}`}>
-                    <Icon name="support" />{branch.phone}
+                    <Icon name="phone" />{branch.phone}
                   </a>
                 </article>
               ))}
@@ -2001,8 +2083,8 @@ export default function KhachHangPortalPage() {
             )}
 
             <div className="kh-profile-detail-summary">
-              <span className={`kh-status-chip kh-status-chip--${statusTone(profileDetailModal.trangThai)}`}>
-                {statusIcon(profileDetailModal.trangThai)} {profileDetailModal.trangThai}
+              <span className={`kh-status-chip kh-status-chip--${statusTone(getProfileDisplayStatus(profileDetailModal))}`}>
+                {statusIcon(getProfileDisplayStatus(profileDetailModal))} {getProfileDisplayStatus(profileDetailModal)}
               </span>
               <p>Ngày tạo: {formatDate(profileDetailModal.ngayDangKy)}</p>
             </div>
