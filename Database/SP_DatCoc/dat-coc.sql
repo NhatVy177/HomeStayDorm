@@ -677,7 +677,6 @@ BEGIN
         pdc.MaPhieuDatCoc      AS maPhieuDatCoc,
         pdc.TrangThaiThanhToan AS trangThaiThanhToan,
         pdc.ChungTuThanhToan   AS chungTuThanhToan,
-        CAST(NULL AS NVARCHAR(200)) AS ghiChuChungTu,
         nd.HoTen               AS hoTen
     FROM dbo.PhieuDatCoc AS pdc
     INNER JOIN dbo.KhachHang AS kh ON kh.MaKhachHang = pdc.MaKhachHang
@@ -711,8 +710,7 @@ BEGIN
         pdc.ThoiDiemDatCoc      AS thoiDiemDatCoc,
         pdc.ThoiHanThanhToan    AS thoiHanThanhToan,
         pdc.TrangThaiThanhToan  AS trangThaiThanhToan,
-        pdc.ChungTuThanhToan    AS chungTuThanhToan,
-        CAST(NULL AS NVARCHAR(200)) AS ghiChuChungTu
+        pdc.ChungTuThanhToan    AS chungTuThanhToan
     FROM dbo.PhieuDatCoc AS pdc
     INNER JOIN dbo.KhachHang AS kh ON kh.MaKhachHang = pdc.MaKhachHang
     INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = kh.MaKhachHang
