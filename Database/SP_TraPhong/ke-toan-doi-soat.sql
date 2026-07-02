@@ -126,6 +126,68 @@ GO
 IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_ChiTietThuThem', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_ChiTietThuThem AS BEGIN SET NOCOUNT ON; END;');
 GO
+IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_DanhSachDaThuThem', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachDaThuThem AS BEGIN SET NOCOUNT ON; END;');
+GO
+CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachDaThuThem
+    @MaNhanVienKeToan VARCHAR(6) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @MaChiNhanh VARCHAR(6);
+    SELECT @MaChiNhanh = MaChiNhanh
+    FROM dbo.NhanVien
+    WHERE MaNhanVien = @MaNhanVienKeToan;
+
+    SELECT
+        ds.MaDoiSoat AS maDoiSoat,
+        pt.MaPhieuTra AS maPhieuTra,
+        ds.NgayLap AS ngayLap,
+        ds.NgayThanhToan AS ngayThanhToan,
+        nd.HoTen AS hoTenKhachHang,
+        nd.SDT AS sdtKhachHang,
+        pt.MaHopDong AS maHopDong,
+        pt.MaPhieuDatCoc AS maPhieuDatCoc,
+        COALESCE(pt.MaHopDong, pt.MaPhieuDatCoc) AS maHoSo,
+        MIN(p.TenPhong) AS tenPhong,
+        MIN(g.MaGiuong) AS maGiuong,
+        COUNT(DISTINCT ctdc.MaChiTietDC) AS soLuongPhongGiuong,
+        ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
+        ds.PhuongThucThanhToan AS phuongThucThanhToan,
+        ds.ChungTuThanhToan AS chungTuThanhToan,
+        ds.TrangThai AS trangThaiDoiSoat,
+        pt.TrangThai AS trangThaiPhieuTra
+    FROM dbo.DoiSoat ds
+    INNER JOIN dbo.PhieuTraPhong pt ON pt.MaPhieuTra = ds.MaPhieuTra
+    LEFT JOIN dbo.HopDongThue hd ON hd.MaHopDong = pt.MaHopDong
+    LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(pt.MaPhieuDatCoc, hd.MaPhieuCoc)
+    INNER JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+    INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
+    LEFT JOIN dbo.Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
+    INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
+    INNER JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
+    WHERE ds.TrangThai = N'Đã quyết toán'
+      AND ISNULL(ds.SoTienKhachPhaiTT, 0) > 0
+      AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
+    GROUP BY
+        ds.MaDoiSoat,
+        pt.MaPhieuTra,
+        ds.NgayLap,
+        ds.NgayThanhToan,
+        nd.HoTen,
+        nd.SDT,
+        pt.MaHopDong,
+        pt.MaPhieuDatCoc,
+        ds.SoTienKhachPhaiTT,
+        ds.PhuongThucThanhToan,
+        ds.ChungTuThanhToan,
+        ds.TrangThai,
+        pt.TrangThai
+    ORDER BY ds.NgayThanhToan DESC, ds.NgayLap DESC, ds.MaDoiSoat DESC;
+END;
+GO
+
 CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_ChiTietThuThem
     @MaDoiSoat VARCHAR(6),
     @MaNhanVienKeToan VARCHAR(6) = NULL
@@ -343,6 +405,136 @@ GO
 IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_ChiTietHoanCoc', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_ChiTietHoanCoc AS BEGIN SET NOCOUNT ON; END;');
 GO
+IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_DanhSachDaHoanCoc', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachDaHoanCoc AS BEGIN SET NOCOUNT ON; END;');
+GO
+CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachDaHoanCoc
+    @MaNhanVienKeToan VARCHAR(6) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @MaChiNhanh VARCHAR(6);
+    SELECT @MaChiNhanh = MaChiNhanh
+    FROM dbo.NhanVien
+    WHERE MaNhanVien = @MaNhanVienKeToan;
+
+    SELECT
+        ds.MaDoiSoat AS maDoiSoat,
+        pt.MaPhieuTra AS maPhieuTra,
+        ds.NgayLap AS ngayLap,
+        ds.NgayThanhToan AS ngayThanhToan,
+        nd.HoTen AS hoTenKhachHang,
+        nd.SDT AS sdtKhachHang,
+        pt.MaHopDong AS maHopDong,
+        pt.MaPhieuDatCoc AS maPhieuDatCoc,
+        COALESCE(pt.MaHopDong, pt.MaPhieuDatCoc) AS maHoSo,
+        MIN(p.TenPhong) AS tenPhong,
+        MIN(g.MaGiuong) AS maGiuong,
+        COUNT(DISTINCT ctdc.MaChiTietDC) AS soLuongPhongGiuong,
+        ds.SoTienHoanThucTe AS soTienHoanThucTe,
+        ds.PhuongThucThanhToan AS phuongThucThanhToan,
+        ds.ChungTuThanhToan AS chungTuThanhToan,
+        ds.TrangThai AS trangThaiDoiSoat,
+        pt.TrangThai AS trangThaiPhieuTra
+    FROM dbo.DoiSoat ds
+    INNER JOIN dbo.PhieuTraPhong pt ON pt.MaPhieuTra = ds.MaPhieuTra
+    LEFT JOIN dbo.HopDongThue hd ON hd.MaHopDong = pt.MaHopDong
+    LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(pt.MaPhieuDatCoc, hd.MaPhieuCoc)
+    INNER JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+    INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
+    LEFT JOIN dbo.Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
+    INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
+    INNER JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
+    WHERE ds.TrangThai = N'Đã hoàn cọc'
+      AND ISNULL(ds.SoTienHoanThucTe, 0) > 0
+      AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
+    GROUP BY
+        ds.MaDoiSoat,
+        pt.MaPhieuTra,
+        ds.NgayLap,
+        ds.NgayThanhToan,
+        nd.HoTen,
+        nd.SDT,
+        pt.MaHopDong,
+        pt.MaPhieuDatCoc,
+        ds.SoTienHoanThucTe,
+        ds.PhuongThucThanhToan,
+        ds.ChungTuThanhToan,
+        ds.TrangThai,
+        pt.TrangThai
+    ORDER BY ds.NgayThanhToan DESC, ds.NgayLap DESC, ds.MaDoiSoat DESC;
+END;
+GO
+
+IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_KetQuaDoiSoat', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_KetQuaDoiSoat AS BEGIN SET NOCOUNT ON; END;');
+GO
+CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_KetQuaDoiSoat
+    @MaNhanVienKeToan VARCHAR(6) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @MaChiNhanh VARCHAR(6);
+    SELECT @MaChiNhanh = MaChiNhanh
+    FROM dbo.NhanVien
+    WHERE MaNhanVien = @MaNhanVienKeToan;
+
+    SELECT
+        ds.MaDoiSoat AS maDoiSoat,
+        pt.MaPhieuTra AS maPhieuTra,
+        ds.NgayLap AS ngayLap,
+        ds.NgayThanhToan AS ngayThanhToan,
+        nd.HoTen AS hoTenKhachHang,
+        nd.SDT AS sdtKhachHang,
+        pt.MaHopDong AS maHopDong,
+        pt.MaPhieuDatCoc AS maPhieuDatCoc,
+        COALESCE(pt.MaHopDong, pt.MaPhieuDatCoc) AS maHoSo,
+        MIN(p.TenPhong) AS tenPhong,
+        MIN(g.MaGiuong) AS maGiuong,
+        COUNT(DISTINCT ctdc.MaChiTietDC) AS soLuongPhongGiuong,
+        ds.SoTienHoanThucTe AS soTienHoanThucTe,
+        ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
+        ds.PhuongThucThanhToan AS phuongThucThanhToan,
+        ds.ChungTuThanhToan AS chungTuThanhToan,
+        ds.TrangThai AS trangThaiDoiSoat,
+        pt.TrangThai AS trangThaiPhieuTra,
+        CASE
+            WHEN ds.TrangThai = N'Đã hoàn cọc' THEN N'hoan-coc'
+            WHEN ISNULL(ds.SoTienKhachPhaiTT, 0) > 0 THEN N'thu-them'
+            ELSE N'khong-phat-sinh'
+        END AS ketQuaDoiSoat
+    FROM dbo.DoiSoat ds
+    INNER JOIN dbo.PhieuTraPhong pt ON pt.MaPhieuTra = ds.MaPhieuTra
+    LEFT JOIN dbo.HopDongThue hd ON hd.MaHopDong = pt.MaHopDong
+    LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(pt.MaPhieuDatCoc, hd.MaPhieuCoc)
+    INNER JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+    INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
+    LEFT JOIN dbo.Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
+    INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
+    INNER JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
+    WHERE ds.TrangThai IN (N'Đã quyết toán', N'Đã hoàn cọc')
+      AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
+    GROUP BY
+        ds.MaDoiSoat,
+        pt.MaPhieuTra,
+        ds.NgayLap,
+        ds.NgayThanhToan,
+        nd.HoTen,
+        nd.SDT,
+        pt.MaHopDong,
+        pt.MaPhieuDatCoc,
+        ds.SoTienHoanThucTe,
+        ds.SoTienKhachPhaiTT,
+        ds.PhuongThucThanhToan,
+        ds.ChungTuThanhToan,
+        ds.TrangThai,
+        pt.TrangThai
+    ORDER BY COALESCE(ds.NgayThanhToan, ds.NgayLap) DESC, ds.MaDoiSoat DESC;
+END;
+GO
+
 CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_ChiTietHoanCoc
     @MaDoiSoat VARCHAR(6),
     @MaNhanVienKeToan VARCHAR(6) = NULL

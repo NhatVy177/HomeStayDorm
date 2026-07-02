@@ -54,10 +54,40 @@ export async function getDanhSachChoHoanCoc(req, res, next) {
   }
 }
 
+export async function getDanhSachDaHoanCoc(req, res, next) {
+  try {
+    const maNhanVienKeToan = req.user?.maNguoiDung;
+    const danhSach = await doiSoatService.getDanhSachDaHoanCoc(maNhanVienKeToan);
+    res.json({ danhSach });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getDanhSachChoThuThem(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
     const danhSach = await doiSoatService.getDanhSachChoThuThem(maNhanVienKeToan);
+    res.json({ danhSach });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getDanhSachDaThuThem(req, res, next) {
+  try {
+    const maNhanVienKeToan = req.user?.maNguoiDung;
+    const danhSach = await doiSoatService.getDanhSachDaThuThem(maNhanVienKeToan);
+    res.json({ danhSach });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getKetQuaDoiSoat(req, res, next) {
+  try {
+    const maNhanVienKeToan = req.user?.maNguoiDung;
+    const danhSach = await doiSoatService.getKetQuaDoiSoat(maNhanVienKeToan);
     res.json({ danhSach });
   } catch (error) {
     next(error);

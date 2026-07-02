@@ -151,8 +151,32 @@ export async function getDanhSachChoHoanCoc(db, maNhanVienKeToan) {
   return result.recordset;
 }
 
+export async function getDanhSachDaHoanCoc(db, maNhanVienKeToan) {
+  const result = await execute(db, 'SP_TraPhong_KeToan_DanhSachDaHoanCoc', [
+    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null }
+  ]);
+
+  return result.recordset;
+}
+
 export async function getDanhSachChoThuThem(db, maNhanVienKeToan) {
   const result = await execute(db, 'SP_TraPhong_KeToan_DanhSachChoThuThem', [
+    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null }
+  ]);
+
+  return result.recordset;
+}
+
+export async function getDanhSachDaThuThem(db, maNhanVienKeToan) {
+  const result = await execute(db, 'SP_TraPhong_KeToan_DanhSachDaThuThem', [
+    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null }
+  ]);
+
+  return result.recordset;
+}
+
+export async function getKetQuaDoiSoat(db, maNhanVienKeToan) {
+  const result = await execute(db, 'SP_TraPhong_KeToan_KetQuaDoiSoat', [
     { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null }
   ]);
 

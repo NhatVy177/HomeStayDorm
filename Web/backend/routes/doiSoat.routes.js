@@ -4,6 +4,9 @@ import {
   getDanhSachChoDoiSoat,
   getChiTietHoanCoc,
   getChiTietThuThem,
+  getDanhSachDaHoanCoc,
+  getDanhSachDaThuThem,
+  getKetQuaDoiSoat,
   getDanhSachChoHoanCoc,
   getDanhSachChoThuThem,
   uploadChungTuThanhToan,
@@ -15,10 +18,13 @@ import {
 const router = express.Router();
 
 router.get('/cho-doi-soat', getDanhSachChoDoiSoat);
+router.get('/ket-qua', getKetQuaDoiSoat);
 router.get('/cho-thu-them', getDanhSachChoThuThem);
+router.get('/da-thu-them', getDanhSachDaThuThem);
 router.get('/thu-them/:maDoiSoat', getChiTietThuThem);
 router.post('/thu-them/xac-nhan', xacNhanThuThem);
 router.get('/cho-hoan-coc', getDanhSachChoHoanCoc);
+router.get('/da-hoan-coc', getDanhSachDaHoanCoc);
 router.get('/hoan-coc/:maDoiSoat', getChiTietHoanCoc);
 router.post('/hoan-coc/xac-nhan', xacNhanHoanCoc);
 router.post('/chung-tu', uploadChungTuThanhToan);

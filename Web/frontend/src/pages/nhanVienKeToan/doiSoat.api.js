@@ -13,8 +13,14 @@ export const doiSoatApi = {
   uploadChungTu: (data) =>
     httpClient.post('/accountant/doi-soat/chung-tu', data),
 
+  getKetQuaDoiSoat: () =>
+    httpClient.get('/accountant/doi-soat/ket-qua'),
+
   getDanhSachChoHoanCoc: () =>
     httpClient.get('/accountant/doi-soat/cho-hoan-coc'),
+
+  getDanhSachDaHoanCoc: () =>
+    httpClient.get('/accountant/doi-soat/da-hoan-coc'),
 
   getChiTietHoanCoc: (maDoiSoat) =>
     httpClient.get(`/accountant/doi-soat/hoan-coc/${maDoiSoat}`),
@@ -24,6 +30,9 @@ export const doiSoatApi = {
 
   getDanhSachChoThuThem: () =>
     httpClient.get('/accountant/doi-soat/cho-thu-them'),
+
+  getDanhSachDaThuThem: () =>
+    httpClient.get('/accountant/doi-soat/da-thu-them'),
 
   getChiTietThuThem: (maDoiSoat) =>
     httpClient.get(`/accountant/doi-soat/thu-them/${maDoiSoat}`),

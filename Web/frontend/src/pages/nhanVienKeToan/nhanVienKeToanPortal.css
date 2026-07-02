@@ -645,7 +645,7 @@
 .qt-subtab-btn {
   background: transparent;
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   color: #5f6869;
   cursor: pointer;
   font-family: inherit;
@@ -672,6 +672,21 @@
 
 .qt-subtab-btn.is-active {
   border-bottom-color: #2f6765;
+}
+
+.qt-result-badge.is-collect {
+  background: #f9e8e3;
+  color: #9c2f00;
+}
+
+.qt-result-badge.is-refund {
+  background: #e5f3eb;
+  color: #137333;
+}
+
+.qt-result-badge.is-neutral {
+  background: #eef3f3;
+  color: #3f494a;
 }
 
 .qt-empty-workflow {
@@ -934,6 +949,119 @@
   gap: 14px !important;
 }
 
+.qt-settlement-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.qt-status-filters {
+  align-items: center;
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.qt-status-filters button {
+  background: #f1f3f4;
+  border: 0;
+  border-radius: 999px;
+  color: #2d3637;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 0 20px;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.qt-status-filters button:hover {
+  background: #e5ecec;
+}
+
+.qt-status-filters button.is-active {
+  background: #2f6866;
+  color: #ffffff;
+}
+
+.qt-toolbar-actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12px;
+}
+
+.qt-compact-search {
+  width: 330px;
+}
+
+.qt-settlement-section {
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.qt-settlement-section + .qt-settlement-section {
+  margin-top: 18px;
+}
+
+.qt-settlement-section-head {
+  align-items: center;
+  background: #f7fbfb;
+  border-bottom: 1px solid #d7dddd;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.qt-settlement-section-head h4 {
+  color: #191c1d;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.qt-settlement-section-head p {
+  color: #687677;
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.qt-settlement-section-head > span {
+  background: #e7f2f1;
+  border: 1px solid #c7dada;
+  border-radius: 999px;
+  color: #00666d;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 7px 12px;
+}
+
+.qt-evidence-link {
+  align-items: center;
+  color: #00666d;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.qt-evidence-link:hover {
+  text-decoration: underline;
+}
+
+.qt-evidence-link .portal-icon {
+  height: 17px;
+  stroke: currentColor;
+  width: 17px;
+}
+
 .qt-refund-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1074,10 +1202,6 @@
   color: #ba1a1a;
 }
 
-.qt-proof-path {
-  margin-top: 10px;
-}
-
 .ktp-btn-cancel {
   align-items: center;
   display: inline-flex;
@@ -1096,5 +1220,33 @@
 
   .qt-refund-form {
     grid-template-columns: 1fr;
+  }
+
+  .qt-settlement-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qt-status-filters,
+  .qt-toolbar-actions {
+    width: 100%;
+  }
+
+  .qt-toolbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .qt-compact-search {
+    flex: 1 1 220px;
+    width: auto;
+  }
+
+  .qt-settlement-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .qt-settlement-section-head > span {
+    align-self: flex-start;
   }
 }

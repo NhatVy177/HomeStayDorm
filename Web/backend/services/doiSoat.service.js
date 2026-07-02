@@ -415,9 +415,24 @@ export async function getDanhSachChoHoanCoc(maNhanVienKeToan) {
   return doiSoatRepository.getDanhSachChoHoanCoc(pool, maNhanVienKeToan);
 }
 
+export async function getDanhSachDaHoanCoc(maNhanVienKeToan) {
+  const pool = await getPool();
+  return doiSoatRepository.getDanhSachDaHoanCoc(pool, maNhanVienKeToan);
+}
+
 export async function getDanhSachChoThuThem(maNhanVienKeToan) {
   const pool = await getPool();
   return doiSoatRepository.getDanhSachChoThuThem(pool, maNhanVienKeToan);
+}
+
+export async function getDanhSachDaThuThem(maNhanVienKeToan) {
+  const pool = await getPool();
+  return doiSoatRepository.getDanhSachDaThuThem(pool, maNhanVienKeToan);
+}
+
+export async function getKetQuaDoiSoat(maNhanVienKeToan) {
+  const pool = await getPool();
+  return doiSoatRepository.getKetQuaDoiSoat(pool, maNhanVienKeToan);
 }
 
 export async function getChiTietThuThem(maDoiSoatInput, maNhanVienKeToan) {
@@ -490,9 +505,12 @@ export default {
   taoDoiSoat,
   uploadChungTuThanhToan,
   getDanhSachChoThuThem,
+  getDanhSachDaThuThem,
+  getKetQuaDoiSoat,
   getChiTietThuThem,
   xacNhanThuThem,
   getDanhSachChoHoanCoc,
+  getDanhSachDaHoanCoc,
   getChiTietHoanCoc,
   xacNhanHoanCoc
 };
