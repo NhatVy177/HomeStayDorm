@@ -5,11 +5,9 @@ export function createServiceError(message, statusCode = 400) {
 }
 
 // SQL Server THROW messages qua tedious driver đôi khi bị encode sai (Latin-1 thay vì UTF-8).
-// Fix: re-encode từ latin1 → utf8 để tiếng Việt hiển thị đúng.
 function fixEncoding(str) {
   try {
     const fixed = Buffer.from(str, 'latin1').toString('utf8');
-    // Kiểm tra kết quả có hợp lệ UTF-8 không (nếu không thì giữ nguyên)
     return /\uFFFD/.test(fixed) ? str : fixed;
   } catch {
     return str;

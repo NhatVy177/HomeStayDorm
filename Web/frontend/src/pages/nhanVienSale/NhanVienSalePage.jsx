@@ -35,6 +35,7 @@ function firstName(name = '') {
 export default function NhanVienSalePage() {
   const { user, dangXuat } = useAuth();
   const [activeTab, setActiveTab] = useState('ho-so');
+  const [isScheduling, setIsScheduling] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -59,6 +60,11 @@ export default function NhanVienSalePage() {
     { id: 'khach-hang', label: 'Khách hàng', icon: 'person' }
   ];
 
+  function handleTabChange(tabId) {
+    if (isScheduling && tabId !== 'ho-so') return;
+    setActiveTab(tabId);
+  }
+
   return (
     <div className="kp-page kh-page">
       <aside className="kp-sidebar" style={{ borderRight: '1px solid #bec8c9' }}>
@@ -68,10 +74,12 @@ export default function NhanVienSalePage() {
         <nav className="ktp-sidebar-nav" aria-label="Menu sale">
           {navItems.map((item) => (
             <button
-              className={`ktp-side-item ${activeTab === item.id ? 'is-active' : ''}`}
+              className={`ktp-side-item ${activeTab === item.id ? 'is-active' : ''} ${isScheduling && item.id !== 'ho-so' ? 'is-disabled' : ''}`}
               type="button"
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              disabled={isScheduling && item.id !== 'ho-so'}
+              title={isScheduling && item.id !== 'ho-so' ? 'Hoàn tất lập lịch xem phòng trước khi chuyển mục' : ''}
+              onClick={() => handleTabChange(item.id)}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
@@ -126,9 +134,9 @@ export default function NhanVienSalePage() {
         </header>
 
         <main className="kp-main" style={{ padding: 0 }}>
-          {activeTab === 'ho-so' && <HoSoDangKyTab onNavigate={setActiveTab} />}
+          {activeTab === 'ho-so' && <HoSoDangKyTab onNavigate={handleTabChange} onSchedulingChange={setIsScheduling} />}
           {activeTab === 'tra-cuu' && <TraCuuPhongTab />}
-          {activeTab === 'lich-xem' && <LichXemPhongTab onNavigate={setActiveTab} />}
+          {activeTab === 'lich-xem' && <LichXemPhongTab onNavigate={handleTabChange} />}
           {activeTab === 'dat-coc' && <DatCocTab />}
           {activeTab === 'nhan-phong' && <NhanPhongTab />}
           {activeTab === 'hop-dong-thue' && <LapHopDongTab />}

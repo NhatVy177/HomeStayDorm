@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { lichXemPhongApi } from '../lichXemPhong/lichXemPhong.api.js';
 
@@ -53,6 +53,35 @@ export default function LichXemPhongTab() {
   const [newTime, setNewTime] = useState('');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
+  const [filters, setFilters] = useState({ keyword: '', status: '', fromDate: '', toDate: '' });
+
+  const filteredSchedules = useMemo(() => {
+    const keyword = filters.keyword.trim().toLocaleLowerCase('vi-VN');
+
+    return schedules.filter((schedule) => {
+      const searchableText = [
+        schedule.id,
+        schedule.maDangKy,
+        schedule.hoTenKhach,
+        schedule.sdtKhach,
+        schedule.danhSachPhong,
+        schedule.maPhong
+      ].filter(Boolean).join(' ').toLocaleLowerCase('vi-VN');
+      const scheduleDate = toDateInput(schedule.thoiGianHen);
+
+      if (keyword && !searchableText.includes(keyword)) return false;
+      if (filters.status && schedule.trangThai !== filters.status) return false;
+      if (filters.fromDate && (!scheduleDate || scheduleDate < filters.fromDate)) return false;
+      if (filters.toDate && (!scheduleDate || scheduleDate > filters.toDate)) return false;
+      return true;
+    });
+  }, [filters, schedules]);
+
+  const hasActiveFilters = Object.values(filters).some(Boolean);
+
+  const clearFilters = () => {
+    setFilters({ keyword: '', status: '', fromDate: '', toDate: '' });
+  };
 
   const fetchSchedules = async () => {
     setLoading(true);
@@ -134,6 +163,66 @@ export default function LichXemPhongTab() {
         </button>
       </section>
 
+      <section className="sale-schedule-filters" aria-label="Bộ lọc lịch xem phòng">
+        <div className="sale-schedule-filter sale-schedule-filter-search">
+          <label className="ktp-filter-label" htmlFor="schedule-search">Tìm kiếm</label>
+          <div className="ktp-input-icon-wrap">
+            <Icon name="search" className="ktp-input-icon" />
+            <input
+              id="schedule-search"
+              className="ktp-input ktp-input-with-icon"
+              value={filters.keyword}
+              onChange={(event) => setFilters((current) => ({ ...current, keyword: event.target.value }))}
+              placeholder="Mã lịch, khách hàng, SĐT hoặc phòng..."
+            />
+          </div>
+        </div>
+        <div className="sale-schedule-filter">
+          <label className="ktp-filter-label" htmlFor="schedule-status">Trạng thái</label>
+          <select
+            id="schedule-status"
+            className="ktp-input"
+            value={filters.status}
+            onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="Chờ xem">Chờ xem</option>
+            <option value="Yêu cầu đổi lịch">Yêu cầu đổi lịch</option>
+            <option value="Yêu cầu hủy">Yêu cầu hủy</option>
+            <option value="Đã xem">Đã xem</option>
+            <option value="Đã hủy">Đã hủy</option>
+          </select>
+        </div>
+        <div className="sale-schedule-filter">
+          <label className="ktp-filter-label" htmlFor="schedule-from-date">Từ ngày</label>
+          <input
+            id="schedule-from-date"
+            className="ktp-input"
+            type="date"
+            value={filters.fromDate}
+            max={filters.toDate || undefined}
+            onChange={(event) => setFilters((current) => ({ ...current, fromDate: event.target.value }))}
+          />
+        </div>
+        <div className="sale-schedule-filter">
+          <label className="ktp-filter-label" htmlFor="schedule-to-date">Đến ngày</label>
+          <input
+            id="schedule-to-date"
+            className="ktp-input"
+            type="date"
+            value={filters.toDate}
+            min={filters.fromDate || undefined}
+            onChange={(event) => setFilters((current) => ({ ...current, toDate: event.target.value }))}
+          />
+        </div>
+        <div className="sale-schedule-filter-actions">
+          <span>{filteredSchedules.length}/{schedules.length} lịch</span>
+          <button className="ktp-btn-outline" type="button" disabled={!hasActiveFilters} onClick={clearFilters}>
+            <Icon name="filter_list" /> Xóa lọc
+          </button>
+        </div>
+      </section>
+
       <section className="ktp-table-section">
         {loading && (
           <div style={{ padding: '48px', textAlign: 'center', color: '#6f797a' }}>
@@ -154,7 +243,16 @@ export default function LichXemPhongTab() {
           </div>
         )}
 
-        {!loading && !error && schedules.length > 0 && (
+        {!loading && !error && schedules.length > 0 && filteredSchedules.length === 0 && (
+          <div className="sale-schedule-empty-filter">
+            <Icon name="search" />
+            <h3>Không tìm thấy lịch phù hợp</h3>
+            <p>Thử thay đổi tiêu chí hoặc xóa bộ lọc để xem toàn bộ lịch.</p>
+            <button className="ktp-btn-outline" type="button" onClick={clearFilters}>Xóa bộ lọc</button>
+          </div>
+        )}
+
+        {!loading && !error && filteredSchedules.length > 0 && (
           <table className="ktp-table">
             <thead>
               <tr>
@@ -167,7 +265,7 @@ export default function LichXemPhongTab() {
               </tr>
             </thead>
             <tbody>
-              {schedules.map((schedule) => {
+              {filteredSchedules.map((schedule) => {
                 const time = formatDateTime(schedule.thoiGianHen);
                 const badge = statusStyle(schedule.trangThai);
                 const isClosed = ['Đã hủy', 'Đã xem'].includes(schedule.trangThai);

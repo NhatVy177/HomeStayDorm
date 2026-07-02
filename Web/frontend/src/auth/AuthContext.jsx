@@ -1,8 +1,17 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../pages/auth/auth.api.js';
-import { clearSession, getStoredToken, storeSession } from './auth.storage.js';
+import { clearSession, getStoredSession, getStoredToken, storeSession } from './auth.storage.js';
 
 const AuthContext = createContext(null);
+
+function mergeFilled(base = {}, update = {}) {
+  return Object.fromEntries(
+    Object.entries({ ...base, ...update }).map(([key, value]) => [
+      key,
+      value === undefined || value === null || value === '' ? base[key] : value
+    ])
+  );
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -15,7 +24,10 @@ export function AuthProvider({ children }) {
     }
 
     authApi.getToi()
-      .then(({ data }) => setUser(data))
+      .then(({ data }) => {
+        const storedUser = getStoredSession()?.user || {};
+        setUser(mergeFilled(storedUser, data));
+      })
       .catch(() => clearSession())
       .finally(() => setIsLoading(false));
   }, []);

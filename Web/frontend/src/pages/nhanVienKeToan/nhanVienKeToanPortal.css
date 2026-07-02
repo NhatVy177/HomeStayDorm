@@ -67,6 +67,18 @@
   padding: 8px 12px;
 }
 
+.ktp-input.is-invalid,
+.ktp-textarea.is-invalid {
+  border-color: #d32f2f;
+  background-color: #fff8f8;
+}
+
+.ktp-input.is-invalid:focus,
+.ktp-textarea.is-invalid:focus {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 1px #d32f2f;
+}
+
 .ktp-input-icon-wrap {
   position: relative;
   display: flex;
@@ -89,6 +101,105 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   border: 1px solid #bec8c9;
   overflow: hidden;
+}
+
+.sale-schedule-filters {
+  align-items: end;
+  background: #fff;
+  border: 1px solid #bec8c9;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(240px, 1.7fr) minmax(170px, 1fr) minmax(145px, 0.8fr) minmax(145px, 0.8fr) auto;
+  margin-bottom: 18px;
+  padding: 16px;
+}
+
+.sale-schedule-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sale-schedule-filter .ktp-input {
+  background: #fff;
+  min-height: 40px;
+}
+
+.sale-schedule-filter-actions {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sale-schedule-filter-actions > span {
+  color: #6f797a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sale-schedule-filter-actions .ktp-btn-outline {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.sale-schedule-empty-filter {
+  align-items: center;
+  color: #6f797a;
+  display: flex;
+  flex-direction: column;
+  padding: 52px 20px;
+  text-align: center;
+}
+
+.sale-schedule-empty-filter > svg {
+  color: #8f999a;
+  height: 30px;
+  margin-bottom: 12px;
+  width: 30px;
+}
+
+.sale-schedule-empty-filter h3 {
+  color: #191c1d;
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.sale-schedule-empty-filter p {
+  margin: 0 0 16px;
+}
+
+@media (max-width: 1180px) {
+  .sale-schedule-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sale-schedule-filter-search,
+  .sale-schedule-filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .sale-schedule-filter-actions {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 640px) {
+  .sale-schedule-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .sale-schedule-filter-search,
+  .sale-schedule-filter-actions {
+    grid-column: auto;
+  }
 }
 
 .ktp-table {
@@ -279,6 +390,119 @@
   bottom: 0;
   width: 4px;
   background-color: #00666d;
+}
+
+.ktp-side-item.is-disabled,
+.ktp-side-item.is-disabled:hover {
+  background: transparent;
+  color: #9aa3a4;
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.ll-profile-summary {
+  background: #ffffff;
+  border: 1px solid #d7dddd;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.ll-profile-field {
+  display: grid;
+  gap: 5px;
+  min-height: 76px;
+  padding: 14px 16px;
+}
+
+.ll-profile-field + .ll-profile-field {
+  border-left: 1px solid #e0e5e5;
+}
+
+.ll-profile-field span {
+  color: #6f797a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ll-profile-field strong {
+  color: #191c1d;
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ll-room-mode {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 8px;
+  padding: 4px 8px;
+  width: fit-content;
+}
+
+.ll-room-mode.is-whole {
+  background: #e4f4f1;
+  color: #145f5a;
+}
+
+.ll-room-mode.is-shared {
+  background: #fff2d8;
+  color: #805600;
+}
+
+.ll-selection-status {
+  align-items: center;
+  border-radius: 6px;
+  display: flex;
+  font-size: 13px;
+  font-weight: 650;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 11px 13px;
+}
+
+.ll-selection-status svg {
+  flex: 0 0 auto;
+  font-size: 18px;
+}
+
+.ll-selection-status.is-valid {
+  background: #e8f5e9;
+  color: #246b37;
+}
+
+.ll-selection-status.is-invalid {
+  background: #fff4dc;
+  color: #805600;
+}
+
+@media (max-width: 900px) {
+  .ll-profile-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ll-profile-field:nth-child(3) {
+    border-left: 0;
+  }
+
+  .ll-profile-field:nth-child(n + 3) {
+    border-top: 1px solid #e0e5e5;
+  }
+}
+
+@media (max-width: 560px) {
+  .ll-profile-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .ll-profile-field + .ll-profile-field {
+    border-left: 0;
+    border-top: 1px solid #e0e5e5;
+  }
 }
 
 /* Header User Menu */

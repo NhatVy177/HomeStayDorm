@@ -43,6 +43,12 @@ BEGIN
        OR @SDT IS NULL
         THROW 50001, N'Vui lòng nhập đầy đủ họ tên, tên đăng nhập, giới tính, số điện thoại, ngày sinh và mật khẩu.', 1;
 
+    IF LEN(@SDT) <> 10 OR @SDT LIKE '%[^0-9]%'
+        THROW 50001, N'Số điện thoại phải có đúng 10 chữ số.', 1;
+
+    IF @NgaySinh >= CAST(GETDATE() AS DATE)
+        THROW 50001, N'Ngày sinh phải trước ngày hiện tại.', 1;
+
     DECLARE @SoThuTu INT;
     DECLARE @MaNguoiDung VARCHAR(6);
 
@@ -56,20 +62,43 @@ BEGIN
         )
             THROW 50002, N'Tên đăng nhập đã tồn tại.', 1;
 
-        SELECT @SoThuTu = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaNguoiDung, 3, 4))), 0) + 1
-        FROM dbo.NguoiDung WITH (UPDLOCK, HOLDLOCK)
-        WHERE MaNguoiDung LIKE 'KH%';
+        SELECT TOP (1) @MaNguoiDung = nd.MaNguoiDung
+        FROM dbo.NguoiDung AS nd WITH (UPDLOCK, HOLDLOCK)
+        INNER JOIN dbo.KhachHang AS kh ON kh.MaKhachHang = nd.MaNguoiDung
+        WHERE nd.SDT = @SDT
+          AND nd.LoaiNguoiDung = 'KhachHang';
 
-        IF @SoThuTu > 9999
-            THROW 50003, N'Không thể cấp thêm mã khách hàng.', 1;
+        IF @MaNguoiDung IS NOT NULL
+           AND EXISTS (
+               SELECT 1
+               FROM dbo.TaiKhoan WITH (UPDLOCK, HOLDLOCK)
+               WHERE MaNguoiDung = @MaNguoiDung
+           )
+            THROW 50006, N'Số điện thoại này đã được liên kết với một tài khoản. Vui lòng đăng nhập.', 1;
 
-        SET @MaNguoiDung = CONCAT('KH', RIGHT(CONCAT('0000', @SoThuTu), 4));
+        IF @MaNguoiDung IS NULL
+        BEGIN
+            SELECT @SoThuTu = ISNULL(MAX(TRY_CONVERT(INT, SUBSTRING(MaNguoiDung, 3, 4))), 0) + 1
+            FROM dbo.NguoiDung WITH (UPDLOCK, HOLDLOCK)
+            WHERE MaNguoiDung LIKE 'KH%';
 
-        INSERT INTO dbo.NguoiDung (MaNguoiDung, HoTen, NgaySinh, GioiTinh, SDT, Email, LoaiNguoiDung)
-        VALUES (@MaNguoiDung, @HoTen, @NgaySinh, @GioiTinh, @SDT, @Email, 'KhachHang');
+            IF @SoThuTu > 9999
+                THROW 50003, N'Không thể cấp thêm mã khách hàng.', 1;
 
-        INSERT INTO dbo.KhachHang (MaKhachHang, QuocTich, CCCD)
-        VALUES (@MaNguoiDung, NULL, NULL);
+            SET @MaNguoiDung = CONCAT('KH', RIGHT(CONCAT('0000', @SoThuTu), 4));
+
+            INSERT INTO dbo.NguoiDung (MaNguoiDung, HoTen, NgaySinh, GioiTinh, SDT, Email, LoaiNguoiDung)
+            VALUES (@MaNguoiDung, @HoTen, @NgaySinh, @GioiTinh, @SDT, @Email, 'KhachHang');
+
+            INSERT INTO dbo.KhachHang (MaKhachHang, QuocTich, CCCD)
+            VALUES (@MaNguoiDung, NULL, NULL);
+        END
+        ELSE
+        BEGIN
+            UPDATE dbo.NguoiDung
+            SET Email = COALESCE(Email, @Email)
+            WHERE MaNguoiDung = @MaNguoiDung;
+        END;
 
         INSERT INTO dbo.TaiKhoan (TenDangNhap, MatKhau, TrangThai, MaNguoiDung)
         VALUES (
@@ -99,10 +128,13 @@ BEGIN
         nd.LoaiNguoiDung AS vaiTro,
         tk.TrangThai AS trangThai,
         nv.ChucVu AS chucVu,
-        nv.MaChiNhanh AS maChiNhanh
+        nv.MaChiNhanh AS maChiNhanh,
+        kh.QuocTich AS quocTich,
+        kh.CCCD AS cccd
     FROM dbo.TaiKhoan AS tk
     INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = tk.MaNguoiDung
     LEFT JOIN dbo.NhanVien AS nv ON nv.MaNhanVien = tk.MaNguoiDung
+    LEFT JOIN dbo.KhachHang AS kh ON kh.MaKhachHang = tk.MaNguoiDung
     WHERE tk.TenDangNhap = @TenDangNhap;
 END;
 GO

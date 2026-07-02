@@ -15,5 +15,9 @@ export function getAuthenticatedHomePath(user) {
     return '/nhan-vien-ke-toan';
   }
 
+  if (user?.vaiTro === 'NhanVien' && user?.chucVu === 'Admin') {
+    return '/nhan-vien-admin';
+  }
+
   return '/dashboard';
 }
