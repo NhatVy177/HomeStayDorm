@@ -10,6 +10,8 @@ import DatCocTab from './DatCocTab.jsx';
 import LapHopDongTab from './LapHopDongTab.jsx';
 import KhachHangTab from './KhachHangTab.jsx';
 import TraCuuPhongTab from './TraCuuPhongTab.jsx';
+import DangKyTraPhongTab from './DangKyTraPhongTab.jsx';
+import NhanPhongTab from './NhanPhongTab.jsx';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 
 function Brand() {
@@ -51,6 +53,7 @@ export default function NhanVienSalePage() {
     { id: 'tra-cuu', label: 'Kiểm tra phòng/giường', icon: 'meeting_room' },
     { id: 'lich-xem', label: 'Lịch xem phòng', icon: 'pending_actions' },
     { id: 'dat-coc', label: 'Đặt cọc', icon: 'account_balance_wallet' },
+    { id: 'nhan-phong', label: 'Ghi nhận cư trú', icon: 'badge' },
     { id: 'hop-dong-thue', label: 'Hợp đồng thuê', icon: 'article' },
     { id: 'tra-phong', label: 'Trả phòng', icon: 'logout' },
     { id: 'khach-hang', label: 'Khách hàng', icon: 'person' }
@@ -127,16 +130,9 @@ export default function NhanVienSalePage() {
           {activeTab === 'tra-cuu' && <TraCuuPhongTab />}
           {activeTab === 'lich-xem' && <LichXemPhongTab onNavigate={setActiveTab} />}
           {activeTab === 'dat-coc' && <DatCocTab />}
+          {activeTab === 'nhan-phong' && <NhanPhongTab />}
           {activeTab === 'hop-dong-thue' && <LapHopDongTab />}
-          {activeTab === 'tra-phong' && (
-            <div className="ktp-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '600px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <Icon name="build" style={{ fontSize: '48px', color: '#9eaaab', marginBottom: '16px' }} />
-                <h2 style={{ color: '#3f494a', margin: '0 0 8px' }}>Chức năng đang phát triển</h2>
-                <p style={{ color: '#6f797a', margin: 0 }}>Tính năng Trả phòng sẽ sớm được cập nhật trong phiên bản tiếp theo.</p>
-              </div>
-            </div>
-          )}
+          {activeTab === 'tra-phong' && <DangKyTraPhongTab />}
           {activeTab === 'khach-hang' && <KhachHangTab />}
         </main>
       </div>

@@ -1,45 +1,12 @@
 import React, { useState } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 
-const AssetRow = ({ asset }) => {
-  const [status, setStatus] = useState(asset.currentStatus);
-  const isNormal = status === 'Bình thường';
-  
-  const selectBorder = isNormal ? '#137333' : '#ba1a1a';
-  const selectColor = isNormal ? '#137333' : '#ba1a1a';
-  const inputBorder = isNormal ? '#e1e3e4' : '#ba1a1a';
-  const inputColor = isNormal ? '#3f494a' : '#ba1a1a';
-  
-  return (
-    <tr style={{ borderBottom: '1px solid #e1e3e4', backgroundColor: isNormal ? 'transparent' : '#fffbfa' }}>
-      <td style={{ padding: '12px 8px', fontSize: '14px', color: '#3f494a' }}>{asset.id}</td>
-      <td style={{ padding: '12px 8px', fontSize: '14px', fontWeight: '600', color: '#191c1d' }}>{asset.name}</td>
-      <td style={{ padding: '12px 8px', fontSize: '14px', color: '#3f494a', textAlign: 'center' }}>{asset.qty}</td>
-      <td style={{ padding: '12px 8px' }}>
-        <span style={{ backgroundColor: '#e6f4ea', color: '#137333', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '500' }}>Bình thường</span>
-      </td>
-      <td style={{ padding: '12px 8px' }}>
-        <select 
-          value={status} 
-          onChange={(e) => setStatus(e.target.value)}
-          style={{ padding: '8px', border: `1px solid ${selectBorder}`, borderRadius: '4px', fontSize: '14px', color: selectColor, width: '100%', outline: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
-        >
-          <option>Bình thường</option>
-          <option>Hư hỏng nhẹ</option>
-          <option>Hư hỏng nặng</option>
-        </select>
-      </td>
-      <td style={{ padding: '12px 8px' }}>
-        <input type="text" defaultValue={asset.note} placeholder="Nhập ghi chú..." style={{ width: '100%', padding: '8px', border: `1px solid ${inputBorder}`, borderRadius: '4px', fontSize: '14px', outline: 'none', color: inputColor, backgroundColor: 'transparent' }} />
-      </td>
-      <td style={{ padding: '12px 8px' }}>
-        <input type="text" defaultValue={asset.cost} style={{ width: '100%', padding: '8px', border: `1px solid ${inputBorder}`, borderRadius: '4px', fontSize: '14px', color: inputColor, outline: 'none', backgroundColor: 'transparent', fontWeight: isNormal ? 'normal' : '600' }} />
-      </td>
-    </tr>
-  );
-};
+import KiemTraTraPhong from './KiemTraTraPhong.jsx';
+import XacNhanKetQua from './xacnhanketqua.jsx';
+import ThanhLyTraPhong from './thanhlytraphong.jsx';
+import CapNhatTraPhong from './capnhattraphong.jsx';
 
-export default function LapBienBanKiemTraPhongTab() {
+export default function XuLyTraPhongTab() {
   const [modalType, setModalType] = useState(null);
   const [activeSubTab, setActiveSubTab] = useState('cho-lap-bien-ban');
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -57,247 +24,29 @@ export default function LapBienBanKiemTraPhongTab() {
         <button 
           onClick={() => setActiveSubTab('cho-lap-bien-ban')}
           style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'cho-lap-bien-ban' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'cho-lap-bien-ban' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
-          Chờ lập biên bản
+          Kiểm tra trả phòng
         </button>
         <button 
           onClick={() => setActiveSubTab('cho-xac-nhan-quyet-toan')}
           style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'cho-xac-nhan-quyet-toan' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'cho-xac-nhan-quyet-toan' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
-          Chờ xác nhận quyết toán
+          Xác nhận đối soát
         </button>
         <button 
-          onClick={() => setActiveSubTab('lich-su')}
-          style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'lich-su' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'lich-su' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
-          Đã xử lý / Lịch sử
+          onClick={() => setActiveSubTab('thanh-ly-tra-phong')}
+          style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'thanh-ly-tra-phong' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'thanh-ly-tra-phong' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+          Thanh lý trả phòng
+        </button>
+        <button 
+          onClick={() => setActiveSubTab('cap-nhat-hoan-tat')}
+          style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'cap-nhat-hoan-tat' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'cap-nhat-hoan-tat' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+          Cập nhật hoàn tất
         </button>
       </div>
 
-      {activeSubTab === 'cho-lap-bien-ban' && (
-        <>
-          {/* Filter Section */}
-      <section className="ktp-filter-section">
-        <div className="ktp-filter-group">
-          <label className="ktp-filter-label">Trạng thái</label>
-          <select className="ktp-input">
-            <option>Tất cả</option>
-            <option>Chờ xử lý</option>
-            <option>Đã xử lý</option>
-          </select>
-        </div>
-        <div className="ktp-filter-group">
-          <label className="ktp-filter-label">Khu vực</label>
-          <select className="ktp-input">
-            <option>Tất cả khu vực</option>
-            <option>Chi nhánh Q1</option>
-            <option>Chi nhánh Q7</option>
-          </select>
-        </div>
-        <div className="ktp-filter-group" style={{ justifyContent: 'flex-end', flexGrow: 1 }}>
-          <div className="ktp-input-icon-wrap" style={{ width: '100%', maxWidth: '350px' }}>
-            <span className="ktp-input-icon"><Icon name="search" /></span>
-            <input className="ktp-input ktp-input-with-icon" type="text" placeholder="Tìm mã phiếu, khách..." style={{ width: '100%' }} />
-          </div>
-        </div>
-      </section>
-
-      {/* Table Section */}
-      <section className="ktp-table-section">
-        <table className="ktp-table">
-          <thead>
-            <tr>
-              <th>Mã phiếu</th>
-              <th>Mã HĐ</th>
-              <th>Khách hàng</th>
-              <th>Phòng/Giường</th>
-              <th>Ngày yêu cầu</th>
-              <th className="text-center">Trạng thái</th>
-              <th className="text-center">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>PTP001</td>
-              <td>HDT001</td>
-              <td>Nguyễn Minh Anh</td>
-              <td>P.203 - G1, G2</td>
-              <td>20/06/2026</td>
-              <td className="text-center">
-                <span className="ktp-badge ktp-badge-warning" style={{ backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffeeba' }}>Chờ xử lý</span>
-              </td>
-              <td className="text-center">
-                <button className="ktp-btn-action-fill" onClick={() => setModalType('create')}>Lập biên bản</button>
-              </td>
-            </tr>
-            <tr style={{ backgroundColor: 'rgba(46, 125, 50, 0.05)' }}>
-              <td>PTP002</td>
-              <td>HDT045</td>
-              <td>Trần Văn Cường</td>
-              <td>P.105 - G4</td>
-              <td>21/06/2026</td>
-              <td className="text-center">
-                <span className="ktp-badge ktp-badge-warning" style={{ backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffeeba' }}>Chờ xử lý</span>
-              </td>
-              <td className="text-center">
-                <button className="ktp-btn-action-fill" onClick={() => setModalType('create')}>Lập biên bản</button>
-              </td>
-            </tr>
-            <tr style={{ opacity: 0.7 }}>
-              <td>PTP003</td>
-              <td>HDT089</td>
-              <td>Lê Thị Thảo</td>
-              <td>P.304 - G1</td>
-              <td>19/06/2026</td>
-              <td className="text-center">
-                <span className="ktp-badge ktp-badge-outline" style={{ backgroundColor: '#e2e3e5', color: '#383d41', borderColor: '#d6d8db' }}>Đã xử lý</span>
-              </td>
-              <td className="text-center">
-                <button className="ktp-btn-action-fill" style={{ backgroundColor: '#mint-mist', color: '#004c52', border: '1px solid #004c52' }} onClick={() => setModalType('detail')}>Chi tiết</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <div className="ktp-pagination">
-          <button className="ktp-page-btn"><Icon name="chevron_left" /></button>
-          <button className="ktp-page-btn is-active">1</button>
-          <button className="ktp-page-btn">2</button>
-          <button className="ktp-page-btn"><Icon name="chevron_right" /></button>
-        </div>
-      </section>
-        </>
-      )}
-
-      {activeSubTab === 'cho-xac-nhan-quyet-toan' && (
-        <section className="ktp-table-section">
-          <table className="ktp-table">
-            <thead>
-              <tr>
-                <th>Mã phiếu trả phòng</th>
-                <th>Mã hợp đồng</th>
-                <th>Khách hàng</th>
-                <th>Phòng/Giường</th>
-                <th>Tổng tiền khấu trừ</th>
-                <th>Số tiền hoàn/thu thêm</th>
-                <th className="text-center">Trạng thái</th>
-                <th className="text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>PTP004</td>
-                <td>HDT012</td>
-                <td>Lê Gia Hân</td>
-                <td>P.102 - G2</td>
-                <td style={{ color: '#ba1a1a', fontWeight: '500' }}>800.000đ</td>
-                <td style={{ color: '#137333', fontWeight: '500' }}>Hoàn: 2.200.000đ</td>
-                <td className="text-center">
-                  <span className="ktp-badge ktp-badge-warning" style={{ backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffeeba' }}>Chờ xác nhận</span>
-                </td>
-                <td className="text-center" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                  <button className="ktp-btn-action-fill" style={{ backgroundColor: '#00666d', color: '#ffffff' }} onClick={() => setModalType('quyet-toan')}>Xử lý</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      )}
-
-      {activeSubTab === 'lich-su' && (
-        <section className="ktp-table-section">
-          <table className="ktp-table">
-            <thead>
-              <tr>
-                <th>Mã phiếu trả phòng</th>
-                <th>Mã hợp đồng</th>
-                <th>Khách hàng</th>
-                <th>Phòng/Giường</th>
-                <th>Tổng tiền khấu trừ</th>
-                <th>Số tiền hoàn/thu thêm</th>
-                <th className="text-center">Trạng thái</th>
-                <th className="text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>PTP005</td>
-                <td>HDT022</td>
-                <td>Trần Mai Phương</td>
-                <td>P.402</td>
-                <td style={{ color: '#ba1a1a', fontWeight: '500' }}>0đ</td>
-                <td style={{ color: '#137333', fontWeight: '500' }}>Hoàn: 3.000.000đ</td>
-                <td className="text-center">
-                  <span className="ktp-badge ktp-badge-outline" style={{ backgroundColor: '#e2e3e5', color: '#383d41', borderColor: '#d6d8db' }}>Đã xử lý</span>
-                </td>
-                <td className="text-center">
-                  <button className="ktp-btn-action-fill" onClick={() => setModalType('detail-quyet-toan')} style={{ backgroundColor: '#00666d', color: '#ffffff', border: 'none' }}>Xem chi tiết</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      )}
-
-      {/* Modal Overlay */}
-      {modalType && modalType !== 'quyet-toan' && modalType !== 'detail-quyet-toan' && (
-        <div className="ktp-modal-overlay" onClick={() => setModalType(null)}>
-          <div className="ktp-modal" style={{ maxWidth: '900px', width: '90%', padding: '0', backgroundColor: '#ffffff', borderRadius: '12px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="ktp-modal-header" style={{ padding: '16px 24px', backgroundColor: '#3b8280', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '12px 12px 0 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff', fontWeight: '700' }}>
-                  {modalType === 'create' ? 'Lập biên bản kiểm tra trả phòng' : 'Chi tiết biên bản kiểm tra'}
-                </h3>
-                <span style={{ backgroundColor: '#ffffff', color: '#93000a', padding: '4px 12px', borderRadius: '16px', fontSize: '13px', fontWeight: '600' }}>Chờ xử lý</span>
-              </div>
-              <button className="ktp-modal-close" onClick={() => setModalType(null)} style={{ color: '#ffffff', background: 'transparent', border: 'none', cursor: 'pointer' }}><Icon name="close" /></button>
-            </div>
-            <div className="ktp-modal-body" style={{ padding: '16px 24px', maxHeight: '70vh', overflowY: 'auto', backgroundColor: '#f8f9fa' }}>
-              
-              {/* Form Info Section */}
-              <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Ngày kiểm tra</label>
-                  <input type="text" defaultValue="21/06/2024" readOnly style={{ width: '250px', padding: '10px 12px', backgroundColor: '#f3f4f5', border: '1px solid #e1e3e4', borderRadius: '6px', color: '#3f494a', fontSize: '14px' }} />
-                </div>
-                <div style={{ marginBottom: '0' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Tình trạng phòng thực tế (Mô tả chung)</label>
-                  <textarea rows="3" placeholder="Nhập đánh giá tổng quan về vệ sinh, mùi, hư hỏng kết cấu chung..." style={{ width: '100%', padding: '12px', border: '1px solid #e1e3e4', borderRadius: '6px', fontSize: '14px', resize: 'vertical', display: 'block' }}></textarea>
-                </div>
-              </div>
-
-              {/* Asset List Section */}
-              <div>
-                <h4 style={{ fontSize: '16px', fontWeight: '700', color: '#191c1d', margin: '0 0 12px 0' }}>Danh mục tài sản kiểm tra</h4>
-                <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead style={{ backgroundColor: '#f3f4f5', borderBottom: '1px solid #e1e3e4' }}>
-                      <tr>
-                        <th style={{ padding: '10px 8px', fontSize: '14px', fontWeight: '600', color: '#3f494a' }}>Mã TS</th>
-                        <th style={{ padding: '10px 8px', fontSize: '14px', fontWeight: '600', color: '#3f494a', width: '120px' }}>Tên tài sản</th>
-                        <th style={{ padding: '10px 8px', fontSize: '14px', fontWeight: '600', color: '#3f494a', textAlign: 'center' }}>SL</th>
-                        <th style={{ padding: '10px 8px', fontSize: '14px', fontWeight: '600', color: '#3f494a', width: '100px' }}>TT Bàn giao</th>
-                        <th style={{ padding: '10px 8px', fontSize: '14px', fontWeight: '600', color: '#3f494a', width: '140px' }}>TT Hiện tại</th>
-                        <th style={{ padding: '10px 8px', fontSize: '14px', fontWeight: '600', color: '#3f494a' }}>Ghi chú chi tiết</th>
-                        <th style={{ padding: '10px 8px', fontSize: '14px', fontWeight: '600', color: '#3f494a', width: '120px' }}>Chi phí bồi thường</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {initialAssets.map((asset) => (
-                        <AssetRow key={asset.id} asset={asset} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-            </div>
-            <div className="ktp-modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e1e3e4', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#ffffff', borderRadius: '0 0 12px 12px' }}>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button onClick={() => setModalType(null)} style={{ backgroundColor: '#ffffff', border: '1px solid #004c52', color: '#004c52', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Lưu nháp</button>
-                {modalType === 'create' && <button className="ktp-btn-action-fill" onClick={() => setModalType(null)} style={{ padding: '10px 24px' }}>Xác nhận lưu biên bản</button>}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {activeSubTab === 'cho-lap-bien-ban' && <KiemTraTraPhong />}
+      {activeSubTab === 'cho-xac-nhan-quyet-toan' && <XacNhanKetQua />}
+      {activeSubTab === 'thanh-ly-tra-phong' && <ThanhLyTraPhong />}
+      {activeSubTab === 'cap-nhat-hoan-tat' && <CapNhatTraPhong />}
 
       {/* Modal Quyết Toán */}
       {(modalType === 'quyet-toan' || modalType === 'detail-quyet-toan') && (

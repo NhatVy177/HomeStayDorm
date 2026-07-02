@@ -208,7 +208,7 @@ function RoomImage({ src, alt }) {
 }
 
 /* ─── Appointment Card ─── */
-function AppointmentCard({ appt, onChat, onReschedule, onCancel, onViewDetail }) {
+function AppointmentCard({ appt, onReschedule, onCancel, onViewDetail }) {
   const isPast = appt.status === 'done' || appt.status === 'cancelled';
 
   return (
@@ -281,10 +281,10 @@ function AppointmentCard({ appt, onChat, onReschedule, onCancel, onViewDetail })
             <button
               className="lxp-card-btn lxp-card-btn-primary"
               type="button"
-              onClick={() => onChat?.(appt)}
+              onClick={() => onCancel?.(appt)}
             >
-              <Icon name="chat" />
-              Liên hệ tư vấn
+              <Icon name="cancel" />
+              Yêu cầu hủy hẹn
             </button>
             <button
               className="lxp-card-btn lxp-card-btn-outline-primary"
@@ -321,7 +321,7 @@ function AppointmentCard({ appt, onChat, onReschedule, onCancel, onViewDetail })
               onClick={() => onCancel?.(appt)}
             >
               <Icon name="cancel" />
-              Yêu cầu hủy lịch
+              Yêu cầu hủy hẹn
             </button>
           </>
         )}
