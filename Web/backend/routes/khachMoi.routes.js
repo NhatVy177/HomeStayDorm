@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as controller from '../controllers/khachMoi.controller.js';
+import { uploadChungTu } from '../middleware/upload.middleware.js';
 
 const router = Router();
 
@@ -15,5 +16,9 @@ router.put('/lich-xem/:id/yeu-cau-dieu-chinh', controller.yeuCauDieuChinhLich);
 router.get('/dat-coc', controller.getDatCoc);
 router.post('/dat-coc/:id/minh-chung', controller.uploadMinhChung);
 router.get('/hop-dong-dashboard', controller.getHopDongDashboard);
+router.post('/hop-dong-dashboard/tra-phong', controller.guiYeuCauTraPhong);
+router.delete('/hop-dong-dashboard/tra-phong/:id', controller.huyYeuCauTraPhong);
+router.post('/hop-dong-dashboard/doi-soat/:id/phan-hoi', controller.phanHoiDoiSoatTraPhong);
+router.post('/hop-dong-dashboard/doi-soat/:id/thanh-toan', uploadChungTu.single('file'), controller.ghiNhanThanhToanDoiSoatTraPhong);
 
 export default router;

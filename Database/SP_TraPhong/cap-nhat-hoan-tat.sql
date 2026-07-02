@@ -225,7 +225,8 @@ BEGIN
 
         -- 4. Cập nhật phiếu trả phòng thành Hoàn tất
         UPDATE dbo.PhieuTraPhong
-        SET TrangThai = N'Hoàn tất'
+        SET TrangThai = N'Hoàn tất',
+            NgayTraThucTe = CAST(GETDATE() AS DATE)
         WHERE MaPhieuTra = @MaPhieuTra;
 
         COMMIT TRANSACTION;
