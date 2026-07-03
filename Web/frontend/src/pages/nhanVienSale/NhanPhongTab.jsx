@@ -156,14 +156,24 @@ function normalizePhieu(row = {}) {
   };
 }
 
+// Cấu hình trạng thái hồ sơ cư trú: nhãn chip, nhãn badge, màu badge (giống DatCocTab).
+const RESIDENCE_STATUS_CONFIG = {
+  'Chưa cập nhật':     { chip: 'Chờ gửi',      badgeLabel: 'Chờ gửi',          badge: { bg: '#fff4e5', fg: '#b45309' } },
+  'Chờ duyệt cư trú': { chip: 'Chờ duyệt',    badgeLabel: 'Chờ quản lý duyệt', badge: { bg: '#e8f1ff', fg: '#1d4ed8' } },
+  'Đã duyệt cư trú':  { chip: 'Đã duyệt',     badgeLabel: 'Đã duyệt',          badge: { bg: '#e6f6ec', fg: '#15803d' } },
+  'Từ chối cư trú':   { chip: 'Bị từ chối',   badgeLabel: 'Bị từ chối',        badge: { bg: '#fdecec', fg: '#b91c1c' } },
+};
+const RESIDENCE_STATUS_ORDER = ['Chưa cập nhật', 'Chờ duyệt cư trú', 'Đã duyệt cư trú', 'Từ chối cư trú'];
+
 function StatusBadge({ value }) {
   const label = value || 'Chưa cập nhật';
-  const tone = label === 'Đã duyệt cư trú'
-    ? 'is-success'
-    : label === 'Từ chối cư trú'
-      ? 'is-danger'
-      : 'is-primary';
-  return <span className={`residence-badge ${tone}`}>{label}</span>;
+  const cfg = RESIDENCE_STATUS_CONFIG[label];
+  const s = cfg ? cfg.badge : { bg: '#eef2f3', fg: '#3f494a' };
+  return (
+    <span style={{ background: s.bg, color: s.fg, padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-block', textAlign: 'center' }}>
+      {cfg ? cfg.badgeLabel : label}
+    </span>
+  );
 }
 
 export default function NhanPhongTab() {
@@ -177,9 +187,27 @@ export default function NhanPhongTab() {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const normalizedList = useMemo(() => phieuCocs.map(normalizePhieu), [phieuCocs]);
   const pendingCount = normalizedList.filter((item) => item.trangThaiHoSo !== 'Đã duyệt cư trú').length;
+
+  // Đếm số lượng theo từng trạng thái (cho chip filter)
+  const statusCounts = useMemo(() => {
+    const c = { all: normalizedList.length };
+    RESIDENCE_STATUS_ORDER.forEach((s) => { c[s] = 0; });
+    normalizedList.forEach((item) => {
+      const key = item.trangThaiHoSo || 'Chưa cập nhật';
+      if (c[key] != null) c[key] += 1;
+    });
+    return c;
+  }, [normalizedList]);
+
+  // Danh sách đã lọc theo chip trạng thái
+  const filteredList = useMemo(() => {
+    if (statusFilter === 'all') return normalizedList;
+    return normalizedList.filter((item) => (item.trangThaiHoSo || 'Chưa cập nhật') === statusFilter);
+  }, [normalizedList, statusFilter]);
 
   async function loadData(keyword = '') {
     try {
@@ -346,6 +374,37 @@ export default function NhanPhongTab() {
         </button>
       </section>
 
+      {/* Bộ lọc trạng thái dạng chip (giống DatCocTab) */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+        {[{ key: 'all', label: 'Tất cả' }, ...RESIDENCE_STATUS_ORDER.map((s) => ({ key: s, label: RESIDENCE_STATUS_CONFIG[s].chip }))].map((tab) => {
+          const active = statusFilter === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setStatusFilter(tab.key)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 600, transition: 'all .15s',
+                border: active ? '1px solid #2f6765' : '1px solid #d7dcdc',
+                background: active ? '#2f6765' : '#fff',
+                color: active ? '#fff' : '#3f494a'
+              }}
+            >
+              {tab.label}
+              <span style={{
+                background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3',
+                color: active ? '#fff' : '#6f797a',
+                borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 700, minWidth: '20px', textAlign: 'center'
+              }}>
+                {statusCounts[tab.key] ?? 0}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <section className="ktp-table-section">
         <div className="residence-table-head">
           <div>
@@ -369,10 +428,10 @@ export default function NhanPhongTab() {
               {loading && (
                 <tr><td colSpan="6" className="text-center">Đang tải dữ liệu...</td></tr>
               )}
-              {!loading && normalizedList.length === 0 && (
+              {!loading && filteredList.length === 0 && (
                 <tr><td colSpan="6" className="text-center">Không có phiếu cọc cần ghi nhận cư trú.</td></tr>
               )}
-              {!loading && normalizedList.map((item) => {
+              {!loading && filteredList.map((item) => {
                 const editable = canEditResidenceProfile(item.trangThaiHoSo);
                 return (
                   <tr key={item.maPhieuDatCoc}>
