@@ -1,0 +1,187 @@
+2026-07-02T14:59:14.916Z
+RequestError: Could not find stored procedure 'dbo.SP_DanhSachHoSoDangKy'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T14:59:14.927Z
+RequestError: Could not find stored procedure 'dbo.SP_DanhSachHoSoDangKy'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T14:59:40.016Z
+RequestError: Could not find stored procedure 'dbo.SP_DanhSachChoXacNhanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T14:59:40.022Z
+RequestError: Could not find stored procedure 'dbo.SP_DanhSachChoXacNhanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T15:09:06.150Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///E:/pttk/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-02T15:19:49.791Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:20:42.295Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:23:48.864Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:24:01.122Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:25:54.417Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:31:36.666Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:31:38.517Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:31:39.373Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:31:40.105Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:31:40.665Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:32:37.781Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:32:42.114Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:32:43.035Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-02T15:32:43.809Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
