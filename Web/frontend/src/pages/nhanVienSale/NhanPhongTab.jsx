@@ -186,8 +186,16 @@ export default function NhanPhongTab() {
   const [reviewInfo, setReviewInfo] = useState(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const errorTimerRef = React.useRef(null);
+
+  function showError(msg) {
+    setError(msg);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setError(''), 4000);
+  }
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [successInfo, setSuccessInfo] = useState(null);
 
   const normalizedList = useMemo(() => phieuCocs.map(normalizePhieu), [phieuCocs]);
   const pendingCount = normalizedList.filter((item) => item.trangThaiHoSo !== 'Đã duyệt cư trú').length;
@@ -265,7 +273,7 @@ export default function NhanPhongTab() {
         setMembers(detailMembers);
       }
     } catch (err) {
-      setError('Không tải được hồ sơ cư trú đã nhập trước đó. Bạn thử đóng form rồi mở lại nha.');
+      showError('Không tải được hồ sơ cư trú đã nhập trước đó. Bạn thử đóng form rồi mở lại nha.');
     } finally {
       setLoading(false);
     }
@@ -277,11 +285,23 @@ export default function NhanPhongTab() {
 
   function addMember() {
     if (isIndividualRental(selectedPhieu)) return;
+    
+    const maxCapacity = selectedPhieu.hinhThucThue === 'Ghép giường' 
+      ? selectedPhieu.soGiuongDaCoc 
+      : selectedPhieu.sucChuaToiDa;
+      
+    if (members.length >= maxCapacity) {
+      const typeLabel = selectedPhieu.hinhThucThue === 'Ghép giường' ? 'số giường đã đặt cọc' : 'sức chứa tối đa của phòng';
+      showError(`Không thể thêm người. Số người cư trú không được vượt quá ${typeLabel} (${maxCapacity} người).`);
+      return;
+    }
+    setError('');
     setMembers((prev) => [...prev, { ...emptyMember }]);
   }
 
   function removeMember(index) {
     if (isIndividualRental(selectedPhieu)) return;
+    setError('');
     setMembers((prev) => prev.filter((_, i) => i !== index));
   }
 
@@ -303,7 +323,7 @@ export default function NhanPhongTab() {
   async function handleSubmit() {
     const message = validateForm();
     if (message) {
-      setError(message);
+      showError(message);
       return;
     }
 
@@ -320,11 +340,16 @@ export default function NhanPhongTab() {
       if (maHoSo) {
         await cuTruApi.guiDuyetHoSoCuTru(maHoSo);
       }
-      setNotice(`Đã gửi hồ sơ cư trú của ${selectedPhieu.maPhieuDatCoc} cho quản lý duyệt.`);
+      setSuccessInfo({
+        maPhieuDatCoc: selectedPhieu.maPhieuDatCoc,
+        hoTenKhachHang: selectedPhieu.hoTenKhachHang,
+        viTriThue: selectedPhieu.viTriThue,
+        soNguoi: members.length
+      });
       setSelectedPhieu(null);
       loadData(searchText);
     } catch (err) {
-      setError(err.response?.data?.message || 'Không thể lưu hồ sơ cư trú. Bạn kiểm tra lại dữ liệu hoặc chạy script SQL mới nha.');
+      showError(err.response?.data?.message || 'Không thể lưu hồ sơ cư trú. Bạn kiểm tra lại dữ liệu hoặc chạy script SQL mới nha.');
     } finally {
       setLoading(false);
     }
@@ -332,6 +357,19 @@ export default function NhanPhongTab() {
 
   return (
     <div className="ktp-container residence-page">
+      {error && (
+        <div className="residence-error-overlay" onClick={() => setError('')}>
+          <div className="residence-error-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="residence-error-icon">
+              <Icon name="error" />
+            </div>
+            <h4>Có lỗi xảy ra</h4>
+            <p>{error}</p>
+            <button type="button" className="residence-error-ok" onClick={() => setError('')}>Đã hiểu</button>
+          </div>
+        </div>
+      )}
+
       {notice && (
         <div className="residence-notice">
           <Icon name="info" />
@@ -477,7 +515,6 @@ export default function NhanPhongTab() {
             </div>
 
             <div className="ktp-modal-body">
-              {error && <div className="residence-error"><Icon name="error" /> {error}</div>}
 
               {reviewInfo && reviewInfo.trangThaiHoSo !== 'Chờ duyệt cư trú' && (
                 <section className={`residence-feedback-panel ${reviewInfo.trangThaiHoSo === 'Từ chối cư trú' ? 'is-danger' : 'is-warning'}`}>
@@ -490,7 +527,7 @@ export default function NhanPhongTab() {
                 </section>
               )}
 
-              <div className="residence-summary">
+              <div className="residence-summary" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
                 <div><span>Khách hàng</span><strong>{selectedPhieu.hoTenKhachHang}</strong></div>
                 <div><span>Mã phiếu đăng ký</span><strong>{selectedPhieu.maPhieuYeuCauDangKy || 'Chưa có'}</strong></div>
                 <div><span>Vị trí thuê</span><strong>{selectedPhieu.viTriThue}</strong></div>
@@ -540,7 +577,7 @@ export default function NhanPhongTab() {
                       </div>
                     )}
                     <div className="residence-form-grid">
-                      <label>
+                      <label style={{ gridColumn: 'span 2' }}>
                         Họ tên
                         <input className="ktp-input" value={member.hoTen} onChange={(event) => updateMember(index, 'hoTen', event.target.value)} />
                       </label>
@@ -563,7 +600,7 @@ export default function NhanPhongTab() {
                         SĐT
                         <input className="ktp-input" value={member.sdt} onChange={(event) => updateMember(index, 'sdt', event.target.value)} />
                       </label>
-                      <label>
+                      <label style={{ gridColumn: 'span 2' }}>
                         Email
                         <input className="ktp-input" value={member.email} onChange={(event) => updateMember(index, 'email', event.target.value)} />
                       </label>
@@ -598,6 +635,47 @@ export default function NhanPhongTab() {
                 Gửi quản lý duyệt
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {successInfo && (
+        <div className="ktp-modal-overlay" onClick={() => setSuccessInfo(null)}>
+          <div className="residence-success-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="residence-success-icon-wrap">
+              <Icon name="check" style={{ fontSize: '32px' }} />
+            </div>
+            <h3 className="residence-success-title">Ghi nhận cư trú thành công</h3>
+            <p className="residence-success-text">Hệ thống đã lập và gửi hồ sơ cư trú của khách hàng cho quản lý duyệt.</p>
+            
+            <div className="residence-success-details">
+              <div className="residence-success-row">
+                <span className="residence-success-label">Mã phiếu cọc</span>
+                <span className="residence-success-value">{successInfo.maPhieuDatCoc}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Khách hàng</span>
+                <span className="residence-success-value">{successInfo.hoTenKhachHang}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Vị trí thuê</span>
+                <span className="residence-success-value">{successInfo.viTriThue}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Số người ở</span>
+                <span className="residence-success-value">{successInfo.soNguoi} người</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Trạng thái duyệt</span>
+                <span className="residence-success-value">
+                  <StatusBadge value="Chờ duyệt cư trú" />
+                </span>
+              </div>
+            </div>
+
+            <button type="button" className="residence-success-btn" onClick={() => setSuccessInfo(null)}>
+              Đóng
+            </button>
           </div>
         </div>
       )}

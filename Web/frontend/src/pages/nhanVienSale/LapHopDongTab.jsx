@@ -60,6 +60,7 @@ export default function LapHopDongTab() {
   const [ngayKetThuc, setNgayKetThuc] = useState('');
   const [kyTT, setKyTT] = useState('Hàng tháng');
   const [ghiChu, setGhiChu] = useState('');
+  const [soXeGuiXe, setSoXeGuiXe] = useState(1);
   const [confirmKH, setConfirmKH] = useState(false);
   const [confirmNV, setConfirmNV] = useState(false);
 
@@ -290,6 +291,7 @@ export default function LapHopDongTab() {
     setThanhVienValidationResult([]);
     setMemberSummary(null);
     setCuTruReview(null);
+    setSoXeGuiXe(1);
     setConfirmKH(false);
     setConfirmNV(false);
     setShowSuccessModal(false);
@@ -345,17 +347,29 @@ export default function LapHopDongTab() {
     return 'room_service';
   };
 
-  const getCuTruStatusStyle = (status = '') => {
-    if (status === 'Đã duyệt cư trú') {
-      return { class: 'lhd-badge-success', label: status };
+  const getPhieuStatusStyle = (p = {}) => {
+    if (p.trangThaiCoc === 'Huỷ') {
+      return { class: 'lhd-badge-danger', label: 'Cọc đã huỷ' };
     }
-    if (status === 'Chờ duyệt cư trú') {
-      return { class: 'lhd-badge-warning', label: 'Chờ quản lý duyệt' };
+    if (p.trangThaiThanhToan !== 'Đã TT') {
+      return { class: 'lhd-badge-warning', label: 'Chờ thanh toán cọc' };
     }
-    if (status === 'Từ chối cư trú') {
-      return { class: 'lhd-badge-danger', label: status };
+    if (p.trangThaiCoc === 'Đã lập HĐ' || (!p.coTheLapHopDong && p.trangThaiHoSoCuTru === 'Đã duyệt cư trú')) {
+      return { class: 'lhd-badge-success', label: 'Đã lập hợp đồng' };
     }
-    return { class: 'lhd-badge-muted', label: 'Chưa ghi nhận cư trú' };
+    if (p.trangThaiHoSoCuTru === 'Chờ duyệt cư trú') {
+      return { class: 'lhd-badge-warning', label: 'Chờ duyệt cư trú' };
+    }
+    if (p.trangThaiHoSoCuTru === 'Từ chối cư trú') {
+      return { class: 'lhd-badge-danger', label: 'Cư trú bị từ chối' };
+    }
+    if (p.trangThaiHoSoCuTru === 'Chưa cập nhật' || !p.trangThaiHoSoCuTru) {
+      return { class: 'lhd-badge-muted', label: 'Chưa lập hồ sơ cư trú' };
+    }
+    if (p.coTheLapHopDong) {
+      return { class: 'lhd-badge-success', label: 'Chờ lập hợp đồng' };
+    }
+    return { class: 'lhd-badge-muted', label: 'Không xác định' };
   };
 
   const getContractMembers = () => {
@@ -376,9 +390,10 @@ export default function LapHopDongTab() {
 
   // Base price and cost calculation
   const basePrice = selectedPhieu ? selectedPhieu.giaThue : 0;
+  const isXeService = (dv) => dv.tenDichVu?.toLowerCase().includes('xe');
   const dichVuCost = services
     .filter(dv => selectedServices[dv.maDichVu])
-    .reduce((sum, dv) => sum + dv.donGia, 0);
+    .reduce((sum, dv) => sum + (isXeService(dv) ? dv.donGia * soXeGuiXe : dv.donGia), 0);
   const totalPrice = basePrice + dichVuCost;
 
   const formatRentPerMonth = (value) => (
@@ -402,11 +417,8 @@ export default function LapHopDongTab() {
     const giaTheoHinhThuc = hinhThucThue === 'Nguyên phòng' ? 'Giá thuê theo phòng' : 'Giá thuê theo giường';
     const kyThanhToan = savedHD.kyThanhToan || 'Hàng tháng';
     const quyDinhHoanCoc = savedHD.quyDinhHoanCoc || [];
-    const noiQuyMacDinh = (savedHD.dieuKhoan || []).length > 0 ? savedHD.dieuKhoan : [
-      { tieuDeNoiQuy: 'Thanh toán', noiDung: 'Bên thuê thanh toán tiền thuê, tiền dịch vụ đúng kỳ hạn và chịu trách nhiệm với các khoản phát sinh trong thời gian lưu trú.' },
-      { tieuDeNoiQuy: 'Bảo quản tài sản', noiDung: 'Bên thuê giữ gìn tài sản, thiết bị, khu vực chung và bồi thường các hư hỏng phát sinh do lỗi sử dụng.' },
-      { tieuDeNoiQuy: 'Trật tự lưu trú', noiDung: 'Bên thuê tuân thủ nội quy ký túc xá, không tự ý chuyển nhượng chỗ ở hoặc đưa người chưa đăng ký vào lưu trú.' }
-    ];
+    const noiQuyList = savedHD.dieuKhoan || [];
+    const dieuKhoanViPham = savedHD.dieuKhoanViPham || [];
     const contractRow = (label, value) => (
       <div className="contract-row-item">
         <span>{label}:</span>
@@ -582,20 +594,56 @@ export default function LapHopDongTab() {
               </table>
 
               {articleTitle(6, 'Nội quy lưu trú')}
-              <ol style={{ margin: 0, paddingLeft: '20px' }}>
-                {noiQuyMacDinh.map((dk, i) => (
-                  <li key={i} style={{ marginBottom: '8px' }}>
-                    <strong>{dk.tieuDeNoiQuy}:</strong> {dk.noiDung}
-                  </li>
-                ))}
-              </ol>
+              {noiQuyList.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '40px' }}>STT</th>
+                      <th style={{ width: '220px' }}>Nội dung</th>
+                      <th>Quy định cụ thể</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {noiQuyList.map((nq, i) => (
+                      <tr key={nq.maQuyDinh || i}>
+                        <td style={{ width: '40px' }}>{i + 1}</td>
+                        <td style={{ fontWeight: '700' }}>{nq.tieuDeNoiQuy}</td>
+                        <td>{nq.noiDung}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p style={{ color: '#888', fontStyle: 'italic' }}>Chưa có dữ liệu nội quy.</p>
+              )}
 
               {articleTitle(7, 'Điều khoản xử lý vi phạm')}
-              <ol style={{ margin: 0, paddingLeft: '20px' }}>
-                <li style={{ marginBottom: '8px' }}>Nếu bên B chậm thanh toán, bên A có quyền nhắc nợ, tạm ngưng dịch vụ không thiết yếu và áp dụng biện pháp xử lý theo quy định của ký túc xá.</li>
-                <li style={{ marginBottom: '8px' }}>Nếu bên B tự ý đưa người chưa đăng ký vào ở, chuyển nhượng chỗ ở, gây mất trật tự hoặc vi phạm quy định giới tính/khu vực, bên A có quyền lập biên bản, yêu cầu khắc phục hoặc chấm dứt hợp đồng.</li>
-                <li style={{ marginBottom: '8px' }}>Các hư hỏng, mất mát tài sản do lỗi của bên B được bồi thường hoặc khấu trừ vào tiền cọc theo biên bản kiểm kê, bàn giao.</li>
-              </ol>
+              {dieuKhoanViPham.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '40px' }}>STT</th>
+                      <th>Điều khoản vi phạm</th>
+                      <th style={{ width: '120px' }}>Hình thức</th>
+                      <th style={{ width: '130px' }}>Mức phạt</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dieuKhoanViPham.map((dk, i) => (
+                      <tr key={dk.maDieuKhoan || i}>
+                        <td style={{ width: '40px' }}>{i + 1}</td>
+                        <td style={{ fontWeight: '700' }}>{dk.tenDieuKhoan}</td>
+                        <td>{dk.hinhThucXuPhat}</td>
+                        <td style={{ fontWeight: '800', color: dk.mucPhat > 0 ? '#a43c12' : '#1b6f6d' }}>
+                          {dk.mucPhat > 0 ? `${Number(dk.mucPhat).toLocaleString('vi-VN')}đ` : 'Nhắc nhở'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p style={{ color: '#888', fontStyle: 'italic' }}>Chưa có dữ liệu điều khoản vi phạm.</p>
+              )}
 
               {articleTitle(8, 'Cam kết chung')}
               <p>
@@ -689,7 +737,7 @@ export default function LapHopDongTab() {
               </tr>
             ) : (
               phieuCocs.map(p => {
-                const cuTruStatus = getCuTruStatusStyle(p.trangThaiHoSoCuTru);
+                const statusInfo = getPhieuStatusStyle(p);
                 const waitingForResidence = p.trangThaiHoSoCuTru !== 'Đã duyệt cư trú';
                 return (
                 <tr key={p.maPhieuDatCoc}>
@@ -700,36 +748,35 @@ export default function LapHopDongTab() {
                     </div>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
                       <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: 'var(--lhd-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700', flexShrink: 0 }}>
                         {p.hoTenKhachHang?.charAt(0).toUpperCase()}
                       </div>
-                      <div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <div style={{ fontWeight: '600', color: 'var(--lhd-text)' }}>{p.hoTenKhachHang}</div>
                         <div style={{ fontSize: '12px', color: 'var(--lhd-text-muted)' }}>{p.sdt}</div>
                       </div>
                     </div>
                   </td>
                   <td>
-                    <div style={{ fontWeight: '600', color: 'var(--lhd-text)' }}>{p.viTriThue}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--lhd-text-muted)' }}>{p.hinhThucThue}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <div style={{ fontWeight: '600', color: 'var(--lhd-text)' }}>{p.viTriThue}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--lhd-text-muted)' }}>{p.hinhThucThue}</div>
+                    </div>
                   </td>
                   <td>
-                    <div style={{ fontWeight: '600', color: 'var(--lhd-text)' }}>{formatRentPerMonth(p.tongGiaThue ?? p.giaThue)}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--lhd-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Icon name="calendar_today" style={{ fontSize: '12px' }} /> 
-                      {p.thoiGianNhanPhong ? new Date(p.thoiGianNhanPhong).toLocaleDateString('vi-VN') : 'Chưa định ngày'}
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <div style={{ fontWeight: '600', color: 'var(--lhd-text)' }}>{formatRentPerMonth(p.tongGiaThue ?? p.giaThue)}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--lhd-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Icon name="calendar_today" style={{ fontSize: '12px' }} /> 
+                        {p.thoiGianNhanPhong ? new Date(p.thoiGianNhanPhong).toLocaleDateString('vi-VN') : 'Chưa định ngày'}
+                      </div>
                     </div>
                   </td>
                   <td className="text-center">
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                      <span className={`lhd-badge ${p.coTheLapHopDong ? 'lhd-badge-success' : 'lhd-badge-danger'}`}>
-                        {p.trangThaiCoc} ({p.trangThaiThanhToan})
-                      </span>
-                      <span className={`lhd-badge ${cuTruStatus.class}`}>
-                        {cuTruStatus.label}
-                      </span>
-                    </div>
+                    <span className={`lhd-badge ${statusInfo.class}`}>
+                      {statusInfo.label}
+                    </span>
                   </td>
                   <td className="text-center">
                     {p.coTheLapHopDong ? (
@@ -752,9 +799,10 @@ export default function LapHopDongTab() {
                     ) : (
                       <button 
                         className="lhd-btn lhd-btn-outline" 
-                        style={{ padding: '7px 16px', fontSize: '13px' }}
+                        style={{ padding: '7px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         onClick={() => handleViewContract(p.maPhieuDatCoc)}
                       >
+                        <Icon name="description" style={{ fontSize: '15px' }} />
                         Xem hợp đồng
                       </button>
                     )}
@@ -776,95 +824,97 @@ export default function LapHopDongTab() {
       { label: 'Trạng thái phiếu đặt cọc: Hiệu lực', met: selectedPhieu?.trangThaiCoc === 'Hiệu lực' },
       { label: 'Tiền cọc: Đã thanh toán', met: selectedPhieu?.trangThaiThanhToan === 'Đã TT' },
       { label: 'Liên kết dữ liệu: Chưa có hợp đồng liên kết', met: dieukienCheck.hopLe },
-      { label: 'Dữ liệu khách hàng: Đủ thông tin (CCCD, SĐT)', met: !!(selectedPhieu?.cccd && selectedPhieu?.sdt) },
-      { label: 'Chính sách thương mại: Giá thuê hợp lệ', met: selectedPhieu?.giaThue > 0 }
+      { label: 'Dữ liệu khách hàng: Đủ thông tin (CCCD, SĐT)', met: !!(selectedPhieu?.cccd && selectedPhieu?.sdt) }
     ];
 
     return (
       <div className="lhd-container">
         <StepIndicator current={2} />
         
-        {dieukienCheck.loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <p>Đang kiểm tra các điều kiện lập hợp đồng...</p>
-          </div>
-        ) : (
-          <div className="lhd-grid-2">
-            <div className="lhd-card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--lhd-text)' }}>Thông tin phiếu đặt cọc</h4>
-                <span className="lhd-badge lhd-badge-warning">{selectedPhieu?.maPhieuDatCoc}</span>
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid var(--lhd-border-light)', paddingBottom: '12px' }}>
-                <span style={{ color: 'var(--lhd-text-muted)' }}>Khách hàng:</span>
-                <span style={{ fontWeight: '700', color: 'var(--lhd-text)' }}>{selectedPhieu?.hoTenKhachHang}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid var(--lhd-border-light)', paddingBottom: '12px' }}>
-                <span style={{ color: 'var(--lhd-text-muted)' }}>Phòng thuê:</span>
-                <span style={{ fontWeight: '700', color: 'var(--lhd-text)' }}>{selectedPhieu?.viTriThue}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid var(--lhd-border-light)', paddingBottom: '12px' }}>
-                <span style={{ color: 'var(--lhd-text-muted)' }}>Giá thuê:</span>
-                <span style={{ fontWeight: '700', color: 'var(--lhd-secondary)' }}>{selectedPhieu?.giaThue?.toLocaleString('vi-VN')}đ/tháng</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid var(--lhd-border-light)', paddingBottom: '12px' }}>
-                <span style={{ color: 'var(--lhd-text-muted)' }}>Trạng thái cọc:</span>
-                <span className={`lhd-badge ${selectedPhieu?.trangThaiCoc === 'Hiệu lực' ? 'lhd-badge-success' : 'lhd-badge-danger'}`}>
-                  {selectedPhieu?.trangThaiCoc}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                <span style={{ color: 'var(--lhd-text-muted)' }}>Thanh toán cọc:</span>
-                <span style={{ fontWeight: '700', color: selectedPhieu?.trangThaiThanhToan === 'Đã TT' ? 'var(--lhd-success)' : 'var(--lhd-secondary)' }}>
-                  {selectedPhieu?.trangThaiThanhToan === 'Đã TT' ? 'ĐÃ THANH TOÁN CỌC' : 'CHƯA THANH TOÁN CỌC'}
-                </span>
-              </div>
-
-              {dieukienCheck.hopLe ? (
-                <div className="lhd-alert lhd-alert-success" style={{ marginTop: '4px' }}>
-                  <div className="lhd-alert-icon"><Icon name="check" /></div>
-                  <div>
-                    <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>Đủ điều kiện lập hợp đồng</div>
-                    <div style={{ fontSize: '12px', lineHeight: '1.5' }}>{dieukienCheck.thongBao}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="lhd-alert lhd-alert-danger" style={{ marginTop: '4px' }}>
-                  <div className="lhd-alert-icon"><Icon name="close" /></div>
-                  <div>
-                    <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>Không đủ điều kiện</div>
-                    <div style={{ fontSize: '12px', lineHeight: '1.5' }}>{dieukienCheck.thongBao || 'Vui lòng kiểm tra các mục bên phải.'}</div>
-                  </div>
-                </div>
-              )}
+        <div className="lhd-grid-2">
+          <div className="lhd-card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--lhd-text)' }}>Thông tin phiếu đặt cọc</h4>
+              <span className="lhd-badge lhd-badge-warning">{selectedPhieu?.maPhieuDatCoc}</span>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid var(--lhd-border-light)', paddingBottom: '12px' }}>
+              <span style={{ color: 'var(--lhd-text-muted)' }}>Khách hàng:</span>
+              <span style={{ fontWeight: '700', color: 'var(--lhd-text)' }}>{selectedPhieu?.hoTenKhachHang}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid var(--lhd-border-light)', paddingBottom: '12px' }}>
+              <span style={{ color: 'var(--lhd-text-muted)' }}>Phòng thuê:</span>
+              <span style={{ fontWeight: '700', color: 'var(--lhd-text)' }}>{selectedPhieu?.viTriThue}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid var(--lhd-border-light)', paddingBottom: '12px' }}>
+              <span style={{ color: 'var(--lhd-text-muted)' }}>Giá thuê:</span>
+              <span style={{ fontWeight: '700', color: 'var(--lhd-secondary)' }}>{selectedPhieu?.giaThue?.toLocaleString('vi-VN')}đ/tháng</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', borderBottom: '1px solid var(--lhd-border-light)', paddingBottom: '12px' }}>
+              <span style={{ color: 'var(--lhd-text-muted)' }}>Trạng thái cọc:</span>
+              <span className={`lhd-badge ${selectedPhieu?.trangThaiCoc === 'Hiệu lực' ? 'lhd-badge-success' : 'lhd-badge-danger'}`}>
+                {selectedPhieu?.trangThaiCoc}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+              <span style={{ color: 'var(--lhd-text-muted)' }}>Thanh toán cọc:</span>
+              <span style={{ fontWeight: '700', color: selectedPhieu?.trangThaiThanhToan === 'Đã TT' ? 'var(--lhd-success)' : 'var(--lhd-secondary)' }}>
+                {selectedPhieu?.trangThaiThanhToan === 'Đã TT' ? 'ĐÃ THANH TOÁN CỌC' : 'CHƯA THANH TOÁN CỌC'}
+              </span>
             </div>
 
-            <div className="lhd-card">
-              <h4 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: '700', color: 'var(--lhd-text)' }}>Điều kiện lập hợp đồng</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {dieuKienItems.map((dk, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: '#f5f7f8', borderRadius: '10px' }}>
-                    <span style={{ fontSize: '14px', color: 'var(--lhd-text)' }}>{dk.label}</span>
-                    <div style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      backgroundColor: dk.met ? 'var(--lhd-success)' : 'var(--lhd-danger)',
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}>
-                      <Icon name={dk.met ? "check" : "close"} style={{ fontSize: '14px' }} />
-                    </div>
-                  </div>
-                ))}
+            {dieukienCheck.loading ? (
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '14px 16px', background: '#edf5f6', border: '1px solid #b7dbdd', borderRadius: '12px', color: '#0f5b5f', marginTop: '4px' }}>
+                <Icon name="sync" className="lhd-rotate" style={{ fontSize: '18px' }} />
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>Đang đối chiếu dữ liệu hệ thống & kiểm tra điều kiện...</span>
               </div>
+            ) : dieukienCheck.hopLe ? (
+              <div className="lhd-alert lhd-alert-success" style={{ marginTop: '4px' }}>
+                <div className="lhd-alert-icon"><Icon name="check" /></div>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>Đủ điều kiện lập hợp đồng</div>
+                  <div style={{ fontSize: '12px', lineHeight: '1.5' }}>{dieukienCheck.thongBao}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="lhd-alert lhd-alert-danger" style={{ marginTop: '4px' }}>
+                <div className="lhd-alert-icon"><Icon name="close" /></div>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>Không đủ điều kiện</div>
+                  <div style={{ fontSize: '12px', lineHeight: '1.5' }}>{dieukienCheck.thongBao || 'Vui lòng kiểm tra các mục bên phải.'}</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="lhd-card">
+            <h4 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: '700', color: 'var(--lhd-text)' }}>Điều kiện lập hợp đồng</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {dieuKienItems.map((dk, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: '#f5f7f8', borderRadius: '10px' }}>
+                  <span style={{ fontSize: '14px', color: 'var(--lhd-text)' }}>{dk.label}</span>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    backgroundColor: dieukienCheck.loading ? '#e0e3e3' : (dk.met ? 'var(--lhd-success)' : 'var(--lhd-danger)'),
+                    color: dieukienCheck.loading ? '#6f797a' : '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Icon 
+                      name={dieukienCheck.loading ? "sync" : (dk.met ? "check" : "close")} 
+                      className={dieukienCheck.loading ? "lhd-rotate" : ""} 
+                      style={{ fontSize: '14px' }} 
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        )}
+        </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '32px' }}>
           <button className="lhd-btn lhd-btn-outline" onClick={() => setStep(1)}><Icon name="arrow_back" /> Quay lại</button>
@@ -1184,10 +1234,10 @@ export default function LapHopDongTab() {
                 <option value="Hàng quý">Hàng quý</option>
               </select>
             </div>
-            <div className="lhd-form-group"><label className="lhd-label">Ngày ký</label><input type="date" className="lhd-input" value={ngayKy} onChange={e => setNgayKy(e.target.value)} /></div>
+            <div className="lhd-form-group"><label className="lhd-label">Ngày ký</label><input type="date" className="lhd-input" value={ngayKy} readOnly disabled /></div>
             <div className="lhd-form-group"><label className="lhd-label">Giá thuê niêm yết</label><div style={{ position: 'relative' }}><input className="lhd-input" value={basePrice?.toLocaleString('vi-VN') || 0} readOnly style={{ paddingRight: '50px' }} /><span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: 'var(--lhd-text-muted)', fontWeight: '600' }}>VND</span></div></div>
-            <div className="lhd-form-group"><label className="lhd-label">Ngày bắt đầu</label><input type="date" className="lhd-input" value={ngayBatDau} onChange={e => setNgayBatDau(e.target.value)} /></div>
-            <div className="lhd-form-group"><label className="lhd-label">Ngày kết thúc (Dự kiến)</label><input type="date" className="lhd-input" value={ngayKetThuc} onChange={e => setNgayKetThuc(e.target.value)} /></div>
+            <div className="lhd-form-group"><label className="lhd-label">Ngày bắt đầu</label><input type="date" className="lhd-input" value={ngayBatDau} min={new Date().toISOString().split('T')[0]} onChange={e => setNgayBatDau(e.target.value)} /></div>
+            <div className="lhd-form-group"><label className="lhd-label">Ngày kết thúc (Dự kiến)</label><input type="date" className="lhd-input" value={ngayKetThuc} min={ngayBatDau || new Date().toISOString().split('T')[0]} onChange={e => setNgayKetThuc(e.target.value)} /></div>
             <div className="lhd-form-group" style={{ gridColumn: '1/-1' }}><label className="lhd-label">Ghi chú hợp đồng</label><textarea className="lhd-input" rows={3} placeholder="Nhập các thỏa thuận riêng hoặc yêu cầu đặc biệt..." value={ghiChu} onChange={e => setGhiChu(e.target.value)} style={{ resize: 'vertical' }} /></div>
           </div>
         </div>
@@ -1198,26 +1248,76 @@ export default function LapHopDongTab() {
               <Icon name="electric_bolt" /> Dịch vụ đăng ký
             </h4>
             <div className="service-select-grid" style={{ marginTop: '16px' }}>
-              {services.map(dv => (
-                <label key={dv.maDichVu} className={`service-select-card ${selectedServices[dv.maDichVu] ? 'selected' : ''} ${dv.batBuoc ? 'compulsory' : ''}`}>
-                  <input 
-                    type="checkbox" 
-                    checked={!!selectedServices[dv.maDichVu]} 
-                    disabled={dv.batBuoc} // Cannot uncheck compulsory
-                    onChange={e => setSelectedServices({ ...selectedServices, [dv.maDichVu]: e.target.checked })} 
-                  />
-                  <div className="service-card-info">
-                    <div className="service-card-title">
-                      {dv.tenDichVu} {dv.batBuoc && <span className="service-card-tag">Bắt buộc</span>}
+              {services.map(dv => {
+                const isXe = isXeService(dv);
+                const isSelected = !!selectedServices[dv.maDichVu];
+                return (
+                  <label key={dv.maDichVu} className={`service-select-card ${isSelected ? 'selected' : ''} ${dv.batBuoc ? 'compulsory' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      disabled={dv.batBuoc}
+                      onChange={e => setSelectedServices({ ...selectedServices, [dv.maDichVu]: e.target.checked })}
+                    />
+                    <div className="service-card-info">
+                      <div className="service-card-title">
+                        {dv.tenDichVu} {dv.batBuoc && <span className="service-card-tag">Bắt buộc</span>}
+                      </div>
+                      <div className="service-card-desc">
+                        {isXe && isSelected
+                          ? <span style={{ color: 'var(--lhd-primary)', fontWeight: '600' }}>
+                              Tổng: {(soXeGuiXe * dv.donGia)?.toLocaleString('vi-VN')}đ/tháng
+                            </span>
+                          : 'Áp dụng hợp đồng'
+                        }
+                      </div>
                     </div>
-                    <div className="service-card-desc">Áp dụng hợp đồng</div>
-                  </div>
-                  <div className="service-card-price">
-                    <div className="service-price-value">{dv.donGia?.toLocaleString('vi-VN')}đ</div>
-                    <div className="service-price-unit">/ {dv.donViTinh}</div>
-                  </div>
-                </label>
-              ))}
+                    {isXe && isSelected ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }} onClick={e => e.preventDefault()}>
+                        <div style={{ fontSize: '11px', color: 'var(--lhd-text-muted)', fontWeight: '600' }}>
+                          {dv.donGia?.toLocaleString('vi-VN')}đ / xe
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1.5px solid var(--lhd-primary)', borderRadius: '8px', overflow: 'hidden', height: '30px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setSoXeGuiXe(v => Math.max(1, v - 1))}
+                            style={{
+                              width: '28px', height: '30px',
+                              border: 'none', borderRight: '1px solid var(--lhd-primary)',
+                              background: 'var(--lhd-primary-soft)', color: 'var(--lhd-primary)',
+                              fontWeight: '700', fontSize: '16px', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}
+                          >−</button>
+                          <span style={{
+                            width: '32px', textAlign: 'center',
+                            fontSize: '14px', fontWeight: '700',
+                            color: 'var(--lhd-primary)', background: '#fff',
+                            lineHeight: '30px', display: 'block'
+                          }}>{soXeGuiXe}</span>
+                          <button
+                            type="button"
+                            onClick={() => setSoXeGuiXe(v => Math.min(10, v + 1))}
+                            style={{
+                              width: '28px', height: '30px',
+                              border: 'none', borderLeft: '1px solid var(--lhd-primary)',
+                              background: 'var(--lhd-primary-soft)', color: 'var(--lhd-primary)',
+                              fontWeight: '700', fontSize: '16px', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}
+                          >+</button>
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--lhd-text-muted)' }}>xe gửi</div>
+                      </div>
+                    ) : (
+                      <div className="service-card-price">
+                        <div className="service-price-value">{dv.donGia?.toLocaleString('vi-VN')}đ</div>
+                        <div className="service-price-unit">/ {dv.donViTinh}</div>
+                      </div>
+                    )}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
@@ -1262,8 +1362,7 @@ export default function LapHopDongTab() {
                 <Icon name="description" /> Thông tin hợp đồng
               </h4>
               <div className="lhd-grid-form" style={{ marginTop: '20px' }}>
-                {[{ l: 'Mã hợp đồng (Dự kiến)', v: 'Tự động sinh' }, 
-                  { l: 'Ngày lập', v: new Date(ngayKy).toLocaleDateString('vi-VN') }, 
+                {[{ l: 'Ngày lập', v: new Date(ngayKy).toLocaleDateString('vi-VN') }, 
                   { l: 'Chủ hợp đồng', v: selectedPhieu?.hoTenKhachHang, s: 'lg' }, 
                   { l: 'Căn hộ / Phòng', v: 'Phòng ' + selectedPhieu?.viTriThue, s: 'lg' }, 
                   { l: 'Thời hạn thuê', v: `${new Date(ngayBatDau).toLocaleDateString('vi-VN')} - ${new Date(ngayKetThuc).toLocaleDateString('vi-VN')}` }, 

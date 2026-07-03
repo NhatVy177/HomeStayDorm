@@ -185,3 +185,10 @@ Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
+2026-07-03T10:18:24.807Z
+Error: Không có thành viên hợp lệ (sai giới tính hoặc thiếu CCCD/SĐT).
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/services/hopDong.service.js:197:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/hopDong.controller.js:65:20)
+

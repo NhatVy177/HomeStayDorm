@@ -1146,7 +1146,7 @@ GO
 -- Màn hình : Hiển thị chi tiết hợp đồng sau khi lập / tra cứu chi tiết
 -- Mục đích : Lấy toàn bộ thông tin chi tiết của hợp đồng để hiển thị lên UI.
 -- Input    : @MaHopDong
--- Output   : 5 Result sets
+-- Output   : 6 Result sets
 -- ============================================================
 CREATE OR ALTER PROCEDURE SP_LayChiTietHopDongThue
     @MaHopDong VARCHAR(6)
@@ -1214,14 +1214,26 @@ BEGIN
     WHERE dvhd.MaHopDong = @MaHopDong
     ORDER BY dv.TenDichVu;
 
-    -- [Result Set 4] Điều khoản hợp đồng
-    SELECT N'Điều 1: Thanh toán' AS TieuDeNoiQuy, N'Bên B thanh toán tiền thuê phòng định kỳ vào ngày 01 đến ngày 05 hàng tháng. Hình thức chuyển khoản hoặc tiền mặt tại quầy lễ tân.' AS NoiDung
-    UNION ALL
-    SELECT N'Điều 2: Bảo trì tài sản' AS TieuDeNoiQuy, N'Bên B có trách nhiệm bảo quản các trang thiết bị trong phòng. Mọi hư hỏng do lỗi chủ quan sẽ phải bồi thường theo giá trị thị trường.' AS NoiDung
-    UNION ALL
-    SELECT N'Điều 3: Trả phòng & Cọc' AS TieuDeNoiQuy, N'Bên B cần thông báo trước ít nhất 30 ngày khi có ý định chấm dứt hợp đồng. Tiền cọc sẽ được hoàn trả sau khi trừ các chi phí vệ sinh và hư hỏng (nếu có).' AS NoiDung;
+    -- [Result Set 4] Nội quy cư trú (lấy từ bảng QuiDinh)
+    SELECT
+        qd.MaQuyDinh,
+        qd.TieuDeNoiQuy,
+        qd.NoiDung
+    FROM dbo.QuiDinh qd
+    WHERE qd.TrangThai = N'Hiệu lực'
+    ORDER BY qd.MaQuyDinh;
 
-    -- [Result Set 5] Quy định hoàn cọc đang áp dụng
+    -- [Result Set 5] Điều khoản vi phạm (lấy từ bảng DieuKhoanViPham)
+    SELECT
+        dk.MaDieuKhoan,
+        dk.TenDieuKhoan,
+        dk.HinhThucXuPhat,
+        dk.MucPhat
+    FROM dbo.DieuKhoanViPham dk
+    WHERE dk.TrangThai = N'Hiệu lực'
+    ORDER BY dk.MaDieuKhoan;
+
+    -- [Result Set 6] Quy định hoàn cọc đang áp dụng
     SELECT
         qh.MaQuyDinhHoanCoc,
         qh.TenQuyDinh,

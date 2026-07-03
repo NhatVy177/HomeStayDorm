@@ -115,10 +115,19 @@ export class HopDongThueDTO {
       donViTinh: dv.DonViTinh
     }));
 
-    // Terms list
+    // Terms list (from QuiDinh table)
     this.dieuKhoan = (dbDetailResult.dieuKhoan || []).map(dk => ({
+      maQuyDinh: dk.MaQuyDinh,
       tieuDeNoiQuy: dk.TieuDeNoiQuy,
       noiDung: dk.NoiDung
+    }));
+
+    // Violation clauses (from DieuKhoanViPham table)
+    this.dieuKhoanViPham = (dbDetailResult.dieuKhoanViPham || []).map(dk => ({
+      maDieuKhoan: dk.MaDieuKhoan,
+      tenDieuKhoan: dk.TenDieuKhoan,
+      hinhThucXuPhat: dk.HinhThucXuPhat,
+      mucPhat: dk.MucPhat
     }));
 
     // Deposit refund policies

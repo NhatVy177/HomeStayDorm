@@ -77,17 +77,38 @@ function normalizeHoSo(row = {}) {
     trangThaiHoSo: pick(row, 'trangThaiHoSo', 'TrangThaiHoSo', 'Chờ duyệt cư trú'),
     ngayCapNhat: pick(row, 'ngayCapNhat', 'NgayCapNhat'),
     ghiChuSale: pick(row, 'ghiChuSale', 'GhiChuSale', ''),
+    ghiChuQuanLy: pick(row, 'ghiChuQuanLy', 'GhiChuQuanLy', ''),
     thanhVien: Array.isArray(row.thanhVien) ? row.thanhVien.map(normalizeMember) : []
   };
 }
 
+const RESIDENCE_STATUS_CONFIG = {
+  'Chờ duyệt cư trú': { chip: 'Chờ duyệt',    badgeLabel: 'Chờ duyệt',    badge: { bg: '#fff4e5', fg: '#b45309' } },
+  'Đã duyệt cư trú':   { chip: 'Đã duyệt',     badgeLabel: 'Đã duyệt',     badge: { bg: '#e6f6ec', fg: '#15803d' } },
+  'Từ chối cư trú':    { chip: 'Từ chối',      badgeLabel: 'Từ chối',      badge: { bg: '#fee2e2', fg: '#b91c1c' } }
+};
+const RESIDENCE_STATUS_ORDER = ['Chờ duyệt cư trú', 'Đã duyệt cư trú', 'Từ chối cư trú'];
+
 function StatusBadge({ value }) {
-  const tone = value === 'Đã duyệt cư trú'
-    ? 'is-success'
-    : value === 'Từ chối cư trú'
-      ? 'is-danger'
-      : 'is-primary';
-  return <span className={`residence-badge ${tone}`}>{value}</span>;
+  const cfg = RESIDENCE_STATUS_CONFIG[value];
+  const badgeStyle = cfg ? cfg.badge : { bg: '#eef2f3', fg: '#6f797a' };
+  const label = cfg ? cfg.badgeLabel : value;
+  
+  return (
+    <span style={{
+      background: badgeStyle.bg,
+      color: badgeStyle.fg,
+      padding: '4px 12px',
+      borderRadius: '999px',
+      fontSize: '12px',
+      fontWeight: 600,
+      whiteSpace: 'nowrap',
+      display: 'inline-block',
+      textAlign: 'center'
+    }}>
+      {label}
+    </span>
+  );
 }
 
 function getInitials(name = '') {
@@ -117,6 +138,7 @@ export default function DuyetCuTruTab() {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [successInfo, setSuccessInfo] = useState(null);
 
   const normalizedList = useMemo(() => records.map(normalizeHoSo), [records]);
   const waitingCount = normalizedList.filter((item) => item.trangThaiHoSo === 'Chờ duyệt cư trú').length;
@@ -131,11 +153,33 @@ export default function DuyetCuTruTab() {
   const capacityWarning = Boolean(selected && acceptedMembers.length > capacityLimit);
   const reviewReady = Boolean(selected && acceptedMembers.length > 0 && !capacityWarning && genderMismatchCount === 0);
 
-  async function loadData(keyword = searchText, status = statusFilter) {
+  // Đếm số lượng theo từng trạng thái cho các chip bộ lọc
+  const statusCounts = useMemo(() => {
+    const counts = { all: normalizedList.length };
+    RESIDENCE_STATUS_ORDER.forEach((s) => {
+      counts[s] = 0;
+    });
+    normalizedList.forEach((item) => {
+      const status = item.trangThaiHoSo;
+      if (counts[status] !== undefined) {
+        counts[status] += 1;
+      }
+    });
+    return counts;
+  }, [normalizedList]);
+
+  // Lọc danh sách hiển thị theo chip trạng thái
+  const filteredList = useMemo(() => {
+    if (statusFilter === 'all') return normalizedList;
+    return normalizedList.filter((item) => item.trangThaiHoSo === statusFilter);
+  }, [normalizedList, statusFilter]);
+
+  async function loadData(keyword = searchText) {
     try {
       setLoading(true);
       setError('');
-      const res = await cuTruApi.layDanhSachChoDuyet({ tuKhoa: keyword, trangThai: status });
+      // Luôn lấy tất cả trạng thái từ API để hiển thị số lượng chính xác trên từng chip
+      const res = await cuTruApi.layDanhSachChoDuyet({ tuKhoa: keyword, trangThai: '' });
       setRecords(res.data || []);
     } catch (err) {
       setRecords(demoHoSo);
@@ -152,14 +196,16 @@ export default function DuyetCuTruTab() {
   async function openDetail(row) {
     const base = normalizeHoSo(row);
     setError('');
-    setDecision('Đã duyệt cư trú');
-    setManagerNote('');
+    setDecision(base.trangThaiHoSo === 'Từ chối cư trú' ? 'Từ chối cư trú' : 'Đã duyệt cư trú');
+    setManagerNote(base.ghiChuQuanLy || '');
 
     try {
       const res = await cuTruApi.layChiTietHoSo(base.maHoSoCuTru);
       const detail = normalizeHoSo(res.data?.hoSo || base);
       const detailMembers = (res.data?.thanhVien || []).map(normalizeMember);
       setSelected({ ...base, ...detail });
+      setDecision(detail.trangThaiHoSo === 'Từ chối cư trú' ? 'Từ chối cư trú' : 'Đã duyệt cư trú');
+      setManagerNote(detail.ghiChuQuanLy || '');
       setMembers((detailMembers.length ? detailMembers : base.thanhVien).map((item) => ({
         ...item,
         trangThaiDuyet: item.trangThaiDuyet === 'Bị từ chối' ? 'Bị từ chối' : 'Đủ điều kiện'
@@ -209,7 +255,12 @@ export default function DuyetCuTruTab() {
           lyDoTuChoi: item.lyDoTuChoi
         }))
       });
-      setNotice(`Đã cập nhật kết quả duyệt hồ sơ ${selected.maHoSoCuTru}.`);
+      setSuccessInfo({
+        maHoSoCuTru: selected.maHoSoCuTru,
+        hoTenKhachHang: selected.hoTenKhachHang,
+        viTriThue: selected.viTriThue,
+        ketQua: decision === 'Từ chối cư trú' ? 'Từ chối cư trú' : 'Đã duyệt cư trú'
+      });
       setSelected(null);
       loadData();
     } catch (err) {
@@ -244,8 +295,15 @@ export default function DuyetCuTruTab() {
         </div>
       </section>
 
-      <section className="residence-filter residence-filter-3">
-        <div className="ktp-filter-group">
+      <form
+        className="residence-filter"
+        style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '16px', alignItems: 'end', marginBottom: '20px' }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          loadData(searchText);
+        }}
+      >
+        <div className="ktp-filter-group" style={{ margin: 0 }}>
           <label className="ktp-filter-label">Tìm kiếm</label>
           <div className="ktp-input-icon-wrap">
             <span className="ktp-input-icon"><Icon name="search" /></span>
@@ -257,20 +315,42 @@ export default function DuyetCuTruTab() {
             />
           </div>
         </div>
-        <div className="ktp-filter-group">
-          <label className="ktp-filter-label">Trạng thái hồ sơ</label>
-          <select className="ktp-input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            <option>Chờ duyệt cư trú</option>
-            <option>Đã duyệt cư trú</option>
-            <option>Từ chối cư trú</option>
-            <option value="">Tất cả</option>
-          </select>
-        </div>
-        <button className="ktp-btn-submit residence-search-btn" type="button" onClick={() => loadData(searchText, statusFilter)}>
+        <button className="ktp-btn-submit" type="submit" style={{ height: '42px', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
           <Icon name="search" />
           Tìm kiếm
         </button>
-      </section>
+      </form>
+
+      {/* Bộ lọc trạng thái dạng chip (giống DatCocTab) */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '25px' }}>
+        {[{ key: 'all', label: 'Tất cả' }, ...RESIDENCE_STATUS_ORDER.map((s) => ({ key: s, label: RESIDENCE_STATUS_CONFIG[s].chip }))].map((tab) => {
+          const active = statusFilter === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setStatusFilter(tab.key)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 600, transition: 'all .15s',
+                border: active ? '1px solid #2f6765' : '1px solid #d7dcdc',
+                background: active ? '#2f6765' : '#fff',
+                color: active ? '#fff' : '#3f494a'
+              }}
+            >
+              {tab.label}
+              <span style={{
+                background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3',
+                color: active ? '#fff' : '#6f797a',
+                borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 700, minWidth: '20px', textAlign: 'center'
+              }}>
+                {statusCounts[tab.key] ?? 0}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       <section className="ktp-table-section">
         <div className="residence-table-head">
@@ -294,8 +374,8 @@ export default function DuyetCuTruTab() {
             </thead>
             <tbody>
               {loading && <tr><td colSpan="7" className="text-center">Đang tải dữ liệu...</td></tr>}
-              {!loading && normalizedList.length === 0 && <tr><td colSpan="7" className="text-center">Không có hồ sơ cần duyệt.</td></tr>}
-              {!loading && normalizedList.map((item) => (
+              {!loading && filteredList.length === 0 && <tr><td colSpan="7" className="text-center">Không có hồ sơ cần duyệt.</td></tr>}
+              {!loading && filteredList.map((item) => (
                 <tr key={item.maHoSoCuTru}>
                   <td><strong className="residence-code">{item.maHoSoCuTru}</strong></td>
                   <td>{item.maPhieuDatCoc}</td>
@@ -310,9 +390,20 @@ export default function DuyetCuTruTab() {
                   <td>{formatDate(item.ngayCapNhat)}</td>
                   <td><StatusBadge value={item.trangThaiHoSo} /></td>
                   <td className="text-center">
-                    <button className="ktp-btn-action-fill" type="button" onClick={() => openDetail(item)}>
-                      Duyệt
-                    </button>
+                    {item.trangThaiHoSo === 'Chờ duyệt cư trú' ? (
+                      <button className="ktp-btn-action-fill" type="button" onClick={() => openDetail(item)}>
+                        Duyệt
+                      </button>
+                    ) : (
+                      <button
+                        className="ktp-btn-action-fill"
+                        type="button"
+                        style={{ backgroundColor: '#2f6765', borderColor: '#2f6765' }}
+                        onClick={() => openDetail(item)}
+                      >
+                        Chi tiết
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -434,6 +525,7 @@ export default function DuyetCuTruTab() {
                       className="ktp-input"
                       value={member.trangThaiDuyet}
                       onChange={(event) => updateMember(index, 'trangThaiDuyet', event.target.value)}
+                      disabled={selected.trangThaiHoSo !== 'Chờ duyệt cư trú'}
                     >
                       <option>Đủ điều kiện</option>
                       <option>Bị từ chối</option>
@@ -444,12 +536,13 @@ export default function DuyetCuTruTab() {
                         value={member.lyDoTuChoi || ''}
                         onChange={(event) => updateMember(index, 'lyDoTuChoi', event.target.value)}
                         placeholder="Lý do từ chối thành viên"
+                        disabled={selected.trangThaiHoSo !== 'Chờ duyệt cư trú'}
                       />
                     )}
                   </article>
                 ))}
               </div>
-
+ 
               <section className="residence-decision-panel">
                 <div className="residence-decision-copy">
                   <strong>Kết luận hồ sơ</strong>
@@ -461,26 +554,78 @@ export default function DuyetCuTruTab() {
                       key={item}
                       type="button"
                       className={decision === item ? 'is-active' : ''}
-                      onClick={() => setDecision(item)}
+                      onClick={() => {
+                        if (selected.trangThaiHoSo === 'Chờ duyệt cư trú') {
+                          setDecision(item);
+                        }
+                      }}
+                      style={{
+                        cursor: selected.trangThaiHoSo === 'Chờ duyệt cư trú' ? 'pointer' : 'default',
+                        opacity: (selected.trangThaiHoSo !== 'Chờ duyệt cư trú' && decision !== item) ? 0.5 : 1
+                      }}
                     >
-                      {item}
+                      {item === 'Đã duyệt cư trú' ? 'Duyệt cư trú' : item}
                     </button>
                   ))}
                 </div>
               </section>
-
+ 
               <label className="residence-note">
                 Ghi chú quản lý
-                <textarea className="ktp-input" value={managerNote} onChange={(event) => setManagerNote(event.target.value)} rows="3" />
+                <textarea
+                  className="ktp-input"
+                  value={managerNote}
+                  onChange={(event) => setManagerNote(event.target.value)}
+                  rows="3"
+                  disabled={selected.trangThaiHoSo !== 'Chờ duyệt cư trú'}
+                />
               </label>
             </div>
-
+ 
             <div className="ktp-modal-footer">
               <button className="ktp-btn-cancel" type="button" onClick={() => setSelected(null)}>Đóng</button>
-              <button className="ktp-btn-submit" type="button" onClick={submitDecision} disabled={loading}>
-                Lưu kết quả duyệt
-              </button>
+              {selected.trangThaiHoSo === 'Chờ duyệt cư trú' && (
+                <button className="ktp-btn-submit" type="button" onClick={submitDecision} disabled={loading}>
+                  Lưu kết quả duyệt
+                </button>
+              )}
             </div>
+          </div>
+        </div>
+      )}
+      {successInfo && (
+        <div className="ktp-modal-overlay" onClick={() => setSuccessInfo(null)}>
+          <div className="residence-success-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="residence-success-icon-wrap">
+              <Icon name="check" style={{ fontSize: '32px' }} />
+            </div>
+            <h3 className="residence-success-title">Duyệt cư trú thành công</h3>
+            <p className="residence-success-text">Hệ thống đã cập nhật kết quả duyệt hồ sơ cư trú vào cơ sở dữ liệu.</p>
+            
+            <div className="residence-success-details">
+              <div className="residence-success-row">
+                <span className="residence-success-label">Mã hồ sơ</span>
+                <span className="residence-success-value">{successInfo.maHoSoCuTru}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Khách hàng</span>
+                <span className="residence-success-value">{successInfo.hoTenKhachHang}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Vị trí thuê</span>
+                <span className="residence-success-value">{successInfo.viTriThue}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Kết quả duyệt</span>
+                <span className="residence-success-value">
+                  <StatusBadge value={successInfo.ketQua} />
+                </span>
+              </div>
+            </div>
+
+            <button type="button" className="residence-success-btn" onClick={() => setSuccessInfo(null)}>
+              Đóng
+            </button>
           </div>
         </div>
       )}

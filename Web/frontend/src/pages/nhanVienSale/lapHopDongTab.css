@@ -44,13 +44,23 @@
   100% { box-shadow: 0 0 0 0 rgba(0, 102, 109, 0); }
 }
 
+@keyframes lhd-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.lhd-rotate {
+  animation: lhd-spin 1.4s linear infinite;
+  display: inline-block;
+}
+
 /* Container */
 .lhd-container {
   animation: lhd-fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   background-color: var(--lhd-bg);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: var(--lhd-text);
-  padding: 8px 0 24px;
+  padding: 8px 24px 24px;
 }
 
 /* Stepper Indicator */
@@ -321,14 +331,15 @@
 
 .lhd-btn-outline {
   background-color: var(--lhd-white);
-  border: 1px solid var(--lhd-border);
-  color: #3f494a;
+  border: 1.5px solid var(--lhd-primary) !important;
+  color: var(--lhd-primary);
+  font-weight: 600;
 }
 
 .lhd-btn-outline:hover {
   background-color: var(--lhd-primary-soft);
-  color: var(--lhd-primary);
-  border-color: var(--lhd-primary);
+  color: var(--lhd-primary-hover);
+  border-color: var(--lhd-primary-hover) !important;
 }
 
 .lhd-btn-text-danger {
@@ -370,6 +381,8 @@
   color: var(--lhd-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 .lhd-table td {
@@ -378,6 +391,17 @@
   border-bottom: 1px solid #f1f3f4;
   color: var(--lhd-text);
   vertical-align: middle;
+  line-height: 1.5;
+}
+
+.lhd-table th:first-child,
+.lhd-table td:first-child {
+  white-space: nowrap;
+}
+
+.lhd-table th:last-child,
+.lhd-table td:last-child {
+  white-space: nowrap;
 }
 
 .lhd-table tr:last-child td {

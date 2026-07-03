@@ -226,23 +226,13 @@ export async function layChiTietHopDongThue(maHopDong) {
     { name: 'MaHopDong', type: sql.VarChar(6), value: maHopDong }
   ]);
 
-  let quyDinhHoanCoc = result.recordsets[4] || [];
-  if (quyDinhHoanCoc.length === 0) {
-    const pool = await getPool();
-    const quyDinhResult = await pool.request().query(`
-      SELECT MaQuyDinhHoanCoc, TenQuyDinh, TyLeHoanCoc
-      FROM dbo.QuyDinhHoanCoc
-      ORDER BY MaQuyDinhHoanCoc
-    `);
-    quyDinhHoanCoc = quyDinhResult.recordset || [];
-  }
-
   return {
     hopDong: result.recordsets[0][0] || null,
     thanhVien: result.recordsets[1] || [],
     dichVu: result.recordsets[2] || [],
     dieuKhoan: result.recordsets[3] || [],
-    quyDinhHoanCoc
+    dieuKhoanViPham: result.recordsets[4] || [],
+    quyDinhHoanCoc: result.recordsets[5] || []
   };
 }
 
