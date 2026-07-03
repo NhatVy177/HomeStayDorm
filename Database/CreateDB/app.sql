@@ -440,6 +440,27 @@ CREATE TABLE BienBanViPham (
 
 );
 
+-- 32b. NỘI QUY HỢP ĐỒNG (Chụp lại lúc lập hợp đồng)
+CREATE TABLE QuiDinhHopDong (
+    MaHopDong       VARCHAR(6)      NOT NULL,
+    MaQuyDinh       VARCHAR(6)      NOT NULL,
+    TieuDeNoiQuy    NVARCHAR(255)   NOT NULL,
+    NoiDung         NVARCHAR(MAX),
+    CONSTRAINT PK_QuiDinhHopDong PRIMARY KEY (MaHopDong, MaQuyDinh),
+    CONSTRAINT FK_QuiDinhHopDong_HopDong FOREIGN KEY (MaHopDong) REFERENCES HopDongThue(MaHopDong) ON DELETE CASCADE
+);
+
+-- 32c. ĐIỀU KHOẢN VI PHẠM HỢP ĐỒNG (Chụp lại lúc lập hợp đồng)
+CREATE TABLE DieuKhoanViPhamHopDong (
+    MaHopDong       VARCHAR(6)      NOT NULL,
+    MaDieuKhoan     VARCHAR(6)      NOT NULL,
+    TenDieuKhoan    NVARCHAR(255)   NOT NULL,
+    HinhThucXuPhat  NVARCHAR(20)     NOT NULL,
+    MucPhat         DECIMAL(15,2),
+    CONSTRAINT PK_DieuKhoanViPhamHopDong PRIMARY KEY (MaHopDong, MaDieuKhoan),
+    CONSTRAINT FK_DieuKhoanViPhamHopDong_HopDong FOREIGN KEY (MaHopDong) REFERENCES HopDongThue(MaHopDong) ON DELETE CASCADE
+);
+
 -- =============================================
 -- PHẦN KHÓA NGOẠI
 -- =============================================

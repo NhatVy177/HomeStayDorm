@@ -920,6 +920,19 @@ BEGIN
         );
 
         -- -----------------------------------------------
+        -- BƯỚC INSERT-3b: Chụp lại nội quy & điều khoản vi phạm lúc ký hợp đồng
+        -- -----------------------------------------------
+        INSERT INTO dbo.QuiDinhHopDong (MaHopDong, MaQuyDinh, TieuDeNoiQuy, NoiDung)
+        SELECT @MaHopDong, MaQuyDinh, TieuDeNoiQuy, NoiDung
+        FROM dbo.QuiDinh
+        WHERE TrangThai = N'Hiệu lực';
+
+        INSERT INTO dbo.DieuKhoanViPhamHopDong (MaHopDong, MaDieuKhoan, TenDieuKhoan, HinhThucXuPhat, MucPhat)
+        SELECT @MaHopDong, MaDieuKhoan, TenDieuKhoan, HinhThucXuPhat, MucPhat
+        FROM dbo.DieuKhoanViPham
+        WHERE TrangThai = N'Hiệu lực';
+
+        -- -----------------------------------------------
         -- BƯỚC INSERT-4: Insert ThanhVienHopDong
         -- -----------------------------------------------
         DECLARE @SoMaTVMax INT;
@@ -1214,23 +1227,23 @@ BEGIN
     WHERE dvhd.MaHopDong = @MaHopDong
     ORDER BY dv.TenDichVu;
 
-    -- [Result Set 4] Nội quy cư trú (lấy từ bảng QuiDinh)
+    -- [Result Set 4] Nội quy cư trú (lấy từ bảng QuiDinhHopDong)
     SELECT
         qd.MaQuyDinh,
         qd.TieuDeNoiQuy,
         qd.NoiDung
-    FROM dbo.QuiDinh qd
-    WHERE qd.TrangThai = N'Hiệu lực'
+    FROM dbo.QuiDinhHopDong qd
+    WHERE qd.MaHopDong = @MaHopDong
     ORDER BY qd.MaQuyDinh;
 
-    -- [Result Set 5] Điều khoản vi phạm (lấy từ bảng DieuKhoanViPham)
+    -- [Result Set 5] Điều khoản vi phạm (lấy từ bảng DieuKhoanViPhamHopDong)
     SELECT
         dk.MaDieuKhoan,
         dk.TenDieuKhoan,
         dk.HinhThucXuPhat,
         dk.MucPhat
-    FROM dbo.DieuKhoanViPham dk
-    WHERE dk.TrangThai = N'Hiệu lực'
+    FROM dbo.DieuKhoanViPhamHopDong dk
+    WHERE dk.MaHopDong = @MaHopDong
     ORDER BY dk.MaDieuKhoan;
 
     -- [Result Set 6] Quy định hoàn cọc đang áp dụng

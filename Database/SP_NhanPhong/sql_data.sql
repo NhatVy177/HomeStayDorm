@@ -67,6 +67,12 @@ BEGIN TRY
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
        OR MaChiTietDVHD IN ('VH9081', 'VH9082', 'VH9083', 'VH9091', 'VH9092', 'VH9093', 'VH9101', 'VH9102', 'VH9103');
 
+    DELETE FROM dbo.QuiDinhHopDong
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts);
+
+    DELETE FROM dbo.DieuKhoanViPhamHopDong
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts);
+
     DELETE FROM dbo.HopDongThue
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
        OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
