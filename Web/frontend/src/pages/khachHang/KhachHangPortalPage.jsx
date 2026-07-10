@@ -1834,32 +1834,51 @@ export default function KhachHangPortalPage() {
                                 })}
                               </div>
                             )}
-                            {group.title === 'Các khoản khấu trừ' && label === 'Chi phí sửa chữa' && (chiTietHuHong.length > 0 || bienBanKiemTra.length > 0) && (
+                            {group.title === 'Các khoản khấu trừ' && label === 'Chi phí sửa chữa' && (Number(doiSoatTraPhong.tongChiPhiSuaChua) || 0) > 0 && (
                               <div className="hd-deduction-detail-list">
-                                {chiTietHuHong.length > 0 ? chiTietHuHong.map((item) => (
-                                  <div className="hd-deduction-detail" key={item.maChiTietHH || `${item.maBienBanKT}-${item.maTaiSan}`}>
-                                    <span>{item.tenTaiSan || item.maTaiSan || 'Hư hỏng phòng'}</span>
-                                    <small>{item.moTaHuHong || 'Chưa có mô tả'}</small>
-                                    <strong>{formatSettlementMoney(item.chiPhiSuaChua)}</strong>
+                                {chiTietHuHong.length > 0 || bienBanKiemTra.length > 0 ? (
+                                  <>
+                                    {chiTietHuHong.map((item) => (
+                                      <div className="hd-deduction-detail" key={item.maChiTietHH || `${item.maBienBanKT}-${item.maTaiSan}`}>
+                                        <span>{item.tenTaiSan || item.maTaiSan || 'Hư hỏng phòng'}</span>
+                                        <small>{item.moTaHuHong || 'Chưa có mô tả'}</small>
+                                        <strong>{formatSettlementMoney(item.chiPhiSuaChua)}</strong>
+                                      </div>
+                                    ))}
+                                    {bienBanKiemTra.filter(bb => !chiTietHuHong.some(ct => ct.maBienBanKT === bb.maBienBanKT)).map((item) => (
+                                      <div className="hd-deduction-detail" key={item.maBienBanKT}>
+                                        <span>Biên bản {item.maBienBanKT}</span>
+                                        <small>Ngày kiểm tra: {formatDate(item.ngayKiemTra)} · {item.tinhTrangPhong || '--'}</small>
+                                        <strong>{formatSettlementMoney(item.tongChiPhiSuaChua)}</strong>
+                                      </div>
+                                    ))}
+                                  </>
+                                ) : (
+                                  <div className="hd-deduction-detail">
+                                    <span>Ghi nhận chi phí sửa chữa</span>
+                                    <small>Không có biên bản chi tiết trên hệ thống (Kế toán cập nhật thủ công)</small>
+                                    <strong>{formatSettlementMoney(doiSoatTraPhong.tongChiPhiSuaChua)}</strong>
                                   </div>
-                                )) : bienBanKiemTra.map((item) => (
-                                  <div className="hd-deduction-detail" key={item.maBienBanKT}>
-                                    <span>Kiểm tra phòng</span>
-                                    <small>Ngày kiểm tra: {formatDate(item.ngayKiemTra)} · {item.tinhTrangPhong || '--'}</small>
-                                    <strong>{formatSettlementMoney(item.tongChiPhiSuaChua)}</strong>
-                                  </div>
-                                ))}
+                                )}
                               </div>
                             )}
-                            {group.title === 'Các khoản khấu trừ' && label === 'Tiền phạt vi phạm' && bienBanViPham.length > 0 && (
+                            {group.title === 'Các khoản khấu trừ' && label === 'Tiền phạt vi phạm' && (Number(doiSoatTraPhong.tienPhat) || 0) > 0 && (
                               <div className="hd-deduction-detail-list">
-                                {bienBanViPham.map((item) => (
-                                  <div className="hd-deduction-detail" key={item.maBBViPham}>
-                                    <span>{item.tenDieuKhoan || 'Vi phạm'}</span>
-                                    <small>Thời gian: {formatDate(item.ngayViPham, true)} · Lý do: {item.moTaViPham || item.hinhThucXuPhat || '--'}</small>
-                                    <strong>{formatSettlementMoney(item.soTienPhat)}</strong>
+                                {bienBanViPham.length > 0 ? (
+                                  bienBanViPham.map((item) => (
+                                    <div className="hd-deduction-detail" key={item.maBBViPham}>
+                                      <span>Biên bản {item.maBBViPham}{item.tenDieuKhoan ? ` - ${item.tenDieuKhoan}` : ''}</span>
+                                      <small>Ngày vi phạm: {formatDate(item.ngayViPham)} · {item.moTaViPham || item.hinhThucXuPhat || '--'}</small>
+                                      <strong>{formatSettlementMoney(item.soTienPhat)}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="hd-deduction-detail">
+                                    <span>Ghi nhận vi phạm</span>
+                                    <small>Không có biên bản chi tiết trên hệ thống (Kế toán cập nhật thủ công)</small>
+                                    <strong>{formatSettlementMoney(doiSoatTraPhong.tienPhat)}</strong>
                                   </div>
-                                ))}
+                                )}
                               </div>
                             )}
                           </React.Fragment>
