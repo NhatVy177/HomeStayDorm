@@ -76,7 +76,7 @@ export default function XacNhanKetQua() {
       return;
     }
     if (!isDongY && !lyDoKhongDongY.trim()) {
-      setToast('Vui lòng nhập lý do không đồng ý');
+      setToast('Vui lòng nhập nội dung cần điều chỉnh');
       return;
     }
 
@@ -244,7 +244,7 @@ export default function XacNhanKetQua() {
                       </label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '500', color: '#ba1a1a' }}>
                         <input type="radio" name="phanHoi" checked={!isDongY} onChange={() => setIsDongY(false)} />
-                        Không đồng ý (Cần điều chỉnh)
+                        Yêu cầu điều chỉnh
                       </label>
                     </div>
 
@@ -265,7 +265,7 @@ export default function XacNhanKetQua() {
 
                     {!isDongY && (
                       <div style={{ marginTop: '16px' }}>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Lý do không đồng ý <span style={{ color: 'red' }}>*</span></label>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Nội dung cần điều chỉnh <span style={{ color: 'red' }}>*</span></label>
                         <textarea 
                           rows="3" 
                           value={lyDoKhongDongY} 

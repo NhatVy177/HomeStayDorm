@@ -590,6 +590,23 @@ function GhiNhanThanhToanPanel({ type }) {
   }, [filteredPendingRows]);
   const activeThuThemFilterMeta = THU_THEM_FILTER_META[thuThemFilter] || THU_THEM_FILTER_META['can-ghi-nhan'];
   const currentProof = String(refundForm.chungTuThanhToan || refundDetail?.chungTuThanhToan || '').trim();
+  const recordedThuThemPaymentMethod = isThuThem
+    ? String(refundDetail?.phuongThucThanhToan || selectedRefund?.phuongThucThanhToan || '').trim()
+    : '';
+  const thuThemPaymentMethodLocked = Boolean(
+    selectedRefund &&
+    selectedRefund._viewMode !== 'completed' &&
+    isThuThem &&
+    recordedThuThemPaymentMethod
+  );
+  const thuThemPaymentDateLocked = Boolean(
+    thuThemPaymentMethodLocked &&
+    refundForm.phuongThucThanhToan === 'Chuyển khoản' &&
+    currentProof &&
+    refundDetail?.ngayThanhToan
+  );
+  const showPaymentEvidenceUpload = !isThuThem
+    || (!thuThemPaymentMethodLocked && refundForm.phuongThucThanhToan === 'Chuyển khoản');
   const canRejectThuThemProof = Boolean(
     selectedRefund &&
     selectedRefund._viewMode !== 'completed' &&
@@ -924,18 +941,25 @@ function GhiNhanThanhToanPanel({ type }) {
                     <section className="ktp-section ktp-info-box-outline qt-refund-form">
                       <h4 className="ktp-section-title"><Icon name="payments" /> {isThuThem ? 'Thông tin thu thêm' : 'Thông tin hoàn cọc'}</h4>
                       {isThuThem ? (
-                        <label className="ktp-filter-group">
-                          <span className="ktp-filter-label">Phương thức thanh toán</span>
-                          <select
-                            className="ktp-input"
-                            value={refundForm.phuongThucThanhToan}
-                            onChange={(event) => setRefundForm((prev) => ({ ...prev, phuongThucThanhToan: event.target.value }))}
-                          >
-                            <option value="">Chọn phương thức</option>
-                            <option value="Tiền mặt">Tiền mặt</option>
-                            <option value="Chuyển khoản">Chuyển khoản</option>
-                          </select>
-                        </label>
+                        thuThemPaymentMethodLocked ? (
+                          <div className="ktp-filter-group">
+                            <span className="ktp-filter-label">Phương thức khách đã chọn</span>
+                            <div className="ktp-readonly-field">{refundForm.phuongThucThanhToan || '--'}</div>
+                          </div>
+                        ) : (
+                          <label className="ktp-filter-group">
+                            <span className="ktp-filter-label">Phương thức thanh toán</span>
+                            <select
+                              className="ktp-input"
+                              value={refundForm.phuongThucThanhToan}
+                              onChange={(event) => setRefundForm((prev) => ({ ...prev, phuongThucThanhToan: event.target.value }))}
+                            >
+                              <option value="">Chọn phương thức</option>
+                              <option value="Tiền mặt">Tiền mặt</option>
+                              <option value="Chuyển khoản">Chuyển khoản</option>
+                            </select>
+                          </label>
+                        )
                       ) : (
                         <div className="ktp-filter-group">
                           <span className="ktp-filter-label">Phương thức khách chọn</span>
@@ -954,6 +978,7 @@ function GhiNhanThanhToanPanel({ type }) {
                           className="ktp-input"
                           type="date"
                           value={refundForm.ngayThanhToan}
+                          disabled={thuThemPaymentDateLocked}
                           onChange={(event) => setRefundForm((prev) => ({ ...prev, ngayThanhToan: event.target.value }))}
                         />
                       </label>
@@ -968,11 +993,16 @@ function GhiNhanThanhToanPanel({ type }) {
                             <EvidenceValue value={currentProof} />
                           </div>
                         )}
-                        <ChungTuUpload
-                          evidence={refundEvidence}
-                          onFileSelect={handleEvidenceSelect}
-                          onRemove={removeEvidence}
-                        />
+                        {isThuThem && refundForm.phuongThucThanhToan === 'Chuyển khoản' && thuThemPaymentMethodLocked && !currentProof && (
+                          <div className="ktp-readonly-field">Khách chưa gửi minh chứng thanh toán.</div>
+                        )}
+                        {showPaymentEvidenceUpload && (
+                          <ChungTuUpload
+                            evidence={refundEvidence}
+                            onFileSelect={handleEvidenceSelect}
+                            onRemove={removeEvidence}
+                          />
+                        )}
                       </div>
                     </section>
                   )}

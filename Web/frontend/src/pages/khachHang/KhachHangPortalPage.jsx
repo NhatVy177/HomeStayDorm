@@ -1415,7 +1415,7 @@ export default function KhachHangPortalPage() {
   async function phanHoiDoiSoat(doiSoat, dongY) {
     if (!doiSoat?.maDoiSoat) return;
     if (!dongY && !doiSoatRejectReason.trim()) {
-      setToast('Vui lòng nhập lý do không đồng ý.');
+      setToast('Vui lòng nhập nội dung cần điều chỉnh.');
       return;
     }
 
@@ -1436,7 +1436,7 @@ export default function KhachHangPortalPage() {
         title: dongY ? 'Đã đồng ý kết quả đối soát' : 'Đã gửi yêu cầu điều chỉnh',
         message: dongY
           ? 'Kết quả đối soát đã được ghi nhận. Hệ thống sẽ chuyển sang bước xử lý khoản tiền phù hợp.'
-          : 'Lý do không đồng ý đã được gửi cho quản lý để kiểm tra lại.',
+          : 'Nội dung cần điều chỉnh đã được gửi cho quản lý để kiểm tra lại.',
         confirmText: 'Đóng'
       });
     } catch (requestError) {
@@ -1822,7 +1822,7 @@ export default function KhachHangPortalPage() {
                     {showDoiSoatReject && (
                       <div className="hd-reject-box">
                         <label>
-                          <span>Lý do không đồng ý</span>
+                          <span>Nội dung cần điều chỉnh</span>
                           <textarea
                             value={doiSoatRejectReason}
                             onChange={(event) => setDoiSoatRejectReason(event.target.value)}

@@ -116,6 +116,7 @@ function mapThuThemDatabaseError(error) {
     50700: 400,
     50701: 409,
     50702: 409,
+    50703: 409,
     50704: 404
   });
 }

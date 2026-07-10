@@ -310,11 +310,13 @@ BEGIN
             @TrangThaiDoiSoat NVARCHAR(30),
             @TrangThaiPhieuTra NVARCHAR(50),
             @MaPhieuTra VARCHAR(6),
+            @PhuongThucThanhToanHienTai NVARCHAR(20),
             @SoTienKhachPhaiTT DECIMAL(15,2);
 
         SELECT
             @TrangThaiDoiSoat = ds.TrangThai,
             @MaPhieuTra = ds.MaPhieuTra,
+            @PhuongThucThanhToanHienTai = ds.PhuongThucThanhToan,
             @SoTienKhachPhaiTT = ds.SoTienKhachPhaiTT,
             @TrangThaiPhieuTra = pt.TrangThai
         FROM dbo.DoiSoat ds WITH (UPDLOCK, HOLDLOCK)
@@ -339,6 +341,12 @@ BEGIN
         IF ISNULL(@SoTienKhachPhaiTT, 0) <= 0
         BEGIN
             THROW 50700, N'Phiếu đối soát không phát sinh số tiền cần thu thêm.', 1;
+        END
+
+        IF NULLIF(LTRIM(RTRIM(ISNULL(@PhuongThucThanhToanHienTai, N''))), N'') IS NOT NULL
+           AND NULLIF(LTRIM(RTRIM(@PhuongThucThanhToanHienTai)), N'') <> @PhuongThucThanhToan
+        BEGIN
+            THROW 50703, N'Khách đã ghi nhận phương thức thanh toán, kế toán không thể thay đổi phương thức.', 1;
         END
 
         UPDATE dbo.DoiSoat
@@ -429,6 +437,7 @@ BEGIN
         UPDATE dbo.DoiSoat
         SET
             ChungTuThanhToan = NULL,
+            NgayThanhToan = NULL,
             TrangThai = N'Chờ thanh toán thêm',
             MaNhanVienKeToan = COALESCE(@MaNhanVienKeToan, MaNhanVienKeToan)
         WHERE MaDoiSoat = @MaDoiSoat;
@@ -441,6 +450,7 @@ BEGIN
             N'Chờ thanh toán thêm' AS trangThaiDoiSoat,
             @TrangThaiPhieuTra AS trangThaiPhieuTra,
             @PhuongThucThanhToan AS phuongThucThanhToan,
+            CAST(NULL AS DATE) AS ngayThanhToan,
             CAST(NULL AS VARCHAR(500)) AS chungTuThanhToan;
     END TRY
     BEGIN CATCH
@@ -492,6 +502,7 @@ BEGIN
     WHERE ds.TrangThai = N'Chờ hoàn cọc'
       AND ds.LoaiQuyetToan = N'Hoàn cọc'
       AND ISNULL(ds.SoTienHoanThucTe, 0) > 0
+      AND pt.TrangThai = N'Chờ hoàn cọc'
       AND (pt.MaHopDong IS NULL OR hd.TrangThai = N'Đã thanh lý')
       AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
     GROUP BY
@@ -768,6 +779,11 @@ BEGIN
         IF @TrangThaiDoiSoat <> N'Chờ hoàn cọc'
         BEGIN
             THROW 50601, N'Phiếu đối soát này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.', 1;
+        END
+
+        IF @TrangThaiPhieuTra <> N'Chờ hoàn cọc'
+        BEGIN
+            THROW 50602, N'Phiếu trả phòng không còn ở trạng thái chờ hoàn cọc.', 1;
         END
 
         IF ISNULL(@SoTienHoanThucTe, 0) <= 0
