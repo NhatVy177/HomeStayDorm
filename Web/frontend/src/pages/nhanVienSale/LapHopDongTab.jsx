@@ -738,7 +738,7 @@ export default function LapHopDongTab() {
             ) : (
               phieuCocs.map(p => {
                 const statusInfo = getPhieuStatusStyle(p);
-                const waitingForResidence = p.trangThaiHoSoCuTru !== 'Đã duyệt cư trú';
+                const waitingForResidence = p.trangThaiHoSoCuTru !== 'Đã duyệt cư trú' && p.trangThaiCoc !== 'Đã lập HĐ';
                 return (
                 <tr key={p.maPhieuDatCoc}>
                   <td>
