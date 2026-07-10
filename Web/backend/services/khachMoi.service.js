@@ -1292,7 +1292,7 @@ export async function phanHoiDoiSoatTraPhong(user, maDoiSoat, data = {}) {
   }
 
   if (!dongY && !lyDoKhongDongY) {
-    throw createServiceError('Vui lòng nhập lý do không đồng ý.', 400);
+    throw createServiceError('Vui lòng nhập nội dung cần điều chỉnh.', 400);
   }
 
   const pool = await getPool();
@@ -1453,6 +1453,13 @@ export async function ghiNhanThanhToanDoiSoatTraPhong(user, maDoiSoat, data = {}
       UPDATE ds
       SET ds.PhuongThucThanhToan = @PhuongThucThanhToan,
           ds.ChungTuThanhToan = @ChungTuThanhToan,
+          ds.NgayThanhToan = CASE
+            WHEN ds.LoaiQuyetToan = N'Thu thêm'
+              AND @PhuongThucThanhToan = N'Chuyển khoản'
+              AND @ChungTuThanhToan IS NOT NULL
+            THEN CONVERT(date, GETDATE())
+            ELSE ds.NgayThanhToan
+          END,
           ds.ThongTinNhanHoanCoc = @ThongTinNhanHoanCoc
       OUTPUT
         inserted.MaDoiSoat AS maDoiSoat,
@@ -1460,6 +1467,7 @@ export async function ghiNhanThanhToanDoiSoatTraPhong(user, maDoiSoat, data = {}
         inserted.TrangThai AS trangThaiDoiSoat,
         inserted.PhuongThucThanhToan AS phuongThucThanhToan,
         inserted.ChungTuThanhToan AS chungTuThanhToan,
+        inserted.NgayThanhToan AS ngayThanhToan,
         inserted.ThongTinNhanHoanCoc AS thongTinNhanHoanCoc
       FROM dbo.DoiSoat ds
       INNER JOIN dbo.PhieuTraPhong pt
