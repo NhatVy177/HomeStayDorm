@@ -2171,6 +2171,24 @@
   margin-bottom: 16px;
 }
 
+.kh-btn-primary {
+  background: var(--kp-primary);
+  border: 1px solid var(--kp-primary);
+  color: #fff;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.kh-btn-primary:hover {
+  background: var(--kp-primary-dark);
+  border-color: var(--kp-primary-dark);
+}
+
+.kh-btn-primary .kp-line-icon {
+  color: currentColor;
+}
+
 /* ────────────────────────────────────────────────────────────────
    Đặt cọc – CSS Variables
 ──────────────────────────────────────────────────────────────── */
@@ -2930,14 +2948,21 @@
 
 .hd-settlement-card,
 .hd-settlement-summary-card {
+  align-content: start;
   display: grid;
   gap: 18px;
 }
 
 .hd-settlement-review-grid {
+  align-items: start;
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 584px);
+}
+
+.hd-settlement-review-grid.is-payment-only {
+  grid-template-columns: minmax(420px, 584px);
+  justify-content: center;
 }
 
 .hd-settlement-result {
@@ -2994,10 +3019,6 @@
   color: var(--kp-primary);
   grid-row: span 2;
   width: 24px;
-}
-
-.hd-settlement-summary-card {
-  align-content: start;
 }
 
 .hd-summary-money-row {
@@ -3474,6 +3495,28 @@
 
 .hd-payment-submit {
   width: 100%;
+}
+
+.hd-payment-review-link {
+  justify-self: start;
+}
+
+.hd-btn-ghost {
+  background: #fff;
+  border: 1px solid var(--kp-border);
+  color: var(--kp-primary);
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.hd-btn-ghost:hover {
+  background: #eff8f7;
+  border-color: rgba(0, 102, 109, 0.24);
+}
+
+.hd-btn-ghost svg {
+  width: 16px;
 }
 .hd-price {
   color: var(--kp-accent);

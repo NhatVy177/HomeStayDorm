@@ -10,6 +10,11 @@ IF OBJECT_ID(N'dbo.DoiSoat', N'U') IS NOT NULL
     ALTER TABLE dbo.DoiSoat ADD ThongTinNhanHoanCoc NVARCHAR(500) NULL;
 GO
 
+IF OBJECT_ID(N'dbo.DichVuHopDong', N'U') IS NOT NULL
+   AND COL_LENGTH('dbo.DichVuHopDong', 'DonGiaApDung') IS NULL
+    ALTER TABLE dbo.DichVuHopDong ADD DonGiaApDung DECIMAL(15,2) NULL;
+GO
+
 IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_DanhSachChoDoiSoat', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachChoDoiSoat AS BEGIN SET NOCOUNT ON; END;');
 GO
@@ -108,6 +113,7 @@ BEGIN
         COUNT(DISTINCT ctdc.MaChiTietDC) AS soLuongPhongGiuong,
         ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
         ds.PhuongThucThanhToan AS phuongThucThanhToan,
+        ds.ChungTuThanhToan AS chungTuThanhToan,
         ds.TrangThai AS trangThaiDoiSoat,
         pt.TrangThai AS trangThaiPhieuTra
     FROM dbo.DoiSoat ds
@@ -126,8 +132,24 @@ BEGIN
       AND (
           @BoLocThuThem IS NULL
           OR @BoLocThuThem = 'all'
-          OR (@BoLocThuThem = 'can-ghi-nhan' AND NULLIF(LTRIM(RTRIM(ds.PhuongThucThanhToan)), N'') IS NULL)
-          OR (@BoLocThuThem = 'cho-xac-nhan' AND NULLIF(LTRIM(RTRIM(ds.PhuongThucThanhToan)), N'') IS NOT NULL)
+          OR (
+              @BoLocThuThem = 'can-ghi-nhan'
+              AND (
+                  NULLIF(LTRIM(RTRIM(ds.PhuongThucThanhToan)), N'') IS NULL
+                  OR (
+                      ds.PhuongThucThanhToan = N'Chuyển khoản'
+                      AND NULLIF(LTRIM(RTRIM(ISNULL(ds.ChungTuThanhToan, ''))), '') IS NULL
+                  )
+              )
+          )
+          OR (
+              @BoLocThuThem = 'cho-xac-nhan'
+              AND NULLIF(LTRIM(RTRIM(ds.PhuongThucThanhToan)), N'') IS NOT NULL
+              AND (
+                  ds.PhuongThucThanhToan <> N'Chuyển khoản'
+                  OR NULLIF(LTRIM(RTRIM(ISNULL(ds.ChungTuThanhToan, ''))), '') IS NOT NULL
+              )
+          )
       )
       AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
     GROUP BY
@@ -140,6 +162,7 @@ BEGIN
         pt.MaPhieuDatCoc,
         ds.SoTienKhachPhaiTT,
         ds.PhuongThucThanhToan,
+        ds.ChungTuThanhToan,
         ds.TrangThai,
         pt.TrangThai
     ORDER BY ds.NgayLap DESC, ds.MaDoiSoat DESC;
@@ -241,8 +264,13 @@ BEGIN
         hd.TrangThai AS trangThaiHopDong,
         pdc.TrangThaiCoc AS trangThaiCoc,
         ds.TienCocBanDau AS tienCocBanDau,
+        ds.SoThangLuuTru AS soThangLuuTru,
         ds.TyLeHoanCocHienTai AS tyLeHoanCocHienTai,
         ds.TienCocDuocHoan AS tienCocDuocHoan,
+        ds.TienThueConNo AS tienThueConNo,
+        ds.TienDichVuConNo AS tienDichVuConNo,
+        ds.TongChiPhiSuaChua AS tongChiPhiSuaChua,
+        ds.TienPhat AS tienPhat,
         ds.TongKhauTru AS tongKhauTru,
         ds.SoTienHoanThucTe AS soTienHoanThucTe,
         ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
@@ -684,8 +712,13 @@ BEGIN
         hd.TrangThai AS trangThaiHopDong,
         pdc.TrangThaiCoc AS trangThaiCoc,
         ds.TienCocBanDau AS tienCocBanDau,
+        ds.SoThangLuuTru AS soThangLuuTru,
         ds.TyLeHoanCocHienTai AS tyLeHoanCocHienTai,
         ds.TienCocDuocHoan AS tienCocDuocHoan,
+        ds.TienThueConNo AS tienThueConNo,
+        ds.TienDichVuConNo AS tienDichVuConNo,
+        ds.TongChiPhiSuaChua AS tongChiPhiSuaChua,
+        ds.TienPhat AS tienPhat,
         ds.TongKhauTru AS tongKhauTru,
         ds.SoTienHoanThucTe AS soTienHoanThucTe,
         ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
@@ -1182,8 +1215,21 @@ BEGIN
     LEFT JOIN dbo.DieuKhoanViPham dkvp ON dkvp.MaDieuKhoan = bbvp.MaDieuKhoan
     WHERE @MaHopDong IS NOT NULL
       AND bbvp.MaHopDong = @MaHopDong
-      AND bbvp.TrangThai = N'Chờ xử lý'
     ORDER BY bbvp.NgayViPham ASC, bbvp.MaBBViPham ASC;
+
+    -- Recordset 6: Dich vu dang ap dung trong hop dong, dung khi hoa don chua co chi tiet.
+    SELECT
+        dvhd.MaChiTietDVHD AS maChiTietDVHD,
+        dvhd.MaDichVu AS maDichVu,
+        dv.TenDichVu AS tenDichVu,
+        dv.DonViTinh AS donViTinh,
+        COALESCE(dvhd.DonGiaApDung, dv.DonGia, 0) AS donGia,
+        dvhd.GhiChu AS ghiChu
+    FROM dbo.DichVuHopDong dvhd
+    LEFT JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+    WHERE @MaHopDong IS NOT NULL
+      AND dvhd.MaHopDong = @MaHopDong
+    ORDER BY dv.TenDichVu ASC, dvhd.MaChiTietDVHD ASC;
 END;
 GO
 

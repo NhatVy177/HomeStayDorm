@@ -105,7 +105,8 @@ export async function getChiTietKhauTru(db, maPhieuTra, maHopDong) {
     chiTietHoaDon: result.recordsets[1] || [],
     bienBanKiemTra: result.recordsets[2] || [],
     chiTietHuHong: result.recordsets[3] || [],
-    bienBanViPham: result.recordsets[4] || []
+    bienBanViPham: result.recordsets[4] || [],
+    dichVuHopDong: result.recordsets[5] || []
   };
 }
 

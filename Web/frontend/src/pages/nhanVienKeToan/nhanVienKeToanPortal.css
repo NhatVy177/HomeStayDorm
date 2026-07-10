@@ -1361,6 +1361,23 @@
   grid-column: 1 / -1;
 }
 
+.qt-refund-payment-layout {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
+}
+
+.qt-refund-payment-left {
+  display: grid;
+  gap: 12px;
+}
+
+.qt-refund-payment-account {
+  align-self: start;
+}
+
 .qt-refund-account-card {
   background: linear-gradient(180deg, #f8fbfb 0%, #eef7f6 100%);
   border: 1px solid #c4d7d7;
@@ -1640,6 +1657,10 @@
   }
 
   .qt-refund-form {
+    grid-template-columns: 1fr;
+  }
+
+  .qt-refund-payment-layout {
     grid-template-columns: 1fr;
   }
 

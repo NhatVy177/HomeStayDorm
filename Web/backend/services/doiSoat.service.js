@@ -324,7 +324,9 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
       throw createServiceError(MESSAGE_STALE, 409);
     }
 
-    const context = await buildHoSoContext(transaction, phieuTraPhong, { requireBienBanKiemTra: true });
+    const context = await buildHoSoContext(transaction, phieuTraPhong, {
+      requireBienBanKiemTra: !maDoiSoatDieuChinh
+    });
     const result = buildPreview(phieuTraPhong, context, data);
     const maQuyDinhHoanCoc = await doiSoatRepository.getMaQuyDinhHoanCoc(
       transaction,

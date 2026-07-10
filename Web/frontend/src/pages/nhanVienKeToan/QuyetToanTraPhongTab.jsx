@@ -35,13 +35,44 @@ const THU_THEM_FILTER_META = {
   }
 };
 
+const KET_QUA_FILTERS = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'thu-them', label: 'Thu thêm' },
+  { key: 'hoan-coc', label: 'Hoàn cọc' },
+  { key: 'khong-phat-sinh', label: 'Không phát sinh' }
+];
+
+const DEFAULT_SERVICE_FALLBACKS = [
+  { maDichVu: 'fallback-dien', tenDichVu: 'Điện', donViTinh: 'kWh', donGia: 4000 },
+  { maDichVu: 'fallback-nuoc', tenDichVu: 'Nước', donViTinh: 'm3', donGia: 18000 },
+  { maDichVu: 'fallback-wifi', tenDichVu: 'Wifi', donViTinh: 'tháng', donGia: 100000 },
+  { maDichVu: 'fallback-gui-xe', tenDichVu: 'Gửi xe', donViTinh: 'tháng', donGia: 150000 },
+  { maDichVu: 'fallback-ve-sinh', tenDichVu: 'Vệ sinh', donViTinh: 'tháng', donGia: 80000 }
+];
+
 function hasPaymentMethod(row) {
   return String(row?.phuongThucThanhToan || '').trim() !== '';
 }
 
+function hasPaymentProof(row) {
+  return String(row?.chungTuThanhToan || '').trim() !== '';
+}
+
+function isTransferPayment(row) {
+  return String(row?.phuongThucThanhToan || '').trim() === 'Chuyển khoản';
+}
+
+function isReadyForThuThemConfirmation(row) {
+  return hasPaymentMethod(row) && (!isTransferPayment(row) || hasPaymentProof(row));
+}
+
+function needsThuThemProof(row) {
+  return hasPaymentMethod(row) && isTransferPayment(row) && !hasPaymentProof(row);
+}
+
 function matchesThuThemFilter(row, filter) {
-  if (filter === 'cho-xac-nhan') return hasPaymentMethod(row);
-  if (filter === 'can-ghi-nhan') return !hasPaymentMethod(row);
+  if (filter === 'cho-xac-nhan') return isReadyForThuThemConfirmation(row);
+  if (filter === 'can-ghi-nhan') return !isReadyForThuThemConfirmation(row);
   return true;
 }
 
@@ -105,6 +136,45 @@ function sumLineValues(values) {
   return Object.values(values || {}).reduce((total, value) => total + safeNumber(value), 0);
 }
 
+function getFallbackServiceSources(chiTietKhauTru, total) {
+  const contractServices = (chiTietKhauTru?.dichVuHopDong || [])
+    .filter((service) => service?.tenDichVu || service?.maDichVu);
+
+  if (contractServices.length > 0) return contractServices;
+  return safeNumber(total) > 0 ? DEFAULT_SERVICE_FALLBACKS : [];
+}
+
+function getServiceSourceKey(service, index) {
+  return makeLineKey(
+    'service-contract',
+    service?.maChiTietDVHD || service?.maDichVu || service?.tenDichVu || index
+  );
+}
+
+function distributeServiceTotal(total, services) {
+  const amount = safeNumber(total);
+  if (amount <= 0 || services.length === 0) return {};
+
+  const weights = services.map((service) => safeNumber(service.donGia));
+  const totalWeight = weights.reduce((sum, value) => sum + value, 0);
+  const values = {};
+  let assigned = 0;
+
+  services.forEach((service, index) => {
+    const key = getServiceSourceKey(service, index);
+    const lineAmount = index === services.length - 1
+      ? amount - assigned
+      : totalWeight > 0
+        ? Math.round((amount * weights[index]) / totalWeight)
+        : Math.floor(amount / services.length);
+
+    values[key] = lineAmount;
+    assigned += lineAmount;
+  });
+
+  return values;
+}
+
 function getLineAmount(values, key, fallback) {
   return values?.[key] ?? safeNumber(fallback);
 }
@@ -116,6 +186,7 @@ function buildInitialDeductionValues(data) {
   const bienBanKiemTra = chiTietKhauTru.bienBanKiemTra || [];
   const chiTietHuHong = chiTietKhauTru.chiTietHuHong || [];
   const bienBanViPham = chiTietKhauTru.bienBanViPham || [];
+  const tienDichVuConNoMacDinh = safeNumber(data?.doiSoat?.tienDichVuConNo ?? data?.macDinhKhauTru?.tienDichVuConNo);
 
   const rentLines = {};
   const serviceLines = {};
@@ -127,10 +198,20 @@ function buildInitialDeductionValues(data) {
     rentLines[key] = safeNumber(hoaDon.thanhTien);
   });
 
-  chiTietHoaDon.forEach((line) => {
-    const key = makeLineKey('service', line.maChiTietHD, line.maHoaDon);
-    serviceLines[key] = safeNumber(line.thanhTien);
-  });
+  if (chiTietHoaDon.length > 0) {
+    chiTietHoaDon.forEach((line) => {
+      const key = makeLineKey('service', line.maChiTietHD, line.maHoaDon);
+      serviceLines[key] = safeNumber(line.thanhTien);
+    });
+  } else {
+    Object.assign(
+      serviceLines,
+      distributeServiceTotal(
+        tienDichVuConNoMacDinh,
+        getFallbackServiceSources(chiTietKhauTru, tienDichVuConNoMacDinh)
+      )
+    );
+  }
 
   bienBanKiemTra.forEach((bienBan) => {
     const damages = chiTietHuHong.filter((item) => item.maBienBanKT === bienBan.maBienBanKT);
@@ -176,6 +257,18 @@ function buildFormFromDeductionValues(defaults, deductionValues) {
   };
 }
 
+function buildAdjustmentDefaults(doiSoat) {
+  if (!doiSoat) return null;
+
+  return {
+    tienThueConNo: safeNumber(doiSoat.tienThueConNo),
+    tienDichVuConNo: safeNumber(doiSoat.tienDichVuConNo),
+    tongChiPhiSuaChua: safeNumber(doiSoat.tongChiPhiSuaChua),
+    tienPhat: safeNumber(doiSoat.tienPhat),
+    ghiChuPhanHoiKhach: doiSoat.ghiChuPhanHoiKhach || ''
+  };
+}
+
 function calculateStayMonths(startDateValue, returnDateValue) {
   const startDate = toDate(startDateValue);
   const returnDate = toDate(returnDateValue);
@@ -195,28 +288,34 @@ function calculateStayMonths(startDateValue, returnDateValue) {
 function calculatePreview(detail, form) {
   if (!detail) return null;
 
-  const tienCocBanDau = safeNumber(detail.hopDong?.soTienCoc ?? detail.phieuDatCoc?.soTienCoc);
+  const doiSoat = detail.doiSoat || {};
+  const tienCocBanDau = safeNumber(doiSoat.tienCocBanDau)
+    || safeNumber(detail.hopDong?.soTienCoc ?? detail.phieuDatCoc?.soTienCoc);
   const tienThueConNo = safeNumber(form.tienThueConNo);
   const tienDichVuConNo = safeNumber(form.tienDichVuConNo);
   const tongChiPhiSuaChua = safeNumber(form.tongChiPhiSuaChua);
   const tienPhat = safeNumber(form.tienPhat);
-  let soThangLuuTru = 0;
-  let tyLeHoanCocHienTai = 80;
+  let soThangLuuTru = safeNumber(doiSoat.soThangLuuTru);
+  let tyLeHoanCocHienTai = doiSoat.tyLeHoanCocHienTai !== undefined && doiSoat.tyLeHoanCocHienTai !== null
+    ? safeNumber(doiSoat.tyLeHoanCocHienTai)
+    : 80;
 
-  if (detail.loaiHoSo === LOAI_HO_SO.HOP_DONG_THUE) {
-    soThangLuuTru = calculateStayMonths(
-      detail.hopDong?.ngayBatDau,
-      detail.phieuTraPhong?.ngayTraThucTe
-    );
-    const ngayTraThucTe = toDate(detail.phieuTraPhong?.ngayTraThucTe);
-    const ngayKetThuc = toDate(detail.hopDong?.ngayKetThuc);
+  if (!detail.doiSoat) {
+    if (detail.loaiHoSo === LOAI_HO_SO.HOP_DONG_THUE) {
+      soThangLuuTru = calculateStayMonths(
+        detail.hopDong?.ngayBatDau,
+        detail.phieuTraPhong?.ngayTraThucTe
+      );
+      const ngayTraThucTe = toDate(detail.phieuTraPhong?.ngayTraThucTe);
+      const ngayKetThuc = toDate(detail.hopDong?.ngayKetThuc);
 
-    if (ngayTraThucTe && ngayKetThuc && ngayTraThucTe >= ngayKetThuc) {
-      tyLeHoanCocHienTai = 100;
-    } else if (soThangLuuTru < 6) {
-      tyLeHoanCocHienTai = 50;
-    } else {
-      tyLeHoanCocHienTai = 70;
+      if (ngayTraThucTe && ngayKetThuc && ngayTraThucTe >= ngayKetThuc) {
+        tyLeHoanCocHienTai = 100;
+      } else if (soThangLuuTru < 6) {
+        tyLeHoanCocHienTai = 50;
+      } else {
+        tyLeHoanCocHienTai = 70;
+      }
     }
   }
 
@@ -269,7 +368,7 @@ function SourceLine({ title, meta, amount, editing = false, editValue, onAmountC
     <div className={`qt-source-line${canEdit ? ' is-editing' : ''}`}>
       <div>
         <p style={{ margin: 0, fontWeight: 500, color: '#526061', fontSize: '13px' }}>{title}</p>
-        {/* {meta && <p style={{ margin: '3px 0 0', color: '#6f797a', fontSize: '12px', lineHeight: 1.45 }}>{meta}</p>} */}
+        {meta && <p style={{ margin: '3px 0 0', color: '#6f797a', fontSize: '12px', lineHeight: 1.45 }}>{meta}</p>}
       </div>
       {canEdit ? (
         <input
@@ -428,6 +527,18 @@ function ketQuaMeta(row) {
   };
 }
 
+function ketQuaFilterKey(row) {
+  if (row?.ketQuaDoiSoat === 'hoan-coc' || safeNumber(row?.soTienHoanThucTe) > 0) {
+    return 'hoan-coc';
+  }
+
+  if (row?.ketQuaDoiSoat === 'thu-them' || safeNumber(row?.soTienKhachPhaiTT) > 0) {
+    return 'thu-them';
+  }
+
+  return 'khong-phat-sinh';
+}
+
 function formatFileSize(bytes) {
   const size = safeNumber(bytes);
   if (size <= 0) return '';
@@ -574,8 +685,8 @@ function GhiNhanThanhToanPanel({ type }) {
 
   const searchedPendingRows = useMemo(() => filterRows(pendingRows), [pendingRows, searchText]);
   const thuThemCounts = useMemo(() => ({
-    'can-ghi-nhan': searchedPendingRows.filter((row) => !hasPaymentMethod(row)).length,
-    'cho-xac-nhan': searchedPendingRows.filter((row) => hasPaymentMethod(row)).length
+    'can-ghi-nhan': searchedPendingRows.filter((row) => !isReadyForThuThemConfirmation(row)).length,
+    'cho-xac-nhan': searchedPendingRows.filter((row) => isReadyForThuThemConfirmation(row)).length
   }), [searchedPendingRows]);
   const thuThemFilters = useMemo(() => THU_THEM_FILTERS.map((filter) => ({
     ...filter,
@@ -803,6 +914,7 @@ function GhiNhanThanhToanPanel({ type }) {
               </tr>
             ) : tableRows.map((row) => {
               const rowMode = row._settlementMode || 'pending';
+              const waitingForCustomerProof = isThuThem && needsThuThemProof(row);
 
               return (
                 <tr key={`${rowMode}-${row.maDoiSoat}`}>
@@ -821,10 +933,23 @@ function GhiNhanThanhToanPanel({ type }) {
                   <td style={{ color: isThuThem ? '#ba1a1a' : '#137333', fontWeight: 800 }}>
                     {formatMoney(row[amountField])}
                   </td>
-                  <td><span className="ktp-badge ktp-badge-secondary">{row.trangThaiDoiSoat}</span></td>
+                  <td>
+                    <span className="ktp-badge ktp-badge-secondary">
+                      {waitingForCustomerProof ? 'Cần bổ sung minh chứng' : row.trangThaiDoiSoat}
+                    </span>
+                  </td>
                   <td className="text-center">
-                    <button className="ktp-btn-action-fill" type="button" onClick={() => openRefundModal(row, rowMode)}>
-                      {isThuThem && thuThemFilter === 'cho-xac-nhan' ? 'Xác nhận' : 'Ghi nhận'}
+                    <button
+                      className="ktp-btn-action-fill"
+                      type="button"
+                      disabled={waitingForCustomerProof}
+                      onClick={() => openRefundModal(row, rowMode)}
+                    >
+                      {waitingForCustomerProof
+                        ? 'Chờ khách bổ sung'
+                        : isThuThem && thuThemFilter === 'cho-xac-nhan'
+                          ? 'Xác nhận'
+                          : 'Ghi nhận'}
                     </button>
                   </td>
                 </tr>
@@ -848,9 +973,6 @@ function GhiNhanThanhToanPanel({ type }) {
             onChange={setThuThemFilter}
           />
         )}
-        <div className="qt-settlement-summary-chip">
-          {displayedRows.length} {isThuThem ? activeThuThemFilterMeta.summary : 'phiếu chờ ghi nhận'}
-        </div>
         <div className="qt-toolbar-actions">
           <div className="ktp-input-icon-wrap qt-compact-search">
             <span className="ktp-input-icon"><Icon name="search" /></span>
@@ -941,47 +1063,62 @@ function GhiNhanThanhToanPanel({ type }) {
                     <section className="ktp-section ktp-info-box-outline qt-refund-form">
                       <h4 className="ktp-section-title"><Icon name="payments" /> {isThuThem ? 'Thông tin thu thêm' : 'Thông tin hoàn cọc'}</h4>
                       {isThuThem ? (
-                        thuThemPaymentMethodLocked ? (
-                          <div className="ktp-filter-group">
-                            <span className="ktp-filter-label">Phương thức khách đã chọn</span>
-                            <div className="ktp-readonly-field">{refundForm.phuongThucThanhToan || '--'}</div>
-                          </div>
-                        ) : (
+                        <>
+                          {thuThemPaymentMethodLocked ? (
+                            <div className="ktp-filter-group">
+                              <span className="ktp-filter-label">Phương thức khách đã chọn</span>
+                              <div className="ktp-readonly-field">{refundForm.phuongThucThanhToan || '--'}</div>
+                            </div>
+                          ) : (
+                            <label className="ktp-filter-group">
+                              <span className="ktp-filter-label">Phương thức thanh toán</span>
+                              <select
+                                className="ktp-input"
+                                value={refundForm.phuongThucThanhToan}
+                                onChange={(event) => setRefundForm((prev) => ({ ...prev, phuongThucThanhToan: event.target.value }))}
+                              >
+                                <option value="">Chọn phương thức</option>
+                                <option value="Tiền mặt">Tiền mặt</option>
+                                <option value="Chuyển khoản">Chuyển khoản</option>
+                              </select>
+                            </label>
+                          )}
                           <label className="ktp-filter-group">
-                            <span className="ktp-filter-label">Phương thức thanh toán</span>
-                            <select
+                            <span className="ktp-filter-label">Ngày thanh toán</span>
+                            <input
                               className="ktp-input"
-                              value={refundForm.phuongThucThanhToan}
-                              onChange={(event) => setRefundForm((prev) => ({ ...prev, phuongThucThanhToan: event.target.value }))}
-                            >
-                              <option value="">Chọn phương thức</option>
-                              <option value="Tiền mặt">Tiền mặt</option>
-                              <option value="Chuyển khoản">Chuyển khoản</option>
-                            </select>
+                              type="date"
+                              value={refundForm.ngayThanhToan}
+                              disabled={thuThemPaymentDateLocked}
+                              onChange={(event) => setRefundForm((prev) => ({ ...prev, ngayThanhToan: event.target.value }))}
+                            />
                           </label>
-                        )
+                        </>
                       ) : (
-                        <div className="ktp-filter-group">
-                          <span className="ktp-filter-label">Phương thức khách chọn</span>
-                          <div className="ktp-readonly-field">{refundForm.phuongThucThanhToan || 'Khách chưa chọn phương thức hoàn tiền'}</div>
+                        <div className="qt-refund-payment-layout">
+                          <div className="qt-refund-payment-left">
+                            <div className="ktp-filter-group">
+                              <span className="ktp-filter-label">Phương thức khách chọn</span>
+                              <div className="ktp-readonly-field">{refundForm.phuongThucThanhToan || 'Khách chưa chọn phương thức hoàn tiền'}</div>
+                            </div>
+                            <label className="ktp-filter-group">
+                              <span className="ktp-filter-label">Ngày thanh toán</span>
+                              <input
+                                className="ktp-input"
+                                type="date"
+                                value={refundForm.ngayThanhToan}
+                                onChange={(event) => setRefundForm((prev) => ({ ...prev, ngayThanhToan: event.target.value }))}
+                              />
+                            </label>
+                          </div>
+                          {refundDetail.thongTinNhanHoanCoc && (
+                            <div className="ktp-filter-group qt-refund-payment-account">
+                              <span className="ktp-filter-label">Thông tin tài khoản nhận hoàn cọc</span>
+                              <RefundAccountCard value={refundDetail.thongTinNhanHoanCoc} />
+                            </div>
+                          )}
                         </div>
                       )}
-                      {!isThuThem && refundDetail.thongTinNhanHoanCoc && (
-                        <div className="ktp-filter-group">
-                          <span className="ktp-filter-label">Thông tin tài khoản nhận hoàn cọc</span>
-                          <RefundAccountCard value={refundDetail.thongTinNhanHoanCoc} />
-                        </div>
-                      )}
-                      <label className="ktp-filter-group">
-                        <span className="ktp-filter-label">Ngày thanh toán</span>
-                        <input
-                          className="ktp-input"
-                          type="date"
-                          value={refundForm.ngayThanhToan}
-                          disabled={thuThemPaymentDateLocked}
-                          onChange={(event) => setRefundForm((prev) => ({ ...prev, ngayThanhToan: event.target.value }))}
-                        />
-                      </label>
                       <div className="ktp-filter-group">
                         <span className="ktp-filter-label">Chứng từ thanh toán</span>
                         {isThuThem && refundForm.phuongThucThanhToan === 'Chuyển khoản' && currentProof && !refundEvidence?.file && (
@@ -1011,10 +1148,11 @@ function GhiNhanThanhToanPanel({ type }) {
             </div>
 
             <div className="ktp-modal-footer">
-              <button className="ktp-btn-cancel" type="button" onClick={() => setSelectedRefund(null)}>
-                {selectedRefund._viewMode === 'completed' ? 'Đóng' : 'Hủy'}
-              </button>
-              {selectedRefund._viewMode !== 'completed' && (
+              {selectedRefund._viewMode === 'completed' ? (
+                <button className="ktp-btn-cancel" type="button" onClick={() => setSelectedRefund(null)}>
+                  Đóng
+                </button>
+              ) : (
                 <>
                   {canRejectThuThemProof && (
                     <button
@@ -1044,6 +1182,7 @@ function GhiNhanThanhToanPanel({ type }) {
 function KetQuaDoiSoatPanel() {
   const [rows, setRows] = useState([]);
   const [searchText, setSearchText] = useState('');
+  const [ketQuaFilter, setKetQuaFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(null);
@@ -1068,7 +1207,7 @@ function KetQuaDoiSoatPanel() {
     loadRows();
   }, []);
 
-  const filteredRows = useMemo(() => {
+  const searchedRows = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
     if (!keyword) return rows;
 
@@ -1081,6 +1220,25 @@ function KetQuaDoiSoatPanel() {
       row.trangThaiDoiSoat?.toLowerCase().includes(keyword)
     );
   }, [rows, searchText]);
+
+  const ketQuaFilterItems = useMemo(() => {
+    const counts = searchedRows.reduce((acc, row) => {
+      const key = ketQuaFilterKey(row);
+      acc[key] = (acc[key] || 0) + 1;
+      acc.all += 1;
+      return acc;
+    }, { all: 0, 'thu-them': 0, 'hoan-coc': 0, 'khong-phat-sinh': 0 });
+
+    return KET_QUA_FILTERS.map((filter) => ({
+      ...filter,
+      count: counts[filter.key] ?? 0
+    }));
+  }, [searchedRows]);
+
+  const filteredRows = useMemo(() => {
+    if (ketQuaFilter === 'all') return searchedRows;
+    return searchedRows.filter((row) => ketQuaFilterKey(row) === ketQuaFilter);
+  }, [ketQuaFilter, searchedRows]);
 
   async function openDetail(row) {
     setSelected(row);
@@ -1108,10 +1266,10 @@ function KetQuaDoiSoatPanel() {
       <section className="qt-settlement-toolbar">
         <StatusFilterTabs
           className="qt-status-filters"
-          ariaLabel="Tổng kết kết quả đối soát"
-          items={[{ key: 'result', label: 'Kết quả đối soát', count: rows.length }]}
-          activeKey="result"
-          onChange={() => {}}
+          ariaLabel="Bộ lọc kết quả đối soát"
+          items={ketQuaFilterItems}
+          activeKey={ketQuaFilter}
+          onChange={setKetQuaFilter}
         />
         <div className="qt-toolbar-actions">
           <div className="ktp-input-icon-wrap qt-compact-search">
@@ -1165,7 +1323,7 @@ function KetQuaDoiSoatPanel() {
                   <div className="qt-empty-workflow">
                     <Icon name="task_alt" />
                     <strong>Kết quả đối soát</strong>
-                    <span>Chưa có phiếu đã quyết toán hoặc đã hoàn cọc.</span>
+                    <span>{rows.length ? 'Không có phiếu phù hợp với bộ lọc.' : 'Chưa có phiếu đã quyết toán hoặc đã hoàn cọc.'}</span>
                   </div>
                 </td>
               </tr>
@@ -1380,17 +1538,28 @@ export default function QuyetToanTraPhongTab() {
     setMessage('');
     try {
       const response = await doiSoatApi.getChiTietPhieuTraPhong(maPhieuTra);
+      let doiSoatDetail = null;
+
+      if (row?.maDoiSoat) {
+        const detailResponse = row.loaiQuyetToan === 'Hoàn cọc'
+          ? await doiSoatApi.getChiTietHoanCoc(row.maDoiSoat)
+          : await doiSoatApi.getChiTietThuThem(row.maDoiSoat);
+        doiSoatDetail = detailResponse.data.chiTiet || null;
+      }
+
       const data = {
         ...response.data,
         doiSoat: row?.maDoiSoat
           ? {
               maDoiSoat: row.maDoiSoat,
               trangThaiDoiSoat: row.trangThaiDoiSoat,
-              loaiQuyetToan: row.loaiQuyetToan
+              loaiQuyetToan: row.loaiQuyetToan,
+              ...doiSoatDetail
             }
           : null
       };
       const isDepositOnly = data.loaiHoSo === LOAI_HO_SO.DAT_COC_CHUA_KY_HOP_DONG;
+      const adjustmentDefaults = buildAdjustmentDefaults(doiSoatDetail);
       const initialDeductionValues = isDepositOnly
         ? {
             rentLines: {},
@@ -1412,7 +1581,7 @@ export default function QuyetToanTraPhongTab() {
               tienPhat: 0,
               ghiChuPhanHoiKhach: ''
             }
-          : buildFormFromDeductionValues(data.macDinhKhauTru, initialDeductionValues)
+          : buildFormFromDeductionValues(adjustmentDefaults || data.macDinhKhauTru, initialDeductionValues)
       );
     } catch (err) {
       setError(err.response?.data?.message || 'Không tải được chi tiết phiếu trả phòng.');
@@ -1495,8 +1664,33 @@ export default function QuyetToanTraPhongTab() {
 
   const hoSoChinh = selected?.hopDong || selected?.phieuDatCoc;
   const chiTietKhauTru = selected?.chiTietKhauTru || {};
-  const hoaDonConNo = chiTietKhauTru.hoaDonConNo || chiTietKhauTru.tienThueConNo || [];
   const chiTietHoaDon = chiTietKhauTru.chiTietHoaDon || [];
+  const serviceFallbackTotal = safeNumber(form.tienDichVuConNo)
+    || sumLineValues(deductionValues.serviceLines)
+    || safeNumber(selected?.doiSoat?.tienDichVuConNo)
+    || safeNumber(selected?.macDinhKhauTru?.tienDichVuConNo);
+  const fallbackServiceSources = chiTietHoaDon.length === 0
+    ? getFallbackServiceSources(chiTietKhauTru, serviceFallbackTotal)
+    : [];
+  const serviceDebtLines = chiTietHoaDon.length > 0
+    ? chiTietHoaDon.map((line) => {
+      const key = makeLineKey('service', line.maChiTietHD, line.maHoaDon);
+      return {
+        key,
+        title: line.tenDichVu || 'Dịch vụ',
+        amount: getLineAmount(deductionValues.serviceLines, key, line.thanhTien),
+        onAmountChange: (value) => updateDeductionLine('serviceLines', key, value)
+      };
+    })
+    : fallbackServiceSources.map((service, index) => {
+      const key = getServiceSourceKey(service, index);
+      return {
+        key,
+        title: service.tenDichVu || service.maDichVu || 'Dịch vụ',
+        amount: getLineAmount(deductionValues.serviceLines, key, 0),
+        onAmountChange: (value) => updateDeductionLine('serviceLines', key, value)
+      };
+    });
   const bienBanKiemTra = chiTietKhauTru.bienBanKiemTra || [];
   const chiTietHuHong = chiTietKhauTru.chiTietHuHong || [];
   const bienBanViPham = chiTietKhauTru.bienBanViPham || [];
@@ -1780,51 +1974,41 @@ export default function QuyetToanTraPhongTab() {
                     onEdit={() => setEditingKhoan('hoaDonConNo')}
                     onDone={() => setEditingKhoan(null)}
                   >
-                    {hoaDonConNo.length === 0 ? (
-                      <EmptySource>Không có hóa đơn còn nợ.</EmptySource>
-                    ) : hoaDonConNo.map((hoaDon) => {
-                      const details = chiTietHoaDon.filter((item) => item.maHoaDon === hoaDon.maHoaDon);
-                      const rentKey = makeLineKey('rent', hoaDon.maHoaDon, hoaDon.maHopDong, hoaDon.kyThanhToan);
-                      const rentAmount = getLineAmount(deductionValues.rentLines, rentKey, hoaDon.thanhTien);
-                      const serviceTotal = details.reduce((total, line) => {
-                        const detailKey = makeLineKey('service', line.maChiTietHD, line.maHoaDon);
-                        return total + getLineAmount(deductionValues.serviceLines, detailKey, line.thanhTien);
-                      }, 0);
-
-                      return (
-                        <div key={hoaDon.maHoaDon || `${hoaDon.maHopDong}-${hoaDon.kyThanhToan}`} className="qt-debt-group">
+                    {safeNumber(form.tienThueConNo) > 0 || safeNumber(form.tienDichVuConNo) > 0 ? (
+                      <div className="qt-debt-group">
+                        {safeNumber(form.tienThueConNo) > 0 && (
                           <SourceLine
-                            title={`Hóa đơn ${hoaDon.maHoaDon || '--'} - kỳ ${hoaDon.kyThanhToan || '--'}`}
-                            meta={`Hạn TT: ${formatDate(hoaDon.ngayHanTT)} · Trạng thái: ${hoaDon.trangThai || '--'}`}
-                            amount={rentAmount + serviceTotal}
-                            tone="danger"
-                          />
-                          <SourceLine
-                            title="Tiền thuê"
-                            meta={`Hợp đồng: ${hoaDon.maHopDong || selected.hopDong?.maHopDong || '--'} · Giá thuê HĐ: ${formatMoney(hoaDon.giaThueHopDong)}`}
-                            amount={rentAmount}
-                            tone="danger"
+                            title="Tiền thuê hợp đồng"
+                            amount={safeNumber(form.tienThueConNo)}
                             editing={editingKhoan === 'hoaDonConNo'}
-                            editValue={rentAmount}
-                            onAmountChange={(value) => updateDeductionLine('rentLines', rentKey, value)}
+                            editValue={safeNumber(form.tienThueConNo)}
+                            onAmountChange={(value) => setForm((prev) => ({ ...prev, tienThueConNo: safeNumber(value) }))}
                           />
-                          {details.length === 0 ? (
-                            <EmptySource>Hóa đơn chưa có dòng dịch vụ.</EmptySource>
-                          ) : details.map((line) => (
+                        )}
+                        {serviceDebtLines.length > 0 ? serviceDebtLines.map((line) => (
+                          safeNumber(line.amount) > 0 && (
                             <SourceLine
-                              key={line.maChiTietHD}
-                              title={line.tenDichVu || line.maChiTietHD}
-                              meta={`Loại: ${line.loaiKhoanNo || 'Dịch vụ'} · SL: ${safeNumber(line.soLuong)} ${line.donViTinh || ''} · Đơn giá: ${formatMoney(line.donGia)}${line.maPhieuGhi ? ` · Phiếu ghi: ${line.maPhieuGhi}` : ''}`}
-                              amount={getLineAmount(deductionValues.serviceLines, makeLineKey('service', line.maChiTietHD, line.maHoaDon), line.thanhTien)}
-                              tone="danger"
+                              key={line.key}
+                              title={line.title}
+                              amount={line.amount}
                               editing={editingKhoan === 'hoaDonConNo'}
-                              editValue={getLineAmount(deductionValues.serviceLines, makeLineKey('service', line.maChiTietHD, line.maHoaDon), line.thanhTien)}
-                              onAmountChange={(value) => updateDeductionLine('serviceLines', makeLineKey('service', line.maChiTietHD, line.maHoaDon), value)}
+                              editValue={line.amount}
+                              onAmountChange={line.onAmountChange}
                             />
-                          ))}
-                        </div>
-                      );
-                    })}
+                          )
+                        )) : safeNumber(form.tienDichVuConNo) > 0 && (
+                          <SourceLine
+                            title="Tiền dịch vụ"
+                            amount={safeNumber(form.tienDichVuConNo)}
+                            editing={editingKhoan === 'hoaDonConNo'}
+                            editValue={safeNumber(form.tienDichVuConNo)}
+                            onAmountChange={(value) => setForm((prev) => ({ ...prev, tienDichVuConNo: safeNumber(value) }))}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <EmptySource>Không có khoản thuê hoặc dịch vụ còn nợ.</EmptySource>
+                    )}
                   </KhauTruPanel>
 
                   <KhauTruPanel
@@ -1835,7 +2019,19 @@ export default function QuyetToanTraPhongTab() {
                     onDone={() => setEditingKhoan(null)}
                   >
                     {bienBanKiemTra.length === 0 ? (
-                      <EmptySource>Chưa có biên bản kiểm tra phòng.</EmptySource>
+                      safeNumber(form.tongChiPhiSuaChua) > 0 ? (
+                        <SourceLine
+                          title="Chi phí sửa chữa"
+                          meta="Theo phiếu đối soát hiện tại khách đang xem"
+                          amount={safeNumber(form.tongChiPhiSuaChua)}
+                          tone="danger"
+                          editing={editingKhoan === 'tongChiPhiSuaChua'}
+                          editValue={safeNumber(form.tongChiPhiSuaChua)}
+                          onAmountChange={(value) => setForm((prev) => ({ ...prev, tongChiPhiSuaChua: safeNumber(value) }))}
+                        />
+                      ) : (
+                        <EmptySource>Chưa có biên bản kiểm tra phòng.</EmptySource>
+                      )
                     ) : bienBanKiemTra.map((bienBan) => {
                       const damages = chiTietHuHong.filter((item) => item.maBienBanKT === bienBan.maBienBanKT);
                       const reportKey = makeLineKey('repair-report', bienBan.maBienBanKT);
@@ -1884,7 +2080,19 @@ export default function QuyetToanTraPhongTab() {
                     onDone={() => setEditingKhoan(null)}
                   >
                     {bienBanViPham.length === 0 ? (
-                      <EmptySource>Không có biên bản vi phạm đang Chờ xử lý.</EmptySource>
+                      safeNumber(form.tienPhat) > 0 ? (
+                        <SourceLine
+                          title="Tiền phạt vi phạm"
+                          meta="Theo phiếu đối soát hiện tại khách đang xem"
+                          amount={safeNumber(form.tienPhat)}
+                          tone="danger"
+                          editing={editingKhoan === 'tienPhat'}
+                          editValue={safeNumber(form.tienPhat)}
+                          onAmountChange={(value) => setForm((prev) => ({ ...prev, tienPhat: safeNumber(value) }))}
+                        />
+                      ) : (
+                        <EmptySource>Không có biên bản vi phạm đang Chờ xử lý.</EmptySource>
+                      )
                     ) : bienBanViPham.map((viPham) => (
                       <SourceLine
                         key={viPham.maBBViPham}

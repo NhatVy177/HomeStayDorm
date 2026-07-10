@@ -1084,7 +1084,8 @@ export async function getHopDongDashboard(user) {
     chiTietHoaDon: [],
     bienBanKiemTra: [],
     chiTietHuHong: [],
-    bienBanViPham: []
+    bienBanViPham: [],
+    dichVuHopDong: []
   };
 
   if (hopDong.MaDoiSoatTraPhong && hopDong.MaPhieuTra) {
@@ -1093,7 +1094,8 @@ export async function getHopDongDashboard(user) {
       chiTietHoaDonResult,
       bienBanKiemTraResult,
       chiTietHuHongResult,
-      bienBanViPhamResult
+      bienBanViPhamResult,
+      dichVuHopDongResult
     ] = await Promise.all([
       pool.request()
         .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
@@ -1192,8 +1194,23 @@ export async function getHopDongDashboard(user) {
           LEFT JOIN dbo.DieuKhoanViPham dkvp ON dkvp.MaDieuKhoan = bbvp.MaDieuKhoan
           WHERE @MaHopDong IS NOT NULL
             AND bbvp.MaHopDong = @MaHopDong
-            AND bbvp.TrangThai = N'Chờ xử lý'
           ORDER BY bbvp.NgayViPham ASC, bbvp.MaBBViPham ASC;
+        `),
+      pool.request()
+        .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
+        .query(`
+          SELECT
+            dvhd.MaChiTietDVHD AS maChiTietDVHD,
+            dvhd.MaDichVu AS maDichVu,
+            dv.TenDichVu AS tenDichVu,
+            dv.DonViTinh AS donViTinh,
+            dv.DonGia AS donGia,
+            dvhd.GhiChu AS ghiChu
+          FROM dbo.DichVuHopDong dvhd
+          LEFT JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+          WHERE @MaHopDong IS NOT NULL
+            AND dvhd.MaHopDong = @MaHopDong
+          ORDER BY dv.TenDichVu ASC, dvhd.MaChiTietDVHD ASC;
         `)
     ]);
 
@@ -1202,7 +1219,8 @@ export async function getHopDongDashboard(user) {
       chiTietHoaDon: chiTietHoaDonResult.recordset || [],
       bienBanKiemTra: bienBanKiemTraResult.recordset || [],
       chiTietHuHong: chiTietHuHongResult.recordset || [],
-      bienBanViPham: bienBanViPhamResult.recordset || []
+      bienBanViPham: bienBanViPhamResult.recordset || [],
+      dichVuHopDong: dichVuHopDongResult.recordset || []
     };
   }
 
