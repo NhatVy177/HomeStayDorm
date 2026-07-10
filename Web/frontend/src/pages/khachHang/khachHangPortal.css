@@ -2320,8 +2320,26 @@
   grid-template-columns: minmax(0, 1fr) 300px;
 }
 
+.dc-detail-grid.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 @media (max-width: 900px) {
   .dc-detail-grid { grid-template-columns: 1fr; }
+
+  .dc-info-blocks,
+  .dc-info-block:nth-child(2) .dc-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dc-ticket-code-box {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dc-ticket-status {
+    justify-content: flex-start;
+  }
 }
 
 .dc-detail-main,
@@ -2346,6 +2364,56 @@
   margin-bottom: 16px;
 }
 
+.dc-ticket-code-box {
+  align-items: center;
+  background: linear-gradient(180deg, #f8fbfb 0%, #eef7f6 100%);
+  border: 1px solid rgba(47, 103, 101, 0.18);
+  border-radius: 8px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.dc-ticket-code-box > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.dc-ticket-status {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dc-info-blocks {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dc-info-block {
+  background: #fff;
+  border: 1px solid var(--dc-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.dc-info-block .dc-section-title {
+  color: var(--dc-primary);
+  margin-bottom: 12px;
+}
+
+.dc-info-block .dc-info-grid {
+  grid-template-columns: 1fr;
+}
+
+.dc-info-block:nth-child(2) .dc-info-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .dc-info-label {
   color: var(--kp-soft-text, #64748b);
   font-size: 11px;
@@ -2355,9 +2423,10 @@
 }
 
 .dc-ma-phieu-lg {
-  color: var(--kp-text, #1e293b);
-  font-size: 22px;
+  color: var(--dc-primary);
+  font-size: 24px;
   font-weight: 800;
+  letter-spacing: 0;
 }
 
 .dc-info-grid {
@@ -2385,6 +2454,22 @@
   color: var(--kp-text, #1e293b);
   font-size: 14px;
   font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .dc-info-blocks,
+  .dc-info-block:nth-child(2) .dc-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dc-ticket-code-box {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dc-ticket-status {
+    justify-content: flex-start;
+  }
 }
 
 /* Section card */
@@ -3354,6 +3439,39 @@
   width: 16px;
 }
 
+.hd-refund-account-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.hd-refund-account-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.hd-refund-account-grid span {
+  color: var(--kp-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hd-refund-account-grid input {
+  background: #fff;
+  border: 1px solid var(--kp-border);
+  border-radius: 8px;
+  color: var(--kp-text);
+  font-size: 13px;
+  min-height: 42px;
+  padding: 9px 11px;
+}
+
+.hd-refund-account-grid input:focus {
+  border-color: var(--kp-primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 109, 0.1);
+  outline: none;
+}
+
 .hd-payment-submit {
   width: 100%;
 }
@@ -3382,6 +3500,82 @@
   gap: 12px;
   margin-top: 16px;
 }
+
+.hd-return-date-field {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.hd-return-date-field span {
+  color: var(--kp-soft-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.hd-return-date-field input {
+  border: 1px solid var(--kp-border);
+  border-radius: 8px;
+  color: var(--kp-text);
+  font-size: 14px;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.hd-return-date-field input:focus {
+  border-color: var(--kp-primary);
+  box-shadow: 0 0 0 3px rgba(47, 103, 101, 0.12);
+  outline: none;
+}
+
+.dc-settlement-summary {
+  background: #f7faf9;
+  border: 1px solid var(--kp-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 0;
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.dc-settlement-summary div {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 44px;
+  padding: 9px 12px;
+}
+
+.dc-settlement-summary div + div {
+  border-top: 1px solid var(--kp-border);
+}
+
+.dc-settlement-summary span {
+  color: var(--kp-soft-text);
+  font-size: 13px;
+}
+
+.dc-settlement-summary strong {
+  color: var(--kp-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.dc-settlement-summary strong.is-success {
+  color: #137333;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.dc-settlement-summary strong.is-danger {
+  color: #ba1a1a;
+  font-size: 16px;
+  font-weight: 850;
+}
+
 .hd-btn-teal {
   background: var(--kp-primary);
   color: white;
@@ -3590,7 +3784,8 @@
   }
 
   .hd-payment-methods,
-  .hd-payment-upload {
+  .hd-payment-upload,
+  .hd-refund-account-grid {
     grid-template-columns: 1fr;
   }
 

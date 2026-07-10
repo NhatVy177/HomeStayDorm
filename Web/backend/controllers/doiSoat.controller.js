@@ -67,7 +67,7 @@ export async function getDanhSachDaHoanCoc(req, res, next) {
 export async function getDanhSachChoThuThem(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
-    const danhSach = await doiSoatService.getDanhSachChoThuThem(maNhanVienKeToan);
+    const danhSach = await doiSoatService.getDanhSachChoThuThem(maNhanVienKeToan, req.query?.filter);
     res.json({ danhSach });
   } catch (error) {
     next(error);
@@ -111,6 +111,19 @@ export async function xacNhanThuThem(req, res, next) {
     const data = await doiSoatService.xacNhanThuThem(req.body, maNhanVienKeToan);
     res.json({
       message: 'Ghi nhận thu thêm thành công.',
+      doiSoat: data
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function khongXacNhanThuThem(req, res, next) {
+  try {
+    const maNhanVienKeToan = req.user?.maNguoiDung;
+    const data = await doiSoatService.khongXacNhanThuThem(req.body, maNhanVienKeToan);
+    res.json({
+      message: 'Đã không xác nhận chứng từ. Khách hàng cần tải lại minh chứng thanh toán.',
       doiSoat: data
     });
   } catch (error) {

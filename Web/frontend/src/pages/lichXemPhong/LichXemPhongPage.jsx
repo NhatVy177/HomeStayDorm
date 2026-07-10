@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import './lichXemPhong.css';
 
 /* ─── SVG Icon helper ─── */
@@ -809,8 +810,13 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail, onR
   });
 
   /* Counts */
-  const upcomingCount = appointments.filter((a) => a.status === 'upcoming').length;
-  const doneCount = appointments.filter((a) => a.status === 'done').length;
+  const filterCounts = {
+    all: appointments.length,
+    upcoming: appointments.filter((a) => a.status === 'upcoming').length,
+    pending: appointments.filter((a) => a.status === 'pending' || a.status === 'cancelRequested').length,
+    done: appointments.filter((a) => a.status === 'done').length,
+    cancelled: appointments.filter((a) => a.status === 'cancelled').length
+  };
 
   /* Filtered list */
   const filtered = activeFilter === 'all'
@@ -859,23 +865,12 @@ export default function LichXemPhongPage({ schedules = [], onViewRoomDetail, onR
     <div className="lxp-page">
       {/* ── Summary + Filter chips ── */}
       <div className="lxp-chips-bar">
-        <div className="lxp-chips">
-          {FILTERS.map((f) => {
-            let label = f.label;
-            if (f.key === 'upcoming') label += `: ${upcomingCount}`;
-            if (f.key === 'done') label += `: ${doneCount}`;
-            const isActive = activeFilter === f.key;
-            return (
-              <span
-                key={f.key}
-                className={`lxp-chip ${isActive ? 'lxp-chip-primary is-active' : 'lxp-chip-neutral'}`}
-                onClick={() => setActiveFilter(f.key)}
-              >
-                {label}
-              </span>
-            );
-          })}
-        </div>
+        <StatusFilterTabs
+          items={FILTERS}
+          activeKey={activeFilter}
+          counts={filterCounts}
+          onChange={setActiveFilter}
+        />
       </div>
 
       {/* ── Timeline ── */}

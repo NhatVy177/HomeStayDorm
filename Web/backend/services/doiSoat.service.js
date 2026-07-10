@@ -17,6 +17,7 @@ const MESSAGE_STALE =
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads/chung-tu-doi-soat');
 const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PROOF_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']);
+const THU_THEM_FILTERS = new Set(['all', 'can-ghi-nhan', 'cho-xac-nhan']);
 
 function requireMaPhieuTra(maPhieuTra) {
   if (!maPhieuTra || String(maPhieuTra).trim().length > 6) {
@@ -73,6 +74,15 @@ function normalizePaymentMethod(value) {
   const normalized = String(value || '').trim();
   if (!['Tiền mặt', 'Chuyển khoản'].includes(normalized)) {
     throw createServiceError('Vui lòng chọn phương thức thanh toán.', 400);
+  }
+
+  return normalized;
+}
+
+function normalizeThuThemFilter(value) {
+  const normalized = String(value || 'all').trim();
+  if (!THU_THEM_FILTERS.has(normalized)) {
+    throw createServiceError('Bộ lọc thu thêm không hợp lệ.', 400);
   }
 
   return normalized;
@@ -340,7 +350,7 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
       return {
         maDoiSoat: maDoiSoatDieuChinh,
         maPhieuTra,
-        trangThai: updated.trangThai || 'Chờ phản hồi',
+        trangThai: updated.trangThai || 'Chờ xác nhận',
         maQuyDinhHoanCoc,
         tienCocBanDau: context.tienCocBanDau,
         ...result
@@ -455,9 +465,10 @@ export async function getDanhSachDaHoanCoc(maNhanVienKeToan) {
   return doiSoatRepository.getDanhSachDaHoanCoc(pool, maNhanVienKeToan);
 }
 
-export async function getDanhSachChoThuThem(maNhanVienKeToan) {
+export async function getDanhSachChoThuThem(maNhanVienKeToan, boLocThuThem) {
+  const normalizedFilter = normalizeThuThemFilter(boLocThuThem);
   const pool = await getPool();
-  return doiSoatRepository.getDanhSachChoThuThem(pool, maNhanVienKeToan);
+  return doiSoatRepository.getDanhSachChoThuThem(pool, maNhanVienKeToan, normalizedFilter);
 }
 
 export async function getDanhSachDaThuThem(maNhanVienKeToan) {
@@ -496,6 +507,20 @@ export async function xacNhanThuThem(data, maNhanVienKeToan) {
       phuongThucThanhToan,
       ngayThanhToan,
       chungTuThanhToan
+    });
+  } catch (error) {
+    mapThuThemDatabaseError(error);
+  }
+}
+
+export async function khongXacNhanThuThem(data, maNhanVienKeToan) {
+  const maDoiSoat = requireMaDoiSoat(data?.maDoiSoat);
+  const pool = await getPool();
+
+  try {
+    return await doiSoatRepository.khongXacNhanThuThem(pool, {
+      maDoiSoat,
+      maNhanVienKeToan
     });
   } catch (error) {
     mapThuThemDatabaseError(error);
@@ -544,6 +569,7 @@ export default {
   getKetQuaDoiSoat,
   getChiTietThuThem,
   xacNhanThuThem,
+  khongXacNhanThuThem,
   getDanhSachChoHoanCoc,
   getDanhSachDaHoanCoc,
   getChiTietHoanCoc,

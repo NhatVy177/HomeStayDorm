@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from './LapPhieuDatCocTab.jsx';
 import { doiSoatApi } from './doiSoat.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
 const LOAI_HO_SO = {
   HOP_DONG_THUE: 'HOP_DONG_THUE',
@@ -13,6 +14,36 @@ const QUYET_TOAN_TABS = [
   { id: 'ghi-nhan-hoan-coc', label: 'Ghi nhận hoàn cọc' },
   { id: 'ket-qua-doi-soat', label: 'Kết quả đối soát' }
 ];
+
+const THU_THEM_FILTERS = [
+  { key: 'can-ghi-nhan', label: 'Cần ghi nhận' },
+  { key: 'cho-xac-nhan', label: 'Chờ xác nhận' }
+];
+
+const THU_THEM_FILTER_META = {
+  'can-ghi-nhan': {
+    title: 'Cần ghi nhận thu thêm',
+    subtitle: 'Phiếu thu thêm chưa có phương thức thanh toán, cần kế toán ghi nhận.',
+    empty: 'Chưa có phiếu thu thêm cần ghi nhận.',
+    summary: 'phiếu cần ghi nhận'
+  },
+  'cho-xac-nhan': {
+    title: 'Chờ xác nhận thu thêm',
+    subtitle: 'Phiếu thu thêm đã có phương thức thanh toán, chờ kế toán xác nhận.',
+    empty: 'Chưa có phiếu thu thêm chờ xác nhận.',
+    summary: 'phiếu chờ xác nhận'
+  }
+};
+
+function hasPaymentMethod(row) {
+  return String(row?.phuongThucThanhToan || '').trim() !== '';
+}
+
+function matchesThuThemFilter(row, filter) {
+  if (filter === 'cho-xac-nhan') return hasPaymentMethod(row);
+  if (filter === 'can-ghi-nhan') return !hasPaymentMethod(row);
+  return true;
+}
 
 function safeNumber(value) {
   if (value === null || value === undefined || value === '') return 0;
@@ -35,6 +66,20 @@ function formatDate(value) {
 
 function formatMoney(value) {
   return `${Math.round(safeNumber(value)).toLocaleString('vi-VN')}đ`;
+}
+
+function isZeroMoneyText(value) {
+  return String(value ?? '').trim() === '0đ';
+}
+
+function moneyToneColor(tone, value) {
+  if (isZeroMoneyText(value)) return '#9aa3a4';
+  if (tone === 'collect') return '#ba1a1a';
+  if (tone === 'success') return '#137333';
+  if (tone === 'deduction') return '#a94b00';
+  if (tone === 'primary') return '#00666d';
+  if (tone === 'group') return '#00666d';
+  return '#263238';
 }
 
 function evidenceHref(value) {
@@ -214,13 +259,16 @@ function InfoRow({ label, value, strong = false }) {
   );
 }
 
-function SourceLine({ title, meta, amount, tone = 'normal', editing = false, editValue, onAmountChange, autoFocus = false }) {
+function SourceLine({ title, meta, amount, editing = false, editValue, onAmountChange, autoFocus = false }) {
   const canEdit = editing && typeof onAmountChange === 'function';
+  const amountText = formatMoney(amount);
+  const amountColor = isZeroMoneyText(amountText) ? '#9aa3a4' : '#263238';
+  const amountWeight = isZeroMoneyText(amountText) ? 600 : 750;
 
   return (
     <div className={`qt-source-line${canEdit ? ' is-editing' : ''}`}>
       <div>
-        <p style={{ margin: 0, fontWeight: 700, color: '#191c1d', fontSize: '13px' }}>{title}</p>
+        <p style={{ margin: 0, fontWeight: 500, color: '#526061', fontSize: '13px' }}>{title}</p>
         {/* {meta && <p style={{ margin: '3px 0 0', color: '#6f797a', fontSize: '12px', lineHeight: 1.45 }}>{meta}</p>} */}
       </div>
       {canEdit ? (
@@ -234,8 +282,8 @@ function SourceLine({ title, meta, amount, tone = 'normal', editing = false, edi
           autoFocus={autoFocus}
         />
       ) : (
-        <strong style={{ color: tone === 'danger' ? '#ba1a1a' : '#00666d', whiteSpace: 'nowrap', fontSize: '13px' }}>
-          {formatMoney(amount)}
+        <strong style={{ color: amountColor, whiteSpace: 'nowrap', fontSize: '13px', fontWeight: amountWeight }}>
+          {amountText}
         </strong>
       )}
     </div>
@@ -247,7 +295,7 @@ function EmptySource({ children }) {
 }
 
 function SummaryLine({ label, value, tone = 'normal' }) {
-  const color = tone === 'danger' ? '#ba1a1a' : tone === 'primary' ? '#00666d' : '#191c1d';
+  const color = moneyToneColor(tone, value);
   return (
     <div className="qt-summary-line">
       <span>{label}</span>
@@ -257,12 +305,13 @@ function SummaryLine({ label, value, tone = 'normal' }) {
 }
 
 function KhauTruPanel({ title, value, children, editing, onEdit, onDone }) {
+  const totalText = formatMoney(value);
   return (
     <div className="qt-deduction-card">
       <div className="qt-deduction-head">
         <div>
           <h5>{title}</h5>
-          <strong>{formatMoney(value)}</strong>
+          <strong style={{ color: moneyToneColor('group', totalText) }}>{totalText}</strong>
         </div>
         <button
           className={`qt-icon-btn${editing ? ' is-active' : ''}`}
@@ -289,6 +338,66 @@ function EvidenceValue({ value }) {
       <Icon name="visibility" />
       <span>Xem chứng từ</span>
     </a>
+  );
+}
+
+function parseRefundAccountInfo(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+
+  const parts = raw.split(';').map((part) => part.trim()).filter(Boolean);
+  const data = {};
+
+  parts.forEach((part) => {
+    const [label, ...rest] = part.split(':');
+    const key = String(label || '').trim().toLowerCase();
+    const text = rest.join(':').trim();
+    if (!text) return;
+
+    if (key.includes('chủ') || key.includes('chu')) data.chuTaiKhoan = text;
+    else if (key.includes('số') || key.includes('so')) data.soTaiKhoan = text;
+    else if (key.includes('ngân') || key.includes('ngan')) data.nganHang = text;
+  });
+
+  if (!data.chuTaiKhoan && !data.soTaiKhoan && !data.nganHang) {
+    return { raw };
+  }
+
+  return data;
+}
+
+function RefundAccountCard({ value }) {
+  const info = parseRefundAccountInfo(value);
+  if (!info) return null;
+
+  if (info.raw) {
+    return <div className="qt-refund-account-card is-raw">{info.raw}</div>;
+  }
+
+  return (
+    <div className="qt-refund-account-card">
+      <div className="qt-refund-account-head">
+        <span><Icon name="account_balance_wallet" /></span>
+        <div>
+          <strong>Tài khoản nhận hoàn cọc</strong>
+          <small>Thông tin do khách hàng cung cấp</small>
+        </div>
+      </div>
+      <div className="qt-refund-account-grid">
+        <div>
+          <span>Chủ tài khoản</span>
+          <strong>{info.chuTaiKhoan || '--'}</strong>
+        </div>
+        <div>
+          <span>Số tài khoản</span>
+          <strong className="is-account-number">{info.soTaiKhoan || '--'}</strong>
+        </div>
+        <div>
+          <span>Ngân hàng</span>
+          <strong>{info.nganHang || '--'}</strong>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -406,9 +515,8 @@ function GhiNhanThanhToanPanel({ type }) {
     ? 'Chưa có phiếu cần ghi nhận thu thêm.'
     : 'Chưa có phiếu cần ghi nhận hoàn cọc.';
   const [pendingRows, setPendingRows] = useState([]);
-  const [completedRows, setCompletedRows] = useState([]);
+  const [thuThemFilter, setThuThemFilter] = useState('can-ghi-nhan');
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [loadingRows, setLoadingRows] = useState(false);
   const [localMessage, setLocalMessage] = useState('');
   const [localError, setLocalError] = useState('');
@@ -428,11 +536,10 @@ function GhiNhanThanhToanPanel({ type }) {
     setLoadingRows(true);
     setLocalError('');
     try {
-      const [pendingResponse, completedResponse] = isThuThem
-        ? await Promise.all([doiSoatApi.getDanhSachChoThuThem(), doiSoatApi.getDanhSachDaThuThem()])
-        : await Promise.all([doiSoatApi.getDanhSachChoHoanCoc(), doiSoatApi.getDanhSachDaHoanCoc()]);
+      const pendingResponse = isThuThem
+        ? await doiSoatApi.getDanhSachChoThuThem('all')
+        : await doiSoatApi.getDanhSachChoHoanCoc();
       setPendingRows(pendingResponse.data.danhSach || []);
-      setCompletedRows(completedResponse.data.danhSach || []);
     } catch (err) {
       setLocalError(err.response?.data?.message || `Không tải được danh sách phiếu ${isThuThem ? 'thu thêm' : 'hoàn cọc'}.`);
     } finally {
@@ -465,21 +572,32 @@ function GhiNhanThanhToanPanel({ type }) {
     );
   }
 
-  const filteredPendingRows = useMemo(() => filterRows(pendingRows), [pendingRows, searchText]);
-  const filteredCompletedRows = useMemo(() => filterRows(completedRows), [completedRows, searchText]);
+  const searchedPendingRows = useMemo(() => filterRows(pendingRows), [pendingRows, searchText]);
+  const thuThemCounts = useMemo(() => ({
+    'can-ghi-nhan': searchedPendingRows.filter((row) => !hasPaymentMethod(row)).length,
+    'cho-xac-nhan': searchedPendingRows.filter((row) => hasPaymentMethod(row)).length
+  }), [searchedPendingRows]);
+  const thuThemFilters = useMemo(() => THU_THEM_FILTERS.map((filter) => ({
+    ...filter,
+    count: thuThemCounts[filter.key] ?? 0
+  })), [thuThemCounts]);
+  const filteredPendingRows = useMemo(() => {
+    if (!isThuThem) return searchedPendingRows;
+    return searchedPendingRows.filter((row) => matchesThuThemFilter(row, thuThemFilter));
+  }, [isThuThem, searchedPendingRows, thuThemFilter]);
   const displayedRows = useMemo(() => {
-    const pending = filteredPendingRows.map((row) => ({ ...row, _settlementMode: 'pending' }));
-    const completed = filteredCompletedRows.map((row) => ({ ...row, _settlementMode: 'completed' }));
-
-    if (statusFilter === 'pending') return pending;
-    if (statusFilter === 'completed') return completed;
-    return [...pending, ...completed];
-  }, [filteredPendingRows, filteredCompletedRows, statusFilter]);
-  const statusFilters = [
-    { key: 'all', label: 'Tất cả', count: pendingRows.length + completedRows.length },
-    { key: 'pending', label: 'Chờ ghi nhận', count: pendingRows.length },
-    { key: 'completed', label: 'Đã ghi nhận', count: completedRows.length }
-  ];
+    return filteredPendingRows.map((row) => ({ ...row, _settlementMode: 'pending' }));
+  }, [filteredPendingRows]);
+  const activeThuThemFilterMeta = THU_THEM_FILTER_META[thuThemFilter] || THU_THEM_FILTER_META['can-ghi-nhan'];
+  const currentProof = String(refundForm.chungTuThanhToan || refundDetail?.chungTuThanhToan || '').trim();
+  const canRejectThuThemProof = Boolean(
+    selectedRefund &&
+    selectedRefund._viewMode !== 'completed' &&
+    isThuThem &&
+    refundForm.phuongThucThanhToan === 'Chuyển khoản' &&
+    currentProof &&
+    !refundEvidence?.file
+  );
 
   async function openRefundModal(row, mode = 'pending') {
     const isCompleted = mode === 'completed';
@@ -530,6 +648,10 @@ function GhiNhanThanhToanPanel({ type }) {
       setLocalError('Vui lòng chọn ngày thanh toán.');
       return;
     }
+    if (isThuThem && refundForm.phuongThucThanhToan === 'Chuyển khoản' && !refundEvidence?.file && !refundForm.chungTuThanhToan) {
+      setLocalError('Khách chưa gửi minh chứng thanh toán chuyển khoản.');
+      return;
+    }
     if (!isThuThem && !refundEvidence?.file && !refundForm.chungTuThanhToan) {
       setLocalError('Vui lòng tải minh chứng hoàn cọc.');
       return;
@@ -572,6 +694,26 @@ function GhiNhanThanhToanPanel({ type }) {
     }
   }
 
+  async function rejectThuThemProof() {
+    if (!selectedRefund || !canRejectThuThemProof) return;
+
+    setSubmittingRefund(true);
+    setLocalError('');
+    setLocalMessage('');
+    try {
+      await doiSoatApi.khongXacNhanThuThem({
+        maDoiSoat: selectedRefund.maDoiSoat
+      });
+      setLocalMessage(`Đã không xác nhận chứng từ của phiếu ${selectedRefund.maDoiSoat}. Khách hàng cần tải lại minh chứng thanh toán.`);
+      setSelectedRefund(null);
+      await loadRows();
+    } catch (err) {
+      setLocalError(err.response?.data?.message || 'Không thể không xác nhận chứng từ thu thêm.');
+    } finally {
+      setSubmittingRefund(false);
+    }
+  }
+
   function handleEvidenceSelect(file) {
     setRefundEvidence((prev) => {
       if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
@@ -599,27 +741,14 @@ function GhiNhanThanhToanPanel({ type }) {
 
   function renderSettlementTable(tableRows) {
     const settlementName = isThuThem ? 'thu thêm' : 'hoàn cọc';
-    const sectionMeta = {
-      all: {
-        title: `Tất cả phiếu ${settlementName}`,
-        subtitle: `Bao gồm phiếu chờ ghi nhận và phiếu đã ghi nhận ${settlementName}.`,
-        empty: `Chưa có phiếu ${settlementName}.`,
-        icon: 'receipt_long'
-      },
-      pending: {
-        title: `Chờ ghi nhận ${settlementName}`,
-        subtitle: `Các phiếu đang chờ kế toán ${settlementName}.`,
-        empty: emptyText,
-        icon: isThuThem ? 'payments' : 'account_balance_wallet'
-      },
-      completed: {
-        title: `Đã ghi nhận ${settlementName}`,
-        subtitle: `Các phiếu ${settlementName} đã được kế toán xử lý.`,
-        empty: `Chưa có phiếu ${settlementName} đã ghi nhận.`,
-        icon: 'task_alt'
-      }
+    const currentSection = {
+      title: isThuThem ? activeThuThemFilterMeta.title : `Chờ ghi nhận ${settlementName}`,
+      subtitle: isThuThem
+        ? activeThuThemFilterMeta.subtitle
+        : `Chỉ hiển thị các phiếu chưa được kế toán xác nhận ${settlementName}. Phiếu đã xác nhận nằm ở tab Kết quả đối soát.`,
+      empty: isThuThem ? activeThuThemFilterMeta.empty : emptyText,
+      icon: isThuThem ? 'payments' : 'account_balance_wallet'
     };
-    const currentSection = sectionMeta[statusFilter] || sectionMeta.all;
 
     return (
       <section className="ktp-table-section qt-settlement-section">
@@ -628,7 +757,6 @@ function GhiNhanThanhToanPanel({ type }) {
             <h4>{currentSection.title}</h4>
             <p>{currentSection.subtitle}</p>
           </div>
-          <span>{tableRows.length} phiếu</span>
         </div>
         <table className="ktp-table">
           <thead>
@@ -658,7 +786,6 @@ function GhiNhanThanhToanPanel({ type }) {
               </tr>
             ) : tableRows.map((row) => {
               const rowMode = row._settlementMode || 'pending';
-              const isCompletedRow = rowMode === 'completed';
 
               return (
                 <tr key={`${rowMode}-${row.maDoiSoat}`}>
@@ -680,7 +807,7 @@ function GhiNhanThanhToanPanel({ type }) {
                   <td><span className="ktp-badge ktp-badge-secondary">{row.trangThaiDoiSoat}</span></td>
                   <td className="text-center">
                     <button className="ktp-btn-action-fill" type="button" onClick={() => openRefundModal(row, rowMode)}>
-                      {isCompletedRow ? 'Chi tiết' : 'Ghi nhận'}
+                      {isThuThem && thuThemFilter === 'cho-xac-nhan' ? 'Xác nhận' : 'Ghi nhận'}
                     </button>
                   </td>
                 </tr>
@@ -695,17 +822,17 @@ function GhiNhanThanhToanPanel({ type }) {
   return (
     <>
       <section className="qt-settlement-toolbar">
-        <div className="qt-status-filters" aria-label="Bộ lọc trạng thái">
-          {statusFilters.map((filter) => (
-            <button
-              key={filter.key}
-              className={statusFilter === filter.key ? 'is-active' : ''}
-              type="button"
-              onClick={() => setStatusFilter(filter.key)}
-            >
-              {filter.label} ({filter.count})
-            </button>
-          ))}
+        {isThuThem && (
+          <StatusFilterTabs
+            className="qt-status-filters"
+            ariaLabel="Bộ lọc thu thêm"
+            items={thuThemFilters}
+            activeKey={thuThemFilter}
+            onChange={setThuThemFilter}
+          />
+        )}
+        <div className="qt-settlement-summary-chip">
+          {displayedRows.length} {isThuThem ? activeThuThemFilterMeta.summary : 'phiếu chờ ghi nhận'}
         </div>
         <div className="qt-toolbar-actions">
           <div className="ktp-input-icon-wrap qt-compact-search">
@@ -718,10 +845,6 @@ function GhiNhanThanhToanPanel({ type }) {
               onChange={(event) => setSearchText(event.target.value)}
             />
           </div>
-          <button className="ktp-btn-submit" type="button" onClick={loadRows} disabled={loadingRows}>
-            <Icon name="refresh" />
-            {loadingRows ? 'Đang tải' : 'Làm mới'}
-          </button>
         </div>
       </section>
 
@@ -791,6 +914,9 @@ function GhiNhanThanhToanPanel({ type }) {
                     <section className="ktp-section ktp-info-box-outline">
                       <h4 className="ktp-section-title"><Icon name="task_alt" /> {isThuThem ? 'Thông tin đã thu thêm' : 'Thông tin đã hoàn cọc'}</h4>
                       <InfoRow label="Phương thức thanh toán" value={refundDetail.phuongThucThanhToan} />
+                      {!isThuThem && refundDetail.thongTinNhanHoanCoc && (
+                        <RefundAccountCard value={refundDetail.thongTinNhanHoanCoc} />
+                      )}
                       <InfoRow label="Ngày thanh toán" value={formatDate(refundDetail.ngayThanhToan)} />
                       <InfoRow label="Chứng từ thanh toán" value={<EvidenceValue value={refundDetail.chungTuThanhToan} />} />
                     </section>
@@ -816,6 +942,12 @@ function GhiNhanThanhToanPanel({ type }) {
                           <div className="ktp-readonly-field">{refundForm.phuongThucThanhToan || 'Khách chưa chọn phương thức hoàn tiền'}</div>
                         </div>
                       )}
+                      {!isThuThem && refundDetail.thongTinNhanHoanCoc && (
+                        <div className="ktp-filter-group">
+                          <span className="ktp-filter-label">Thông tin tài khoản nhận hoàn cọc</span>
+                          <RefundAccountCard value={refundDetail.thongTinNhanHoanCoc} />
+                        </div>
+                      )}
                       <label className="ktp-filter-group">
                         <span className="ktp-filter-label">Ngày thanh toán</span>
                         <input
@@ -827,6 +959,15 @@ function GhiNhanThanhToanPanel({ type }) {
                       </label>
                       <div className="ktp-filter-group">
                         <span className="ktp-filter-label">Chứng từ thanh toán</span>
+                        {isThuThem && refundForm.phuongThucThanhToan === 'Chuyển khoản' && currentProof && !refundEvidence?.file && (
+                          <div className="qt-existing-proof-card">
+                            <div>
+                              <strong>Minh chứng khách đã gửi</strong>
+                              <span>Kế toán kiểm tra chứng từ trước khi xác nhận thu thêm.</span>
+                            </div>
+                            <EvidenceValue value={currentProof} />
+                          </div>
+                        )}
                         <ChungTuUpload
                           evidence={refundEvidence}
                           onFileSelect={handleEvidenceSelect}
@@ -844,10 +985,23 @@ function GhiNhanThanhToanPanel({ type }) {
                 {selectedRefund._viewMode === 'completed' ? 'Đóng' : 'Hủy'}
               </button>
               {selectedRefund._viewMode !== 'completed' && (
-                <button className="ktp-btn-submit" type="button" onClick={submitRefund} disabled={submittingRefund || loadingDetail}>
-                  <Icon name="check_circle" />
-                  {submittingRefund ? 'Đang ghi nhận' : submitLabel}
-                </button>
+                <>
+                  {canRejectThuThemProof && (
+                    <button
+                      className="ktp-btn-cancel qt-btn-reject-proof"
+                      type="button"
+                      onClick={rejectThuThemProof}
+                      disabled={submittingRefund || loadingDetail}
+                    >
+                      <Icon name="close" />
+                      {submittingRefund ? 'Đang xử lý' : 'Không xác nhận'}
+                    </button>
+                  )}
+                  <button className="ktp-btn-submit" type="button" onClick={submitRefund} disabled={submittingRefund || loadingDetail}>
+                    <Icon name="check_circle" />
+                    {submittingRefund ? 'Đang ghi nhận' : submitLabel}
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -922,9 +1076,13 @@ function KetQuaDoiSoatPanel() {
   return (
     <>
       <section className="qt-settlement-toolbar">
-        <div className="qt-status-filters" aria-label="Tổng kết kết quả đối soát">
-          <button className="is-active" type="button">Kết quả đối soát ({rows.length})</button>
-        </div>
+        <StatusFilterTabs
+          className="qt-status-filters"
+          ariaLabel="Tổng kết kết quả đối soát"
+          items={[{ key: 'result', label: 'Kết quả đối soát', count: rows.length }]}
+          activeKey="result"
+          onChange={() => {}}
+        />
         <div className="qt-toolbar-actions">
           <div className="ktp-input-icon-wrap qt-compact-search">
             <span className="ktp-input-icon"><Icon name="search" /></span>
@@ -936,10 +1094,6 @@ function KetQuaDoiSoatPanel() {
               onChange={(event) => setSearchText(event.target.value)}
             />
           </div>
-          <button className="ktp-btn-submit" type="button" onClick={loadRows} disabled={loading}>
-            <Icon name="refresh" />
-            {loading ? 'Đang tải' : 'Làm mới'}
-          </button>
         </div>
       </section>
 
@@ -956,7 +1110,6 @@ function KetQuaDoiSoatPanel() {
             <h4>Kết quả đối soát</h4>
             <p>Danh sách phiếu đã quyết toán hoặc đã hoàn cọc.</p>
           </div>
-          <span>{filteredRows.length} phiếu</span>
         </div>
         <table className="ktp-table">
           <thead>
@@ -1340,18 +1493,13 @@ export default function QuyetToanTraPhongTab() {
       {activeQuyetToanTab === 'lap-doi-soat' && (
         <>
       <section className="qt-settlement-toolbar">
-        <div className="qt-status-filters" aria-label="Bộ lọc đối soát">
-          {lapFilters.map((filter) => (
-            <button
-              key={filter.key}
-              className={lapFilter === filter.key ? 'is-active' : ''}
-              type="button"
-              onClick={() => setLapFilter(filter.key)}
-            >
-              {filter.label} ({filter.count})
-            </button>
-          ))}
-        </div>
+        <StatusFilterTabs
+          className="qt-status-filters"
+          ariaLabel="Bộ lọc đối soát"
+          items={lapFilters}
+          activeKey={lapFilter}
+          onChange={setLapFilter}
+        />
         <div className="qt-toolbar-actions">
           <div className="ktp-input-icon-wrap qt-compact-search">
             <span className="ktp-input-icon"><Icon name="search" /></span>
@@ -1363,10 +1511,6 @@ export default function QuyetToanTraPhongTab() {
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-          <button className="ktp-btn-submit" type="button" onClick={loadDanhSach} disabled={loading}>
-            <Icon name="refresh" />
-            {loading ? 'Đang tải' : 'Làm mới'}
-          </button>
         </div>
       </section>
 
@@ -1390,7 +1534,6 @@ export default function QuyetToanTraPhongTab() {
             <h4>{currentLapSection.title}</h4>
             <p>{currentLapSection.subtitle}</p>
           </div>
-          <span>{filteredDanhSach.length} phiếu</span>
         </div>
         <table className="ktp-table">
           <thead>
@@ -1508,7 +1651,7 @@ export default function QuyetToanTraPhongTab() {
 
             <div className="ktp-modal-body qt-modal-body">
               {laPhieuDatCoc ? (
-                <div style={{ gridColumn: '1 / -1', display: 'grid', gap: '16px' }}>
+                <div style={{ gridColumn: '1 / -1', display: 'grid', gap: '12px' }}>
                   <div className="ktp-grid-2">
                     <section className="ktp-section ktp-info-box-outline">
                       <h4 className="ktp-section-title">
@@ -1550,7 +1693,7 @@ export default function QuyetToanTraPhongTab() {
                       <SummaryLine
                         label="Số tiền hoàn cho khách"
                         value={formatMoney(preview?.soTienHoanThucTe)}
-                        tone="primary"
+                        tone="success"
                       />
                     </div>
 
@@ -1737,12 +1880,12 @@ export default function QuyetToanTraPhongTab() {
                   <SummaryLine label="Số tháng lưu trú" value={preview?.soThangLuuTru ?? 0} />
                   <SummaryLine label="Tỷ lệ hoàn cọc" value={`${preview?.tyLeHoanCocHienTai ?? 0}%`} />
                   <SummaryLine label="Cọc được hoàn" value={formatMoney(preview?.tienCocDuocHoan)} tone="primary" />
-                  <SummaryLine label="Tổng khấu trừ" value={formatMoney(preview?.tongKhauTru)} tone="danger" />
-                  <SummaryLine label="Số tiền hoàn thực tế" value={formatMoney(preview?.soTienHoanThucTe)} tone={preview?.soTienHoanThucTe > 0 ? 'primary' : 'danger'} />
-                  <SummaryLine label="Số tiền khách phải thanh toán thêm" value={formatMoney(preview?.soTienKhachPhaiTT)} tone="danger" />
+                  <SummaryLine label="Tổng khấu trừ" value={formatMoney(preview?.tongKhauTru)} tone="deduction" />
+                  <SummaryLine label="Số tiền hoàn thực tế" value={formatMoney(preview?.soTienHoanThucTe)} tone={preview?.soTienHoanThucTe > 0 ? 'success' : 'normal'} />
+                  <SummaryLine label="Số tiền khách phải thanh toán thêm" value={formatMoney(preview?.soTienKhachPhaiTT)} tone={preview?.soTienKhachPhaiTT > 0 ? 'collect' : 'normal'} />
                 </div>
 
-                <div className={`qt-result-box${preview?.soTienKhachPhaiTT > 0 ? ' is-danger' : ' is-primary'}`}>
+                <div className={`qt-result-box${preview?.soTienKhachPhaiTT > 0 ? ' is-danger' : preview?.soTienHoanThucTe > 0 ? ' is-success' : ' is-neutral'}`}>
                   <Icon name={preview?.soTienKhachPhaiTT > 0 ? 'warning' : 'check_circle'} />
                   <div>
                     <span>Kết quả: {resultText(preview)}</span>

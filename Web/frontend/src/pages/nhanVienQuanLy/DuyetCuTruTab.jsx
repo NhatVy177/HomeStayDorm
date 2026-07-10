@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { cuTruApi } from '../nhanPhong/cuTru.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import '../nhanPhong/cuTru.css';
 
 const demoHoSo = [
@@ -259,12 +260,17 @@ export default function DuyetCuTruTab() {
         </div>
         <div className="ktp-filter-group">
           <label className="ktp-filter-label">Trạng thái hồ sơ</label>
-          <select className="ktp-input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            <option>Chờ duyệt cư trú</option>
-            <option>Đã duyệt cư trú</option>
-            <option>Từ chối cư trú</option>
-            <option value="">Tất cả</option>
-          </select>
+          <StatusFilterTabs
+            className="residence-status-tabs"
+            items={[
+              { key: '', label: 'Tất cả' },
+              { key: 'Chờ duyệt cư trú', label: 'Chờ duyệt' },
+              { key: 'Đã duyệt cư trú', label: 'Đã duyệt' },
+              { key: 'Từ chối cư trú', label: 'Từ chối' }
+            ]}
+            activeKey={statusFilter}
+            onChange={setStatusFilter}
+          />
         </div>
         <button className="ktp-btn-submit residence-search-btn" type="button" onClick={() => loadData(searchText, statusFilter)}>
           <Icon name="search" />

@@ -16,3 +16,54 @@ Error: Tên đăng nhập hoặc mật khẩu không đúng.
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
 
+2026-07-08T05:25:49.029Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-08T14:35:07.480Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-08T14:35:09.426Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-08T14:35:16.194Z
+Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:185:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:250:19)
+    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+
+2026-07-08T19:11:21.472Z
+Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:185:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:250:19)
+    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+
+2026-07-09T06:06:51.753Z
+Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:185:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:250:19)
+    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+

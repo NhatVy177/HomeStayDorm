@@ -327,7 +327,7 @@ MaPhieuTra      VARCHAR(6)      PRIMARY KEY,
     TrangThai       NVARCHAR(50)     NOT NULL DEFAULT N'Chờ xử lý',
     MaHopDong       VARCHAR(6)      NULL,
     MaPhieuDatCoc   VARCHAR(6)      NULL,
-    CONSTRAINT CHK_PTP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Chờ hoàn tất', N'Hoàn tất', N'Hủy')),
+    CONSTRAINT CHK_PTP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Hoàn tất', N'Hủy')),
     CONSTRAINT CHK_PTP_CoHD      CHECK (MaHopDong IS NOT NULL OR MaPhieuDatCoc IS NOT NULL)
 );
 
@@ -376,9 +376,10 @@ CREATE TABLE DoiSoat (
     PhuongThucThanhToan NVARCHAR(20),
 	ChungTuThanhToan	VARCHAR(500),
 	NgayThanhToan		DATE,
+    ThongTinNhanHoanCoc NVARCHAR(500),
 	GhiChuPhanHoiKhach  NVARCHAR(500),
     LoaiQuyetToan      NVARCHAR(30)     NOT NULL DEFAULT N'Không phát sinh',
-    TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ quản lý xác nhận',
+    TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ xác nhận',
     MaNhanVienKeToan    VARCHAR(6),
     MaPhieuTra          VARCHAR(6)      NOT NULL,
     MaQuyDinhHoanCoc    VARCHAR(6),

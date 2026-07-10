@@ -28,8 +28,8 @@ export const doiSoatApi = {
   xacNhanHoanCoc: (data) =>
     httpClient.post('/accountant/doi-soat/hoan-coc/xac-nhan', data),
 
-  getDanhSachChoThuThem: () =>
-    httpClient.get('/accountant/doi-soat/cho-thu-them'),
+  getDanhSachChoThuThem: (filter) =>
+    httpClient.get('/accountant/doi-soat/cho-thu-them', { params: filter ? { filter } : {} }),
 
   getDanhSachDaThuThem: () =>
     httpClient.get('/accountant/doi-soat/da-thu-them'),
@@ -38,5 +38,8 @@ export const doiSoatApi = {
     httpClient.get(`/accountant/doi-soat/thu-them/${maDoiSoat}`),
 
   xacNhanThuThem: (data) =>
-    httpClient.post('/accountant/doi-soat/thu-them/xac-nhan', data)
+    httpClient.post('/accountant/doi-soat/thu-them/xac-nhan', data),
+
+  khongXacNhanThuThem: (data) =>
+    httpClient.post('/accountant/doi-soat/thu-them/khong-xac-nhan', data)
 };

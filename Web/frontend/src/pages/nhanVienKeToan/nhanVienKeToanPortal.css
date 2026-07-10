@@ -874,22 +874,33 @@
   background: #ffffff;
   border-bottom: 1px solid #d7dddd;
   display: flex;
-  gap: 28px;
+  gap: 26px;
   margin: -24px -24px 24px;
-  padding: 0 20px;
+  padding: 0 30px;
 }
 
 .qt-subtab-btn {
   background: transparent;
   border: 0;
-  border-bottom: 3px solid transparent;
   color: #5f6869;
   cursor: pointer;
   font-family: inherit;
   font-size: 16px;
   font-weight: 700;
   min-height: 68px;
-  padding: 0 0;
+  padding: 0 20px;
+  position: relative;
+  transition: color 0.16s ease;
+}
+
+.qt-subtab-btn::after {
+  background: transparent;
+  bottom: -1px;
+  content: "";
+  height: 2px;
+  left: 0;
+  position: absolute;
+  right: 0;
 }
 
 .qt-subtab-btn:focus {
@@ -908,7 +919,11 @@
 }
 
 .qt-subtab-btn.is-active {
-  border-bottom-color: #2f6765;
+  color: #2f6765;
+}
+
+.qt-subtab-btn.is-active::after {
+  background: #2f6765;
 }
 
 .qt-result-badge.is-collect {
@@ -951,15 +966,33 @@
 }
 
 .qt-modal {
-  max-width: min(1120px, 96vw) !important;
+  max-width: min(980px, 92vw) !important;
+}
+
+.qt-modal .ktp-modal-header {
+  padding: 18px 24px !important;
+}
+
+.qt-modal .ktp-modal-header h3 {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+.qt-modal .ktp-modal-footer {
+  padding: 12px 18px !important;
 }
 
 .qt-modal-body {
   align-items: start;
   display: grid;
-  gap: 18px !important;
+  gap: 12px !important;
   grid-template-columns: minmax(0, 1fr) 300px;
-  padding: 18px 22px !important;
+  padding: 14px 18px !important;
+}
+
+.qt-modal-body .ktp-section-title {
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .qt-main-column {
@@ -970,14 +1003,22 @@
 }
 
 .qt-main-column .ktp-grid-2 {
-  gap: 14px;
+  gap: 12px;
 }
 
 .qt-main-column .ktp-info-box-outline,
 .qt-summary-panel {
   border-color: #d5dddd;
   border-radius: 8px;
-  padding: 14px;
+  padding: 12px;
+}
+
+.qt-modal .ktp-grid-2 {
+  gap: 12px;
+}
+
+.qt-modal .ktp-info-box-outline {
+  padding: 12px 14px;
 }
 
 .qt-deduction-grid {
@@ -1009,15 +1050,15 @@
 .qt-deduction-head h5 {
   color: #00666d;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   margin: 0 0 4px;
 }
 
 .qt-deduction-head strong {
-  color: #ba1a1a;
+  color: #00666d;
   display: block;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 650;
   white-space: nowrap;
 }
 
@@ -1041,7 +1082,7 @@
 
 .qt-line-amount-input {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   height: 30px;
   margin: 0;
   min-width: 0;
@@ -1095,7 +1136,7 @@
 .qt-summary-card {
   border: 1px solid #e1e3e4;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 8px 12px;
 }
 
 .qt-summary-line {
@@ -1104,7 +1145,7 @@
   display: flex;
   gap: 14px;
   justify-content: space-between;
-  padding: 11px 0;
+  padding: 9px 0;
 }
 
 .qt-summary-line:last-child {
@@ -1118,7 +1159,7 @@
 
 .qt-summary-line strong {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-align: right;
   white-space: nowrap;
 }
@@ -1156,10 +1197,16 @@
   color: #ba1a1a;
 }
 
-.qt-result-box.is-primary {
-  background: #f1faf9;
-  border-color: #9fd3d0;
-  color: #00666d;
+.qt-result-box.is-success {
+  background: #e6f4ea;
+  border-color: #a8d5b5;
+  color: #137333;
+}
+
+.qt-result-box.is-neutral {
+  background: #f4f6f6;
+  border-color: #d6e0e0;
+  color: #536465;
 }
 
 .qt-info-note {
@@ -1170,7 +1217,7 @@
   color: #3869b1;
   display: flex;
   gap: 10px;
-  padding: 12px;
+  padding: 10px 12px;
 }
 
 .qt-info-note span {
@@ -1202,28 +1249,44 @@
   gap: 10px;
 }
 
-.qt-status-filters button {
-  background: #f1f3f4;
-  border: 0;
+.qt-status-filters .status-pill-tab {
+  background: #ffffff;
+  border: 1px solid #d7dddf;
   border-radius: 999px;
-  color: #2d3637;
+  color: #364244;
   cursor: pointer;
   font-family: inherit;
-  font-size: 15px;
-  font-weight: 800;
-  min-height: 42px;
-  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 36px;
+  padding: 0 16px;
   transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
   white-space: nowrap;
 }
 
-.qt-status-filters button:hover {
-  background: #e5ecec;
+.qt-status-filters .status-pill-tab:hover {
+  background: #f8fbfb;
 }
 
-.qt-status-filters button.is-active {
-  background: #2f6866;
+.qt-status-filters .status-pill-tab.is-active {
+  background: #3b6f6b;
+  border-color: #3b6f6b;
   color: #ffffff;
+}
+
+.qt-settlement-summary-chip {
+  align-items: center;
+  background: #eef7f6;
+  border: 1px solid #c7dddd;
+  border-radius: 999px;
+  color: #245f5c;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 14px;
+  font-weight: 800;
+  min-height: 36px;
+  padding: 0 16px;
+  white-space: nowrap;
 }
 
 .qt-toolbar-actions {
@@ -1269,17 +1332,6 @@
   margin: 4px 0 0;
 }
 
-.qt-settlement-section-head > span {
-  background: #e7f2f1;
-  border: 1px solid #c7dada;
-  border-radius: 999px;
-  color: #00666d;
-  flex: 0 0 auto;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 7px 12px;
-}
-
 .qt-evidence-link {
   align-items: center;
   color: #00666d;
@@ -1307,6 +1359,138 @@
 .qt-refund-form .ktp-section-title,
 .qt-refund-form .ktp-filter-group:last-child {
   grid-column: 1 / -1;
+}
+
+.qt-refund-account-card {
+  background: linear-gradient(180deg, #f8fbfb 0%, #eef7f6 100%);
+  border: 1px solid #c4d7d7;
+  border-radius: 10px;
+  color: #1d2b2d;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.qt-refund-account-card.is-raw {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.qt-refund-account-head {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 38px minmax(0, 1fr);
+}
+
+.qt-refund-account-head > span {
+  align-items: center;
+  background: #dfeceb;
+  border-radius: 8px;
+  color: #2f6765;
+  display: inline-flex;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.qt-refund-account-head svg {
+  height: 18px;
+  stroke: currentColor;
+  width: 18px;
+}
+
+.qt-refund-account-head strong {
+  color: #174e4d;
+  display: block;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.qt-refund-account-head small {
+  color: #617071;
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.qt-refund-account-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.qt-refund-account-grid div {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(190, 200, 201, 0.75);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(96px, 0.45fr) minmax(0, 1fr);
+  min-height: 42px;
+  padding: 8px 10px;
+}
+
+.qt-refund-account-grid span {
+  color: #667575;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.qt-refund-account-grid strong {
+  color: #172426;
+  font-size: 14px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.qt-refund-account-grid .is-account-number {
+  color: #00666d;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
+
+.qt-existing-proof-card {
+  align-items: center;
+  background: #fff8e1;
+  border: 1px solid #f2d48c;
+  border-radius: 8px;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+}
+
+.qt-existing-proof-card strong {
+  color: #3a2d00;
+  display: block;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.qt-existing-proof-card span {
+  color: #6f5f1c;
+  display: block;
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+.qt-btn-reject-proof {
+  background: #ffebee;
+  border-color: #ffcdd2;
+  color: #b71c1c;
+}
+
+.qt-btn-reject-proof:hover {
+  background: #ffdad6;
+}
+
+.qt-btn-reject-proof:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .qt-proof-upload {
@@ -1483,9 +1667,6 @@
     flex-direction: column;
   }
 
-  .qt-settlement-section-head > span {
-    align-self: flex-start;
-  }
 }
 
 .ktp-inline-notice {

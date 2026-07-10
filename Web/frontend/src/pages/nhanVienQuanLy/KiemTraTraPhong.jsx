@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { kiemTraTraPhongApi } from './kiemTraTraPhong.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import '../nhanVienSale/dangKyTraPhongTab.css';
 
 
@@ -291,18 +292,16 @@ export default function KiemTraTraPhong() {
           </div>
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TRẠNG THÁI</div>
-            <div className="tp-search-wrap">
-              <select 
-                className="ktp-input tp-search-input-no-icon"
-                style={{ cursor: 'pointer' }}
-                value={filterStatus}
-                onChange={e => setFilterStatus(e.target.value)}
-              >
-                <option value="Chờ xử lý">Chờ xử lý</option>
-                <option value="Đã xử lý">Đã xử lý</option>
-                <option value="Tất cả">Tất cả</option>
-              </select>
-            </div>
+            <StatusFilterTabs
+              className="tp-search-status-tabs"
+              items={[
+                { key: 'Tất cả', label: 'Tất cả' },
+                { key: 'Chờ xử lý', label: 'Chờ xử lý' },
+                { key: 'Đã xử lý', label: 'Đã xử lý' }
+              ]}
+              activeKey={filterStatus}
+              onChange={setFilterStatus}
+            />
           </div>
           <button type="submit" className="tp-btn-search" style={{ alignSelf: 'flex-end', height: '42px' }}>Tìm kiếm</button>
         </form>

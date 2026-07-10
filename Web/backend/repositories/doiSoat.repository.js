@@ -182,9 +182,10 @@ export async function getDanhSachDaHoanCoc(db, maNhanVienKeToan) {
   return result.recordset;
 }
 
-export async function getDanhSachChoThuThem(db, maNhanVienKeToan) {
+export async function getDanhSachChoThuThem(db, maNhanVienKeToan, boLocThuThem = 'all') {
   const result = await execute(db, 'SP_TraPhong_KeToan_DanhSachChoThuThem', [
-    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null }
+    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: maNhanVienKeToan || null },
+    { name: 'BoLocThuThem', type: sql.VarChar(30), value: boLocThuThem || 'all' }
   ]);
 
   return result.recordset;
@@ -225,6 +226,15 @@ export async function xacNhanThuThem(db, data) {
     { name: 'PhuongThucThanhToan', type: sql.NVarChar(20), value: data.phuongThucThanhToan },
     { name: 'NgayThanhToan', type: sql.Date, value: data.ngayThanhToan },
     { name: 'ChungTuThanhToan', type: sql.VarChar(500), value: data.chungTuThanhToan || null }
+  ]);
+
+  return result.recordset[0] || null;
+}
+
+export async function khongXacNhanThuThem(db, data) {
+  const result = await execute(db, 'SP_TraPhong_KeToan_KhongXacNhanThuThem', [
+    { name: 'MaDoiSoat', type: sql.VarChar(6), value: data.maDoiSoat },
+    { name: 'MaNhanVienKeToan', type: sql.VarChar(6), value: data.maNhanVienKeToan || null }
   ]);
 
   return result.recordset[0] || null;
