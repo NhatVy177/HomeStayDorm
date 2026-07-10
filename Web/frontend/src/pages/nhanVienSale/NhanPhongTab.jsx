@@ -100,6 +100,10 @@ function canEditResidenceProfile(status) {
   return !['Chờ duyệt cư trú', 'Đã duyệt cư trú'].includes(status);
 }
 
+function canViewResidenceProfile(status) {
+  return status === 'Đã duyệt cư trú';
+}
+
 function createPrimaryMember(phieu) {
   return {
     hoTen: phieu.hoTenKhachHang || '',
@@ -113,8 +117,11 @@ function createPrimaryMember(phieu) {
 }
 
 function normalizeMember(row = {}) {
+  const maTV = pick(row, 'maThanhVien', 'MaThanhVien', 'maThanhVienCuTru', 'MaThanhVienCuTru', null);
+  const status = pick(row, 'trangThai', 'TrangThai', 'trangThaiDuyet', 'TrangThaiDuyet', '');
   return {
-    maThanhVienCuTru: pick(row, 'maThanhVienCuTru', 'MaThanhVienCuTru', null),
+    maThanhVien: maTV,
+    maThanhVienCuTru: maTV,
     hoTen: pick(row, 'hoTen', 'HoTen'),
     ngaySinh: toDateInput(pick(row, 'ngaySinh', 'NgaySinh')),
     gioiTinh: pick(row, 'gioiTinh', 'GioiTinh', 'Nam'),
@@ -122,7 +129,8 @@ function normalizeMember(row = {}) {
     sdt: pick(row, 'sdt', 'SDT'),
     email: pick(row, 'email', 'Email'),
     quocTich: pick(row, 'quocTich', 'QuocTich', 'Việt Nam'),
-    trangThaiDuyet: pick(row, 'trangThaiDuyet', 'TrangThaiDuyet', ''),
+    trangThai: status,
+    trangThaiDuyet: status,
     lyDoTuChoi: pick(row, 'lyDoTuChoi', 'LyDoTuChoi', '')
   };
 }
@@ -356,7 +364,7 @@ export default function NhanPhongTab() {
   }
 
   return (
-    <div className="ktp-container residence-page">
+    <div className="ktp-container residence-page tnp-page">
       {error && (
         <div className="residence-error-overlay" onClick={() => setError('')}>
           <div className="residence-error-dialog" onClick={(e) => e.stopPropagation()}>
@@ -378,20 +386,7 @@ export default function NhanPhongTab() {
         </div>
       )}
 
-      <section className="residence-hero">
-        <div>
-          <p className="residence-eyebrow">Ghi nhận cư trú</p>
-          <h2>Hoàn tất thông tin trước khi lập hợp đồng</h2>
-          <p>Sale đối chiếu giấy tờ, nhập thành viên ở cùng và gửi quản lý duyệt điều kiện lưu trú.</p>
-        </div>
-        <div className="residence-kpi">
-          <span className="residence-kpi-icon"><Icon name="pending_actions" /></span>
-          <div>
-            <strong>{pendingCount}</strong>
-            <span>Hồ sơ cần xử lý</span>
-          </div>
-        </div>
-      </section>
+
 
       <section className="residence-filter">
         <div className="ktp-filter-group">
@@ -471,6 +466,7 @@ export default function NhanPhongTab() {
               )}
               {!loading && filteredList.map((item) => {
                 const editable = canEditResidenceProfile(item.trangThaiHoSo);
+                const viewOnly = canViewResidenceProfile(item.trangThaiHoSo);
                 return (
                   <tr key={item.maPhieuDatCoc}>
                     <td><strong className="residence-code">{item.maPhieuDatCoc}</strong></td>
@@ -485,15 +481,34 @@ export default function NhanPhongTab() {
                     <td>{formatDate(item.thoiGianNhanPhong)}</td>
                     <td><StatusBadge value={item.trangThaiHoSo} /></td>
                     <td className="text-center">
-                      <button
-                        className="ktp-btn-action-fill"
-                        type="button"
-                        onClick={() => openForm(item)}
-                        disabled={!editable}
-                        title={editable ? 'Ghi nhận thông tin cư trú' : 'Hồ sơ đang chờ quản lý xử lý'}
-                      >
-                        {editable ? 'Ghi nhận' : 'Chờ duyệt'}
-                      </button>
+                      {editable ? (
+                        <button
+                          className="tnp-row-action"
+                          type="button"
+                          onClick={() => openForm(item)}
+                          title="Ghi nhận thông tin cư trú"
+                        >
+                          Ghi nhận
+                        </button>
+                      ) : viewOnly ? (
+                        <button
+                          className="tnp-row-action is-muted"
+                          type="button"
+                          onClick={() => openForm(item)}
+                          title="Xem hồ sơ cư trú đã duyệt"
+                        >
+                          Xem hồ sơ
+                        </button>
+                      ) : (
+                        <button
+                          className="tnp-row-action is-muted"
+                          type="button"
+                          disabled
+                          title="Hồ sơ đang chờ quản lý xử lý"
+                        >
+                          Chờ duyệt
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -509,12 +524,17 @@ export default function NhanPhongTab() {
             <div className="ktp-modal-header-primary">
               <div>
                 <h3>Hồ sơ cư trú {selectedPhieu.maPhieuDatCoc}</h3>
-                <p className="ktp-modal-header-sub">Kiểm tra giấy tờ và danh sách người ở trước khi gửi duyệt.</p>
+                <p className="ktp-modal-header-sub" style={{ color: 'rgba(255, 255, 255, 0.85)' }}>Kiểm tra giấy tờ và danh sách người ở trước khi gửi duyệt.</p>
               </div>
               <button className="ktp-modal-close" type="button" onClick={() => setSelectedPhieu(null)}><Icon name="close" /></button>
             </div>
 
             <div className="ktp-modal-body">
+              {/* isViewOnly: chế độ chỉ xem khi hồ sơ đã được duyệt */}
+              {(() => {
+                const isViewOnly = selectedPhieu.trangThaiHoSo === 'Đã duyệt cư trú';
+                return (
+                  <>
 
               {reviewInfo && reviewInfo.trangThaiHoSo !== 'Chờ duyệt cư trú' && (
                 <section className={`residence-feedback-panel ${reviewInfo.trangThaiHoSo === 'Từ chối cư trú' ? 'is-danger' : 'is-warning'}`}>
@@ -547,7 +567,7 @@ export default function NhanPhongTab() {
                     <p className="residence-subtext">Đi đơn nên hệ thống tự nạp thông tin khách hàng từ phiếu đăng ký.</p>
                   )}
                 </div>
-                {!isIndividualRental(selectedPhieu) && (
+                {!isIndividualRental(selectedPhieu) && !isViewOnly && (
                   <button className="ktp-btn-action" type="button" onClick={addMember}>Thêm người</button>
                 )}
               </div>
@@ -557,7 +577,7 @@ export default function NhanPhongTab() {
                   <article className="residence-member-card" key={`member-${index}`}>
                     <div className="residence-member-title">
                       <strong>{isIndividualRental(selectedPhieu) ? 'Người thuê chính' : `Người cư trú ${index + 1}`}</strong>
-                      {!isIndividualRental(selectedPhieu) && members.length > 1 && (
+                      {!isIndividualRental(selectedPhieu) && members.length > 1 && !isViewOnly && (
                         <button type="button" onClick={() => removeMember(index)}>Xóa</button>
                       )}
                     </div>
@@ -579,61 +599,70 @@ export default function NhanPhongTab() {
                     <div className="residence-form-grid">
                       <label style={{ gridColumn: 'span 2' }}>
                         Họ tên
-                        <input className="ktp-input" value={member.hoTen} onChange={(event) => updateMember(index, 'hoTen', event.target.value)} />
+                        <input className="ktp-input" value={member.hoTen} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'hoTen', event.target.value)} />
                       </label>
                       <label>
                         CCCD
-                        <input className="ktp-input" value={member.cccd} onChange={(event) => updateMember(index, 'cccd', event.target.value)} />
+                        <input className="ktp-input" value={member.cccd} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'cccd', event.target.value)} />
                       </label>
                       <label>
                         Ngày sinh
-                        <input className="ktp-input" type="date" value={member.ngaySinh} onChange={(event) => updateMember(index, 'ngaySinh', event.target.value)} />
+                        <input className="ktp-input" type="date" value={member.ngaySinh} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'ngaySinh', event.target.value)} />
                       </label>
                       <label>
                         Giới tính
-                        <select className="ktp-input" value={member.gioiTinh} onChange={(event) => updateMember(index, 'gioiTinh', event.target.value)}>
+                        <select className="ktp-input" value={member.gioiTinh} disabled={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'gioiTinh', event.target.value)}>
                           <option>Nam</option>
                           <option>Nữ</option>
                         </select>
                       </label>
                       <label>
                         SĐT
-                        <input className="ktp-input" value={member.sdt} onChange={(event) => updateMember(index, 'sdt', event.target.value)} />
+                        <input className="ktp-input" value={member.sdt} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'sdt', event.target.value)} />
                       </label>
                       <label style={{ gridColumn: 'span 2' }}>
                         Email
-                        <input className="ktp-input" value={member.email} onChange={(event) => updateMember(index, 'email', event.target.value)} />
+                        <input className="ktp-input" value={member.email} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'email', event.target.value)} />
                       </label>
                       <label>
                         Quốc tịch
-                        <input className="ktp-input" value={member.quocTich} onChange={(event) => updateMember(index, 'quocTich', event.target.value)} />
+                        <input className="ktp-input" value={member.quocTich} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'quocTich', event.target.value)} />
                       </label>
                     </div>
                   </article>
                 ))}
               </div>
 
-              <label className="residence-note">
-                Ghi chú cho quản lý
-                <textarea className="ktp-input" value={note} onChange={(event) => setNote(event.target.value)} rows="3" />
-              </label>
+              {!isViewOnly && (
+                <>
+                  <label className="residence-note">
+                    Ghi chú cho quản lý
+                    <textarea className="ktp-input" value={note} onChange={(event) => setNote(event.target.value)} rows="3" />
+                  </label>
 
-              <div className="residence-checkline residence-checkline-final">
-                <input
-                  id="checkedDocs"
-                  type="checkbox"
-                  checked={checkedDocs}
-                  onChange={(event) => setCheckedDocs(event.target.checked)}
-                />
-                <label htmlFor="checkedDocs">Đã đối chiếu giấy tờ tùy thân bản gốc và thông tin đặt cọc.</label>
-              </div>
+                  <div className="residence-checkline residence-checkline-final">
+                    <input
+                      id="checkedDocs"
+                      type="checkbox"
+                      checked={checkedDocs}
+                      onChange={(event) => setCheckedDocs(event.target.checked)}
+                    />
+                    <label htmlFor="checkedDocs">Đã đối chiếu giấy tờ tùy thân bản gốc và thông tin đặt cọc.</label>
+                  </div>
+                </>
+              )}
+              </>
+            );})()
+            }
             </div>
 
             <div className="ktp-modal-footer">
               <button className="ktp-btn-cancel" type="button" onClick={() => setSelectedPhieu(null)}>Đóng</button>
-              <button className="ktp-btn-submit" type="button" onClick={handleSubmit} disabled={loading}>
-                Gửi quản lý duyệt
-              </button>
+              {selectedPhieu.trangThaiHoSo !== 'Đã duyệt cư trú' && (
+                <button className="ktp-btn-submit" type="button" onClick={handleSubmit} disabled={loading}>
+                  Gửi quản lý duyệt
+                </button>
+              )}
             </div>
           </div>
         </div>

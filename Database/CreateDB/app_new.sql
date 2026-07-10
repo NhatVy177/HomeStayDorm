@@ -110,7 +110,6 @@ CREATE TABLE PhieuDangKy (
     SoNu                INT             DEFAULT 0,
     SoNguoiDuKienO      INT,
     KhuVucMongMuon      NVARCHAR(100),
-    LoaiPhongYeuCau     NVARCHAR(50),
     MucGiaToiDa         DECIMAL(15,2),  
     ThoiGianDuKienVaoO  DATE,
     ThoiHanThue         INT,
@@ -129,7 +128,14 @@ CREATE TABLE PhieuDangKy (
     CONSTRAINT CHK_PDK_MucGia CHECK (MucGiaToiDa > 0)
 );
 
--- 10. LỊCH XEM PHÒNG
+-- 9B. PDK - LOAI PHONG
+CREATE TABLE PDK_LoaiPhong (
+    MaDangKy       VARCHAR(6)      NOT NULL,
+    MaLoaiPhong    VARCHAR(6)      NOT NULL,
+    CONSTRAINT PK_PDK_LoaiPhong PRIMARY KEY (MaDangKy, MaLoaiPhong)
+);
+
+-- 10. LICH XEM PHONG
 CREATE TABLE LichXemPhong (
     MaDangKy    VARCHAR(6)      NOT NULL,
     STTLich     INT             NOT NULL,
@@ -193,8 +199,26 @@ CREATE UNIQUE INDEX UX_CTDC_Giuong
 ON ChiTietDatCoc (MaPhieuDatCoc, MaPhong, MaGiuong)
 WHERE MaGiuong IS NOT NULL;
 
+-- 14. HỒ SƠ CƯ TRÚ
+CREATE TABLE HoSoCuTru (
+    MaHoSoCuTru        VARCHAR(6)    NOT NULL PRIMARY KEY,
+    MaPhieuDatCoc      VARCHAR(6)    NOT NULL,
+    MaNhanVienSale     VARCHAR(6)    NOT NULL,
+    MaNhanVienQuanLy   VARCHAR(6)    NULL,
+    TrangThaiHoSo      NVARCHAR(30)  NOT NULL DEFAULT N'Chưa cập nhật',
+    DaDoiChieuGiayTo   BIT           NOT NULL DEFAULT 0,
+    NgayCapNhat        DATETIME      NOT NULL DEFAULT GETDATE(),
+    NgayGuiDuyet       DATETIME      NULL,
+    NgayDuyet          DATETIME      NULL,
+    GhiChuSale         NVARCHAR(500) NULL,
+    GhiChuQuanLy       NVARCHAR(500) NULL,
+    CONSTRAINT UQ_HSCT_PhieuDatCoc UNIQUE (MaPhieuDatCoc),
+    CONSTRAINT CHK_HSCT_TrangThai CHECK (TrangThaiHoSo IN (
+        N'Chưa cập nhật', N'Chờ duyệt cư trú', N'Đã duyệt cư trú', N'Từ chối cư trú'
+    ))
+);
 
--- 14. HỢP ĐỒNG THUÊ
+-- 15. HỢP ĐỒNG THUÊ
 CREATE TABLE HopDongThue (
     MaHopDong           VARCHAR(6)      PRIMARY KEY,
     NgayKyHD            DATE            NOT NULL,
@@ -211,7 +235,7 @@ CREATE TABLE HopDongThue (
     CONSTRAINT CHK_HDT_TrangThai CHECK (TrangThai IN (N'Hiệu lực', N'Hết hạn', N'Đã thanh lý'))
 );
 
--- 15. DỊCH VỤ
+-- 16. DỊCH VỤ
 CREATE TABLE DichVu (
     MaDichVu    VARCHAR(6)      PRIMARY KEY,
     TenDichVu   NVARCHAR(100)   NOT NULL,
@@ -219,7 +243,7 @@ CREATE TABLE DichVu (
     DonGia      DECIMAL(15,2)   NOT NULL
 );
 
--- 16. DỊCH VỤ HỢP ĐỒNG
+-- 17. DỊCH VỤ HỢP ĐỒNG
 CREATE TABLE DichVuHopDong (
     MaChiTietDVHD   VARCHAR(6)      PRIMARY KEY,
     MaDichVu        VARCHAR(6)      NOT NULL,
@@ -227,23 +251,25 @@ CREATE TABLE DichVuHopDong (
     GhiChu          NVARCHAR(MAX)
 );
 
--- 17. THÀNH VIÊN HỢP ĐỒNG
+-- 18. THÀNH VIÊN HỢP ĐỒNG
 CREATE TABLE ThanhVienHopDong (
-    MaThanhVien VARCHAR(6)      PRIMARY KEY,
-    HoTen       NVARCHAR(100)   NOT NULL,
-    NgaySinh    DATE,
-    GioiTinh    NVARCHAR(4),
-    CCCD        VARCHAR(20),
-    SDT         VARCHAR(20),
-    Email       VARCHAR(100),
-    QuocTich    NVARCHAR(50),
-    TrangThai   NVARCHAR(20)     NOT NULL DEFAULT N'Đang ở',
-    MaHopDong   VARCHAR(6)      NOT NULL,
+    MaThanhVien     VARCHAR(6)    NOT NULL PRIMARY KEY,
+    MaHoSoCuTru     VARCHAR(6)    NULL,
+    MaHopDong       VARCHAR(6)    NULL,
+    HoTen           NVARCHAR(100) NOT NULL,
+    NgaySinh        DATE          NULL,
+    GioiTinh        NVARCHAR(4)   NOT NULL,
+    CCCD            VARCHAR(20)   NOT NULL,
+    SDT             VARCHAR(20)   NULL,
+    Email           VARCHAR(100)  NULL,
+    QuocTich        NVARCHAR(50)  NULL,
+    TrangThai       NVARCHAR(20)  NOT NULL DEFAULT N'Chờ duyệt',
+    LyDoTuChoi      NVARCHAR(500) NULL,
     CONSTRAINT CHK_TVHD_GioiTinh  CHECK (GioiTinh IN (N'Nam', N'Nữ')),
-    CONSTRAINT CHK_TVHD_TrangThai CHECK (TrangThai IN (N'Đang ở', N'Đã rời', N'Bị từ chối'))
+    CONSTRAINT CHK_TVHD_TrangThai CHECK (TrangThai IN (N'Chờ duyệt', N'Đủ điều kiện', N'Bị từ chối', N'Đang ở', N'Đã rời'))
 );
 
--- 18. TÀI SẢN
+-- 19. TÀI SẢN
 CREATE TABLE TaiSan (
 	MaPhong     VARCHAR(4)      NOT NULL,
 MaTaiSan    VARCHAR(6)      NOT NULL,
@@ -253,7 +279,7 @@ MaTaiSan    VARCHAR(6)      NOT NULL,
     PRIMARY KEY (MaPhong, MaTaiSan)
 );
 
--- 19. BIÊN BẢN BÀN GIAO
+-- 20. BIÊN BẢN BÀN GIAO
 CREATE TABLE BienBanBanGiao (
     MaBienBan           VARCHAR(6)      PRIMARY KEY,
     NgayBanGiao         DATE            NOT NULL,
@@ -263,7 +289,7 @@ CREATE TABLE BienBanBanGiao (
     CONSTRAINT CHK_BBBG_Loai CHECK (LoaiBanGiao IN (N'Bàn giao vào', N'Bàn giao ra'))
 );
 
--- 20. CHI TIẾT BÀN GIAO
+-- 21. CHI TIẾT BÀN GIAO
 CREATE TABLE ChiTietBanGiao (
     MaChiTietBG     VARCHAR(6)      PRIMARY KEY,
     MaBienBan       VARCHAR(6)      NOT NULL,
@@ -273,7 +299,7 @@ CREATE TABLE ChiTietBanGiao (
     GhiChu          NVARCHAR(255)
 );
 
--- 21. PHIẾU GHI CHỈ SỐ
+-- 22. PHIẾU GHI CHỈ SỐ
 CREATE TABLE PhieuGhiChiSo (
     MaPhieuGhi          VARCHAR(6)      PRIMARY KEY,
     KyGhi               VARCHAR(7)      NOT NULL,
@@ -290,7 +316,7 @@ CREATE TABLE PhieuGhiChiSo (
     CONSTRAINT CHK_PGCS_Dien        CHECK (ChiSoDienCuoi >= ChiSoDienDau)
 );
 
--- 22. HÓA ĐƠN
+-- 23. HÓA ĐƠN
 CREATE TABLE HoaDon (
     MaHoaDon            VARCHAR(6)      PRIMARY KEY,
     KyThanhToan         VARCHAR(7)      NOT NULL,
@@ -306,7 +332,7 @@ CREATE TABLE HoaDon (
     CONSTRAINT CHK_HD_PhuongThuc CHECK (PhuongThucThanhToan IN (N'Tiền mặt', N'Chuyển khoản'))
 );
 
--- 23. CHI TIẾT HÓA ĐƠN
+-- 24. CHI TIẾT HÓA ĐƠN
 CREATE TABLE ChiTietHoaDon (
     MaChiTietHD     VARCHAR(6)      PRIMARY KEY,
     SoLuong         DECIMAL(10,2)   ,
@@ -318,7 +344,7 @@ CREATE TABLE ChiTietHoaDon (
     MaPhieuGhi      VARCHAR(6)      NULL
 );
 
--- 24. PHIẾU TRẢ PHÒNG
+-- 25. PHIẾU TRẢ PHÒNG
 CREATE TABLE PhieuTraPhong (
 MaPhieuTra      VARCHAR(6)      PRIMARY KEY,
     NgayDangKyTra   DATE            NOT NULL,
@@ -327,11 +353,11 @@ MaPhieuTra      VARCHAR(6)      PRIMARY KEY,
     TrangThai       NVARCHAR(50)     NOT NULL DEFAULT N'Chờ xử lý',
     MaHopDong       VARCHAR(6)      NULL,
     MaPhieuDatCoc   VARCHAR(6)      NULL,
-    CONSTRAINT CHK_PTP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Chờ hoàn tất', N'Hoàn tất', N'Hủy')),
+    CONSTRAINT CHK_PTP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Hoàn tất', N'Hủy')),
     CONSTRAINT CHK_PTP_CoHD      CHECK (MaHopDong IS NOT NULL OR MaPhieuDatCoc IS NOT NULL)
 );
 
--- 25. BIÊN BẢN KIỂM TRA PHÒNG
+-- 26. BIÊN BẢN KIỂM TRA PHÒNG
 CREATE TABLE BienBanKiemTraPhong (
     MaBienBanKT         VARCHAR(6)      PRIMARY KEY,
     MaPhieuTra          VARCHAR(6)      NOT NULL,
@@ -341,7 +367,7 @@ CREATE TABLE BienBanKiemTraPhong (
     TongChiPhiSuaChua   DECIMAL(15,2)   DEFAULT 0
 );
 
--- 26. CHI TIẾT HƯ HỎNG
+-- 27. CHI TIẾT HƯ HỎNG
 CREATE TABLE ChiTietHuHong (
     MaChiTietHH     VARCHAR(6)      PRIMARY KEY,
     MaBienBanKT     VARCHAR(6)      NOT NULL,
@@ -351,14 +377,14 @@ CREATE TABLE ChiTietHuHong (
     ChiPhiSuaChua   DECIMAL(15,2)   DEFAULT 0
 );
 
--- 27. QUY ĐỊNH HOÀN CỌC
+-- 28. QUY ĐỊNH HOÀN CỌC
 CREATE TABLE QuyDinhHoanCoc (
     MaQuyDinhHoanCoc    VARCHAR(6)      PRIMARY KEY,
     TenQuyDinh          NVARCHAR(255)   NOT NULL,
     TyLeHoanCoc         DECIMAL(5,2)    NOT NULL
 );
 
--- 28. ĐỐI SOÁT (QUYẾT TOÁN)
+-- 29. ĐỐI SOÁT (QUYẾT TOÁN)
 CREATE TABLE DoiSoat (
     MaDoiSoat    VARCHAR(6)      PRIMARY KEY,
     NgayLap             DATE            NOT NULL,
@@ -376,9 +402,10 @@ CREATE TABLE DoiSoat (
     PhuongThucThanhToan NVARCHAR(20),
 	ChungTuThanhToan	VARCHAR(500),
 	NgayThanhToan		DATE,
+    ThongTinNhanHoanCoc NVARCHAR(500),
 	GhiChuPhanHoiKhach  NVARCHAR(500),
     LoaiQuyetToan      NVARCHAR(30)     NOT NULL DEFAULT N'Không phát sinh',
-    TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ quản lý xác nhận',
+    TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ xác nhận',
     MaNhanVienKeToan    VARCHAR(6),
     MaPhieuTra          VARCHAR(6)      NOT NULL,
     MaQuyDinhHoanCoc    VARCHAR(6),
@@ -387,7 +414,7 @@ CREATE TABLE DoiSoat (
     CONSTRAINT CHK_DS_TrangThai  CHECK (TrangThai IN (N'Chờ phản hồi', N'Chờ xác nhận', N'Cần điều chỉnh', N'Chờ hoàn cọc', N'Chờ thanh toán thêm', N'Đã quyết toán'))
 );
 
--- 29. QUY ĐỊNH
+-- 30. QUY ĐỊNH
 CREATE TABLE QuiDinh (
     MaQuyDinh       VARCHAR(6)      PRIMARY KEY,
     TieuDeNoiQuy    NVARCHAR(255)   NOT NULL,
@@ -396,7 +423,7 @@ CREATE TABLE QuiDinh (
     CONSTRAINT CHK_QD_TrangThai CHECK (TrangThai IN (N'Hiệu lực', N'Hết hiệu lực'))
 );
 
--- 30. ĐIỀU KHOẢN VI PHẠM
+-- 31. ĐIỀU KHOẢN VI PHẠM
 CREATE TABLE DieuKhoanViPham (
     MaDieuKhoan     VARCHAR(6)      PRIMARY KEY,
     TenDieuKhoan    NVARCHAR(255)   NOT NULL,
@@ -407,7 +434,7 @@ CREATE TABLE DieuKhoanViPham (
     CONSTRAINT CHK_DKVP_TrangThai CHECK (TrangThai IN (N'Hiệu lực', N'Hết hiệu lực'))
 );
 
--- 31. YÊU CẦU SỬA CHỮA
+-- 32. YÊU CẦU SỬA CHỮA
 CREATE TABLE YeuCauSuaChua (
     MaYeuCau            VARCHAR(6)      PRIMARY KEY,
     NgayYeuCau          DATE        NOT NULL,
@@ -426,7 +453,7 @@ CREATE TABLE YeuCauSuaChua (
     CONSTRAINT CHK_YCSC_TrangThai CHECK (TrangThai IN (N'Chờ tiếp nhận', N'Đang xử lý', N'Hoàn tất', N'Từ chối'))
 );
 
--- 32. BIÊN BẢN VI PHẠM 
+-- 33. BIÊN BẢN VI PHẠM 
 CREATE TABLE BienBanViPham (
 	MaBBViPham			VARCHAR(6)		PRIMARY KEY,
 	NgayViPham			DATE,
@@ -439,7 +466,6 @@ CREATE TABLE BienBanViPham (
 	CONSTRAINT CHK_BBVP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Đã xử lý'))
 
 );
-
 
 -- =============================================
 -- PHẦN KHÓA NGOẠI
@@ -472,7 +498,12 @@ ALTER TABLE PhieuDangKy
     ADD CONSTRAINT FK_PDK_KhachHang         FOREIGN KEY (MaKhachHang)       REFERENCES KhachHang(MaKhachHang),
         CONSTRAINT FK_PDK_NhanVienSale      FOREIGN KEY (MaNhanVienSale)    REFERENCES NhanVien(MaNhanVien);
 
--- LỊCH XEM PHÒNG
+-- PDK - LOAI PHONG
+ALTER TABLE PDK_LoaiPhong
+    ADD CONSTRAINT FK_PDK_LoaiPhong_PhieuDangKy    FOREIGN KEY (MaDangKy)       REFERENCES PhieuDangKy(MaDangKy),
+        CONSTRAINT FK_PDK_LoaiPhong_LoaiPhong      FOREIGN KEY (MaLoaiPhong)    REFERENCES LoaiPhong(MaLoaiPhong);
+
+-- LICH XEM PHONG
 ALTER TABLE LichXemPhong
 ADD CONSTRAINT FK_LXP_PhieuDangKy       FOREIGN KEY (MaDangKy)          REFERENCES PhieuDangKy(MaDangKy);
 
@@ -498,9 +529,16 @@ ALTER TABLE DichVuHopDong
     ADD CONSTRAINT FK_DVHD_DichVu           FOREIGN KEY (MaDichVu)          REFERENCES DichVu(MaDichVu),
         CONSTRAINT FK_DVHD_HopDong          FOREIGN KEY (MaHopDong)         REFERENCES HopDongThue(MaHopDong);
 
+-- HỒ SƠ CƯ TRÚ
+ALTER TABLE HoSoCuTru
+    ADD CONSTRAINT FK_HSCT_PhieuDatCoc      FOREIGN KEY (MaPhieuDatCoc)     REFERENCES PhieuDatCoc(MaPhieuDatCoc),
+        CONSTRAINT FK_HSCT_NhanVienSale     FOREIGN KEY (MaNhanVienSale)    REFERENCES NhanVien(MaNhanVien),
+        CONSTRAINT FK_HSCT_NhanVienQuanLy   FOREIGN KEY (MaNhanVienQuanLy)  REFERENCES NhanVien(MaNhanVien);
+
 -- THÀNH VIÊN HỢP ĐỒNG
 ALTER TABLE ThanhVienHopDong
-    ADD CONSTRAINT FK_TVHD_HopDong          FOREIGN KEY (MaHopDong)         REFERENCES HopDongThue(MaHopDong);
+    ADD CONSTRAINT FK_TVHD_HopDong          FOREIGN KEY (MaHopDong)         REFERENCES HopDongThue(MaHopDong),
+        CONSTRAINT FK_TVHD_HoSoCuTru        FOREIGN KEY (MaHoSoCuTru)       REFERENCES HoSoCuTru(MaHoSoCuTru);
 
 -- TÀI SẢN
 ALTER TABLE TaiSan

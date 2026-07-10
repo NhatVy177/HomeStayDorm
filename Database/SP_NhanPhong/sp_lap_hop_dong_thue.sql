@@ -919,132 +919,140 @@ BEGIN
             @MaNhanVienQuanLy
         );
 
-        -- -----------------------------------------------
-        -- BƯỚC INSERT-3b: Chụp lại nội quy & điều khoản vi phạm lúc ký hợp đồng
-        -- -----------------------------------------------
-        INSERT INTO dbo.QuiDinhHopDong (MaHopDong, MaQuyDinh, TieuDeNoiQuy, NoiDung)
-        SELECT @MaHopDong, MaQuyDinh, TieuDeNoiQuy, NoiDung
-        FROM dbo.QuiDinh
-        WHERE TrangThai = N'Hiệu lực';
-
-        INSERT INTO dbo.DieuKhoanViPhamHopDong (MaHopDong, MaDieuKhoan, TenDieuKhoan, HinhThucXuPhat, MucPhat)
-        SELECT @MaHopDong, MaDieuKhoan, TenDieuKhoan, HinhThucXuPhat, MucPhat
-        FROM dbo.DieuKhoanViPham
-        WHERE TrangThai = N'Hiệu lực';
+        -- (Không chụp lại nội quy / điều khoản vi phạm – lấy trực tiếp từ bảng gốc khi xem hợp đồng)
 
         -- -----------------------------------------------
-        -- BƯỚC INSERT-4: Insert ThanhVienHopDong
+        -- BƯỚC INSERT-4: Cập nhật hoặc Thêm mới thành viên hợp đồng
         -- -----------------------------------------------
-        DECLARE @SoMaTVMax INT;
-        SELECT @SoMaTVMax = ISNULL(MAX(CAST(SUBSTRING(MaThanhVien, 3, 4) AS INT)), 0)
-        FROM dbo.ThanhVienHopDong
-        WHERE MaThanhVien LIKE 'TV[0-9][0-9][0-9][0-9]';
+        DECLARE @MaHoSoCuTru VARCHAR(6);
+        SELECT @MaHoSoCuTru = MaHoSoCuTru FROM dbo.HoSoCuTru WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
 
-        IF @TuTaoThanhVien = 1
+        IF @MaHoSoCuTru IS NOT NULL
         BEGIN
-            -- Lấy thông tin khách hàng đại diện
-            DECLARE
-                @HoTenKH    NVARCHAR(100),
-                @NgaySinhKH DATE,
-                @GioiTinhKH NVARCHAR(5),
-                @CCCCKH     VARCHAR(20),
-                @SDTKH      VARCHAR(20),
-                @EmailKH    VARCHAR(100),
-                @QuocTichKH NVARCHAR(50);
-
-            SELECT
-                @HoTenKH    = nd.HoTen,
-                @NgaySinhKH = nd.NgaySinh,
-                @GioiTinhKH = nd.GioiTinh,
-                @CCCCKH     = kh.CCCD,
-                @SDTKH      = nd.SDT,
-                @EmailKH    = nd.Email,
-                @QuocTichKH = kh.QuocTich
-            FROM        dbo.KhachHang kh
-            JOIN        dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
-            WHERE kh.MaKhachHang = @MaKhachHang;
-
-            SET @SoMaTVMax = @SoMaTVMax + 1;
-
-            INSERT INTO dbo.ThanhVienHopDong (
-                MaThanhVien, HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email, QuocTich, TrangThai, MaHopDong
-            )
-            VALUES (
-                'TV' + RIGHT('0000' + CAST(@SoMaTVMax AS VARCHAR(4)), 4),
-                @HoTenKH,
-                @NgaySinhKH,
-                @GioiTinhKH,
-                @CCCCKH,
-                @SDTKH,
-                @EmailKH,
-                @QuocTichKH,
-                N'Đang ở',
-                @MaHopDong
-            );
+            -- Nếu có hồ sơ cư trú đã được duyệt, cập nhật MaHopDong và đổi trạng thái sang 'Đang ở' cho các thành viên 'Đủ điều kiện'
+            UPDATE dbo.ThanhVienHopDong
+            SET MaHopDong = @MaHopDong,
+                TrangThai = N'Đang ở'
+            WHERE MaHoSoCuTru = @MaHoSoCuTru
+              AND TrangThai = N'Đủ điều kiện';
         END
         ELSE
         BEGIN
-            -- Insert từng thành viên từ TVP
-            DECLARE tv_cursor CURSOR LOCAL FAST_FORWARD FOR
-                SELECT HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email, QuocTich
-                FROM @DanhSachThanhVien;
+            -- Trường hợp lập hợp đồng không qua duyệt cư trú trước (hoặc tự tạo)
+            DECLARE @SoMaTVMax INT;
+            SELECT @SoMaTVMax = ISNULL(MAX(CAST(SUBSTRING(MaThanhVien, 3, 4) AS INT)), 0)
+            FROM dbo.ThanhVienHopDong
+            WHERE MaThanhVien LIKE 'TV[0-9][0-9][0-9][0-9]';
 
-            DECLARE
-                @TV_HoTen   NVARCHAR(100),
-                @TV_NS      DATE,
-                @TV_GT      NVARCHAR(4),
-                @TV_CCCD    VARCHAR(20),
-                @TV_SDT     VARCHAR(20),
-                @TV_Email   VARCHAR(100),
-                @TV_QT      NVARCHAR(50);
-
-            OPEN tv_cursor;
-            FETCH NEXT FROM tv_cursor INTO @TV_HoTen, @TV_NS, @TV_GT, @TV_CCCD, @TV_SDT, @TV_Email, @TV_QT;
-
-            WHILE @@FETCH_STATUS = 0
+            IF @TuTaoThanhVien = 1
             BEGIN
+                -- Lấy thông tin khách hàng đại diện
+                DECLARE
+                    @HoTenKH    NVARCHAR(100),
+                    @NgaySinhKH DATE,
+                    @GioiTinhKH NVARCHAR(5),
+                    @CCCCKH     VARCHAR(20),
+                    @SDTKH      VARCHAR(20),
+                    @EmailKH    VARCHAR(100),
+                    @QuocTichKH NVARCHAR(50);
+
+                SELECT
+                    @HoTenKH    = nd.HoTen,
+                    @NgaySinhKH = nd.NgaySinh,
+                    @GioiTinhKH = nd.GioiTinh,
+                    @CCCCKH     = kh.CCCD,
+                    @SDTKH      = nd.SDT,
+                    @EmailKH    = nd.Email,
+                    @QuocTichKH = kh.QuocTich
+                FROM        dbo.KhachHang kh
+                JOIN        dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
+                WHERE kh.MaKhachHang = @MaKhachHang;
+
                 SET @SoMaTVMax = @SoMaTVMax + 1;
 
-                -- Xác định trạng thái: hợp lệ hay bị từ chối
-                DECLARE @TrangThaiTV NVARCHAR(20);
-                SET @TrangThaiTV = N'Đang ở'; -- mặc định hợp lệ
-
-                IF ISNULL(LTRIM(RTRIM(@TV_CCCD)), '') = ''
-                    OR ISNULL(LTRIM(RTRIM(@TV_SDT)), '') = ''
-                    SET @TrangThaiTV = N'Bị từ chối';
-
-                IF @GioiTinhChoPhep = N'Nam' AND @TV_GT = N'Nữ'
-                    SET @TrangThaiTV = N'Bị từ chối';
-
-                IF @GioiTinhChoPhep = N'Nữ' AND @TV_GT = N'Nam'
-                    SET @TrangThaiTV = N'Bị từ chối';
-
-                -- GioiTinh chỉ nhận 'Nam' hoặc 'Nữ' (CHECK constraint)
-                -- Nếu giá trị khác → NULL để tránh vi phạm constraint
-                DECLARE @TV_GT_Insert NVARCHAR(4);
-                SET @TV_GT_Insert = CASE WHEN @TV_GT IN (N'Nam', N'Nữ') THEN @TV_GT ELSE NULL END;
-
                 INSERT INTO dbo.ThanhVienHopDong (
-                    MaThanhVien, HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email, QuocTich, TrangThai, MaHopDong
+                    MaThanhVien, MaHoSoCuTru, MaHopDong, HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email, QuocTich, TrangThai, LyDoTuChoi
                 )
                 VALUES (
                     'TV' + RIGHT('0000' + CAST(@SoMaTVMax AS VARCHAR(4)), 4),
-                    @TV_HoTen,
-                    @TV_NS,
-                    @TV_GT_Insert,
-                    NULLIF(LTRIM(RTRIM(@TV_CCCD)), ''),
-                    NULLIF(LTRIM(RTRIM(@TV_SDT)),  ''),
-                    @TV_Email,
-                    @TV_QT,
-                    @TrangThaiTV,
-                    @MaHopDong
+                    NULL,
+                    @MaHopDong,
+                    @HoTenKH,
+                    @NgaySinhKH,
+                    @GioiTinhKH,
+                    @CCCCKH,
+                    @SDTKH,
+                    @EmailKH,
+                    @QuocTichKH,
+                    N'Đang ở',
+                    NULL
                 );
+            END
+            ELSE
+            BEGIN
+                -- Insert từng thành viên từ TVP
+                DECLARE tv_cursor CURSOR LOCAL FAST_FORWARD FOR
+                    SELECT HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email, QuocTich
+                    FROM @DanhSachThanhVien;
 
+                DECLARE
+                    @TV_HoTen   NVARCHAR(100),
+                    @TV_NS      DATE,
+                    @TV_GT      NVARCHAR(4),
+                    @TV_CCCD    VARCHAR(20),
+                    @TV_SDT     VARCHAR(20),
+                    @TV_Email   VARCHAR(100),
+                    @TV_QT      NVARCHAR(50);
+
+                OPEN tv_cursor;
                 FETCH NEXT FROM tv_cursor INTO @TV_HoTen, @TV_NS, @TV_GT, @TV_CCCD, @TV_SDT, @TV_Email, @TV_QT;
-            END;
 
-            CLOSE tv_cursor;
-            DEALLOCATE tv_cursor;
+                WHILE @@FETCH_STATUS = 0
+                BEGIN
+                    SET @SoMaTVMax = @SoMaTVMax + 1;
+
+                    -- Xác định trạng thái: hợp lệ hay bị từ chối
+                    DECLARE @TrangThaiTV NVARCHAR(20);
+                    SET @TrangThaiTV = N'Đang ở'; -- mặc định hợp lệ
+
+                    IF ISNULL(LTRIM(RTRIM(@TV_CCCD)), '') = ''
+                        OR ISNULL(LTRIM(RTRIM(@TV_SDT)), '') = ''
+                        SET @TrangThaiTV = N'Bị từ chối';
+
+                    IF @GioiTinhChoPhep = N'Nam' AND @TV_GT = N'Nữ'
+                        SET @TrangThaiTV = N'Bị từ chối';
+
+                    IF @GioiTinhChoPhep = N'Nữ' AND @TV_GT = N'Nam'
+                        SET @TrangThaiTV = N'Bị từ chối';
+
+                    -- GioiTinh chỉ nhận 'Nam' hoặc 'Nữ' (CHECK constraint)
+                    DECLARE @TV_GT_Insert NVARCHAR(4);
+                    SET @TV_GT_Insert = CASE WHEN @TV_GT IN (N'Nam', N'Nữ') THEN @TV_GT ELSE NULL END;
+
+                    INSERT INTO dbo.ThanhVienHopDong (
+                        MaThanhVien, MaHoSoCuTru, MaHopDong, HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email, QuocTich, TrangThai, LyDoTuChoi
+                    )
+                    VALUES (
+                        'TV' + RIGHT('0000' + CAST(@SoMaTVMax AS VARCHAR(4)), 4),
+                        NULL,
+                        @MaHopDong,
+                        @TV_HoTen,
+                        @TV_NS,
+                        @TV_GT_Insert,
+                        NULLIF(LTRIM(RTRIM(@TV_CCCD)), ''),
+                        NULLIF(LTRIM(RTRIM(@TV_SDT)),  ''),
+                        @TV_Email,
+                        @TV_QT,
+                        @TrangThaiTV,
+                        NULL
+                    );
+
+                    FETCH NEXT FROM tv_cursor INTO @TV_HoTen, @TV_NS, @TV_GT, @TV_CCCD, @TV_SDT, @TV_Email, @TV_QT;
+                END;
+
+                CLOSE tv_cursor;
+                DEALLOCATE tv_cursor;
+            END;
         END;
 
         -- -----------------------------------------------
@@ -1227,23 +1235,23 @@ BEGIN
     WHERE dvhd.MaHopDong = @MaHopDong
     ORDER BY dv.TenDichVu;
 
-    -- [Result Set 4] Nội quy cư trú (lấy từ bảng QuiDinhHopDong)
+    -- [Result Set 4] Nội quy cư trú (lấy trực tiếp từ bảng QuiDinh đang hiệu lực)
     SELECT
         qd.MaQuyDinh,
         qd.TieuDeNoiQuy,
         qd.NoiDung
-    FROM dbo.QuiDinhHopDong qd
-    WHERE qd.MaHopDong = @MaHopDong
+    FROM dbo.QuiDinh qd
+    WHERE qd.TrangThai = N'Hiệu lực'
     ORDER BY qd.MaQuyDinh;
 
-    -- [Result Set 5] Điều khoản vi phạm (lấy từ bảng DieuKhoanViPhamHopDong)
+    -- [Result Set 5] Điều khoản vi phạm (lấy trực tiếp từ bảng DieuKhoanViPham đang hiệu lực)
     SELECT
         dk.MaDieuKhoan,
         dk.TenDieuKhoan,
         dk.HinhThucXuPhat,
         dk.MucPhat
-    FROM dbo.DieuKhoanViPhamHopDong dk
-    WHERE dk.MaHopDong = @MaHopDong
+    FROM dbo.DieuKhoanViPham dk
+    WHERE dk.TrangThai = N'Hiệu lực'
     ORDER BY dk.MaDieuKhoan;
 
     -- [Result Set 6] Quy định hoàn cọc đang áp dụng

@@ -29,7 +29,7 @@ BEGIN
 END
 ELSE
 BEGIN
-    PRINT N'Bảng BienBanBanGiao đã có cấu trúc nâng cấp – bỏ qua.';
+    PRINT N'Bảng BienBanBanGiao đã có cấu trúc nâng cấp bỏ qua.';
 END
 GO
 
@@ -81,9 +81,15 @@ BEGIN
         p.MaPhong AS maPhong,
         p.TenPhong AS tenPhong,
         ISNULL(STRING_AGG(ctdc.MaGiuong, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong), N'Nguyên phòng') AS maGiuong,
-        CAST(1 AS BIT) AS daDongTienDauKy,
+        CAST(CASE WHEN hdKyDau.TrangThai = N'Đã TT' THEN 1 ELSE 0 END AS BIT) AS daDongTienDauKy,
         ISNULL(STRING_AGG(g.TinhTrang, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong), N'Đã đặt cọc') AS tinhTrangGiuong,
-        CAST(1 AS BIT) AS tinhTrangGiuongHopLe
+        CAST(1 AS BIT) AS tinhTrangGiuongHopLe,
+        CAST(CASE WHEN EXISTS (
+            SELECT 1 FROM BienBanBanGiao bb
+            WHERE bb.MaHopDong = hd.MaHopDong 
+              AND bb.LoaiBanGiao = N'Bàn giao vào' 
+              AND bb.TrangThai = N'Đã lập'
+        ) THEN 1 ELSE 0 END AS BIT) AS daBanGiao
     FROM HopDongThue hd
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
@@ -99,44 +105,46 @@ BEGIN
     ) hdKyDau
     WHERE hd.TrangThai = N'Hiệu lực'
       AND CAST(hd.NgayBatDau AS DATE) <= CAST(GETDATE() AS DATE)
-      AND hdKyDau.TrangThai = N'Đã TT'
-      AND NOT EXISTS (
-          SELECT 1
-          FROM BienBanBanGiao bb
-          WHERE bb.MaHopDong = hd.MaHopDong
-            AND bb.LoaiBanGiao = N'Bàn giao vào'
-            AND ISNULL(bb.TrangThai, N'Đã lập') = N'Đã lập'
-      )
       AND EXISTS (
           SELECT 1
           FROM TaiSan ts
           WHERE ts.MaPhong = p.MaPhong
       )
-      AND NOT EXISTS (
-          SELECT 1
-          FROM ChiTietDatCoc ctdcCheck
-          LEFT JOIN Giuong gCheck
-            ON gCheck.MaPhong = ctdcCheck.MaPhong
-           AND gCheck.MaGiuong = ctdcCheck.MaGiuong
-          WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
-            AND pdc.HinhThucThue = N'Ghép giường'
-            AND (
-                ctdcCheck.MaGiuong IS NULL
-                OR gCheck.TinhTrang <> N'Đã đặt cọc'
-                OR gCheck.TinhTrang IS NULL
-            )
-      )
-      AND NOT EXISTS (
-          SELECT 1
-          FROM ChiTietDatCoc ctdcCheck
-          JOIN Giuong gCheck ON gCheck.MaPhong = ctdcCheck.MaPhong
-          WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
-            AND pdc.HinhThucThue <> N'Ghép giường'
-            AND gCheck.TinhTrang <> N'Đã đặt cọc'
+      AND (
+          EXISTS (
+              SELECT 1 FROM BienBanBanGiao bb
+              WHERE bb.MaHopDong = hd.MaHopDong 
+                AND bb.LoaiBanGiao = N'Bàn giao vào' 
+                AND bb.TrangThai = N'Đã lập'
+          )
+          OR (
+              NOT EXISTS (
+                  SELECT 1
+                  FROM ChiTietDatCoc ctdcCheck
+                  LEFT JOIN Giuong gCheck
+                    ON gCheck.MaPhong = ctdcCheck.MaPhong
+                   AND gCheck.MaGiuong = ctdcCheck.MaGiuong
+                  WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
+                    AND pdc.HinhThucThue = N'Ghép giường'
+                    AND (
+                        ctdcCheck.MaGiuong IS NULL
+                        OR gCheck.TinhTrang <> N'Đã đặt cọc'
+                        OR gCheck.TinhTrang IS NULL
+                    )
+              )
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM ChiTietDatCoc ctdcCheck
+                  JOIN Giuong gCheck ON gCheck.MaPhong = ctdcCheck.MaPhong
+                  WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
+                    AND pdc.HinhThucThue <> N'Ghép giường'
+                    AND gCheck.TinhTrang <> N'Đã đặt cọc'
+              )
+          )
       )
     GROUP BY
         hd.MaHopDong, hd.NgayBatDau, hd.NgayKetThuc, hd.GiaThue, hd.KyThanhToan,
-        nd.HoTen, nd.SDT, kh.CCCD, p.MaPhong, p.TenPhong
+        nd.HoTen, nd.SDT, kh.CCCD, p.MaPhong, p.TenPhong, hdKyDau.TrangThai
     ORDER BY hd.NgayBatDau ASC, hd.MaHopDong ASC;
 END;
 GO
@@ -179,6 +187,9 @@ BEGIN
         -- Trạng thái giường
         ISNULL(STRING_AGG(g.TinhTrang, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong), N'Nguyên phòng') AS TinhTrangGiuong,
         @TrangThaiHoaDonKyDau AS TrangThaiHoaDonKyDau,
+        ISNULL(bbVao.KhachCoMat, 1) AS KhachCoMat,
+        ISNULL(bbVao.DaKyBienBan, 1) AS DaKyBienBan,
+        bbVao.GhiChuChung AS GhiChuChung,
         -- Đã có biên bản bàn giao vào chính thức chưa
         CAST(CASE WHEN EXISTS (
             SELECT 1 FROM BienBanBanGiao bb
@@ -206,10 +217,18 @@ BEGIN
     JOIN Phong p ON p.MaPhong = ctdc.MaPhong
     JOIN ChiNhanh cn ON cn.MaChiNhanh = p.MaChiNhanh
     LEFT JOIN Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
+    OUTER APPLY (
+        SELECT TOP 1 bb.KhachCoMat, bb.DaKyBienBan, bb.GhiChuChung
+        FROM BienBanBanGiao bb
+        WHERE bb.MaHopDong = hd.MaHopDong
+          AND bb.LoaiBanGiao = N'Bàn giao vào'
+          AND bb.TrangThai = N'Đã lập'
+    ) bbVao
     WHERE hd.MaHopDong = @MaHopDong
     GROUP BY 
         hd.MaHopDong, hd.TrangThai, hd.NgayBatDau, hd.NgayKetThuc, 
-        hd.MaKhachHang, nd.HoTen, nd.SDT, p.MaPhong, p.TenPhong, cn.TenChiNhanh;
+        hd.MaKhachHang, nd.HoTen, nd.SDT, p.MaPhong, p.TenPhong, cn.TenChiNhanh,
+        bbVao.KhachCoMat, bbVao.DaKyBienBan, bbVao.GhiChuChung;
 END;
 GO
 
@@ -371,6 +390,45 @@ BEGIN
     SELECT @HinhThucThue = HinhThucThue
     FROM PhieuDatCoc
     WHERE MaPhieuDatCoc = @MaPhieuCoc;
+
+    -- Kiểm tra nếu hợp đồng đã có biên bản bàn giao
+    DECLARE @MaBienBan VARCHAR(6) = NULL;
+    SELECT TOP 1 @MaBienBan = MaBienBan
+    FROM BienBanBanGiao
+    WHERE MaHopDong = @MaHopDong
+      AND LoaiBanGiao = N'Bàn giao vào'
+      AND TrangThai = N'Đã lập';
+
+    IF @MaBienBan IS NOT NULL
+    BEGIN
+        SELECT 
+            ct.MaPhong AS MaPhong,
+            p.TenPhong AS TenPhong,
+            CAST(NULL AS VARCHAR(3)) AS MaGiuong,
+            ct.MaTaiSan AS MaTaiSan,
+            ts.TenTaiSan AS TenTaiSan,
+            CASE 
+                WHEN @HinhThucThue = N'Ghép giường' AND (
+                    ts.TenTaiSan LIKE N'%Giường%' 
+                 OR ts.TenTaiSan LIKE N'%Nệm%' 
+                 OR ts.TenTaiSan LIKE N'%Tủ cá nhân%' 
+                 OR ts.TenTaiSan LIKE N'%Bàn học%' 
+                 OR ts.TenTaiSan LIKE N'%Khóa%' 
+                 OR ts.TenTaiSan LIKE N'%Thẻ%' 
+                 OR ts.TenTaiSan LIKE N'%Ghế%'
+                ) THEN 1
+                ELSE ts.SoLuong
+            END AS SoLuongHeThong,
+            ts.DonGia AS DonGia,
+            ct.SoLuongThucTe AS SoLuongThucTeMacDinh,
+            ct.GhiChu AS GhiChuMacDinh
+        FROM ChiTietBanGiao ct
+        JOIN TaiSan ts ON ts.MaTaiSan = ct.MaTaiSan AND ts.MaPhong = ct.MaPhong
+        JOIN Phong p ON p.MaPhong = ct.MaPhong
+        WHERE ct.MaBienBan = @MaBienBan
+        ORDER BY MaTaiSan;
+        RETURN;
+    END;
 
     IF @HinhThucThue = N'Nguyên phòng'
     BEGIN

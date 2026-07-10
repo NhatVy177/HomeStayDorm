@@ -18,12 +18,12 @@
   --lhd-white: #ffffff;
   
   /* Status Colors */
-  --lhd-success: #1a7c4f;
-  --lhd-success-soft: #e8f4f4;
-  --lhd-warning: #c87c00;
-  --lhd-warning-soft: #fff7e6;
-  --lhd-danger: #ba1a1a;
-  --lhd-danger-soft: #fdf2f2;
+  --lhd-success: #2e7d32;
+  --lhd-success-soft: #e8f5e9;
+  --lhd-warning: #f57f17;
+  --lhd-warning-soft: #fff8e1;
+  --lhd-danger: #c62828;
+  --lhd-danger-soft: #ffebee;
 }
 
 /* Animations */
@@ -331,15 +331,15 @@
 
 .lhd-btn-outline {
   background-color: var(--lhd-white);
-  border: 1.5px solid var(--lhd-primary) !important;
-  color: var(--lhd-primary);
+  border: 1.5px solid var(--lhd-border) !important;
+  color: #3f494a;
   font-weight: 600;
 }
 
 .lhd-btn-outline:hover {
-  background-color: var(--lhd-primary-soft);
-  color: var(--lhd-primary-hover);
-  border-color: var(--lhd-primary-hover) !important;
+  background-color: #f5f7f8;
+  color: var(--lhd-text);
+  border-color: var(--lhd-text-muted) !important;
 }
 
 .lhd-btn-text-danger {
@@ -414,6 +414,10 @@
 
 .lhd-table tbody tr:hover {
   background-color: #f7fafb;
+}
+
+.text-center {
+  text-align: center !important;
 }
 
 /* Service Selector Cards */
@@ -571,6 +575,15 @@
 }
 .lhd-badge-muted::before {
   background-color: var(--lhd-text-muted);
+}
+
+.lhd-badge-info {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border-color: rgba(21, 101, 192, 0.15);
+}
+.lhd-badge-info::before {
+  background-color: #1565c0;
 }
 
 /* Success Modal & Overlay */

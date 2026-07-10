@@ -1,7 +1,8 @@
 USE HOMEDORM4;
 GO
 
-IF OBJECT_ID(N'dbo.ThanhVienCuTru', N'U') IS NULL
+-- Tạo bảng HoSoCuTru nếu chưa tồn tại
+IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.HoSoCuTru (
         MaHoSoCuTru        VARCHAR(6)    NOT NULL PRIMARY KEY,
@@ -22,23 +23,6 @@ BEGIN
         CONSTRAINT FK_HSCT_PhieuDatCoc FOREIGN KEY (MaPhieuDatCoc) REFERENCES dbo.PhieuDatCoc(MaPhieuDatCoc),
         CONSTRAINT FK_HSCT_NhanVienSale FOREIGN KEY (MaNhanVienSale) REFERENCES dbo.NhanVien(MaNhanVien),
         CONSTRAINT FK_HSCT_NhanVienQuanLy FOREIGN KEY (MaNhanVienQuanLy) REFERENCES dbo.NhanVien(MaNhanVien)
-    );
-
-    CREATE TABLE dbo.ThanhVienCuTru (
-        MaThanhVienCuTru VARCHAR(6)    NOT NULL PRIMARY KEY,
-        MaHoSoCuTru      VARCHAR(6)    NOT NULL,
-        HoTen            NVARCHAR(100) NOT NULL,
-        NgaySinh         DATE          NULL,
-        GioiTinh         NVARCHAR(4)   NOT NULL,
-        CCCD             VARCHAR(20)   NOT NULL,
-        SDT              VARCHAR(20)   NULL,
-        Email            VARCHAR(100)  NULL,
-        QuocTich         NVARCHAR(50)  NULL,
-        TrangThaiDuyet   NVARCHAR(20)  NOT NULL DEFAULT N'Chờ duyệt',
-        LyDoTuChoi       NVARCHAR(500) NULL,
-        CONSTRAINT CHK_TVCT_GioiTinh CHECK (GioiTinh IN (N'Nam', N'Nữ')),
-        CONSTRAINT CHK_TVCT_TrangThai CHECK (TrangThaiDuyet IN (N'Chờ duyệt', N'Đủ điều kiện', N'Bị từ chối')),
-        CONSTRAINT FK_TVCT_HoSoCuTru FOREIGN KEY (MaHoSoCuTru) REFERENCES dbo.HoSoCuTru(MaHoSoCuTru)
     );
 END
 GO
@@ -82,7 +66,17 @@ BEGIN
         ISNULL(hs.TrangThaiHoSo, N'Chưa cập nhật') AS TrangThaiHoSo,
         MIN(p.GioiTinhChoPhep) AS GioiTinhChoPhep,
         MAX(lp.SucChuaToiDa) AS SucChuaToiDa,
-        COUNT(ctdc.MaChiTietDC) AS SoGiuongDaCoc
+        COUNT(ctdc.MaChiTietDC) AS SoGiuongDaCoc,
+        -- Kiểm tra phòng đang có hợp đồng có hiệu lực hay không (tức là có ngườơi đang ở)
+        CAST(
+            CASE WHEN EXISTS (
+                SELECT 1
+                FROM dbo.HopDongThue hd2
+                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
+                WHERE cthd.MaPhong = ctdc.MaPhong
+                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
+            ) THEN 1 ELSE 0 END
+        AS BIT) AS CoNguoiDangO
     FROM dbo.PhieuDatCoc pdc
     JOIN dbo.PhieuDangKy pdk ON pdk.MaDangKy = pdc.MaPhieuYeuCauDangKy
     JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
@@ -171,13 +165,13 @@ BEGIN
             GhiChuQuanLy = NULL
         WHERE MaHoSoCuTru = @MaHoSoCuTru;
 
-        DELETE FROM dbo.ThanhVienCuTru WHERE MaHoSoCuTru = @MaHoSoCuTru;
+        DELETE FROM dbo.ThanhVienHopDong WHERE MaHoSoCuTru = @MaHoSoCuTru;
     END
 
     DECLARE @StartIndex INT;
-    SELECT @StartIndex = ISNULL(MAX(CAST(SUBSTRING(MaThanhVienCuTru, 3, 4) AS INT)), 0)
-    FROM dbo.ThanhVienCuTru WITH (UPDLOCK, HOLDLOCK)
-    WHERE MaThanhVienCuTru LIKE 'TC[0-9][0-9][0-9][0-9]';
+    SELECT @StartIndex = ISNULL(MAX(CAST(SUBSTRING(MaThanhVien, 3, 4) AS INT)), 0)
+    FROM dbo.ThanhVienHopDong WITH (UPDLOCK, HOLDLOCK)
+    WHERE MaThanhVien LIKE 'TV[0-9][0-9][0-9][0-9]';
 
     ;WITH RawMembers AS (
         SELECT
@@ -194,13 +188,14 @@ BEGIN
             QuocTich NVARCHAR(50) '$.quocTich'
         )
     )
-    INSERT INTO dbo.ThanhVienCuTru (
-        MaThanhVienCuTru, MaHoSoCuTru, HoTen, NgaySinh,
-        GioiTinh, CCCD, SDT, Email, QuocTich, TrangThaiDuyet
+    INSERT INTO dbo.ThanhVienHopDong (
+        MaThanhVien, MaHoSoCuTru, MaHopDong, HoTen, NgaySinh,
+        GioiTinh, CCCD, SDT, Email, QuocTich, TrangThai, LyDoTuChoi
     )
     SELECT
-        'TC' + RIGHT('0000' + CAST(@StartIndex + RN AS VARCHAR(4)), 4),
+        'TV' + RIGHT('0000' + CAST(@StartIndex + RN AS VARCHAR(4)), 4),
         @MaHoSoCuTru,
+        NULL,
         HoTen,
         NgaySinh,
         GioiTinh,
@@ -208,7 +203,8 @@ BEGIN
         SDT,
         Email,
         ISNULL(QuocTich, N'Việt Nam'),
-        N'Chờ duyệt'
+        N'Chờ duyệt',
+        NULL
     FROM RawMembers
     WHERE HoTen IS NOT NULL AND CCCD IS NOT NULL AND GioiTinh IN (N'Nam', N'Nữ');
 
@@ -273,7 +269,17 @@ BEGIN
         COUNT(ctdc.MaChiTietDC) AS SoGiuongDaCoc,
         hs.TrangThaiHoSo,
         hs.NgayCapNhat,
-        hs.GhiChuSale
+        hs.GhiChuSale,
+        -- Kiểm tra phòng đang có hợp đồng có hiệu lực hay không
+        CAST(
+            CASE WHEN EXISTS (
+                SELECT 1
+                FROM dbo.HopDongThue hd2
+                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
+                WHERE cthd.MaPhong = p.MaPhong
+                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
+            ) THEN 1 ELSE 0 END
+        AS BIT) AS CoNguoiDangO
     FROM dbo.HoSoCuTru hs
     JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hs.MaPhieuDatCoc
     JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
@@ -324,7 +330,17 @@ BEGIN
         hs.NgayGuiDuyet,
         hs.NgayDuyet,
         hs.GhiChuSale,
-        hs.GhiChuQuanLy
+        hs.GhiChuQuanLy,
+        -- Kiểm tra phòng đang có hợp đồng có hiệu lực hay không
+        CAST(
+            CASE WHEN EXISTS (
+                SELECT 1
+                FROM dbo.HopDongThue hd2
+                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
+                WHERE cthd.MaPhong = p.MaPhong
+                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
+            ) THEN 1 ELSE 0 END
+        AS BIT) AS CoNguoiDangO
     FROM dbo.HoSoCuTru hs
     JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hs.MaPhieuDatCoc
     JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
@@ -340,7 +356,8 @@ BEGIN
         hs.GhiChuSale, hs.GhiChuQuanLy;
 
     SELECT
-        MaThanhVienCuTru,
+        MaThanhVien,
+        MaThanhVien AS MaThanhVienCuTru,
         MaHoSoCuTru,
         HoTen,
         NgaySinh,
@@ -349,11 +366,12 @@ BEGIN
         SDT,
         Email,
         QuocTich,
-        TrangThaiDuyet,
+        TrangThai,
+        TrangThai AS TrangThaiDuyet,
         LyDoTuChoi
-    FROM dbo.ThanhVienCuTru
+    FROM dbo.ThanhVienHopDong
     WHERE MaHoSoCuTru = @MaHoSoCuTru
-    ORDER BY MaThanhVienCuTru;
+    ORDER BY MaThanhVien;
 END
 GO
 
@@ -385,32 +403,33 @@ BEGIN
     BEGIN
         ;WITH DecisionRows AS (
             SELECT
-                MaThanhVienCuTru,
+                COALESCE(MaThanhVien, MaThanhVienCuTru) AS MaThanhVienCuTru,
                 TrangThaiDuyet,
                 LyDoTuChoi
             FROM OPENJSON(@DanhSachKetQuaThanhVienJson)
             WITH (
+                MaThanhVien VARCHAR(6) '$.maThanhVien',
                 MaThanhVienCuTru VARCHAR(6) '$.maThanhVienCuTru',
                 TrangThaiDuyet NVARCHAR(20) '$.trangThaiDuyet',
                 LyDoTuChoi NVARCHAR(500) '$.lyDoTuChoi'
             )
         )
         UPDATE tv
-        SET TrangThaiDuyet = CASE
+        SET TrangThai = CASE
                 WHEN d.TrangThaiDuyet = N'Bị từ chối' THEN N'Bị từ chối'
                 ELSE N'Đủ điều kiện'
             END,
             LyDoTuChoi = CASE WHEN d.TrangThaiDuyet = N'Bị từ chối' THEN d.LyDoTuChoi ELSE NULL END
-        FROM dbo.ThanhVienCuTru tv
-        JOIN DecisionRows d ON d.MaThanhVienCuTru = tv.MaThanhVienCuTru
+        FROM dbo.ThanhVienHopDong tv
+        JOIN DecisionRows d ON d.MaThanhVienCuTru = tv.MaThanhVien
         WHERE tv.MaHoSoCuTru = @MaHoSoCuTru;
     END
 
     IF @KetQua = N'Đã duyệt cư trú'
        AND NOT EXISTS (
-            SELECT 1 FROM dbo.ThanhVienCuTru
+            SELECT 1 FROM dbo.ThanhVienHopDong
             WHERE MaHoSoCuTru = @MaHoSoCuTru
-              AND TrangThaiDuyet = N'Đủ điều kiện'
+              AND TrangThai = N'Đủ điều kiện'
        )
     BEGIN
         ROLLBACK;

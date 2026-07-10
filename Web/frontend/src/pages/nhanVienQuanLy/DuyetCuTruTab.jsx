@@ -49,8 +49,11 @@ function formatDate(value) {
 }
 
 function normalizeMember(row = {}) {
+  const maTV = pick(row, 'maThanhVien', 'MaThanhVien', 'maThanhVienCuTru', 'MaThanhVienCuTru', null);
+  const status = pick(row, 'trangThai', 'TrangThai', 'trangThaiDuyet', 'TrangThaiDuyet', 'Chờ duyệt');
   return {
-    maThanhVienCuTru: pick(row, 'maThanhVienCuTru', 'MaThanhVienCuTru'),
+    maThanhVien: maTV,
+    maThanhVienCuTru: maTV,
     hoTen: pick(row, 'hoTen', 'HoTen'),
     ngaySinh: pick(row, 'ngaySinh', 'NgaySinh'),
     gioiTinh: pick(row, 'gioiTinh', 'GioiTinh'),
@@ -58,7 +61,8 @@ function normalizeMember(row = {}) {
     sdt: pick(row, 'sdt', 'SDT'),
     email: pick(row, 'email', 'Email'),
     quocTich: pick(row, 'quocTich', 'QuocTich', 'Việt Nam'),
-    trangThaiDuyet: pick(row, 'trangThaiDuyet', 'TrangThaiDuyet', 'Chờ duyệt'),
+    trangThai: status,
+    trangThaiDuyet: status,
     lyDoTuChoi: pick(row, 'lyDoTuChoi', 'LyDoTuChoi', '')
   };
 }
@@ -78,6 +82,7 @@ function normalizeHoSo(row = {}) {
     ngayCapNhat: pick(row, 'ngayCapNhat', 'NgayCapNhat'),
     ghiChuSale: pick(row, 'ghiChuSale', 'GhiChuSale', ''),
     ghiChuQuanLy: pick(row, 'ghiChuQuanLy', 'GhiChuQuanLy', ''),
+    coNguoiDangO: Boolean(pick(row, 'coNguoiDangO', 'CoNguoiDangO', false)),
     thanhVien: Array.isArray(row.thanhVien) ? row.thanhVien.map(normalizeMember) : []
   };
 }
@@ -121,7 +126,16 @@ function getInitials(name = '') {
     .toUpperCase() || 'CT';
 }
 
-function genderFits(roomGender = '', memberGender = '') {
+/**
+ * Kiểm tra giới tính thành viên có phù hợp với quy định phòng không.
+ * Điều kiện Bỏ QUA (luôn pass):
+ *   - Phòng chưa có ai đang ở (coNguoiDangO = false)
+ *   - Hoặc đang thuê nguyên căn (người thuê tự chọn ai ở trong phòng của họ)
+ *   - Hoặc phòng không phân biệt giới tính
+ */
+function genderFits(roomGender = '', memberGender = '', coNguoiDangO = false, hinhThucThue = '') {
+  if (!coNguoiDangO) return true;             // Phòng trống → không áp dụng
+  if (hinhThucThue === 'Nguyên phòng') return true; // Thuê nguyên căn → tự quản
   return !roomGender
     || roomGender === 'Không phân biệt'
     || roomGender === memberGender;
@@ -148,8 +162,10 @@ export default function DuyetCuTruTab() {
     ? (selected.hinhThucThue === 'Ghép giường' ? selected.soGiuongDaCoc : selected.sucChuaToiDa)
     : 0;
   const genderMismatchCount = selected
-    ? members.filter((item) => !genderFits(selected.gioiTinhChoPhep, item.gioiTinh)).length
+    ? members.filter((item) => !genderFits(selected.gioiTinhChoPhep, item.gioiTinh, selected.coNguoiDangO, selected.hinhThucThue)).length
     : 0;
+  // Phải kiểm tra giới tính khi phòng có người đang ở và là ghép giường
+  const isGenderCheckRequired = selected && selected.coNguoiDangO && selected.hinhThucThue !== 'Nguyên phòng';
   const capacityWarning = Boolean(selected && acceptedMembers.length > capacityLimit);
   const reviewReady = Boolean(selected && acceptedMembers.length > 0 && !capacityWarning && genderMismatchCount === 0);
 
@@ -280,20 +296,7 @@ export default function DuyetCuTruTab() {
         </div>
       )}
 
-      <section className="residence-hero">
-        <div>
-          <p className="residence-eyebrow">Duyệt cư trú</p>
-          <h2>Kiểm tra điều kiện lưu trú trước hợp đồng</h2>
-          <p>Quản lý rà soát giấy tờ, giới tính phòng và sức chứa để duyệt hồ sơ cho sale lập hợp đồng.</p>
-        </div>
-        <div className="residence-kpi">
-          <span className="residence-kpi-icon"><Icon name="fact_check" /></span>
-          <div>
-            <strong>{waitingCount}</strong>
-            <span>Hồ sơ chờ duyệt</span>
-          </div>
-        </div>
-      </section>
+
 
       <form
         className="residence-filter"
@@ -391,14 +394,14 @@ export default function DuyetCuTruTab() {
                   <td><StatusBadge value={item.trangThaiHoSo} /></td>
                   <td className="text-center">
                     {item.trangThaiHoSo === 'Chờ duyệt cư trú' ? (
-                      <button className="ktp-btn-action-fill" type="button" onClick={() => openDetail(item)}>
+                      <button className="ktp-btn-action-fill" type="button" style={{ width: '96px' }} onClick={() => openDetail(item)}>
                         Duyệt
                       </button>
                     ) : (
                       <button
                         className="ktp-btn-action-fill"
                         type="button"
-                        style={{ backgroundColor: '#2f6765', borderColor: '#2f6765' }}
+                        style={{ backgroundColor: '#2f6765', borderColor: '#2f6765', width: '96px' }}
                         onClick={() => openDetail(item)}
                       >
                         Chi tiết
@@ -418,7 +421,7 @@ export default function DuyetCuTruTab() {
             <div className="ktp-modal-header-primary">
               <div>
                 <h3>Duyệt hồ sơ {selected.maHoSoCuTru}</h3>
-                <p className="ktp-modal-header-sub">Kiểm tra danh sách cư trú và chọn kết quả xử lý.</p>
+                <p className="ktp-modal-header-sub" style={{ color: 'rgba(255, 255, 255, 0.85)' }}>Kiểm tra danh sách cư trú và chọn kết quả xử lý.</p>
               </div>
               <button className="ktp-modal-close" type="button" onClick={() => setSelected(null)}><Icon name="close" /></button>
             </div>
@@ -471,11 +474,20 @@ export default function DuyetCuTruTab() {
                       <span>Sale đã hoàn tất bước ghi nhận thông tin cư trú.</span>
                     </div>
                   </div>
-                  <div className={`residence-condition-card ${genderMismatchCount ? 'is-danger' : 'is-ok'}`}>
-                    <Icon name={genderMismatchCount ? 'warning' : 'verified'} />
+                  <div className={`residence-condition-card ${isGenderCheckRequired && genderMismatchCount ? 'is-danger' : 'is-ok'}`}>
+                    <Icon name={isGenderCheckRequired && genderMismatchCount ? 'warning' : 'verified'} />
                     <div>
                       <strong>Giới tính phù hợp</strong>
-                      <span>{genderMismatchCount ? `${genderMismatchCount} người chưa khớp quy định phòng.` : `Phòng cho phép: ${selected.gioiTinhChoPhep}.`}</span>
+                      <span>
+                        {!isGenderCheckRequired
+                          ? (selected.hinhThucThue === 'Nguyên phòng'
+                              ? 'Thuê nguyên căn – không giới hạn giới tính.'
+                              : 'Phòng chưa có ai ở – không áp dụng quy định giới tính.')
+                          : genderMismatchCount
+                            ? `${genderMismatchCount} người chưa khớp quy định phòng.`
+                            : `Phòng cho phép: ${selected.gioiTinhChoPhep}.`
+                        }
+                      </span>
                     </div>
                   </div>
                   <div className={`residence-condition-card ${capacityWarning ? 'is-danger' : 'is-ok'}`}>
@@ -516,7 +528,7 @@ export default function DuyetCuTruTab() {
                           <span>{member.quocTich || 'Việt Nam'}</span>
                           {member.sdt && <span>{member.sdt}</span>}
                         </div>
-                        {!genderFits(selected.gioiTinhChoPhep, member.gioiTinh) && (
+                        {isGenderCheckRequired && !genderFits(selected.gioiTinhChoPhep, member.gioiTinh, selected.coNguoiDangO, selected.hinhThucThue) && (
                           <small className="residence-review-warning">Không khớp giới tính phòng</small>
                         )}
                       </div>

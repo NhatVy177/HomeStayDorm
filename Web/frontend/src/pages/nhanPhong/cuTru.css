@@ -778,6 +778,29 @@
   opacity: 0.9;
 }
 
+.ktp-btn-action-outline {
+  background: #ffffff;
+  border: 1.5px solid #00666d;
+  border-radius: 8px;
+  color: #00666d;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ktp-btn-action-outline:hover {
+  background: #eef8f8;
+}
+
+.ktp-btn-action-outline:disabled {
+  border-color: #b8c4c5;
+  color: #b8c4c5;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
 @media (max-width: 980px) {
   .residence-hero,
   .residence-filter,

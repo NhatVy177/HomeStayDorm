@@ -55,8 +55,11 @@ function getFutureStartDateMessage(value) {
 }
 
 function normalizeMember(item = {}) {
+  const maTV = item.maThanhVien || item.MaThanhVien || item.maThanhVienCuTru || item.MaThanhVienCuTru || null;
+  const status = item.trangThai || item.TrangThai || item.trangThaiDuyet || item.TrangThaiDuyet || 'Chờ duyệt';
   return {
-    maThanhVienCuTru: item.maThanhVienCuTru || item.MaThanhVienCuTru || null,
+    maThanhVien: maTV,
+    maThanhVienCuTru: maTV,
     hoTen: String(item.hoTen || item.HoTen || '').trim(),
     ngaySinh: item.ngaySinh || item.NgaySinh || null,
     gioiTinh: item.gioiTinh || item.GioiTinh || null,
@@ -64,7 +67,8 @@ function normalizeMember(item = {}) {
     sdt: String(item.sdt || item.SDT || '').trim(),
     email: String(item.email || item.Email || '').trim(),
     quocTich: String(item.quocTich || item.QuocTich || 'Việt Nam').trim(),
-    trangThaiDuyet: item.trangThaiDuyet || item.TrangThaiDuyet || 'Chờ duyệt',
+    trangThai: status,
+    trangThaiDuyet: status,
     lyDoTuChoi: item.lyDoTuChoi || item.LyDoTuChoi || null
   };
 }
@@ -526,7 +530,7 @@ export async function getDanhSachChoBanGiaoVao() {
   try {
     const result = await executeProcedure('dbo.SP_DanhSachChoBanGiaoVao', []);
     return (result.recordset || []).filter((item) => (
-      Boolean(item.daDongTienDauKy) && Boolean(item.tinhTrangGiuongHopLe) && !isFutureStartDate(item.ngayBatDau)
+      Boolean(item.tinhTrangGiuongHopLe) && !isFutureStartDate(item.ngayBatDau)
     ));
   } catch (error) {
     handleDatabaseError(error);

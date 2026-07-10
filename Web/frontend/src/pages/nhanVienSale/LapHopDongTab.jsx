@@ -349,27 +349,27 @@ export default function LapHopDongTab() {
 
   const getPhieuStatusStyle = (p = {}) => {
     if (p.trangThaiCoc === 'Huỷ') {
-      return { class: 'lhd-badge-danger', label: 'Cọc đã huỷ' };
+      return { class: 'lhd-badge-danger', label: 'Đã hủy cọc' };
     }
     if (p.trangThaiThanhToan !== 'Đã TT') {
-      return { class: 'lhd-badge-warning', label: 'Chờ thanh toán cọc' };
+      return { class: 'lhd-badge-warning', label: 'Chờ thanh toán' };
     }
     if (p.trangThaiCoc === 'Đã lập HĐ' || (!p.coTheLapHopDong && p.trangThaiHoSoCuTru === 'Đã duyệt cư trú')) {
-      return { class: 'lhd-badge-success', label: 'Đã lập hợp đồng' };
+      return { class: 'lhd-badge-success', label: 'Đã lập HĐ' };
     }
     if (p.trangThaiHoSoCuTru === 'Chờ duyệt cư trú') {
-      return { class: 'lhd-badge-warning', label: 'Chờ duyệt cư trú' };
+      return { class: 'lhd-badge-warning', label: 'Chờ duyệt' };
     }
     if (p.trangThaiHoSoCuTru === 'Từ chối cư trú') {
-      return { class: 'lhd-badge-danger', label: 'Cư trú bị từ chối' };
+      return { class: 'lhd-badge-danger', label: 'Từ chối cư trú' };
     }
     if (p.trangThaiHoSoCuTru === 'Chưa cập nhật' || !p.trangThaiHoSoCuTru) {
-      return { class: 'lhd-badge-muted', label: 'Chưa lập hồ sơ cư trú' };
+      return { class: 'lhd-badge-warning', label: 'Chưa cư trú' };
     }
     if (p.coTheLapHopDong) {
-      return { class: 'lhd-badge-success', label: 'Chờ lập hợp đồng' };
+      return { class: 'lhd-badge-info', label: 'Chờ lập HĐ' };
     }
-    return { class: 'lhd-badge-muted', label: 'Không xác định' };
+    return { class: 'lhd-badge-muted', label: 'Không rõ' };
   };
 
   const getContractMembers = () => {
@@ -748,14 +748,9 @@ export default function LapHopDongTab() {
                     </div>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: 'var(--lhd-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700', flexShrink: 0 }}>
-                        {p.hoTenKhachHang?.charAt(0).toUpperCase()}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontWeight: '600', color: 'var(--lhd-text)' }}>{p.hoTenKhachHang}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--lhd-text-muted)' }}>{p.sdt}</div>
-                      </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontWeight: '600', color: 'var(--lhd-text)' }}>{p.hoTenKhachHang}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--lhd-text-muted)' }}>{p.sdt}</div>
                     </div>
                   </td>
                   <td>
@@ -782,7 +777,7 @@ export default function LapHopDongTab() {
                     {p.coTheLapHopDong ? (
                       <button 
                         className="lhd-btn lhd-btn-primary" 
-                        style={{ padding: '7px 16px', fontSize: '13px' }}
+                        style={{ padding: '7px 16px', fontSize: '13px', width: '160px' }}
                         onClick={() => handleSelectPhieu(p)}
                       >
                         Lập hợp đồng
@@ -792,14 +787,14 @@ export default function LapHopDongTab() {
                         className="lhd-btn"
                         disabled
                         title="Phiếu này phải được quản lý duyệt cư trú trước khi lập hợp đồng."
-                        style={{ backgroundColor: '#bec8c9', color: '#fff', padding: '7px 16px', fontSize: '13px', cursor: 'not-allowed' }}
+                        style={{ backgroundColor: '#bec8c9', color: '#fff', padding: '7px 16px', fontSize: '13px', cursor: 'not-allowed', width: '160px' }}
                       >
                         Chờ duyệt cư trú
                       </button>
                     ) : (
                       <button 
                         className="lhd-btn lhd-btn-outline" 
-                        style={{ padding: '7px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        style={{ padding: '7px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: '160px' }}
                         onClick={() => handleViewContract(p.maPhieuDatCoc)}
                       >
                         <Icon name="description" style={{ fontSize: '15px' }} />

@@ -192,3 +192,10 @@ Error: Không có thành viên hợp lệ (sai giới tính hoặc thiếu CCCD/
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/hopDong.controller.js:65:20)
 
+2026-07-10T16:27:43.279Z
+Error: Lỗi hệ thống: Không thể xếp Nam và Nữ vào cùng một phòng. (Line 45)
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/services/hopDong.service.js:197:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/hopDong.controller.js:65:20)
+

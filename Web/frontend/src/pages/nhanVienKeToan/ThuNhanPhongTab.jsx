@@ -285,20 +285,7 @@ export default function ThuNhanPhongTab() {
         </div>
       )}
 
-      <section className="tnp-hero">
-        <div className="tnp-hero-copy">
-          <span>Thu nhận phòng</span>
-          <h2>Ghi nhận khoản thu kỳ đầu</h2>
-        </div>
-        <article className="tnp-summary-card is-primary" aria-label="Hợp đồng cần thu tiền">
-          <span><Icon name="pending_actions" /></span>
-          <div>
-            <p>Hợp đồng cần thu tiền</p>
-            <strong>{choThuCount}</strong>
-            <small>Cần xử lý</small>
-          </div>
-        </article>
-      </section>
+
 
       <form className="tnp-filter-card" onSubmit={handleSearch}>
         <label className="tnp-search-field">
@@ -395,7 +382,6 @@ export default function ThuNhanPhongTab() {
                         <td><span className="tnp-contract-code">{contract.MaHopDong}</span></td>
                         <td>
                           <div className="tnp-customer-cell">
-                            <div className="ktp-avatar-sm ktp-avatar-secondary">{getInitials(contract.HoTenKhachHang)}</div>
                             <div>
                               <p>{contract.HoTenKhachHang}</p>
                               <small>{contract.SDT}</small>
@@ -414,7 +400,7 @@ export default function ThuNhanPhongTab() {
                         </td>
                         <td className="text-center">
                           {contract.TrangThaiThuTien === 'Đã thanh toán' ? (
-                            <button className="tnp-row-action is-muted" onClick={() => handleOpenDetailModal(contract.MaHopDong)}>Chi tiết</button>
+                            <button className="tnp-row-action is-muted" onClick={() => handleOpenDetailModal(contract.MaHopDong)}>Xem hóa đơn</button>
                           ) : (
                             <button className="tnp-row-action" onClick={() => handleOpenCreateModal(contract.MaHopDong)}>Ghi nhận thu tiền</button>
                           )}
