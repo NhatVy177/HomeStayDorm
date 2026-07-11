@@ -11,6 +11,8 @@ function requireCustomer(user) {
 
 function handleDatabaseError(error) {
   mapDatabaseError(error, {
+    50010: 404,
+    50011: 400,
     50101: 404,
     50102: 409,
     50103: 409,
@@ -611,8 +613,11 @@ export async function getDatCoc(user) {
         pdc.PhuongThucThanhToan    AS phuongThucThanhToan,
         pdc.TrangThaiThanhToan     AS trangThaiThanhToan,
         pdc.TrangThaiCoc           AS trangThaiCoc,
+        pdc.HinhThucThue           AS hinhThucThue,
         pdc.ChungTuThanhToan       AS minhChungThanhToan,
         pdc.ThoiGianXacNhanTT      AS thoiGianXacNhanTT,
+        khUser.HoTen               AS tenKhachHang,
+        khUser.SDT                 AS sdtKhachHang,
         -- Trạng thái hiển thị cho frontend
         CASE
           WHEN pdc.TrangThaiThanhToan = N'Hết hạn' OR pdc.TrangThaiCoc = N'Đã hủy'
@@ -628,15 +633,55 @@ export async function getDatCoc(user) {
         -- Thông tin phòng (từ ChiTietDatCoc)
         p.TenPhong                 AS tenPhong,
         p.MaPhong                  AS maPhong,
+        ct.MaGiuong                AS maGiuong,
+        ct.GiaThue                 AS giaThue,
         cn.DiaChi                  AS diaChi,
         lp.TenLoaiPhong            AS loaiPhong,
         cn.TenChiNhanh             AS tenChiNhanh,
+        ha.UrlImg                  AS urlImg,
         -- Nhân viên sale phụ trách
-        nd.HoTen                   AS tenNhanVienPhuTrach
+        nd.HoTen                   AS tenNhanVienPhuTrach,
+        nd.SDT                     AS sdtNhanVienPhuTrach,
+        ndKeToan.HoTen             AS tenNhanVienKeToan,
+        ndKeToan.SDT               AS sdtNhanVienKeToan,
+        ptp.MaPhieuTra             AS maPhieuTra,
+        ptp.NgayDangKyTra          AS ngayDangKyTra,
+        ptp.NgayDuKienTra          AS ngayDuKienTra,
+        ptp.NgayTraThucTe          AS ngayTraThucTe,
+        ptp.TrangThaiTraPhong      AS trangThaiTraPhong,
+        ds.MaDoiSoat               AS maDoiSoatTraPhong,
+        ds.NgayLap                 AS ngayLapDoiSoatTraPhong,
+        ds.TienCocBanDau           AS tienCocBanDauTraPhong,
+        ds.SoThangLuuTru           AS soThangLuuTruTraPhong,
+        ds.TyLeHoanCocHienTai      AS tyLeHoanCocHienTaiTraPhong,
+        ds.TienCocDuocHoan         AS tienCocDuocHoanTraPhong,
+        ds.TienThueConNo           AS tienThueConNoTraPhong,
+        ds.TienDichVuConNo         AS tienDichVuConNoTraPhong,
+        ds.TongChiPhiSuaChua       AS tongChiPhiSuaChuaTraPhong,
+        ds.TienPhat                AS tienPhatTraPhong,
+        ds.TongKhauTru             AS tongKhauTruTraPhong,
+        ds.SoTienHoanThucTe        AS soTienHoanThucTeTraPhong,
+        ds.SoTienKhachPhaiTT       AS soTienKhachPhaiTTTraPhong,
+        ds.PhuongThucThanhToan     AS phuongThucThanhToanTraPhong,
+        ds.ChungTuThanhToan        AS chungTuThanhToanTraPhong,
+        ds.NgayThanhToan           AS ngayThanhToanTraPhong,
+        ds.ThongTinNhanHoanCoc     AS thongTinNhanHoanCocTraPhong,
+        ds.GhiChuPhanHoiKhach      AS ghiChuPhanHoiKhachTraPhong,
+        ds.LoaiQuyetToan           AS loaiQuyetToanTraPhong,
+        ds.TrangThai               AS trangThaiDoiSoatTraPhong,
+        CASE
+          WHEN EXISTS (
+            SELECT 1
+            FROM dbo.HopDongThue AS hd
+            WHERE hd.MaPhieuCoc = pdc.MaPhieuDatCoc
+          )
+            THEN CAST(1 AS BIT)
+          ELSE CAST(0 AS BIT)
+        END                        AS coHopDong
       FROM dbo.PhieuDatCoc AS pdc
       -- Lấy 1 chi tiết đặt cọc đầu tiên (phòng/giường đầu tiên)
       OUTER APPLY (
-        SELECT TOP 1 ctdc.MaPhong
+        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.GiaThue
         FROM dbo.ChiTietDatCoc AS ctdc
         WHERE ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
         ORDER BY ctdc.MaChiTietDC
@@ -644,13 +689,213 @@ export async function getDatCoc(user) {
       LEFT JOIN dbo.Phong    AS p  ON p.MaPhong    = ct.MaPhong
       LEFT JOIN dbo.LoaiPhong AS lp ON lp.MaLoaiPhong = p.MaLoaiPhong
       LEFT JOIN dbo.ChiNhanh  AS cn ON cn.MaChiNhanh  = p.MaChiNhanh
+      OUTER APPLY (
+        SELECT TOP 1 hap.UrlImg
+        FROM dbo.HinhAnhPhong AS hap
+        WHERE hap.MaPhong = p.MaPhong
+        ORDER BY hap.STTAnh
+      ) AS ha
       LEFT JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = pdc.MaPhieuYeuCauDangKy
       LEFT JOIN dbo.NhanVien    AS nv  ON nv.MaNhanVien = pdk.MaNhanVienSale
       LEFT JOIN dbo.NguoiDung   AS nd  ON nd.MaNguoiDung = nv.MaNhanVien
+      LEFT JOIN dbo.NhanVien    AS nvKeToan ON nvKeToan.MaNhanVien = pdc.MaNhanVienKeToan
+      LEFT JOIN dbo.NguoiDung   AS ndKeToan ON ndKeToan.MaNguoiDung = nvKeToan.MaNhanVien
+      LEFT JOIN dbo.NguoiDung   AS khUser ON khUser.MaNguoiDung = pdc.MaKhachHang
+      OUTER APPLY (
+        SELECT TOP 1
+          ptra.MaPhieuTra,
+          ptra.NgayDangKyTra,
+          ptra.NgayDuKienTra,
+          ptra.NgayTraThucTe,
+          ptra.TrangThai AS TrangThaiTraPhong
+        FROM dbo.PhieuTraPhong AS ptra
+        WHERE ptra.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+          AND ptra.TrangThai <> N'Hủy'
+        ORDER BY ptra.NgayDangKyTra DESC, ptra.MaPhieuTra DESC
+      ) AS ptp
+      OUTER APPLY (
+        SELECT TOP 1
+          d.MaDoiSoat,
+          d.NgayLap,
+          d.TienCocBanDau,
+          d.SoThangLuuTru,
+          d.TyLeHoanCocHienTai,
+          d.TienCocDuocHoan,
+          d.TienThueConNo,
+          d.TienDichVuConNo,
+          d.TongChiPhiSuaChua,
+          d.TienPhat,
+          d.TongKhauTru,
+          d.SoTienHoanThucTe,
+          d.SoTienKhachPhaiTT,
+          d.PhuongThucThanhToan,
+          d.ChungTuThanhToan,
+          d.NgayThanhToan,
+          d.ThongTinNhanHoanCoc,
+          d.GhiChuPhanHoiKhach,
+          d.LoaiQuyetToan,
+          d.TrangThai
+        FROM dbo.DoiSoat AS d
+        WHERE d.MaPhieuTra = ptp.MaPhieuTra
+        ORDER BY d.NgayLap DESC, d.MaDoiSoat DESC
+      ) AS ds
       WHERE pdc.MaKhachHang = @KhachHangId
       ORDER BY pdc.ThoiDiemDatCoc DESC;
     `);
-  return result.recordset;
+
+  const deposits = result.recordset || [];
+  if (!deposits.length) return [];
+
+  const maPhieuValues = deposits.map((row) => row.maPhieuCoc).filter(Boolean);
+  const detailRequest = pool.request();
+  const detailParams = maPhieuValues.map((value, index) => {
+    const name = `MaPhieuCoc${index}`;
+    detailRequest.input(name, sql.VarChar(6), value);
+    return `@${name}`;
+  });
+
+  const [roomResult, quyDinhResult] = await Promise.all([
+    detailRequest.query(`
+      SELECT
+        ctdc.MaPhieuDatCoc AS maPhieuCoc,
+        ctdc.MaChiTietDC   AS maChiTietDC,
+        ctdc.MaPhong       AS maPhong,
+        p.TenPhong         AS tenPhong,
+        ctdc.MaGiuong      AS maGiuong,
+        ctdc.GiaThue       AS giaThue,
+        p.GioiTinhChoPhep  AS gioiTinhChoPhep,
+        p.TinhTrang        AS tinhTrangPhong,
+        pdc.HinhThucThue   AS hinhThucThue,
+        lp.TenLoaiPhong    AS loaiPhong,
+        cn.TenChiNhanh     AS tenChiNhanh,
+        cn.DiaChi          AS diaChi,
+        ha.UrlImg          AS urlImg
+      FROM dbo.ChiTietDatCoc AS ctdc
+      INNER JOIN dbo.PhieuDatCoc AS pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
+      LEFT JOIN dbo.Phong AS p ON p.MaPhong = ctdc.MaPhong
+      LEFT JOIN dbo.LoaiPhong AS lp ON lp.MaLoaiPhong = p.MaLoaiPhong
+      LEFT JOIN dbo.ChiNhanh AS cn ON cn.MaChiNhanh = p.MaChiNhanh
+      OUTER APPLY (
+        SELECT TOP 1 hap.UrlImg
+        FROM dbo.HinhAnhPhong AS hap
+        WHERE hap.MaPhong = ctdc.MaPhong
+        ORDER BY hap.STTAnh
+      ) AS ha
+      WHERE ctdc.MaPhieuDatCoc IN (${detailParams.join(', ')})
+      ORDER BY ctdc.MaPhieuDatCoc, ctdc.MaChiTietDC;
+    `),
+    pool.request().query(`
+      SELECT MaQuyDinh, TieuDeNoiQuy, NoiDung
+      FROM dbo.QuiDinh
+      WHERE TrangThai = N'Hiệu lực'
+      ORDER BY MaQuyDinh;
+    `)
+  ]);
+
+  const rooms = roomResult.recordset || [];
+  const maPhongValues = [...new Set(rooms.map((room) => room.maPhong).filter(Boolean))];
+  const [assetResult, imageResult] = maPhongValues.length
+    ? await Promise.all([
+        (() => {
+          const request = pool.request();
+          const params = maPhongValues.map((value, index) => {
+            const name = `MaPhongAsset${index}`;
+            request.input(name, sql.VarChar(4), value);
+            return `@${name}`;
+          });
+          return request.query(`
+            SELECT MaPhong AS maPhong, MaTaiSan AS maTaiSan, TenTaiSan AS tenTaiSan, SoLuong AS soLuong, DonGia AS donGia
+            FROM dbo.TaiSan
+            WHERE MaPhong IN (${params.join(', ')})
+            ORDER BY MaPhong, MaTaiSan;
+          `);
+        })(),
+        (() => {
+          const request = pool.request();
+          const params = maPhongValues.map((value, index) => {
+            const name = `MaPhongImage${index}`;
+            request.input(name, sql.VarChar(4), value);
+            return `@${name}`;
+          });
+          return request.query(`
+            SELECT MaPhong AS maPhong, STTAnh AS sttAnh, UrlImg AS urlAnh, UrlImg AS urlImg
+            FROM dbo.HinhAnhPhong
+            WHERE MaPhong IN (${params.join(', ')})
+            ORDER BY MaPhong, STTAnh;
+          `);
+        })()
+      ])
+    : [{ recordset: [] }, { recordset: [] }];
+
+  const imagesByRoom = new Map();
+  for (const image of imageResult.recordset || []) {
+    if (!imagesByRoom.has(image.maPhong)) imagesByRoom.set(image.maPhong, []);
+    imagesByRoom.get(image.maPhong).push(image);
+  }
+
+  const assetsByRoom = new Map();
+  for (const asset of assetResult.recordset || []) {
+    if (!assetsByRoom.has(asset.maPhong)) assetsByRoom.set(asset.maPhong, []);
+    assetsByRoom.get(asset.maPhong).push(asset);
+  }
+
+  const roomsByDeposit = new Map();
+  for (const room of rooms) {
+    if (!roomsByDeposit.has(room.maPhieuCoc)) roomsByDeposit.set(room.maPhieuCoc, []);
+    const hinhAnh = imagesByRoom.get(room.maPhong) || [];
+    roomsByDeposit.get(room.maPhieuCoc).push({
+      ...room,
+      hinhAnh,
+      taiSan: assetsByRoom.get(room.maPhong) || [],
+      urlImg: room.urlImg || hinhAnh[0]?.urlAnh || null
+    });
+  }
+
+  const quyDinh = quyDinhResult.recordset || [];
+  return deposits.map((deposit) => {
+    const phongDatCoc = roomsByDeposit.get(deposit.maPhieuCoc) || [];
+    return {
+      ...deposit,
+      phongDatCoc,
+      taiSan: phongDatCoc.flatMap((room) => room.taiSan || []),
+      quyDinh,
+      urlImg: deposit.urlImg || phongDatCoc[0]?.urlImg || null,
+      yeuCauTraPhong: deposit.maPhieuTra
+        ? {
+            maPhieuTra: deposit.maPhieuTra,
+            maPhieuDatCoc: deposit.maPhieuCoc,
+            ngayDangKyTra: deposit.ngayDangKyTra,
+            ngayDuKienTra: deposit.ngayDuKienTra,
+            ngayTraThucTe: deposit.ngayTraThucTe,
+            trangThai: deposit.trangThaiTraPhong,
+            doiSoat: deposit.maDoiSoatTraPhong
+              ? {
+                  maDoiSoat: deposit.maDoiSoatTraPhong,
+                  ngayLap: deposit.ngayLapDoiSoatTraPhong,
+                  tienCocBanDau: deposit.tienCocBanDauTraPhong,
+                  soThangLuuTru: deposit.soThangLuuTruTraPhong,
+                  tyLeHoanCocHienTai: deposit.tyLeHoanCocHienTaiTraPhong,
+                  tienCocDuocHoan: deposit.tienCocDuocHoanTraPhong,
+                  tienThueConNo: deposit.tienThueConNoTraPhong,
+                  tienDichVuConNo: deposit.tienDichVuConNoTraPhong,
+                  tongChiPhiSuaChua: deposit.tongChiPhiSuaChuaTraPhong,
+                  tienPhat: deposit.tienPhatTraPhong,
+                  tongKhauTru: deposit.tongKhauTruTraPhong,
+                  soTienHoanThucTe: deposit.soTienHoanThucTeTraPhong,
+                  soTienKhachPhaiTT: deposit.soTienKhachPhaiTTTraPhong,
+                  phuongThucThanhToan: deposit.phuongThucThanhToanTraPhong,
+                  chungTuThanhToan: deposit.chungTuThanhToanTraPhong,
+                  ngayThanhToan: deposit.ngayThanhToanTraPhong,
+                  thongTinNhanHoanCoc: deposit.thongTinNhanHoanCocTraPhong,
+                  ghiChuPhanHoiKhach: deposit.ghiChuPhanHoiKhachTraPhong,
+                  loaiQuyetToan: deposit.loaiQuyetToanTraPhong,
+                  trangThai: deposit.trangThaiDoiSoatTraPhong
+                }
+              : null
+          }
+        : null
+    };
+  });
 }
 
 export async function uploadMinhChungKhachHang(user, maPhieuCoc, data = {}) {
@@ -738,6 +983,7 @@ export async function getHopDongDashboard(user) {
         ds.PhuongThucThanhToan AS PhuongThucThanhToanTraPhong,
         ds.ChungTuThanhToan AS ChungTuThanhToanTraPhong,
         ds.NgayThanhToan AS NgayThanhToanTraPhong,
+        ds.ThongTinNhanHoanCoc AS ThongTinNhanHoanCocTraPhong,
         ds.GhiChuPhanHoiKhach AS GhiChuPhanHoiKhachTraPhong,
         ds.LoaiQuyetToan AS LoaiQuyetToanTraPhong,
         ds.TrangThai AS TrangThaiDoiSoatTraPhong
@@ -792,6 +1038,7 @@ export async function getHopDongDashboard(user) {
           d.PhuongThucThanhToan,
           d.ChungTuThanhToan,
           d.NgayThanhToan,
+          d.ThongTinNhanHoanCoc,
           d.GhiChuPhanHoiKhach,
           d.LoaiQuyetToan,
           d.TrangThai
@@ -837,7 +1084,8 @@ export async function getHopDongDashboard(user) {
     chiTietHoaDon: [],
     bienBanKiemTra: [],
     chiTietHuHong: [],
-    bienBanViPham: []
+    bienBanViPham: [],
+    dichVuHopDong: []
   };
 
   if (hopDong.MaDoiSoatTraPhong && hopDong.MaPhieuTra) {
@@ -846,7 +1094,8 @@ export async function getHopDongDashboard(user) {
       chiTietHoaDonResult,
       bienBanKiemTraResult,
       chiTietHuHongResult,
-      bienBanViPhamResult
+      bienBanViPhamResult,
+      dichVuHopDongResult
     ] = await Promise.all([
       pool.request()
         .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
@@ -945,8 +1194,23 @@ export async function getHopDongDashboard(user) {
           LEFT JOIN dbo.DieuKhoanViPham dkvp ON dkvp.MaDieuKhoan = bbvp.MaDieuKhoan
           WHERE @MaHopDong IS NOT NULL
             AND bbvp.MaHopDong = @MaHopDong
-            AND bbvp.TrangThai = N'Chờ xử lý'
           ORDER BY bbvp.NgayViPham ASC, bbvp.MaBBViPham ASC;
+        `),
+      pool.request()
+        .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
+        .query(`
+          SELECT
+            dvhd.MaChiTietDVHD AS maChiTietDVHD,
+            dvhd.MaDichVu AS maDichVu,
+            dv.TenDichVu AS tenDichVu,
+            dv.DonViTinh AS donViTinh,
+            dv.DonGia AS donGia,
+            dvhd.GhiChu AS ghiChu
+          FROM dbo.DichVuHopDong dvhd
+          LEFT JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+          WHERE @MaHopDong IS NOT NULL
+            AND dvhd.MaHopDong = @MaHopDong
+          ORDER BY dv.TenDichVu ASC, dvhd.MaChiTietDVHD ASC;
         `)
     ]);
 
@@ -955,7 +1219,8 @@ export async function getHopDongDashboard(user) {
       chiTietHoaDon: chiTietHoaDonResult.recordset || [],
       bienBanKiemTra: bienBanKiemTraResult.recordset || [],
       chiTietHuHong: chiTietHuHongResult.recordset || [],
-      bienBanViPham: bienBanViPhamResult.recordset || []
+      bienBanViPham: bienBanViPhamResult.recordset || [],
+      dichVuHopDong: dichVuHopDongResult.recordset || []
     };
   }
 
@@ -984,6 +1249,7 @@ export async function getHopDongDashboard(user) {
               phuongThucThanhToan: hopDong.PhuongThucThanhToanTraPhong,
               chungTuThanhToan: hopDong.ChungTuThanhToanTraPhong,
               ngayThanhToan: hopDong.NgayThanhToanTraPhong,
+              thongTinNhanHoanCoc: hopDong.ThongTinNhanHoanCocTraPhong,
               ghiChuPhanHoiKhach: hopDong.GhiChuPhanHoiKhachTraPhong,
               loaiQuyetToan: hopDong.LoaiQuyetToanTraPhong,
               trangThai: hopDong.TrangThaiDoiSoatTraPhong,
@@ -1003,25 +1269,34 @@ export async function getHopDongDashboard(user) {
 
 export async function guiYeuCauTraPhong(user, data = {}) {
   const khachHangId = requireCustomer(user);
-  const result = await executeProcedure('dbo.SP_TraPhong_KhachHang_GuiYeuCau', [
-    { name: 'MaKhachHang', type: sql.VarChar(6), value: khachHangId },
-    { name: 'MaHopDong', type: sql.VarChar(6), value: data.maHopDong || null },
-    { name: 'NgayDuKienTra', type: sql.Date, value: data.ngayDuKienTra ? new Date(data.ngayDuKienTra) : null }
-  ]);
+  try {
+    const result = await executeProcedure('dbo.SP_TraPhong_KhachHang_GuiYeuCau', [
+      { name: 'MaKhachHang', type: sql.VarChar(6), value: khachHangId },
+      { name: 'MaHopDong', type: sql.VarChar(6), value: data.maHopDong || null },
+      { name: 'MaPhieuDatCoc', type: sql.VarChar(6), value: data.maPhieuDatCoc || data.maPhieuCoc || null },
+      { name: 'NgayDuKienTra', type: sql.Date, value: data.ngayDuKienTra ? new Date(data.ngayDuKienTra) : null }
+    ]);
 
-  return result.recordset?.[0] || null;
+    return result.recordset?.[0] || null;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
 }
 
 export async function huyYeuCauTraPhong(user, maPhieuTra) {
   const khachHangId = requireCustomer(user);
   if (!maPhieuTra) throw createServiceError('Thiếu mã yêu cầu trả phòng.', 400);
 
-  const result = await executeProcedure('dbo.SP_TraPhong_KhachHang_HuyYeuCau', [
-    { name: 'MaKhachHang', type: sql.VarChar(6), value: khachHangId },
-    { name: 'MaPhieuTra', type: sql.VarChar(6), value: maPhieuTra }
-  ]);
+  try {
+    const result = await executeProcedure('dbo.SP_TraPhong_KhachHang_HuyYeuCau', [
+      { name: 'MaKhachHang', type: sql.VarChar(6), value: khachHangId },
+      { name: 'MaPhieuTra', type: sql.VarChar(6), value: maPhieuTra }
+    ]);
 
-  return result.recordset?.[0] || null;
+    return result.recordset?.[0] || null;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
 }
 
 export async function phanHoiDoiSoatTraPhong(user, maDoiSoat, data = {}) {
@@ -1035,7 +1310,7 @@ export async function phanHoiDoiSoatTraPhong(user, maDoiSoat, data = {}) {
   }
 
   if (!dongY && !lyDoKhongDongY) {
-    throw createServiceError('Vui lòng nhập lý do không đồng ý.', 400);
+    throw createServiceError('Vui lòng nhập nội dung cần điều chỉnh.', 400);
   }
 
   const pool = await getPool();
@@ -1135,6 +1410,7 @@ export async function ghiNhanThanhToanDoiSoatTraPhong(user, maDoiSoat, data = {}
   const maDoiSoatValue = String(maDoiSoat || '').trim();
   const phuongThucThanhToan = String(data.phuongThucThanhToan || '').trim();
   const chungTuThanhToan = String(data.chungTuThanhToan || '').trim() || null;
+  const thongTinNhanHoanCoc = String(data.thongTinNhanHoanCoc || '').trim() || null;
 
   if (!maDoiSoatValue || maDoiSoatValue.length > 6) {
     throw createServiceError('Mã đối soát không hợp lệ.', 400);
@@ -1151,7 +1427,11 @@ export async function ghiNhanThanhToanDoiSoatTraPhong(user, maDoiSoat, data = {}
     .query(`
       SELECT TOP 1
         ds.LoaiQuyetToan,
-        ds.SoTienHoanThucTe
+        ds.SoTienHoanThucTe,
+        ds.SoTienKhachPhaiTT,
+        ds.PhuongThucThanhToan,
+        ds.ChungTuThanhToan,
+        ds.TrangThai
       FROM dbo.DoiSoat ds
       INNER JOIN dbo.PhieuTraPhong pt
         ON pt.MaPhieuTra = ds.MaPhieuTra
@@ -1166,26 +1446,47 @@ export async function ghiNhanThanhToanDoiSoatTraPhong(user, maDoiSoat, data = {}
   const isHoanCoc = String(data.loaiGhiNhan || '').toLowerCase() === 'hoan-coc'
     || String(doiSoatType?.LoaiQuyetToan || '').toLowerCase().includes('hoàn cọc')
     || Number(doiSoatType?.SoTienHoanThucTe || 0) > 0;
+  const isThuThemUploadLai = !isHoanCoc
+    && doiSoatType?.TrangThai === 'Chờ thanh toán thêm'
+    && doiSoatType?.LoaiQuyetToan === 'Thu thêm'
+    && doiSoatType?.PhuongThucThanhToan === 'Chuyển khoản'
+    && !String(doiSoatType?.ChungTuThanhToan || '').trim();
+  const phuongThucCanLuu = isThuThemUploadLai ? 'Chuyển khoản' : phuongThucThanhToan;
 
-  if (phuongThucThanhToan === 'Chuyển khoản' && !chungTuThanhToan && !isHoanCoc) {
+  if (phuongThucCanLuu === 'Chuyển khoản' && !chungTuThanhToan && !isHoanCoc) {
     throw createServiceError('Vui lòng tải minh chứng thanh toán khi chọn chuyển khoản.', 400);
+  }
+
+  if (isHoanCoc && phuongThucCanLuu === 'Chuyển khoản' && !thongTinNhanHoanCoc) {
+    throw createServiceError('Vui lòng nhập thông tin tài khoản nhận hoàn cọc.', 400);
   }
 
   const result = await pool.request()
     .input('MaDoiSoat', sql.VarChar(6), maDoiSoatValue)
     .input('MaKhachHang', sql.VarChar(6), khachHangId)
-    .input('PhuongThucThanhToan', sql.NVarChar(20), phuongThucThanhToan)
+    .input('PhuongThucThanhToan', sql.NVarChar(20), phuongThucCanLuu)
     .input('ChungTuThanhToan', sql.VarChar(500), chungTuThanhToan)
+    .input('ThongTinNhanHoanCoc', sql.NVarChar(500), isHoanCoc ? thongTinNhanHoanCoc : null)
     .query(`
       UPDATE ds
       SET ds.PhuongThucThanhToan = @PhuongThucThanhToan,
-          ds.ChungTuThanhToan = @ChungTuThanhToan
+          ds.ChungTuThanhToan = @ChungTuThanhToan,
+          ds.NgayThanhToan = CASE
+            WHEN ds.LoaiQuyetToan = N'Thu thêm'
+              AND @PhuongThucThanhToan = N'Chuyển khoản'
+              AND @ChungTuThanhToan IS NOT NULL
+            THEN CONVERT(date, GETDATE())
+            ELSE ds.NgayThanhToan
+          END,
+          ds.ThongTinNhanHoanCoc = @ThongTinNhanHoanCoc
       OUTPUT
         inserted.MaDoiSoat AS maDoiSoat,
         inserted.MaPhieuTra AS maPhieuTra,
         inserted.TrangThai AS trangThaiDoiSoat,
         inserted.PhuongThucThanhToan AS phuongThucThanhToan,
-        inserted.ChungTuThanhToan AS chungTuThanhToan
+        inserted.ChungTuThanhToan AS chungTuThanhToan,
+        inserted.NgayThanhToan AS ngayThanhToan,
+        inserted.ThongTinNhanHoanCoc AS thongTinNhanHoanCoc
       FROM dbo.DoiSoat ds
       INNER JOIN dbo.PhieuTraPhong pt
         ON pt.MaPhieuTra = ds.MaPhieuTra

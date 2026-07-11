@@ -3,6 +3,7 @@ import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import { dangKyThueApi } from '../dangKyThue/dangKyThue.api.js';
 import LapLichChoHoSo from './LapLichChoHoSo.jsx';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
 function parseMoney(value) {
   if (value == null || value === '') return null;
@@ -642,33 +643,17 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
     <div className="ktp-container">
       {/* HEADER TABS & STATS */}
       <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {[
-            { id: 'Chờ tiếp nhận', label: `Chờ tiếp nhận (${stats.choTiepNhan})` },
-            { id: 'Đã tiếp nhận', label: `Đã tiếp nhận (${stats.daTiepNhan})` },
-            { id: 'Từ chối', label: `Từ chối (${stats.tuChoi})` },
-            { id: 'Hủy', label: `Hủy (${stats.huy})` }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setFilterStatus(tab.id)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '20px',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all 0.2s',
-                backgroundColor: filterStatus === tab.id ? '#2f6765' : '#edeeef',
-                color: filterStatus === tab.id ? '#fff' : '#3f494a'
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <StatusFilterTabs
+          items={[
+            { key: 'Tất cả', label: 'Tất cả', count: branchFilteredList.length },
+            { key: 'Chờ tiếp nhận', label: 'Chờ tiếp nhận', count: stats.choTiepNhan },
+            { key: 'Đã tiếp nhận', label: 'Đã tiếp nhận', count: stats.daTiepNhan },
+            { key: 'Từ chối', label: 'Từ chối', count: stats.tuChoi },
+            { key: 'Hủy', label: 'Hủy', count: stats.huy }
+          ]}
+          activeKey={filterStatus}
+          onChange={setFilterStatus}
+        />
 
         <button className="ktp-btn-action-fill" style={{ backgroundColor: '#2f6765', borderRadius: '6px', whiteSpace: 'nowrap' }} onClick={() => setShowCreateModal(true)}>
           <Icon name="add_circle" /> Tạo phiếu mới cho khách vãng lai

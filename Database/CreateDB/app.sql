@@ -110,7 +110,6 @@ CREATE TABLE PhieuDangKy (
     SoNu                INT             DEFAULT 0,
     SoNguoiDuKienO      INT,
     KhuVucMongMuon      NVARCHAR(100),
-    LoaiPhongYeuCau     NVARCHAR(50),
     MucGiaToiDa         DECIMAL(15,2),  
     ThoiGianDuKienVaoO  DATE,
     ThoiHanThue         INT,
@@ -129,7 +128,14 @@ CREATE TABLE PhieuDangKy (
     CONSTRAINT CHK_PDK_MucGia CHECK (MucGiaToiDa > 0)
 );
 
--- 10. LỊCH XEM PHÒNG
+-- 9B. PDK - LOAI PHONG
+CREATE TABLE PDK_LoaiPhong (
+    MaDangKy       VARCHAR(6)      NOT NULL,
+    MaLoaiPhong    VARCHAR(6)      NOT NULL,
+    CONSTRAINT PK_PDK_LoaiPhong PRIMARY KEY (MaDangKy, MaLoaiPhong)
+);
+
+-- 10. LICH XEM PHONG
 CREATE TABLE LichXemPhong (
     MaDangKy    VARCHAR(6)      NOT NULL,
     STTLich     INT             NOT NULL,
@@ -327,7 +333,7 @@ MaPhieuTra      VARCHAR(6)      PRIMARY KEY,
     TrangThai       NVARCHAR(50)     NOT NULL DEFAULT N'Chờ xử lý',
     MaHopDong       VARCHAR(6)      NULL,
     MaPhieuDatCoc   VARCHAR(6)      NULL,
-    CONSTRAINT CHK_PTP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Chờ hoàn tất', N'Hoàn tất', N'Hủy')),
+    CONSTRAINT CHK_PTP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Hoàn tất', N'Hủy')),
     CONSTRAINT CHK_PTP_CoHD      CHECK (MaHopDong IS NOT NULL OR MaPhieuDatCoc IS NOT NULL)
 );
 
@@ -376,9 +382,10 @@ CREATE TABLE DoiSoat (
     PhuongThucThanhToan NVARCHAR(20),
 	ChungTuThanhToan	VARCHAR(500),
 	NgayThanhToan		DATE,
+    ThongTinNhanHoanCoc NVARCHAR(500),
 	GhiChuPhanHoiKhach  NVARCHAR(500),
     LoaiQuyetToan      NVARCHAR(30)     NOT NULL DEFAULT N'Không phát sinh',
-    TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ quản lý xác nhận',
+    TrangThai           NVARCHAR(30)     NOT NULL DEFAULT N'Chờ xác nhận',
     MaNhanVienKeToan    VARCHAR(6),
     MaPhieuTra          VARCHAR(6)      NOT NULL,
     MaQuyDinhHoanCoc    VARCHAR(6),
@@ -472,7 +479,12 @@ ALTER TABLE PhieuDangKy
     ADD CONSTRAINT FK_PDK_KhachHang         FOREIGN KEY (MaKhachHang)       REFERENCES KhachHang(MaKhachHang),
         CONSTRAINT FK_PDK_NhanVienSale      FOREIGN KEY (MaNhanVienSale)    REFERENCES NhanVien(MaNhanVien);
 
--- LỊCH XEM PHÒNG
+-- PDK - LOAI PHONG
+ALTER TABLE PDK_LoaiPhong
+    ADD CONSTRAINT FK_PDK_LoaiPhong_PhieuDangKy    FOREIGN KEY (MaDangKy)       REFERENCES PhieuDangKy(MaDangKy),
+        CONSTRAINT FK_PDK_LoaiPhong_LoaiPhong      FOREIGN KEY (MaLoaiPhong)    REFERENCES LoaiPhong(MaLoaiPhong);
+
+-- LICH XEM PHONG
 ALTER TABLE LichXemPhong
 ADD CONSTRAINT FK_LXP_PhieuDangKy       FOREIGN KEY (MaDangKy)          REFERENCES PhieuDangKy(MaDangKy);
 

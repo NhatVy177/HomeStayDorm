@@ -38,9 +38,6 @@ BEGIN TRY
     UPDATE dbo.DoiSoat
     SET TrangThai =
         CASE
-            WHEN TrangThai = N'Chờ xác nhận'
-                THEN N'Chờ phản hồi'
-
             WHEN TrangThai = N'Đã hoàn cọc'
                 THEN N'Đã quyết toán'
 
@@ -50,7 +47,7 @@ BEGIN TRY
     /* 4. Thêm DEFAULT mới */
     ALTER TABLE dbo.DoiSoat
     ADD CONSTRAINT DF_DoiSoat_TrangThai
-        DEFAULT N'Chờ phản hồi' FOR TrangThai;
+        DEFAULT N'Chờ xác nhận' FOR TrangThai;
 
     /* 5. Thêm CHECK mới */
     ALTER TABLE dbo.DoiSoat

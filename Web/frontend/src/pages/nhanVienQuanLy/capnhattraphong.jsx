@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { capNhatTraPhongApi } from './capnhattraphong.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import '../nhanVienSale/dangKyTraPhongTab.css';
 
 function fmtDate(d) {
@@ -142,17 +143,16 @@ export default function CapNhatTraPhong() {
           </div>
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TRẠNG THÁI</div>
-            <div className="tp-search-wrap">
-              <select
-                className="ktp-input"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="Chờ hoàn tất">Chờ hoàn tất</option>
-                <option value="Hoàn tất">Hoàn tất</option>
-                <option value="Tất cả">Tất cả</option>
-              </select>
-            </div>
+            <StatusFilterTabs
+              className="tp-search-status-tabs"
+              items={[
+                { key: 'Tất cả', label: 'Tất cả' },
+                { key: 'Chờ hoàn tất', label: 'Chờ hoàn tất' },
+                { key: 'Hoàn tất', label: 'Hoàn tất' }
+              ]}
+              activeKey={filterStatus}
+              onChange={setFilterStatus}
+            />
           </div>
           <button type="submit" className="tp-btn-search" style={{ alignSelf: 'flex-end', height: '42px' }}>
             Tìm kiếm
