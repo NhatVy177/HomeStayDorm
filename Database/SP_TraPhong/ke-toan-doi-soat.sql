@@ -842,11 +842,66 @@ BEGIN
         SET TrangThai = N'Hoàn tất'
         WHERE MaPhieuTra = @MaPhieuTra;
 
-        IF @MaPhieuDatCoc IS NOT NULL
+        IF @MaHopDong IS NULL AND @MaPhieuDatCoc IS NOT NULL
         BEGIN
+            DECLARE @PhongCanCapNhat TABLE (MaPhong VARCHAR(4) PRIMARY KEY);
+
+            INSERT INTO @PhongCanCapNhat (MaPhong)
+            SELECT DISTINCT MaPhong
+            FROM dbo.ChiTietDatCoc
+            WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+
             UPDATE dbo.PhieuDatCoc
             SET TrangThaiCoc = N'Đã hủy'
             WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+
+            UPDATE g
+            SET TinhTrang = N'Trống'
+            FROM dbo.Giuong g
+            INNER JOIN dbo.ChiTietDatCoc ctdc
+                ON ctdc.MaPhong = g.MaPhong
+               AND ctdc.MaGiuong = g.MaGiuong
+            WHERE ctdc.MaPhieuDatCoc = @MaPhieuDatCoc
+              AND ctdc.MaGiuong IS NOT NULL;
+
+            UPDATE g
+            SET TinhTrang = N'Trống'
+            FROM dbo.Giuong g
+            INNER JOIN dbo.ChiTietDatCoc ctdc
+                ON ctdc.MaPhong = g.MaPhong
+               AND ctdc.MaGiuong IS NULL
+            WHERE ctdc.MaPhieuDatCoc = @MaPhieuDatCoc;
+
+            UPDATE p
+            SET
+                TinhTrang =
+                    CASE
+                        WHEN NOT EXISTS (
+                            SELECT 1
+                            FROM dbo.Giuong g
+                            WHERE g.MaPhong = p.MaPhong
+                              AND g.TinhTrang <> N'Trống'
+                        ) THEN N'Trống'
+                        WHEN NOT EXISTS (
+                            SELECT 1
+                            FROM dbo.Giuong g
+                            WHERE g.MaPhong = p.MaPhong
+                              AND g.TinhTrang = N'Trống'
+                        ) THEN N'Đầy'
+                        ELSE N'Còn chỗ'
+                    END,
+                GioiTinhChoPhep =
+                    CASE
+                        WHEN NOT EXISTS (
+                            SELECT 1
+                            FROM dbo.Giuong g
+                            WHERE g.MaPhong = p.MaPhong
+                              AND g.TinhTrang <> N'Trống'
+                        ) THEN N'Không phân biệt'
+                        ELSE p.GioiTinhChoPhep
+                    END
+            FROM dbo.Phong p
+            INNER JOIN @PhongCanCapNhat pc ON pc.MaPhong = p.MaPhong;
         END
 
         COMMIT TRANSACTION;

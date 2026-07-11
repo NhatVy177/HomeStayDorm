@@ -727,6 +727,7 @@ function GhiNhanThanhToanPanel({ type }) {
     refundDetail?.ngayThanhToan
   );
   const showPaymentEvidenceUpload = !isThuThem
+    || refundForm.phuongThucThanhToan === 'Tiền mặt'
     || (!thuThemPaymentMethodLocked && refundForm.phuongThucThanhToan === 'Chuyển khoản');
   const canRejectThuThemProof = Boolean(
     selectedRefund &&

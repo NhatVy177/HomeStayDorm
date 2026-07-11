@@ -24,7 +24,7 @@ BEGIN
     SET TrangThai = @TrangThaiNo
     WHERE TrangThai = @TrangThaiChuaTT
       AND NgayThanhToan IS NULL
-      AND NgayHanTT IS NOT NULL
+      AND NgayHanTT IS NOT NULLphi
       AND CAST(NgayHanTT AS DATE) < CAST(GETDATE() AS DATE);
 
     SET @SoHoaDonCapNhat = @@ROWCOUNT;

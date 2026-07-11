@@ -199,3 +199,94 @@ Error: Lỗi hệ thống: Không thể xếp Nam và Nữ vào cùng một phò
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/hopDong.controller.js:65:20)
 
+2026-07-11T14:20:00.776Z
+RequestError: Timeout: Request failed to complete in 15000ms
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2706:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2026-07-11T14:20:02.741Z
+RequestError: Timeout: Request failed to complete in 15000ms
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2706:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2026-07-11T14:20:02.744Z
+RequestError: Timeout: Request failed to complete in 15000ms
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2706:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2026-07-11T14:20:08.526Z
+RequestError: Timeout: Request failed to complete in 15000ms
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2706:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2026-07-11T14:21:03.703Z
+RequestError: Timeout: Request failed to complete in 15000ms
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2706:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2026-07-11T14:21:03.710Z
+RequestError: Timeout: Request failed to complete in 15000ms
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2706:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2026-07-11T14:21:18.727Z
+RequestError: Timeout: Request failed to complete in 15000ms
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2706:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2026-07-11T14:21:18.731Z
+RequestError: Timeout: Request failed to complete in 15000ms
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2706:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2026-07-11T14:27:01.556Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-11T14:37:52.214Z
+RequestError: Invalid object name 'dbo.ChiTietHopDong'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-11T14:37:52.228Z
+RequestError: Invalid object name 'dbo.ChiTietHopDong'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
