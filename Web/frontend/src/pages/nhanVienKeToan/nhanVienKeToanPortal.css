@@ -2146,15 +2146,19 @@
 .tnp-row-action {
   min-height: 36px;
   padding: 0 14px;
+  width: 160px;
 }
 
 .tnp-row-action.is-muted {
-  background: #536465;
-  color: #ffffff;
+  background: #ffffff;
+  color: #3f494a;
+  border: 1.5px solid #bec8c9;
 }
 
 .tnp-row-action.is-muted:hover {
-  background: #3f5152;
+  background: #f5f7f8;
+  color: #191c1d;
+  border-color: #6f797a;
 }
 
 @media (max-width: 1120px) {

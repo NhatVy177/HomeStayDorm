@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Icon } from './LapPhieuDatCocTab';
 import { thuNhanPhongApi } from './thuNhanPhong.api.js';
 
+// Cấu hình trạng thái thu tiền: chip label, badge label, màu badge (giống DatCocTab).
+const TNP_STATUS_CONFIG = {
+  'Chưa thanh toán': { chip: 'Chờ thu tiền',    badgeLabel: 'Chờ thu tiền',    badge: { bg: '#fff4e5', fg: '#b45309' } },
+  'Đã thanh toán':   { chip: 'Đã thanh toán',   badgeLabel: 'Đã thanh toán',   badge: { bg: '#e6f6ec', fg: '#15803d' } },
+};
+const TNP_STATUS_ORDER = ['Chưa thanh toán', 'Đã thanh toán'];
+
 export default function ThuNhanPhongTab() {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -10,7 +17,7 @@ export default function ThuNhanPhongTab() {
   const [paymentSuccessDialog, setPaymentSuccessDialog] = useState(null);
 
   // Filters
-  const [trangThai, setTrangThai] = useState('Chưa thanh toán');
+  const [trangThai, setTrangThai] = useState('all');
   const [tuKhoa, setTuKhoa] = useState('');
 
   // Modals state
@@ -24,22 +31,20 @@ export default function ThuNhanPhongTab() {
   const [ghiChu, setGhiChu] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Load contracts from API
+  // Load contracts from API — SP mặc định lọc 'Chưa thanh toán' khi NULL,
+  // nên cần gọi 2 lần rồi ghép để chip đếm đúng cả 2 trạng thái.
   const loadContracts = async (override = {}) => {
     try {
       setLoading(true);
       setErrorMsg('');
-      const nextTrangThai = Object.prototype.hasOwnProperty.call(override, 'trangThai')
-        ? override.trangThai
-        : trangThai;
       const nextTuKhoa = Object.prototype.hasOwnProperty.call(override, 'tuKhoa')
         ? override.tuKhoa
         : tuKhoa;
-      const res = await thuNhanPhongApi.getDanhSachHDChoThuDauKy({
-        trangThaiThuTien: nextTrangThai || null,
-        tuKhoa: nextTuKhoa || null
-      });
-      setContracts(res.data || []);
+      const [resChua, resDa] = await Promise.all([
+        thuNhanPhongApi.getDanhSachHDChoThuDauKy({ trangThaiThuTien: 'Chưa thanh toán', tuKhoa: nextTuKhoa || null }),
+        thuNhanPhongApi.getDanhSachHDChoThuDauKy({ trangThaiThuTien: 'Đã thanh toán', tuKhoa: nextTuKhoa || null })
+      ]);
+      setContracts([...(resChua.data || []), ...(resDa.data || [])]);
     } catch (err) {
       console.error(err);
       setErrorMsg(err.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách hợp đồng.');
@@ -50,7 +55,7 @@ export default function ThuNhanPhongTab() {
 
   useEffect(() => {
     loadContracts();
-  }, [trangThai]);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -153,8 +158,8 @@ export default function ThuNhanPhongTab() {
       }
 
       setModalType(null);
-      setTrangThai(nextTrangThai);
-      loadContracts({ trangThai: nextTrangThai });
+      setTrangThai('all');
+      loadContracts();
     } catch (err) {
       console.error(err);
       setNotice({
@@ -186,6 +191,22 @@ export default function ThuNhanPhongTab() {
 
   // Calculate dynamic stats
   const choThuCount = contracts.filter(c => c.TrangThaiThuTien === 'Chưa thanh toán').length;
+
+  // Đếm số lượng theo từng trạng thái (cho chip filter)
+  const statusCounts = (() => {
+    const c = { all: contracts.length };
+    TNP_STATUS_ORDER.forEach((s) => { c[s] = 0; });
+    contracts.forEach((item) => {
+      const key = item.TrangThaiThuTien;
+      if (c[key] != null) c[key] += 1;
+    });
+    return c;
+  })();
+
+  // Danh sách đã lọc theo chip trạng thái (client-side trên data API trả về)
+  const filteredContracts = trangThai === 'all'
+    ? contracts
+    : contracts.filter((c) => c.TrangThaiThuTien === trangThai);
 
   return (
     <div className="ktp-container tnp-page">
@@ -264,20 +285,7 @@ export default function ThuNhanPhongTab() {
         </div>
       )}
 
-      <section className="tnp-hero">
-        <div className="tnp-hero-copy">
-          <span>Thu nhận phòng</span>
-          <h2>Ghi nhận khoản thu kỳ đầu</h2>
-        </div>
-        <article className="tnp-summary-card is-primary" aria-label="Hợp đồng cần thu tiền">
-          <span><Icon name="pending_actions" /></span>
-          <div>
-            <p>Hợp đồng cần thu tiền</p>
-            <strong>{choThuCount}</strong>
-            <small>Cần xử lý</small>
-          </div>
-        </article>
-      </section>
+
 
       <form className="tnp-filter-card" onSubmit={handleSearch}>
         <label className="tnp-search-field">
@@ -292,18 +300,42 @@ export default function ThuNhanPhongTab() {
             />
           </div>
         </label>
-        <label className="tnp-select-field">
-          <span>Trạng thái thu tiền</span>
-          <select value={trangThai} onChange={e => setTrangThai(e.target.value)}>
-            <option value="Chưa thanh toán">Chờ thu tiền</option>
-            <option value="Đã thanh toán">Đã thanh toán</option>
-          </select>
-        </label>
         <button type="submit" className="tnp-filter-submit">
           <Icon name="search" />
           Tìm kiếm
         </button>
       </form>
+
+      {/* Bộ lọc trạng thái dạng chip (giống DatCocTab) */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+        {[{ key: 'all', label: 'Tất cả' }, ...TNP_STATUS_ORDER.map((s) => ({ key: s, label: TNP_STATUS_CONFIG[s].chip }))].map((tab) => {
+          const active = trangThai === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setTrangThai(tab.key)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 600, transition: 'all .15s',
+                border: active ? '1px solid #2f6765' : '1px solid #d7dcdc',
+                background: active ? '#2f6765' : '#fff',
+                color: active ? '#fff' : '#3f494a'
+              }}
+            >
+              {tab.label}
+              <span style={{
+                background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3',
+                color: active ? '#fff' : '#6f797a',
+                borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 700, minWidth: '20px', textAlign: 'center'
+              }}>
+                {statusCounts[tab.key] ?? 0}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Table */}
       <section className="ktp-table-section tnp-table-card">
@@ -331,7 +363,7 @@ export default function ThuNhanPhongTab() {
                 </tr>
               </thead>
               <tbody>
-                {contracts.length === 0 ? (
+                {filteredContracts.length === 0 ? (
                   <tr>
                     <td colSpan="7">
                       <div className="tnp-empty-state">
@@ -342,37 +374,40 @@ export default function ThuNhanPhongTab() {
                     </td>
                   </tr>
                 ) : (
-                  contracts.map(contract => (
-                    <tr key={contract.MaHopDong}>
-                      <td><span className="tnp-contract-code">{contract.MaHopDong}</span></td>
-                      <td>
-                        <div className="tnp-customer-cell">
-                          <div className="ktp-avatar-sm ktp-avatar-secondary">{getInitials(contract.HoTenKhachHang)}</div>
-                          <div>
-                            <p>{contract.HoTenKhachHang}</p>
-                            <small>{contract.SDT}</small>
+                  filteredContracts.map(contract => {
+                    const cfg = TNP_STATUS_CONFIG[contract.TrangThaiThuTien];
+                    const badgeStyle = cfg ? cfg.badge : { bg: '#eef2f3', fg: '#3f494a' };
+                    return (
+                      <tr key={contract.MaHopDong}>
+                        <td><span className="tnp-contract-code">{contract.MaHopDong}</span></td>
+                        <td>
+                          <div className="tnp-customer-cell">
+                            <div>
+                              <p>{contract.HoTenKhachHang}</p>
+                              <small>{contract.SDT}</small>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td>
-                        <p className="tnp-room-cell">{contract.PhongGiuong}</p>
-                      </td>
-                      <td>{formatDate(contract.NgayBatDau)}</td>
-                      <td className="tnp-money-cell">{formatCurrency(contract.TongTien)}</td>
-                      <td className="text-center">
-                        <span className={contract.TrangThaiThuTien === 'Đã thanh toán' ? 'ktp-badge-da-thanh-toan' : 'ktp-badge-chua-thanh-toan'}>
-                          {contract.TrangThaiThuTien}
-                        </span>
-                      </td>
-                      <td className="text-center">
-                        {contract.TrangThaiThuTien === 'Đã thanh toán' ? (
-                          <button className="tnp-row-action is-muted" onClick={() => handleOpenDetailModal(contract.MaHopDong)}>Chi tiết</button>
-                        ) : (
-                          <button className="tnp-row-action" onClick={() => handleOpenCreateModal(contract.MaHopDong)}>Ghi nhận thu tiền</button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td>
+                          <p className="tnp-room-cell">{contract.PhongGiuong}</p>
+                        </td>
+                        <td>{formatDate(contract.NgayBatDau)}</td>
+                        <td className="tnp-money-cell">{formatCurrency(contract.TongTien)}</td>
+                        <td className="text-center">
+                          <span style={{ background: badgeStyle.bg, color: badgeStyle.fg, padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-block', textAlign: 'center' }}>
+                            {cfg ? cfg.badgeLabel : contract.TrangThaiThuTien}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          {contract.TrangThaiThuTien === 'Đã thanh toán' ? (
+                            <button className="tnp-row-action is-muted" onClick={() => handleOpenDetailModal(contract.MaHopDong)}>Xem hóa đơn</button>
+                          ) : (
+                            <button className="tnp-row-action" onClick={() => handleOpenCreateModal(contract.MaHopDong)}>Ghi nhận thu tiền</button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -483,94 +518,163 @@ export default function ThuNhanPhongTab() {
             )}
 
             {/* View Details Modal */}
-            {modalType === 'tnp-detail' && activeDetail && (
-              <>
-                <div className="ktp-modal-header-primary">
-                  <div>
-                    <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff' }}>Chi tiết thu nhận phòng</h3>
-                    <p style={{ fontSize: '14px', margin: '4px 0 0 0', opacity: 0.9 }}>Thông tin chi tiết về hợp đồng và thanh toán</p>
-                  </div>
-                  <button className="ktp-modal-close" onClick={() => setModalType(null)} style={{ color: '#ffffff' }}>
-                    <Icon name="close" />
-                  </button>
-                </div>
-                
-                <div className="ktp-modal-body">
-                  {activeDetail.summary?.TrangThaiThuTien === 'Đã thanh toán' && (
-                    <div
-                      className="ktp-inline-notice ktp-inline-notice-success"
-                      style={{ marginBottom: '18px' }}
-                    >
-                      <div>
-                        <strong>Thu tiền kỳ đầu thành công</strong>
-                        <p>Hợp đồng {activeDetail.summary?.MaHopDong} đã thu tiền kỳ đầu thành công.</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="ktp-flex-between" style={{ marginBottom: '20px' }}>
-                    <span className={activeDetail.summary?.TrangThaiThuTien === 'Đã thanh toán' ? 'ktp-badge-da-thanh-toan' : 'ktp-badge-chua-thanh-toan'}>
-                      {activeDetail.summary?.TrangThaiThuTien}
-                    </span>
-                    <div style={{ textAlign: 'right' }}>
-                      <p className="ktp-mini-label" style={{ margin: 0 }}>Mã hợp đồng</p>
-                      <p style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#00666d' }}>{activeDetail.summary?.MaHopDong}</p>
-                    </div>
-                  </div>
-
-                  <div className="ktp-grid-2" style={{ marginBottom: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div>
-                        <h4 className="ktp-mini-label" style={{ marginBottom: '8px' }}>Thông tin khách hàng</h4>
-                        <div className="ktp-info-box" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <p style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>{activeDetail.summary?.HoTenKhachHang}</p>
-                          <p style={{ margin: 0, fontSize: '13px', color: '#414753' }}>{activeDetail.summary?.SDT}</p>
-                          <p style={{ margin: 0, fontSize: '13px', color: '#414753' }}>{activeDetail.summary?.Email}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="ktp-mini-label" style={{ marginBottom: '8px' }}>Thông tin phòng</h4>
-                        <div className="ktp-info-box" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <p style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>{activeDetail.summary?.PhongGiuong}</p>
-                          <p style={{ margin: 0, fontSize: '13px', color: '#414753' }}>Ngày bắt đầu: {formatDate(activeDetail.summary?.NgayBatDau)}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="ktp-mini-label" style={{ marginBottom: '8px' }}>Chi tiết tài chính</h4>
-                      <div className="ktp-info-box-outline" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px' }}>
-                        <div className="ktp-flex-between"><span style={{ color: '#414753', fontSize: '13px' }}>Tổng khoản thu</span><strong style={{ fontSize: '13px' }}>{formatCurrency(activeDetail.summary?.TongKhoanThu)}</strong></div>
-                        <div className="ktp-flex-between"><span style={{ color: '#414753', fontSize: '13px' }}>Đã thanh toán</span><strong style={{ fontSize: '13px', color: '#00666d' }}>{formatCurrency(activeDetail.summary?.DaThanhToan)}</strong></div>
-                        <div style={{ height: '1px', backgroundColor: '#c1c6d5', margin: '4px 0' }}></div>
-                        <div className="ktp-flex-between"><span style={{ color: '#414753', fontSize: '13px' }}>Phương thức</span><span style={{ fontSize: '13px', fontWeight: '500' }}>{activeDetail.summary?.PhuongThucThanhToan || 'N/A'}</span></div>
-                        <div className="ktp-flex-between"><span style={{ color: '#414753', fontSize: '13px' }}>Ngày thanh toán</span><span style={{ fontSize: '13px', fontWeight: '500' }}>{activeDetail.summary?.NgayThanhToan ? formatDate(activeDetail.summary?.NgayThanhToan) : 'N/A'}</span></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="ktp-mini-label" style={{ marginBottom: '8px' }}>Chi tiết các khoản phí đã thanh toán</h4>
-                    <div className="ktp-info-box-outline" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px' }}>
-                      {(activeDetail.details || []).length === 0 ? (
-                        <p style={{ margin: 0, fontSize: '13px', color: '#6f797a', fontStyle: 'italic' }}>Không có chi tiết dịch vụ đi kèm hóa đơn.</p>
-                      ) : (
-                        (activeDetail.details || []).map((item, idx) => (
-                          <div key={idx} className="ktp-flex-between">
-                            <span style={{ color: '#414753', fontSize: '13px' }}>{item.NoiDung} ({item.SoLuong} {item.DonViTinh})</span>
-                            <strong style={{ fontSize: '13px' }}>{formatCurrency(item.ThanhTien)}</strong>
-                          </div>
-                        ))
+            {modalType === 'tnp-detail' && activeDetail && (() => {
+              const s = activeDetail.summary || {};
+              const isPaid = s.TrangThaiThuTien === 'Đã thanh toán';
+              const badgeCfg = TNP_STATUS_CONFIG[s.TrangThaiThuTien] || { badgeLabel: s.TrangThaiThuTien, badge: { bg: '#eef2f3', fg: '#3f494a' } };
+              return (
+                <>
+                  {/* ── Header ── */}
+                  <div style={{ background: 'linear-gradient(135deg, #00666d 0%, #004d52 100%)', padding: '28px 28px 24px', color: '#fff', position: 'relative' }}>
+                    <button className="ktp-modal-close" onClick={() => setModalType(null)} style={{ color: '#fff', position: 'absolute', top: 16, right: 16 }}>
+                      <Icon name="close" />
+                    </button>
+                    <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.75 }}>Phiếu thu nhận phòng</p>
+                    <h3 style={{ margin: 0, fontSize: '24px', fontWeight: 800, letterSpacing: '-0.01em' }}>{s.MaHopDong}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '14px' }}>
+                      <span style={{ background: isPaid ? 'rgba(134,211,163,0.25)' : 'rgba(255,244,229,0.3)', color: '#fff', padding: '5px 14px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: isPaid ? '#86d3a3' : '#fbbf24', display: 'inline-block' }}></span>
+                        {badgeCfg.badgeLabel}
+                      </span>
+                      {isPaid && s.NgayThanhToan && (
+                        <span style={{ fontSize: '12px', opacity: 0.7 }}>• Ngày TT: {formatDate(s.NgayThanhToan)}</span>
                       )}
                     </div>
                   </div>
-                </div>
 
-                <div className="ktp-modal-footer">
-                  <button type="button" className="ktp-btn-cancel" onClick={() => setModalType(null)} style={{ backgroundColor: '#e1e3e4', border: 'none', cursor: 'pointer' }}>Đóng</button>
-                </div>
-              </>
-            )}
+                  <div className="ktp-modal-body" style={{ padding: '24px 28px', gap: 0, display: 'block' }}>
+                    {/* ── Success banner ── */}
+                    {isPaid && (
+                      <div style={{ background: '#f0faf4', border: '1px solid #a7d7b8', borderRadius: '12px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '22px' }}>
+                        <span style={{ background: '#d4eddf', borderRadius: '10px', width: 38, height: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon name="check_circle" style={{ color: '#15803d', fontSize: '20px' }} />
+                        </span>
+                        <div>
+                          <strong style={{ color: '#15803d', fontSize: '14px', display: 'block', marginBottom: '2px' }}>Đã thu đủ kỳ đầu</strong>
+                          <span style={{ color: '#3f6f54', fontSize: '13px' }}>Hợp đồng {s.MaHopDong} đã hoàn tất thanh toán khoản thu nhận phòng.</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── Customer & Room info ── */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '22px' }}>
+                      {/* Customer card */}
+                      <div style={{ background: '#f8fafb', border: '1px solid #e2e8ea', borderRadius: '12px', padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                          <div style={{ width: 42, height: 42, borderRadius: '12px', background: 'linear-gradient(135deg, #00666d, #008b8b)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '15px', flexShrink: 0 }}>
+                            {getInitials(s.HoTenKhachHang)}
+                          </div>
+                          <div>
+                            <strong style={{ color: '#111819', fontSize: '15px', display: 'block' }}>{s.HoTenKhachHang}</strong>
+                            <span style={{ color: '#6f797a', fontSize: '12px' }}>Khách hàng</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icon name="phone" style={{ fontSize: '16px', color: '#00666d' }} />
+                            <span style={{ fontSize: '13px', color: '#3f494a' }}>{s.SDT || '—'}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icon name="mail" style={{ fontSize: '16px', color: '#00666d' }} />
+                            <span style={{ fontSize: '13px', color: '#3f494a' }}>{s.Email || '—'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Room card */}
+                      <div style={{ background: '#f8fafb', border: '1px solid #e2e8ea', borderRadius: '12px', padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                          <span style={{ width: 42, height: 42, borderRadius: '12px', background: '#edf7f7', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Icon name="meeting_room" style={{ fontSize: '22px', color: '#00666d' }} />
+                          </span>
+                          <div>
+                            <strong style={{ color: '#111819', fontSize: '15px', display: 'block' }}>{s.PhongGiuong}</strong>
+                            <span style={{ color: '#6f797a', fontSize: '12px' }}>Vị trí thuê</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icon name="calendar_today" style={{ fontSize: '16px', color: '#00666d' }} />
+                            <span style={{ fontSize: '13px', color: '#3f494a' }}>Bắt đầu: <strong>{formatDate(s.NgayBatDau)}</strong></span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icon name="payments" style={{ fontSize: '16px', color: '#00666d' }} />
+                            <span style={{ fontSize: '13px', color: '#3f494a' }}>Thanh toán: <strong>{s.PhuongThucThanhToan || 'Chưa ghi nhận'}</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Financial summary ── */}
+                    <div style={{ background: '#ffffff', border: '1px solid #e2e8ea', borderRadius: '12px', overflow: 'hidden', marginBottom: '22px' }}>
+                      <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8ea', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="receipt_long" style={{ fontSize: '18px', color: '#00666d' }} />
+                        <strong style={{ fontSize: '14px', color: '#111819' }}>Tổng hợp tài chính</strong>
+                      </div>
+                      <div style={{ padding: '18px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <span style={{ color: '#6f797a', fontSize: '13px' }}>Tổng khoản thu kỳ đầu</span>
+                          <strong style={{ fontSize: '15px', color: '#111819' }}>{formatCurrency(s.TongKhoanThu)}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                          <span style={{ color: '#6f797a', fontSize: '13px' }}>Đã thanh toán</span>
+                          <strong style={{ fontSize: '15px', color: '#15803d' }}>{formatCurrency(s.DaThanhToan)}</strong>
+                        </div>
+                        <div style={{ height: '1px', background: '#e2e8ea', margin: '0 0 14px' }}></div>
+                        <div style={{ background: isPaid ? '#f0faf4' : '#fff8ec', borderRadius: '10px', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: isPaid ? '#15803d' : '#b45309', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              {isPaid ? 'Đã hoàn tất' : 'Còn thiếu'}
+                            </span>
+                          </div>
+                          <strong style={{ fontSize: '22px', fontWeight: 800, color: isPaid ? '#15803d' : '#b45309' }}>
+                            {isPaid ? formatCurrency(s.DaThanhToan) : formatCurrency((s.TongKhoanThu || 0) - (s.DaThanhToan || 0))}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Fee breakdown ── */}
+                    {(activeDetail.details || []).length > 0 && (
+                      <div style={{ background: '#ffffff', border: '1px solid #e2e8ea', borderRadius: '12px', overflow: 'hidden' }}>
+                        <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8ea', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Icon name="list_alt" style={{ fontSize: '18px', color: '#00666d' }} />
+                          <strong style={{ fontSize: '14px', color: '#111819' }}>Chi tiết các khoản phí</strong>
+                        </div>
+                        <div style={{ padding: '4px 0' }}>
+                          {(activeDetail.details || []).map((item, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                padding: '12px 18px',
+                                borderBottom: idx < (activeDetail.details || []).length - 1 ? '1px solid #f0f2f3' : 'none'
+                              }}
+                            >
+                              <div>
+                                <span style={{ fontSize: '13px', color: '#111819', fontWeight: 600 }}>{item.NoiDung}</span>
+                                <span style={{ fontSize: '12px', color: '#6f797a', marginLeft: '6px' }}>× {item.SoLuong} {item.DonViTinh}</span>
+                              </div>
+                              <strong style={{ fontSize: '14px', color: '#111819' }}>{formatCurrency(item.ThanhTien)}</strong>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="ktp-modal-footer" style={{ padding: '16px 28px', borderTop: '1px solid #e2e8ea' }}>
+                    <button
+                      type="button"
+                      onClick={() => setModalType(null)}
+                      style={{ background: '#2f6765', color: '#fff', border: 'none', padding: '10px 28px', borderRadius: '10px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Icon name="close" style={{ fontSize: '18px' }} /> Đóng
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

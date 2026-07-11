@@ -99,6 +99,8 @@ export default function BanGiaoPhongTab() {
   const [loadingDanhSach, setLoadingDanhSach] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [filterState, setFilterState] = useState('all'); // 'all' | 'cho-thu-tien' | 'da-thanh-toan'
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isReadOnlyHandover = Boolean(hopDong?.daCoBienBanBanGiaoVao || Number(dieuKien?.maLoi) === -5);
 
@@ -121,12 +123,43 @@ export default function BanGiaoPhongTab() {
     )).length;
   }, [danhSachTaiSan]);
 
+  const counts = useMemo(() => {
+    const all = danhSachChoBanGiao.length;
+    const choThuTien = danhSachChoBanGiao.filter((item) => !item.daDongTienDauKy && !item.daBanGiao).length;
+    const daThanhToan = danhSachChoBanGiao.filter((item) => item.daDongTienDauKy && !item.daBanGiao).length;
+    const daBanGiao = danhSachChoBanGiao.filter((item) => item.daBanGiao).length;
+    return { all, 'cho-thu-tien': choThuTien, 'da-thanh-toan': daThanhToan, 'da-ban-giao': daBanGiao };
+  }, [danhSachChoBanGiao]);
+
+  const filteredList = useMemo(() => {
+    let list = danhSachChoBanGiao;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((item) => (
+        String(item.maHopDong || '').toLowerCase().includes(q) ||
+        String(item.hoTen || '').toLowerCase().includes(q) ||
+        String(item.soDienThoai || '').toLowerCase().includes(q) ||
+        String(item.tenPhong || item.maPhong || '').toLowerCase().includes(q)
+      ));
+    }
+    if (filterState === 'cho-thu-tien') {
+      return list.filter((item) => !item.daDongTienDauKy && !item.daBanGiao);
+    }
+    if (filterState === 'da-thanh-toan') {
+      return list.filter((item) => item.daDongTienDauKy && !item.daBanGiao);
+    }
+    if (filterState === 'da-ban-giao') {
+      return list.filter((item) => item.daBanGiao);
+    }
+    return list;
+  }, [danhSachChoBanGiao, filterState, searchQuery]);
+
   const fetchDanhSachChoBanGiao = async () => {
     setLoadingDanhSach(true);
     try {
       const res = await banGiaoPhongApi.getDanhSachChoBanGiao();
       setDanhSachChoBanGiao((res.data || []).filter((item) => (
-        Boolean(item.daDongTienDauKy) && Boolean(item.tinhTrangGiuongHopLe) && !isFutureDate(item.ngayBatDau)
+        Boolean(item.tinhTrangGiuongHopLe) && !isFutureDate(item.ngayBatDau)
       )));
     } catch (error) {
       setNotice({
@@ -165,16 +198,29 @@ export default function BanGiaoPhongTab() {
       setDieuKien(futureStartMessage
         ? { ...(res.data.dieuKien || {}), hopLe: false, maLoi: -16, thongBao: futureStartMessage }
         : res.data.dieuKien);
+      if (res.data.hopDong?.daCoBienBanBanGiaoVao) {
+        setKhachCoMat(res.data.hopDong.khachCoMat ?? true);
+        setDaKyBienBan(res.data.hopDong.daKyBienBan ?? true);
+        setGhiChuChung(res.data.hopDong.ghiChuChung || '');
+      } else {
+        setKhachCoMat(true);
+        setDaKyBienBan(true);
+        setGhiChuChung('');
+      }
       setDanhSachTaiSan((res.data.danhSachTaiSan || []).map((item) => ({
         ...item,
         soLuongThucTe: item.soLuongThucTe ?? item.soLuongHeThong ?? 0,
         ghiChu: item.ghiChu || ''
       })));
-      setNotice({
-        type: !futureStartMessage && res.data.dieuKien?.hopLe ? 'success' : 'warning',
-        title: !futureStartMessage && res.data.dieuKien?.hopLe ? 'Hợp đồng đủ điều kiện' : 'Chưa thể bàn giao',
-        message: futureStartMessage || res.data.dieuKien?.thongBao || 'Đã tải thông tin hợp đồng.'
-      });
+      if (!res.data.hopDong?.daCoBienBanBanGiaoVao) {
+        setNotice({
+          type: !futureStartMessage && res.data.dieuKien?.hopLe ? 'success' : 'warning',
+          title: !futureStartMessage && res.data.dieuKien?.hopLe ? 'Hợp đồng đủ điều kiện' : 'Chưa thể bàn giao',
+          message: futureStartMessage || res.data.dieuKien?.thongBao || 'Đã tải thông tin hợp đồng.'
+        });
+      } else {
+        setNotice(null);
+      }
     } catch (error) {
       setNotice({ type: 'error', title: 'Không tra cứu được', message: getErrorMessage(error, 'Không tìm thấy hợp đồng cần bàn giao.') });
     } finally {
@@ -261,9 +307,38 @@ export default function BanGiaoPhongTab() {
     setSuccessDialog(null);
   };
 
+  const FlatSummaryCard = ({ icon, title, children, accentColor }) => (
+    <div style={{
+      backgroundColor: '#f5fbfb',
+      border: '1px solid #e0ebed',
+      borderRadius: '12px',
+      padding: '18px 20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '14px'
+    }}>
+      <h4 style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontSize: '14px',
+        fontWeight: '700',
+        color: accentColor,
+        margin: 0,
+        borderBottom: '1px solid #e0ebed',
+        paddingBottom: '10px'
+      }}>
+        <Icon name={icon} /> {title}
+      </h4>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {children}
+      </div>
+    </div>
+  );
+
   return (
     <div className="ktp-container handover-tab">
-      {notice && (
+      {!hopDong && notice && (
         <div className={`ktp-inline-notice ktp-inline-notice-${notice.type}`} style={{ marginBottom: '16px' }}>
           <div>
             <strong>{notice.title}</strong>
@@ -316,44 +391,28 @@ export default function BanGiaoPhongTab() {
         </div>
       )}
 
-      <div className="ktp-section handover-search-card">
-        <div className="handover-search-copy">
-          <span>Lập biên bản bàn giao</span>
-          <h2>Chọn hợp đồng đã sẵn sàng nhận phòng</h2>
-          <p>Tra cứu nhanh theo mã hợp đồng hoặc chọn trực tiếp từ danh sách đủ điều kiện bên dưới.</p>
-        </div>
-        <div className="handover-search-row">
-          <div className="handover-search-field">
-            <label className="ktp-label">Mã hợp đồng cần bàn giao</label>
+      {!hopDong && (
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px 24px', borderRadius: '12px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', border: '1px solid #e0ebed' }}>
+          <div style={{ flex: '1 1 300px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#00666d', marginBottom: '8px' }}>Tìm kiếm nhanh</label>
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Nhập mã hợp đồng, tên khách hàng, số điện thoại hoặc tên phòng..."
               className="ktp-input"
-              value={maHopDong}
-              placeholder="Nhập mã hợp đồng tại đây..."
-              onChange={(event) => setMaHopDong(event.target.value.toUpperCase())}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') handleSearch();
-              }}
+              style={{ width: '100%', backgroundColor: '#fff', border: '1px solid #bec8c9', borderRadius: '8px', padding: '10px 12px' }}
             />
           </div>
-          <button
-            type="button"
-            className="ktp-btn-submit"
-            style={{ padding: '10px 24px', whiteSpace: 'nowrap' }}
-            onClick={() => handleSearch()}
-            disabled={loading}
-          >
-            {loading ? 'Đang kiểm tra...' : 'Kiểm tra hợp đồng'}
-          </button>
         </div>
-      </div>
+      )}
 
       {!hopDong && (
         <section className="ktp-table-section handover-queue-card">
           <div className="handover-queue-head">
             <div>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#191c1d' }}>Hợp đồng có thể bàn giao</h3>
-              <p style={{ margin: '6px 0 0 0', color: '#6f797a', fontSize: '13px' }}>Đã thu tiền kỳ đầu, chưa lập biên bản bàn giao vào và phòng/giường đang chờ bàn giao.</p>
+              <p style={{ margin: '6px 0 0 0', color: '#6f797a', fontSize: '13px' }}>Danh sách hợp đồng chờ bàn giao vào phòng/giường.</p>
             </div>
             <button
               type="button"
@@ -364,6 +423,54 @@ export default function BanGiaoPhongTab() {
               {loadingDanhSach ? 'Đang tải...' : 'Làm mới'}
             </button>
           </div>
+
+          {/* Segmented control: lọc theo trạng thái + số đếm */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '16px 24px 8px 24px' }}>
+            {[
+              { key: 'all', label: 'Tất cả' },
+              { key: 'cho-thu-tien', label: 'Chờ thanh toán' },
+              { key: 'da-thanh-toan', label: 'Chờ bàn giao' },
+              { key: 'da-ban-giao', label: 'Đã bàn giao' }
+            ].map((tab) => {
+              const active = filterState === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setFilterState(tab.key)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    borderRadius: '999px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    transition: 'all .15s',
+                    border: active ? '1px solid #00666d' : '1px solid #d7dcdc',
+                    background: active ? '#00666d' : '#fff',
+                    color: active ? '#fff' : '#3f494a'
+                  }}
+                >
+                  {tab.label}
+                  <span style={{
+                    background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3',
+                    color: active ? '#fff' : '#6f797a',
+                    borderRadius: '999px',
+                    padding: '1px 8px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: '20px',
+                    textAlign: 'center'
+                  }}>
+                    {counts[tab.key] ?? 0}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           <div className="handover-table-scroll">
             <table className="ktp-table">
               <thead>
@@ -381,11 +488,11 @@ export default function BanGiaoPhongTab() {
                   <tr>
                     <td colSpan="6" style={{ textAlign: 'center', color: '#6f797a', padding: '28px' }}>Đang tải danh sách hợp đồng...</td>
                   </tr>
-                ) : danhSachChoBanGiao.length === 0 ? (
+                ) : filteredList.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', color: '#6f797a', padding: '28px' }}>Chưa có hợp đồng nào đủ điều kiện bàn giao.</td>
+                    <td colSpan="6" style={{ textAlign: 'center', color: '#6f797a', padding: '28px' }}>Không có hợp đồng nào thuộc trạng thái này.</td>
                   </tr>
-                ) : danhSachChoBanGiao.map((item) => (
+                ) : filteredList.map((item) => (
                   <tr key={`${item.maHopDong}-${item.maPhong}-${item.maGiuong || 'phong'}`}>
                     <td style={{ fontWeight: 700, color: '#00666d' }}>{item.maHopDong}</td>
                     <td>
@@ -400,20 +507,79 @@ export default function BanGiaoPhongTab() {
                     </td>
                     <td>{formatDate(item.ngayBatDau)}</td>
                     <td className="text-center">
-                      <span style={{ backgroundColor: '#f6feff', color: '#004c52', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, border: '1px solid #86d3da' }}>
-                        Sẵn sàng
-                      </span>
+                      {item.daBanGiao ? (
+                        <span style={{
+                          backgroundColor: '#e8f4f4',
+                          color: '#00666d',
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          display: 'inline-block'
+                        }}>
+                          Đã bàn giao
+                        </span>
+                      ) : item.daDongTienDauKy ? (
+                        <span style={{
+                          backgroundColor: '#e6f6ec',
+                          color: '#15803d',
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          display: 'inline-block'
+                        }}>
+                          Chờ bàn giao
+                        </span>
+                      ) : (
+                        <span style={{
+                          backgroundColor: '#fff8e1',
+                          color: '#f57f17',
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          display: 'inline-block'
+                        }}>
+                          Chờ thanh toán
+                        </span>
+                      )}
                     </td>
                     <td className="text-center" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        className="ktp-btn-submit"
-                        style={{ padding: '8px 14px', minWidth: '92px' }}
-                        onClick={() => handleSearch(item.maHopDong)}
-                        disabled={loading}
-                      >
-                        Bàn giao
-                      </button>
+                      {item.daBanGiao ? (
+                        <button
+                          type="button"
+                          className="ktp-btn-outline"
+                          style={{
+                            padding: '8px 14px',
+                            minWidth: '92px',
+                            border: '1.5px solid #bec8c9',
+                            color: '#3f494a',
+                            backgroundColor: '#ffffff',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            fontSize: '13px'
+                          }}
+                          onClick={() => handleSearch(item.maHopDong)}
+                          disabled={loading}
+                        >
+                          Xem biên bản
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="ktp-btn-submit"
+                          style={{ padding: '8px 14px', minWidth: '92px' }}
+                          onClick={() => handleSearch(item.maHopDong)}
+                          disabled={loading || !item.daDongTienDauKy}
+                        >
+                          Bàn giao
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -423,22 +589,217 @@ export default function BanGiaoPhongTab() {
         </section>
       )}
 
-      {hopDong && (
+      {/* POPUP XEM BIÊN BẢN (READ-ONLY) */}
+      {hopDong && isReadOnlyHandover && (
+        <div className="ktp-modal-overlay" onClick={resetForm} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(25, 28, 29, 0.55)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(3px)' }}>
+          <div className="ktp-modal-content" onClick={(e) => e.stopPropagation()} style={{ width: '880px', maxWidth: '95%', maxHeight: '85vh', backgroundColor: '#ffffff', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRadius: '16px', boxShadow: '0 24px 64px rgba(0, 50, 54, 0.12)', border: '1px solid #e0ebed', animation: 'fadeIn 0.2s forwards' }}>
+            
+            {/* Header */}
+            <div style={{ padding: '20px 28px', backgroundColor: '#ffffff', color: '#00666d', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid #eef2f2' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>Biên bản bàn giao vào: {hopDong.maHopDong}</h3>
+              </div>
+              <button onClick={resetForm} style={{ background: 'none', border: 'none', color: '#6f797a', cursor: 'pointer', display: 'flex', fontSize: '24px', transition: 'color 0.15s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#00666d'} onMouseLeave={(e) => e.currentTarget.style.color = '#6f797a'}>
+                <Icon name="close" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              {/* Flat cards grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+                <FlatSummaryCard icon="description" title="Thông tin hợp đồng" accentColor="#00666d">
+                  <InfoRow label="Mã HĐ:" value={hopDong.maHopDong} />
+                  <InfoRow label="Trạng thái:" value={hopDong.trangThaiHopDong} badge={hopDong.trangThaiHopDong === 'Hiệu lực' ? 'success' : 'warning'} />
+                  <InfoRow label="Ngày bắt đầu:" value={formatDate(hopDong.ngayBatDau)} />
+                  <InfoRow label="Thời hạn:" value={`${hopDong.thoiHanThue || 0} tháng`} />
+                </FlatSummaryCard>
+
+                <FlatSummaryCard icon="person" title="Thông tin khách thuê" accentColor="#2f6765">
+                  <InfoRow label="Họ tên:" value={hopDong.hoTenKhachHang} />
+                  <InfoRow label="SĐT:" value={hopDong.sdt} />
+                  <InfoRow label="Số người ở:" value={`${Math.max(Number(hopDong.soNguoiO) || 0, 1)} người`} />
+                  <InfoRow label="Hóa đơn kỳ đầu:" value={hopDong.trangThaiHoaDonKyDau} badge={hopDong.trangThaiHoaDonKyDau === 'Đã TT' ? 'success' : 'warning'} />
+                </FlatSummaryCard>
+
+                <FlatSummaryCard icon="bed" title="Thông tin phòng/giường" accentColor="#4d777c">
+                  <InfoRow label="Chi nhánh:" value={hopDong.tenChiNhanh} />
+                  <InfoRow label="Hình thức:" value={getScopeLabel(hopDong.danhSachGiuong)} badge="success" />
+                  <InfoRow label="Phòng:" value={hopDong.tenPhong || hopDong.maPhong} />
+                  <InfoRow label="Phạm vi:" value={isWholeRoomValue(hopDong.danhSachGiuong) ? 'Toàn bộ phòng' : `Giường ${hopDong.danhSachGiuong}`} />
+                  <InfoRow label="Trạng thái:" value="Đã lập HĐ" badge={hopDong.coTheBanGiao ? 'success' : 'warning'} />
+                </FlatSummaryCard>
+              </div>
+
+              {/* Workspace flat borderless container */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #00666d', paddingBottom: '12px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#191c1d', margin: 0 }}>
+                      Thông tin biên bản bàn giao
+                    </h3>
+                    <p style={{ fontSize: '13px', color: '#6f797a', margin: '4px 0 0 0' }}>
+                      Danh sách tài sản và kết quả kiểm kê thực tế.
+                    </p>
+                  </div>
+                  <div className="handover-pills">
+                    <span className="handover-pill" style={{ backgroundColor: '#f0f7f7', color: '#00666d' }}>
+                      <Icon name={isWholeRoomValue(hopDong.danhSachGiuong) ? 'home' : 'bed'} />
+                      {getScopeLabel(hopDong.danhSachGiuong)}
+                    </span>
+                    <span className={`handover-pill ${assetNoteCount > 0 ? 'is-warning' : ''}`} style={{ backgroundColor: assetNoteCount > 0 ? '#fff8e1' : '#f0f7f7', color: assetNoteCount > 0 ? '#b93c00' : '#00666d' }}>
+                      <Icon name="edit_note" />
+                      {assetNoteCount > 0 ? `${assetNoteCount} tài sản cần ghi chú` : 'Chưa có chênh lệch'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="handover-table-scroll">
+                  <table className="ktp-table" style={{ tableLayout: 'fixed', minWidth: '800px' }}>
+                    <thead style={{ backgroundColor: '#f5fbfb' }}>
+                      <tr>
+                        <th style={{ width: '110px', color: '#00666d' }}>Mã tài sản</th>
+                        <th style={{ width: '240px', color: '#00666d' }}>Tên tài sản</th>
+                        <th style={{ width: '170px', color: '#00666d' }}>Phạm vi</th>
+                        <th style={{ width: '210px', color: '#00666d' }}>Kiểm kê</th>
+                        <th style={{ width: '320px', color: '#00666d' }}>Ghi chú khi chênh lệch</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {danhSachTaiSan.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" style={{ textAlign: 'center', color: '#6f797a', padding: '28px' }}>
+                            Chưa có tài sản bàn giao cho hợp đồng này.
+                          </td>
+                        </tr>
+                      ) : danhSachTaiSan.map((item, index) => {
+                        const hasDifference = Number(item.soLuongThucTe) !== Number(item.soLuongHeThong);
+                        return (
+                          <tr key={`${item.maPhong}-${item.maTaiSan}-${index}`} style={{ backgroundColor: hasDifference ? '#fffaf3' : '#ffffff' }}>
+                            <td style={{ fontWeight: 700, color: '#00666d', verticalAlign: 'middle' }}>{item.maTaiSan}</td>
+                            <td style={{ fontWeight: 700, color: '#191c1d', verticalAlign: 'middle' }}>{item.tenTaiSan}</td>
+                            <td style={{ verticalAlign: 'middle' }}>
+                              <div style={{ fontWeight: 600, color: '#191c1d' }}>{item.tenPhong || item.maPhong}</div>
+                              {!isWholeRoomValue(item.maGiuong) && (
+                                <div style={{ fontSize: '12px', color: '#6f797a', fontWeight: 500 }}>
+                                  Giường {item.maGiuong}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ verticalAlign: 'middle' }}>
+                              {hasDifference ? (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                                  <span style={{ color: '#6f797a' }}>Định mức:</span>
+                                  <strong style={{ color: '#191c1d' }}>{item.soLuongHeThong}</strong>
+                                  <span style={{ color: '#8a9495' }}>→</span>
+                                  <span style={{ color: '#b93c00', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, backgroundColor: '#fff0e6', padding: '4px 10px', borderRadius: '12px', fontSize: '12px' }}>
+                                    <Icon name="warning" style={{ fontSize: '14px' }} /> {item.soLuongThucTe}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                                  <span style={{ color: '#6f797a' }}>Định mức:</span>
+                                  <strong style={{ color: '#191c1d' }}>{item.soLuongHeThong}</strong>
+                                  <span style={{ color: '#8a9495' }}>|</span>
+                                  <span style={{ color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, backgroundColor: '#e6f6ec', padding: '4px 10px', borderRadius: '12px', fontSize: '12px' }}>
+                                    <Icon name="check" style={{ fontSize: '14px' }} /> {item.soLuongThucTe}
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ verticalAlign: 'middle' }}>
+                              <span style={{
+                                color: item.ghiChu ? '#191c1d' : '#8a9495',
+                                fontStyle: item.ghiChu ? 'normal' : 'italic',
+                                fontSize: '13px',
+                                fontWeight: item.ghiChu ? 600 : 400
+                              }}>
+                                {item.ghiChu || '—'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#191c1d', margin: 0 }}>Xác nhận & Chữ ký</h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div style={{ border: '1px solid #e0ebed', backgroundColor: '#f5fbfb', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00666d', fontWeight: 800, fontSize: '14px' }}>
+                        <Icon name="check_circle" /> Xác nhận từ Quản lý
+                      </div>
+                      <span style={{ color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '13px', backgroundColor: '#e6f6ec', padding: '6px 12px', borderRadius: '8px', width: 'fit-content' }}>
+                        <Icon name="check" style={{ fontSize: '16px' }} /> Đã kiểm kê tài sản & thông tin bàn giao
+                      </span>
+                    </div>
+
+                    <div style={{ border: '1px solid #e0ebed', backgroundColor: '#f5fbfb', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2f6765', fontWeight: 800, fontSize: '14px' }}>
+                        <Icon name="person" /> Xác nhận từ Khách thuê
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ color: khachCoMat ? '#15803d' : '#b93c00', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '13px', backgroundColor: khachCoMat ? '#e6f6ec' : '#fff0e6', padding: '6px 12px', borderRadius: '8px' }}>
+                          <Icon name={khachCoMat ? "check" : "close"} style={{ fontSize: '16px' }} /> Khách hàng {khachCoMat ? "có mặt" : "vắng mặt"}
+                        </span>
+                        <span style={{ color: daKyBienBan ? '#15803d' : '#b93c00', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '13px', backgroundColor: daKyBienBan ? '#e6f6ec' : '#fff0e6', padding: '6px 12px', borderRadius: '8px' }}>
+                          <Icon name={daKyBienBan ? "assignment_turned_in" : "close"} style={{ fontSize: '16px' }} /> {daKyBienBan ? "Đã ký biên bản" : "Chưa ký biên bản"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="ktp-label" style={{ fontWeight: 800, color: '#191c1d', marginBottom: '8px', display: 'block' }}>Ghi chú chung của biên bản</label>
+                    <div style={{
+                      padding: '14px 18px',
+                      borderLeft: '4px solid #00666d',
+                      backgroundColor: '#f5fbfb',
+                      borderRadius: '0 12px 12px 0',
+                      fontSize: '13px',
+                      color: ghiChuChung ? '#191c1d' : '#6f797a',
+                      fontStyle: ghiChuChung ? 'normal' : 'italic',
+                      lineHeight: 1.6
+                    }}>
+                      {ghiChuChung || 'Không có ghi chú chung cho biên bản bàn giao này.'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 28px', backgroundColor: '#ffffff', borderTop: '1px solid #eef2f2', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="ktp-btn-submit"
+                style={{ padding: '10px 28px', borderRadius: '8px', fontWeight: 700 }}
+                onClick={resetForm}
+              >
+                Đóng
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* LẬP BIÊN BẢN BÀN GIAO (INLINE FORM) */}
+      {hopDong && !isReadOnlyHandover && (
         <>
           <div className="handover-current-banner">
             <div style={{ color: '#00666d', fontWeight: 700 }}>
-              {isReadOnlyHandover ? 'Hợp đồng đã lập biên bản bàn giao' : 'Đang lập biên bản cho hợp đồng'} {hopDong.maHopDong}
+              Đang lập biên bản cho hợp đồng {hopDong.maHopDong}
             </div>
             <button
               type="button"
               style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #bec8c9', backgroundColor: '#ffffff', color: '#00666d', fontWeight: 700, cursor: 'pointer' }}
-              onClick={() => {
-                setHopDong(null);
-                setDieuKien(null);
-                setDanhSachTaiSan([]);
-                setGhiChuChung('');
-                setNotice(null);
-              }}
+              onClick={resetForm}
             >
               Chọn hợp đồng khác
             </button>
@@ -473,12 +834,10 @@ export default function BanGiaoPhongTab() {
               <div className="handover-form-head-row">
                 <div>
                   <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#191c1d', margin: 0 }}>
-                    {isReadOnlyHandover ? 'Thông tin biên bản bàn giao' : 'Lập biên bản bàn giao'}
+                    Lập biên bản bàn giao
                   </h3>
                   <p style={{ fontSize: '13px', color: '#6f797a', margin: '6px 0 0 0' }}>
-                    {isReadOnlyHandover
-                      ? 'Hợp đồng đã có biên bản bàn giao vào nên thông tin chỉ được xem lại.'
-                      : isWholeRoomValue(hopDong.danhSachGiuong)
+                    {isWholeRoomValue(hopDong.danhSachGiuong)
                       ? 'Kiểm kê toàn bộ tài sản thuộc phòng khi khách thuê nguyên căn.'
                       : 'Kiểm kê tài sản cá nhân theo giường và tài sản chung của phòng.'}
                   </p>
@@ -493,8 +852,8 @@ export default function BanGiaoPhongTab() {
                     {assetNoteCount > 0 ? `${assetNoteCount} tài sản cần ghi chú` : 'Chưa có chênh lệch'}
                   </span>
                   <span className={`handover-pill ${dieuKien?.hopLe ? '' : 'is-warning'}`}>
-                  <Icon name={dieuKien?.hopLe ? 'check_circle' : 'error_outline'} />
-                  {dieuKien?.hopLe ? 'Đủ điều kiện bàn giao' : 'Cần kiểm tra điều kiện'}
+                    <Icon name={dieuKien?.hopLe ? 'check_circle' : 'error_outline'} />
+                    {dieuKien?.hopLe ? 'Đủ điều kiện bàn giao' : 'Cần kiểm tra điều kiện'}
                   </span>
                 </div>
               </div>
@@ -552,7 +911,6 @@ export default function BanGiaoPhongTab() {
                               type="number"
                               min="0"
                               value={item.soLuongThucTe}
-                              disabled={isReadOnlyHandover}
                               onChange={(event) => updateAsset(index, 'soLuongThucTe', event.target.value)}
                               style={{
                                 width: '74px',
@@ -563,8 +921,7 @@ export default function BanGiaoPhongTab() {
                                 outline: 'none',
                                 fontWeight: 700,
                                 color: hasDifference ? '#9b4922' : '#191c1d',
-                                backgroundColor: isReadOnlyHandover ? '#f1f3f4' : '#ffffff',
-                                cursor: isReadOnlyHandover ? 'not-allowed' : 'text'
+                                backgroundColor: '#ffffff'
                               }}
                             />
                           </div>
@@ -573,7 +930,6 @@ export default function BanGiaoPhongTab() {
                           <input
                             type="text"
                             value={item.ghiChu}
-                            disabled={isReadOnlyHandover}
                             onChange={(event) => updateAsset(index, 'ghiChu', event.target.value)}
                             placeholder={hasDifference ? 'Bắt buộc nhập lý do chênh lệch' : 'Không bắt buộc'}
                             style={{
@@ -584,8 +940,7 @@ export default function BanGiaoPhongTab() {
                               borderRadius: '6px',
                               outline: 'none',
                               boxSizing: 'border-box',
-                              backgroundColor: isReadOnlyHandover ? '#f1f3f4' : (missingNote ? '#fff8f7' : '#ffffff'),
-                              cursor: isReadOnlyHandover ? 'not-allowed' : 'text'
+                              backgroundColor: missingNote ? '#fff8f7' : '#ffffff'
                             }}
                           />
                         </td>
@@ -604,12 +959,11 @@ export default function BanGiaoPhongTab() {
                     <Icon name="check_circle" /> Quản lý xác nhận
                   </div>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={quanLyXacNhan}
-                        disabled={isReadOnlyHandover}
-                        onChange={(event) => setQuanLyXacNhan(event.target.checked)}
-                        style={{ width: '20px', height: '20px', accentColor: '#00666d' }}
+                    <input
+                      type="checkbox"
+                      checked={quanLyXacNhan}
+                      onChange={(event) => setQuanLyXacNhan(event.target.checked)}
+                      style={{ width: '20px', height: '20px', accentColor: '#00666d' }}
                     />
                     <span style={{ fontSize: '14px', color: '#191c1d' }}>Đã kiểm kê tài sản và thông tin bàn giao</span>
                   </label>
@@ -624,7 +978,6 @@ export default function BanGiaoPhongTab() {
                       <input
                         type="checkbox"
                         checked={khachCoMat}
-                        disabled={isReadOnlyHandover}
                         onChange={(event) => setKhachCoMat(event.target.checked)}
                         style={{ width: '20px', height: '20px', accentColor: '#00666d' }}
                       />
@@ -634,7 +987,6 @@ export default function BanGiaoPhongTab() {
                       <input
                         type="checkbox"
                         checked={daKyBienBan}
-                        disabled={isReadOnlyHandover}
                         onChange={(event) => setDaKyBienBan(event.target.checked)}
                         style={{ width: '20px', height: '20px', accentColor: '#00666d' }}
                       />
@@ -649,32 +1001,29 @@ export default function BanGiaoPhongTab() {
                 className="ktp-input"
                 value={ghiChuChung}
                 placeholder="Nhập ghi chú chung cho biên bản..."
-                disabled={isReadOnlyHandover}
                 style={{ minHeight: '92px', resize: 'vertical' }}
                 onChange={(event) => setGhiChuChung(event.target.value)}
               />
             </div>
 
-            {!isReadOnlyHandover && (
-              <div style={{ padding: '16px 24px', backgroundColor: '#f8f9fa', borderTop: '1px solid #e1e3e4', display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  style={{ padding: '10px 24px', borderRadius: '8px', border: '1px solid #bec8c9', backgroundColor: 'transparent', color: '#3f494a', fontWeight: '600', cursor: 'pointer' }}
-                  onClick={resetForm}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="button"
-                  className="ktp-btn-submit"
-                  style={{ padding: '10px 24px' }}
-                  disabled={!canSubmit}
-                  onClick={handleSubmit}
-                >
-                  {saving ? 'Đang lưu...' : 'Lưu biên bản'}
-                </button>
-              </div>
-            )}
+            <div style={{ padding: '16px 24px', backgroundColor: '#f8f9fa', borderTop: '1px solid #e1e3e4', display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                style={{ padding: '10px 24px', borderRadius: '8px', border: '1px solid #bec8c9', backgroundColor: 'transparent', color: '#3f494a', fontWeight: '600', cursor: 'pointer' }}
+                onClick={resetForm}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="ktp-btn-submit"
+                style={{ padding: '10px 24px' }}
+                disabled={!canSubmit}
+                onClick={handleSubmit}
+              >
+                {saving ? 'Đang lưu...' : 'Lưu biên bản'}
+              </button>
+            </div>
           </div>
         </>
       )}

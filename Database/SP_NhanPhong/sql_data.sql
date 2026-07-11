@@ -67,21 +67,24 @@ BEGIN TRY
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
        OR MaChiTietDVHD IN ('VH9081', 'VH9082', 'VH9083', 'VH9091', 'VH9092', 'VH9093', 'VH9101', 'VH9102', 'VH9103');
 
+    DELETE FROM dbo.QuiDinhHopDong
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts);
+
+    DELETE FROM dbo.DieuKhoanViPhamHopDong
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts);
+
     DELETE FROM dbo.HopDongThue
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
        OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
 
-    IF OBJECT_ID(N'dbo.ThanhVienCuTru', N'U') IS NOT NULL
-    BEGIN
-        DELETE FROM dbo.ThanhVienCuTru
-        WHERE MaHoSoCuTru IN (
-                SELECT MaHoSoCuTru
-                FROM dbo.HoSoCuTru
-                WHERE MaHoSoCuTru IN ('CT9098', 'CT9099', 'CT9100')
-                   OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101')
-            )
-           OR MaThanhVienCuTru IN ('TC9098', 'TC9099', 'TC9101', 'TC9102');
-    END
+    DELETE FROM dbo.ThanhVienHopDong
+    WHERE MaHoSoCuTru IN (
+            SELECT MaHoSoCuTru
+            FROM dbo.HoSoCuTru
+            WHERE MaHoSoCuTru IN ('CT9098', 'CT9099', 'CT9100')
+               OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101')
+        )
+       OR MaThanhVien IN ('TV9098', 'TV9099', 'TV9101', 'TV9102');
 
     IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NOT NULL
     BEGIN
@@ -278,22 +281,19 @@ BEGIN
          N'Đã đối chiếu giấy tờ nhóm thuê nguyên căn.', N'Cả nhóm đủ điều kiện lưu trú.');
 END
 
-IF OBJECT_ID(N'dbo.ThanhVienCuTru', N'U') IS NOT NULL
-BEGIN
-    INSERT INTO dbo.ThanhVienCuTru (
-        MaThanhVienCuTru, MaHoSoCuTru, HoTen, NgaySinh, GioiTinh,
-        CCCD, SDT, Email, QuocTich, TrangThaiDuyet, LyDoTuChoi
-    )
+INSERT INTO dbo.ThanhVienHopDong (
+    MaThanhVien, MaHoSoCuTru, MaHopDong, HoTen, NgaySinh, GioiTinh,
+    CCCD, SDT, Email, QuocTich, TrangThai, LyDoTuChoi
+)
 VALUES
-        ('TC9098', 'CT9098', N'Nguyễn Minh Ngân', '2001-05-12', N'Nữ',
-         '079200009098', '0988009098', 'kh9098@homedorm.vn', N'Việt Nam', N'Đủ điều kiện', NULL),
-        ('TC9099', 'CT9099', N'Lê Hoàng Bàn Giao', '2000-09-20', N'Nam',
-         '079200009099', '0988009099', 'kh9099@homedorm.vn', N'Việt Nam', N'Đủ điều kiện', NULL),
-        ('TC9101', 'CT9100', N'Trần Mai Nguyên Căn', '2001-11-18', N'Nữ',
-         '079200009100', '0988009100', 'kh9100@homedorm.vn', N'Việt Nam', N'Đủ điều kiện', NULL),
-        ('TC9102', 'CT9100', N'Phạm Thu Hòa', '2002-03-09', N'Nữ',
-         '079200009101', '0988009101', 'hoa9100@homedorm.vn', N'Việt Nam', N'Đủ điều kiện', NULL);
-END
+    ('TV9098', 'CT9098', NULL, N'Nguyễn Minh Ngân', '2001-05-12', N'Nữ',
+     '079200009098', '0988009098', 'kh9098@homedorm.vn', N'Việt Nam', N'Đủ điều kiện', NULL),
+    ('TV9099', 'CT9099', NULL, N'Lê Hoàng Bàn Giao', '2000-09-20', N'Nam',
+     '079200009099', '0988009099', 'kh9099@homedorm.vn', N'Việt Nam', N'Đủ điều kiện', NULL),
+    ('TV9101', 'CT9100', NULL, N'Trần Mai Nguyên Căn', '2001-11-18', N'Nữ',
+     '079200009100', '0988009100', 'kh9100@homedorm.vn', N'Việt Nam', N'Đủ điều kiện', NULL),
+    ('TV9102', 'CT9100', NULL, N'Phạm Thu Hòa', '2002-03-09', N'Nữ',
+     '079200009101', '0988009101', 'hoa9100@homedorm.vn', N'Việt Nam', N'Đủ điều kiện', NULL);
 GO
 
 /* ============================================================
@@ -312,19 +312,17 @@ VALUES
     ('HD9100', '2026-06-25', '2026-07-01', '2027-01-01',
      2, 4400000, N'Hàng tháng', N'Hiệu lực', 'DC9100', 'KH9100', 'NV0003');
 
-INSERT INTO dbo.ThanhVienHopDong (
-    MaThanhVien, HoTen, NgaySinh, GioiTinh, CCCD, SDT, Email,
-    QuocTich, TrangThai, MaHopDong
-)
-VALUES
-    ('TV9098', N'Nguyễn Minh Ngân', '2001-05-12', N'Nữ', '079200009098', '0988009098', 'kh9098@homedorm.vn',
-     N'Việt Nam', N'Đang ở', 'HD9098'),
-    ('TV9099', N'Lê Hoàng Bàn Giao', '2000-09-20', N'Nam', '079200009099', '0988009099', 'kh9099@homedorm.vn',
-     N'Việt Nam', N'Đang ở', 'HD9099'),
-    ('TV9101', N'Trần Mai Nguyên Căn', '2001-11-18', N'Nữ', '079200009100', '0988009100', 'kh9100@homedorm.vn',
-     N'Việt Nam', N'Đang ở', 'HD9100'),
-    ('TV9102', N'Phạm Thu Hòa', '2002-03-09', N'Nữ', '079200009101', '0988009101', 'hoa9100@homedorm.vn',
-     N'Việt Nam', N'Đang ở', 'HD9100');
+UPDATE dbo.ThanhVienHopDong
+SET MaHopDong = 'HD9098', TrangThai = N'Đang ở'
+WHERE MaThanhVien = 'TV9098';
+
+UPDATE dbo.ThanhVienHopDong
+SET MaHopDong = 'HD9099', TrangThai = N'Đang ở'
+WHERE MaThanhVien = 'TV9099';
+
+UPDATE dbo.ThanhVienHopDong
+SET MaHopDong = 'HD9100', TrangThai = N'Đang ở'
+WHERE MaThanhVien IN ('TV9101', 'TV9102');
 
 INSERT INTO dbo.DichVuHopDong (MaChiTietDVHD, MaDichVu, MaHopDong, GhiChu)
 VALUES

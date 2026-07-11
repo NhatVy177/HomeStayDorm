@@ -28,13 +28,9 @@ BEGIN
         -- Ghép tên phòng và giường để tương thích với UI (ví dụ: "P.102 - Giường A" hoặc ghép danh sách nếu thuê nhiều giường)
         STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
         hd.NgayBatDau,
-        -- Lấy TongTien từ hóa đơn kỳ đầu, nếu chưa lập hóa đơn thì lấy tổng tiền thuê kỳ đầu + các dịch vụ đi kèm
-        CASE 
-            WHEN h.TrangThai = N'Đã TT' THEN h.TongTien
-            ELSE
-                (CASE WHEN hd.KyThanhToan = N'Hàng tháng' THEN hd.GiaThue ELSE hd.GiaThue * 3 END)
-                + ISNULL((SELECT SUM(dv.DonGia) FROM DichVuHopDong dvhd JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu WHERE dvhd.MaHopDong = hd.MaHopDong AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')), 0)
-        END AS TongTien,
+        -- Tính động TongTien theo kỳ thanh toán (GiaThue * 3 nếu Hàng quý, GiaThue nếu Hàng tháng) cộng dịch vụ đi kèm
+        (CASE WHEN hd.KyThanhToan = N'Hàng tháng' THEN hd.GiaThue ELSE hd.GiaThue * 3 END)
+        + ISNULL((SELECT SUM(dv.DonGia) FROM DichVuHopDong dvhd JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu WHERE dvhd.MaHopDong = hd.MaHopDong AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')), 0) AS TongTien,
         -- Trạng thái thanh toán
         CASE 
             WHEN h.TrangThai = N'Đã TT' THEN N'Đã thanh toán'
@@ -536,6 +532,22 @@ BEGIN
     SET NOCOUNT ON;
 
     -- RESULT SET 1: Thông tin tổng quan hiển thị trên Modal
+    DECLARE @GiaThueDetail DECIMAL(15,2), @KyTTDetail NVARCHAR(20);
+    SELECT @GiaThueDetail = GiaThue, @KyTTDetail = KyThanhToan
+    FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
+    DECLARE @TienThueDetail DECIMAL(15,2);
+    SET @TienThueDetail = CASE WHEN @KyTTDetail = N'Hàng tháng' THEN @GiaThueDetail ELSE @GiaThueDetail * 3 END;
+
+    DECLARE @TienDichVuDetail DECIMAL(15,2);
+    SELECT @TienDichVuDetail = ISNULL(SUM(dv.DonGia), 0)
+    FROM DichVuHopDong dvhd
+    JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+    WHERE dvhd.MaHopDong = @MaHopDong
+      AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
+
+    DECLARE @TongKhoanThuDetail DECIMAL(15,2) = @TienThueDetail + @TienDichVuDetail;
+
     SELECT 
         hd.MaHopDong,
         CASE 
@@ -547,8 +559,9 @@ BEGIN
         nd.Email,
         STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
         hd.NgayBatDau,
-        ISNULL(h.TongTien, 0.00) AS TongKhoanThu,
-        CASE WHEN h.TrangThai = N'Đã TT' THEN ISNULL(h.TongTien, 0.00) ELSE 0.00 END AS DaThanhToan,
+        -- Tính động để đảm bảo khớp với chi tiết (không dùng h.TongTien vì có thể lưu sai từ trước)
+        @TongKhoanThuDetail AS TongKhoanThu,
+        CASE WHEN h.TrangThai = N'Đã TT' THEN @TongKhoanThuDetail ELSE 0.00 END AS DaThanhToan,
         h.PhuongThucThanhToan,
         h.NgayThanhToan
     FROM HopDongThue hd

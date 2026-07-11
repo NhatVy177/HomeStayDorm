@@ -130,7 +130,7 @@ export async function layHoSoCuTruDaDuyetTheoPhieuCoc(maPhieuDatCoc) {
       AND hs.TrangThaiHoSo = N'Đã duyệt cư trú';
 
     SELECT
-      tv.MaThanhVienCuTru,
+      tv.MaThanhVien AS MaThanhVienCuTru,
       tv.HoTen,
       tv.NgaySinh,
       tv.GioiTinh,
@@ -138,15 +138,15 @@ export async function layHoSoCuTruDaDuyetTheoPhieuCoc(maPhieuDatCoc) {
       tv.SDT,
       tv.Email,
       tv.QuocTich,
-      tv.TrangThaiDuyet,
+      tv.TrangThai AS TrangThaiDuyet,
       tv.LyDoTuChoi
-    FROM dbo.ThanhVienCuTru tv
+    FROM dbo.ThanhVienHopDong tv
     JOIN dbo.HoSoCuTru hs ON hs.MaHoSoCuTru = tv.MaHoSoCuTru
     WHERE hs.MaPhieuDatCoc = @MaPhieuDatCoc
       AND hs.TrangThaiHoSo = N'Đã duyệt cư trú'
     ORDER BY
-      CASE WHEN tv.TrangThaiDuyet = N'Đủ điều kiện' THEN 0 ELSE 1 END,
-      tv.MaThanhVienCuTru;
+      CASE WHEN tv.TrangThai = N'Đủ điều kiện' THEN 0 ELSE 1 END,
+      tv.MaThanhVien;
   `);
 
   return {
@@ -226,23 +226,13 @@ export async function layChiTietHopDongThue(maHopDong) {
     { name: 'MaHopDong', type: sql.VarChar(6), value: maHopDong }
   ]);
 
-  let quyDinhHoanCoc = result.recordsets[4] || [];
-  if (quyDinhHoanCoc.length === 0) {
-    const pool = await getPool();
-    const quyDinhResult = await pool.request().query(`
-      SELECT MaQuyDinhHoanCoc, TenQuyDinh, TyLeHoanCoc
-      FROM dbo.QuyDinhHoanCoc
-      ORDER BY MaQuyDinhHoanCoc
-    `);
-    quyDinhHoanCoc = quyDinhResult.recordset || [];
-  }
-
   return {
     hopDong: result.recordsets[0][0] || null,
     thanhVien: result.recordsets[1] || [],
     dichVu: result.recordsets[2] || [],
     dieuKhoan: result.recordsets[3] || [],
-    quyDinhHoanCoc
+    dieuKhoanViPham: result.recordsets[4] || [],
+    quyDinhHoanCoc: result.recordsets[5] || []
   };
 }
 

@@ -1,149 +1,201 @@
-2026-07-02T14:51:43.668Z
-Error: Số điện thoại này đã được liên kết với một tài khoản. Vui lòng đăng nhập.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangKy (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:131:5)
-    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangKy (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:10:26)
+2026-07-02T14:59:14.916Z
+RequestError: Could not find stored procedure 'dbo.SP_DanhSachHoSoDangKy'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
 
-2026-07-02T14:57:32.581Z
+2026-07-02T14:59:14.927Z
+RequestError: Could not find stored procedure 'dbo.SP_DanhSachHoSoDangKy'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T14:59:40.016Z
+RequestError: Could not find stored procedure 'dbo.SP_DanhSachChoXacNhanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T14:59:40.022Z
+RequestError: Could not find stored procedure 'dbo.SP_DanhSachChoXacNhanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-02T15:09:06.150Z
 Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///E:/pttk/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async dangNhap (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
 
-2026-07-08T05:25:49.029Z
-Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+2026-07-02T15:19:49.791Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-08T14:35:07.480Z
-Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+2026-07-02T15:20:42.295Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-08T14:35:09.426Z
-Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+2026-07-02T15:23:48.864Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-08T14:35:16.194Z
-Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:185:11)
+2026-07-02T15:24:01.122Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:250:19)
-    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-08T19:11:21.472Z
-Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:185:11)
+2026-07-02T15:25:54.417Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:250:19)
-    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-09T06:06:51.753Z
-Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:185:11)
+2026-07-02T15:31:36.666Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:250:19)
-    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-10T07:04:32.977Z
-Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+2026-07-02T15:31:38.517Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-10T07:26:22.888Z
-Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+2026-07-02T15:31:39.373Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-10T08:21:30.027Z
-Error: Phiếu trả phòng chưa có biên bản kiểm tra phòng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at buildHoSoContext (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:160:13)
+2026-07-02T15:31:40.105Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async Object.taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:327:21)
-    at async taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:37:18)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-11T05:24:31.558Z
-Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+2026-07-02T15:31:40.665Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-11T05:24:36.939Z
-Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+2026-07-02T15:32:37.781Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-11T05:25:24.108Z
-Error: Tên đăng nhập hoặc mật khẩu không đúng.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
-    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
-    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+2026-07-02T15:32:42.114Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-11T05:30:10.201Z
-Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at layThongTinPhieuDatCoc (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:37:11)
+2026-07-02T15:32:43.035Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async Module.layThongTinHoSo (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:83:23)
-    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:184:23)
-    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-11T05:36:39.896Z
-Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at layThongTinPhieuDatCoc (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:37:11)
+2026-07-02T15:32:43.809Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at Module.createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/services/khachMoi.service.js:334:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async Module.layThongTinHoSo (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:83:23)
-    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:184:23)
-    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+    at async createHoSo (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
-2026-07-11T07:17:13.682Z
-Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
-    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
-    at layThongTinPhieuDatCoc (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:37:11)
+2026-07-03T10:18:24.807Z
+Error: Không có thành viên hợp lệ (sai giới tính hoặc thiếu CCCD/SĐT).
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/services/hopDong.service.js:197:11)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async Module.layThongTinHoSo (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:83:23)
-    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:184:23)
-    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+    at async lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/hopDong.controller.js:65:20)
+
+2026-07-10T16:27:43.279Z
+Error: Lỗi hệ thống: Không thể xếp Nam và Nữ vào cùng một phòng. (Line 45)
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/services/hopDong.service.js:197:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async lapHopDongThue (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/hopDong.controller.js:65:20)
 

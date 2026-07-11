@@ -32,66 +32,8 @@ IF OBJECT_ID('TRG_ChiTietHoaDon_TinhSoLuong',         'TR') IS NOT NULL DROP TRI
 IF OBJECT_ID('TRG_ChiTietHoaDon_TinhThanhTien',       'TR') IS NOT NULL DROP TRIGGER TRG_ChiTietHoaDon_TinhThanhTien;
 IF OBJECT_ID('TRG_ChiTietHoaDon_TinhSoLuong_ThanhTien_TongTien','TR') IS NOT NULL DROP TRIGGER TRG_ChiTietHoaDon_TinhSoLuong_ThanhTien_TongTien;
 IF OBJECT_ID('TRG_HoaDon_TinhTongTien_OnDelete',      'TR') IS NOT NULL DROP TRIGGER TRG_HoaDon_TinhTongTien_OnDelete;
-IF OBJECT_ID('TRG_HoaDon_ChuyenNoQuaHan',             'TR') IS NOT NULL DROP TRIGGER TRG_HoaDon_ChuyenNoQuaHan;
 IF OBJECT_ID('TRG_ChiTietHuHong_CapNhatTongSuaChua',  'TR') IS NOT NULL DROP TRIGGER TRG_ChiTietHuHong_CapNhatTongSuaChua;
 IF OBJECT_ID('TRG_BienBanViPham_TinhSoTienPhat',      'TR') IS NOT NULL DROP TRIGGER TRG_BienBanViPham_TinhSoTienPhat;
-IF OBJECT_ID('TRG_LichXemPhong_TuChoiPhieuKhiTatCaLichHuy','TR') IS NOT NULL DROP TRIGGER TRG_LichXemPhong_TuChoiPhieuKhiTatCaLichHuy;
-GO
-
-
--- ================================================================
--- TRIGGER: TRG_LichXemPhong_TuChoiPhieuKhiTatCaLichHuy
--- Bang : LichXemPhong | Su kien: AFTER INSERT, UPDATE
--- Neu tat ca lich xem phong cua mot phieu dang ky da huy thi
--- chuyen phieu dang ky do sang trang thai Tu choi.
--- ================================================================
-CREATE TRIGGER TRG_LichXemPhong_TuChoiPhieuKhiTatCaLichHuy
-ON LichXemPhong
-AFTER INSERT, UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    UPDATE pdk
-    SET TrangThai = N'Từ chối'
-    FROM PhieuDangKy AS pdk
-    INNER JOIN (
-        SELECT DISTINCT MaDangKy
-        FROM inserted
-        WHERE TrangThai = N'Đã hủy'
-    ) AS changed ON changed.MaDangKy = pdk.MaDangKy
-    WHERE pdk.TrangThai <> N'Từ chối'
-      AND EXISTS (
-          SELECT 1
-          FROM LichXemPhong AS lxpAny
-          WHERE lxpAny.MaDangKy = pdk.MaDangKy
-      )
-      AND NOT EXISTS (
-          SELECT 1
-          FROM LichXemPhong AS lxpActive
-          WHERE lxpActive.MaDangKy = pdk.MaDangKy
-            AND lxpActive.TrangThai <> N'Đã hủy'
-      );
-END;
-GO
-
-
--- Dong bo du lieu hien co theo rule moi
-UPDATE pdk
-SET TrangThai = N'Từ chối'
-FROM PhieuDangKy AS pdk
-WHERE pdk.TrangThai <> N'Từ chối'
-  AND EXISTS (
-      SELECT 1
-      FROM LichXemPhong AS lxpAny
-      WHERE lxpAny.MaDangKy = pdk.MaDangKy
-  )
-  AND NOT EXISTS (
-      SELECT 1
-      FROM LichXemPhong AS lxpActive
-      WHERE lxpActive.MaDangKy = pdk.MaDangKy
-        AND lxpActive.TrangThai <> N'Đã hủy'
-  );
 GO
 
 
@@ -439,24 +381,6 @@ BEGIN
 END;
 GO
 
--- ================================================================
--- TRIGGER: TRG_HoaDon_ChuyenNoQuaHan
--- Bang : HoaDon | Su kien: AFTER INSERT, UPDATE
--- Neu hoa don qua NgayHanTT ma van Chua TT thi tu dong chuyen thanh No.
--- Khong dung vao hoa don Da TT, No, Tam tinh hoac hoa don da co NgayThanhToan.
--- ================================================================
-CREATE TRIGGER TRG_HoaDon_ChuyenNoQuaHan
-ON HoaDon
-AFTER INSERT, UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-    IF TRIGGER_NESTLEVEL() > 1 RETURN;
-
-    EXEC dbo.SP_HoaDon_CapNhatNoQuaHan @TraKetQua = 0;
-END;
-GO
-
 
 -- ================================================================
 -- TRIGGER 8: TRG_ChiTietHuHong_CapNhatTongSuaChua
@@ -533,7 +457,7 @@ SELECT
 FROM sys.triggers
 WHERE OBJECT_NAME(parent_id) IN (
     'LoaiPhong', 'ChiTietDatCoc', 'HopDongThue', 'PhieuGhiChiSo',
-    'ChiTietHoaDon', 'HoaDon', 'ChiTietHuHong', 'BienBanViPham'
+    'ChiTietHoaDon', 'ChiTietHuHong', 'BienBanViPham'
 )
 ORDER BY BangApDung, TenTrigger;
 GO
@@ -762,31 +686,98 @@ BEGIN
         TrangThai          = @TrangThai
     WHERE MaPhieuTra = @MaPhieuTra;
 
-    -- ---- In kết quả tóm tắt ----
-    PRINT N'';
-    PRINT N'=== DoiSoat: ' + @MaDoiSoat + '  |  PhieuTra: ' + @MaPhieuTra
-        + '  |  HopDong: ' + ISNULL(@MaHopDong, N'(chưa ký)') + N' ===';
-    PRINT N'  TienCocBanDau     : ' + FORMAT(@TienCocBanDau,     'N0', 'vi-VN') + N' đ';
-    PRINT N'  TyLeHoanCoc       : ' + CAST(@TyLeHoanCoc AS VARCHAR) + N'%'
-        + N'  →  TienCocDuocHoan: ' + FORMAT(@TienCocDuocHoan, 'N0', 'vi-VN') + N' đ';
-    PRINT N'  TienThueConNo     : ' + FORMAT(@TienThueConNo,     'N0', 'vi-VN') + N' đ';
-    PRINT N'  TienDichVuConNo   : ' + FORMAT(@TienDichVuConNo,   'N0', 'vi-VN') + N' đ';
-    PRINT N'  TongChiPhiSuaChua : ' + FORMAT(@TongChiPhiSuaChua, 'N0', 'vi-VN') + N' đ';
-    PRINT N'  TienPhat          : ' + FORMAT(@TienPhat,           'N0', 'vi-VN') + N' đ';
-    PRINT N'  TongKhauTru       : ' + FORMAT(@TongKhauTru,        'N0', 'vi-VN') + N' đ';
-    PRINT N'  ────────────────────────────────────────';
-    PRINT N'  SoTienHoanThucTe  : ' + FORMAT(@SoTienHoanThucTe,  'N0', 'vi-VN') + N' đ';
-    PRINT N'  SoTienKhachPhaiTT : ' + FORMAT(@SoTienKhachPhaiTT, 'N0', 'vi-VN') + N' đ';
-    PRINT N'  TrangThai         : ' + @TrangThai;
-    PRINT N'';
 END;
 GO
+IF OBJECT_ID('TRG_Phong_CapNhatGioiTinhChoPhep', 'TR') IS NOT NULL
+    DROP TRIGGER TRG_Phong_CapNhatGioiTinhChoPhep;
+GO
 
+CREATE TRIGGER TRG_Phong_CapNhatGioiTinhChoPhep
+ON ThanhVienHopDong
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    DECLARE @PhongBiAnhHuong TABLE (
+        MaPhong VARCHAR(4) PRIMARY KEY
+    );
 
-EXEC SP_TinhDoiSoat 'TP0001';
-EXEC SP_TinhDoiSoat 'TP0002';
-EXEC SP_TinhDoiSoat 'TP0003';
-EXEC SP_TinhDoiSoat 'TP0004';
-EXEC SP_TinhDoiSoat 'TP0008';
-EXEC SP_TinhDoiSoat 'TP0009';
+    INSERT INTO @PhongBiAnhHuong (MaPhong)
+    SELECT DISTINCT ctdc.MaPhong
+    FROM inserted i
+    JOIN HopDongThue hdt 
+        ON i.MaHopDong = hdt.MaHopDong
+    JOIN ChiTietDatCoc ctdc 
+        ON hdt.MaPhieuCoc = ctdc.MaPhieuDatCoc
+
+    UNION
+
+    SELECT DISTINCT ctdc.MaPhong
+    FROM deleted d
+    JOIN HopDongThue hdt 
+        ON d.MaHopDong = hdt.MaHopDong
+    JOIN ChiTietDatCoc ctdc 
+        ON hdt.MaPhieuCoc = ctdc.MaPhieuDatCoc;
+
+    -- ----------------------------------------------------------------
+    -- Chỉ chặn khi GHÉP GIƯỜNG có cả Nam lẫn Nữ trong cùng phòng.
+    -- NGUYÊN PHÒNG: người thuê tự quyết định thành viên → không chặn.
+    -- ----------------------------------------------------------------
+    IF EXISTS (
+        SELECT 1
+        FROM @PhongBiAnhHuong pbh
+        JOIN ChiTietDatCoc ctdc 
+            ON pbh.MaPhong = ctdc.MaPhong
+        JOIN HopDongThue hdt 
+            ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
+        JOIN PhieuDatCoc pdc
+            ON pdc.MaPhieuDatCoc = hdt.MaPhieuCoc
+        JOIN ThanhVienHopDong tvhd 
+            ON hdt.MaHopDong = tvhd.MaHopDong
+        WHERE tvhd.TrangThai = N'Đang ở'
+          AND hdt.TrangThai  = N'Hiệu lực'
+          AND pdc.HinhThucThue = N'Ghép giường'
+        GROUP BY pbh.MaPhong
+        HAVING COUNT(DISTINCT tvhd.GioiTinh) > 1
+    )
+    BEGIN
+        RAISERROR(N'Không thể xếp Nam và Nữ vào cùng một phòng ghép giường.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+
+    -- ----------------------------------------------------------------
+    -- Cập nhật GioiTinhChoPhep của bảng Phong:
+    --   • Nguyên phòng hiệu lực → 'Không phân biệt'
+    --   • Ghép giường           → giới tính thực tế đang ở (Nam/Nữ)
+    --   • Phòng trống           → 'Không phân biệt'
+    -- ----------------------------------------------------------------
+    UPDATE p
+    SET p.GioiTinhChoPhep = COALESCE(
+        (
+            SELECT
+                CASE
+                    WHEN MAX(CASE WHEN pdc2.HinhThucThue = N'Nguyên phòng'
+                                       AND hdt2.TrangThai = N'Hiệu lực'
+                                  THEN 1 ELSE 0 END) = 1
+                        THEN N'Không phân biệt'
+                    ELSE MAX(CAST(tvhd2.GioiTinh AS NVARCHAR(20)))
+                END
+            FROM ChiTietDatCoc ctdc2
+            JOIN HopDongThue hdt2
+                ON ctdc2.MaPhieuDatCoc = hdt2.MaPhieuCoc
+            JOIN PhieuDatCoc pdc2
+                ON pdc2.MaPhieuDatCoc = hdt2.MaPhieuCoc
+            JOIN ThanhVienHopDong tvhd2
+                ON hdt2.MaHopDong = tvhd2.MaHopDong
+            WHERE ctdc2.MaPhong = p.MaPhong
+              AND hdt2.TrangThai  = N'Hiệu lực'
+              AND tvhd2.TrangThai = N'Đang ở'
+        ),
+        N'Không phân biệt'
+    )
+    FROM Phong p
+    JOIN @PhongBiAnhHuong pbh ON p.MaPhong = pbh.MaPhong;
+END;
+GO
