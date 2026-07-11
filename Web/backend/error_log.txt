@@ -93,3 +93,57 @@ Error: Phiếu trả phòng chưa có biên bản kiểm tra phòng.
     at async Object.taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:327:21)
     at async taoDoiSoat (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:37:18)
 
+2026-07-11T05:24:31.558Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-11T05:24:36.939Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-11T05:25:24.108Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-11T05:30:10.201Z
+Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at layThongTinPhieuDatCoc (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:37:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Module.layThongTinHoSo (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:83:23)
+    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:184:23)
+    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+
+2026-07-11T05:36:39.896Z
+Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at layThongTinPhieuDatCoc (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:37:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Module.layThongTinHoSo (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:83:23)
+    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:184:23)
+    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+
+2026-07-11T07:17:13.682Z
+Error: Phiếu đặt cọc chưa đủ điều kiện đối soát.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at layThongTinPhieuDatCoc (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:37:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Module.layThongTinHoSo (file:///D:/NAM3/HomeStayDorm/Web/backend/services/hoSoThue.service.js:83:23)
+    at async Object.getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/doiSoat.service.js:184:23)
+    at async getChiTietPhieuTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/doiSoat.controller.js:27:18)
+

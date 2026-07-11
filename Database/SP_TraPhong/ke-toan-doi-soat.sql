@@ -1282,6 +1282,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_InsertDoiSoat
     @TongKhauTru DECIMAL(15,2),
     @SoTienHoanThucTe DECIMAL(15,2),
     @SoTienKhachPhaiTT DECIMAL(15,2),
+    @LoaiQuyetToan NVARCHAR(30),
     @MaNhanVienKeToan VARCHAR(6),
     @MaPhieuTra VARCHAR(6),
     @MaQuyDinhHoanCoc VARCHAR(6) = NULL,
@@ -1332,11 +1333,7 @@ BEGIN
         NULL,
         NULL,
         @GhiChuPhanHoiKhach,
-        CASE
-            WHEN ISNULL(@SoTienKhachPhaiTT, 0) > 0 THEN N'Thu thêm'
-            WHEN ISNULL(@SoTienHoanThucTe, 0) > 0 THEN N'Hoàn cọc'
-            ELSE N'Không phát sinh'
-        END,
+        @LoaiQuyetToan,
         N'Chờ xác nhận',
         @MaNhanVienKeToan,
         @MaPhieuTra,
@@ -1361,6 +1358,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_UpdateDoiSoatCanDieuChinh
     @TongKhauTru DECIMAL(15,2),
     @SoTienHoanThucTe DECIMAL(15,2),
     @SoTienKhachPhaiTT DECIMAL(15,2),
+    @LoaiQuyetToan NVARCHAR(30),
     @MaNhanVienKeToan VARCHAR(6),
     @MaPhieuTra VARCHAR(6),
     @MaQuyDinhHoanCoc VARCHAR(6) = NULL,
@@ -1387,11 +1385,7 @@ BEGIN
         ChungTuThanhToan = NULL,
         NgayThanhToan = NULL,
         GhiChuPhanHoiKhach = @GhiChuPhanHoiKhach,
-        LoaiQuyetToan = CASE
-            WHEN ISNULL(@SoTienKhachPhaiTT, 0) > 0 THEN N'Thu thêm'
-            WHEN ISNULL(@SoTienHoanThucTe, 0) > 0 THEN N'Hoàn cọc'
-            ELSE N'Không phát sinh'
-        END,
+        LoaiQuyetToan = @LoaiQuyetToan,
         TrangThai = N'Chờ xác nhận',
         MaNhanVienKeToan = @MaNhanVienKeToan,
         MaQuyDinhHoanCoc = @MaQuyDinhHoanCoc

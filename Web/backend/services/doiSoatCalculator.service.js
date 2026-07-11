@@ -20,6 +20,18 @@ export function roundMoney(value) {
   return Math.round(value);
 }
 
+export function xacDinhLoaiQuyetToan(soTienHoanThucTe, soTienKhachPhaiTT) {
+  if (safeNumber(soTienKhachPhaiTT) > 0) {
+    return 'Thu thêm';
+  }
+
+  if (safeNumber(soTienHoanThucTe) > 0) {
+    return 'Hoàn cọc';
+  }
+
+  return 'Không phát sinh';
+}
+
 export function calculateStayMonths(startDate, returnDate) {
   let months =
     (returnDate.getFullYear() - startDate.getFullYear()) * 12 +
@@ -92,6 +104,8 @@ export function calculateDoiSoatTraPhong(input) {
     soTienKhachPhaiTT = Math.abs(chenhLech);
   }
 
+  const loaiQuyetToan = xacDinhLoaiQuyetToan(soTienHoanThucTe, soTienKhachPhaiTT);
+
   return {
     soThangLuuTru,
     tyLeHoanCocHienTai,
@@ -102,6 +116,7 @@ export function calculateDoiSoatTraPhong(input) {
     tienPhat,
     tongKhauTru,
     soTienHoanThucTe,
-    soTienKhachPhaiTT
+    soTienKhachPhaiTT,
+    loaiQuyetToan
   };
 }

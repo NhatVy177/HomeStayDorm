@@ -969,6 +969,10 @@
   max-width: min(980px, 92vw) !important;
 }
 
+.qt-modal.qt-modal-sm {
+  max-width: min(750px, 92vw) !important;
+}
+
 .qt-modal .ktp-modal-header {
   padding: 18px 24px !important;
 }
@@ -1226,11 +1230,21 @@
 }
 
 .qt-refund-modal {
-  max-width: min(760px, 94vw) !important;
+  max-width: min(940px, 94vw) !important;
 }
 
 .qt-refund-body {
-  gap: 14px !important;
+  gap: 16px !important;
+}
+
+.qt-refund-top-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.qt-refund-action-card {
+  width: 100%;
 }
 
 .qt-settlement-toolbar {
@@ -1353,11 +1367,12 @@
 
 .qt-refund-form {
   display: grid;
+  gap: 14px 16px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.qt-refund-form .ktp-section-title,
-.qt-refund-form .ktp-filter-group:last-child {
+.qt-refund-form > .ktp-section-title,
+.qt-refund-form > .ktp-filter-group:last-child {
   grid-column: 1 / -1;
 }
 
@@ -1376,6 +1391,10 @@
 
 .qt-refund-payment-account {
   align-self: start;
+}
+
+.qt-refund-wide-field {
+  grid-column: 1 / -1;
 }
 
 .qt-refund-account-card {
@@ -1653,6 +1672,10 @@
   }
 
   .qt-deduction-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qt-refund-top-grid {
     grid-template-columns: 1fr;
   }
 
