@@ -319,56 +319,25 @@ export default function DuyetCuTruTab() {
             />
           </div>
         </div>
-        <div className="ktp-filter-group">
-          <label className="ktp-filter-label">Trạng thái hồ sơ</label>
-          <StatusFilterTabs
-            className="residence-status-tabs"
-            items={[
-              { key: '', label: 'Tất cả' },
-              { key: 'Chờ duyệt cư trú', label: 'Chờ duyệt' },
-              { key: 'Đã duyệt cư trú', label: 'Đã duyệt' },
-              { key: 'Từ chối cư trú', label: 'Từ chối' }
-            ]}
-            activeKey={statusFilter}
-            onChange={setStatusFilter}
-          />
-        </div>
-        <button className="ktp-btn-submit residence-search-btn" type="button" onClick={() => loadData(searchText, statusFilter)}>
+        <button className="ktp-btn-submit" type="submit" style={{ height: '42px', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
           <Icon name="search" />
           Tìm kiếm
         </button>
       </form>
 
-      {/* Bộ lọc trạng thái dạng chip (giống DatCocTab) */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '25px' }}>
-        {[{ key: 'all', label: 'Tất cả' }, ...RESIDENCE_STATUS_ORDER.map((s) => ({ key: s, label: RESIDENCE_STATUS_CONFIG[s].chip }))].map((tab) => {
-          const active = statusFilter === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setStatusFilter(tab.key)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
-                fontSize: '13px', fontWeight: 600, transition: 'all .15s',
-                border: active ? '1px solid #2f6765' : '1px solid #d7dcdc',
-                background: active ? '#2f6765' : '#fff',
-                color: active ? '#fff' : '#3f494a'
-              }}
-            >
-              {tab.label}
-              <span style={{
-                background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3',
-                color: active ? '#fff' : '#6f797a',
-                borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 700, minWidth: '20px', textAlign: 'center'
-              }}>
-                {statusCounts[tab.key] ?? 0}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Bộ lọc trạng thái dạng chip */}
+      <StatusFilterTabs
+        className="status-pill-tabs-offset"
+        items={[
+          { key: 'all', label: 'Tất cả' },
+          { key: 'Chờ duyệt cư trú', label: 'Chờ duyệt' },
+          { key: 'Đã duyệt cư trú', label: 'Đã duyệt' },
+          { key: 'Từ chối cư trú', label: 'Từ chối' }
+        ]}
+        activeKey={statusFilter}
+        counts={statusCounts}
+        onChange={setStatusFilter}
+      />
 
       <section className="ktp-table-section">
         <div className="residence-table-head">
