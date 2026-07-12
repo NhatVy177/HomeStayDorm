@@ -25,6 +25,9 @@ export class HopDongBanGiaoDTO {
     this.trangThaiHoaDonKyDau = row.TrangThaiHoaDonKyDau;
     this.daCoBienBanBanGiaoVao = boolValue(row.DaCoBienBanBanGiaoVao);
     this.coTheBanGiao = boolValue(row.CoTheBanGiao);
+    this.khachCoMat = row.KhachCoMat === null ? true : boolValue(row.KhachCoMat);
+    this.daKyBienBan = row.DaKyBienBan === null ? true : boolValue(row.DaKyBienBan);
+    this.ghiChuChung = row.GhiChuChung || '';
   }
 }
 

@@ -49,8 +49,8 @@ BEGIN
     WHERE p.MaChiNhanh = @MaChiNhanh
       AND (
           (@TrangThaiLoc = N'Chờ xử lý' AND ptp.TrangThai = N'Chờ xử lý') OR
-          (@TrangThaiLoc = N'Đã xử lý'  AND ptp.TrangThai IN (N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Chờ hoàn tất', N'Hoàn tất')) OR
-          (@TrangThaiLoc = N'Tất cả'    AND ptp.TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Chờ hoàn tất', N'Hoàn tất'))
+          (@TrangThaiLoc = N'Đã xử lý'  AND ptp.TrangThai IN (N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Hoàn tất')) OR
+          (@TrangThaiLoc = N'Tất cả'    AND ptp.TrangThai IN (N'Chờ xử lý', N'Chờ đối soát', N'Chờ ký biên bản', N'Chờ hoàn cọc', N'Hoàn tất'))
       )
     ORDER BY ptp.NgayDuKienTra ASC;
 END;

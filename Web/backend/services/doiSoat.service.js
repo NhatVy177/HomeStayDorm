@@ -3,15 +3,18 @@ import path from 'path';
 import { getPool, sql } from '../database/connection.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 import {
-  LOAI_HO_SO_TRA_PHONG,
   calculateDoiSoatTraPhong,
   safeNumber
 } from './doiSoatCalculator.service.js';
+import * as phieuTraPhongService from './phieuTraPhong.service.js';
+import * as hoSoThueService from './hoSoThue.service.js';
+import * as khauTruDoiSoatService from './khauTruDoiSoat.service.js';
 import * as doiSoatRepository from '../repositories/doiSoat.repository.js';
+import * as quyDinhHoanCocRepository from '../repositories/quyDinhHoanCoc.repository.js';
+import * as thuThemDoiSoatRepository from '../repositories/thuThemDoiSoat.repository.js';
+import * as hoanCocDoiSoatRepository from '../repositories/hoanCocDoiSoat.repository.js';
+import * as ketQuaDoiSoatRepository from '../repositories/ketQuaDoiSoat.repository.js';
 
-const TRANG_THAI_CHO_DOI_SOAT = 'Chờ đối soát';
-const MESSAGE_NOT_READY_FOR_DOI_SOAT =
-  'Phiếu trả phòng chưa được quản lý xử lý nên chưa thể lập đối soát.';
 const MESSAGE_STALE =
   'Phiếu trả phòng này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.';
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads/chung-tu-doi-soat');
@@ -101,15 +104,6 @@ function mapHoanCocDatabaseError(error) {
   });
 }
 
-function mapThuThemDatabaseError(error) {
-  mapDatabaseError(error, {
-    50700: 400,
-    50701: 409,
-    50702: 409,
-    50704: 404
-  });
-}
-
 function pickMoney(inputValue, defaultValue) {
   return inputValue === undefined ? safeNumber(defaultValue) : safeNumber(inputValue);
 }
@@ -122,86 +116,13 @@ function validateNonNegativeMoney(values) {
   }
 }
 
-function determineLoaiHoSo(phieuTraPhong) {
-  if (phieuTraPhong.maHopDong) {
-    return LOAI_HO_SO_TRA_PHONG.HOP_DONG_THUE;
-  }
-
-  if (phieuTraPhong.maPhieuDatCoc) {
-    return LOAI_HO_SO_TRA_PHONG.DAT_COC_CHUA_KY_HOP_DONG;
-  }
-
-  throw createServiceError('Phiếu trả phòng thiếu thông tin hợp đồng hoặc phiếu đặt cọc.', 400);
-}
-
-async function buildHoSoContext(db, phieuTraPhong, options = {}) {
-  const loaiHoSo = determineLoaiHoSo(phieuTraPhong);
-  const suaChua = await doiSoatRepository.getTongChiPhiSuaChua(db, phieuTraPhong.maPhieuTra);
-
-  if (loaiHoSo === LOAI_HO_SO_TRA_PHONG.HOP_DONG_THUE) {
-    const hopDong = await doiSoatRepository.getHopDongHoSo(db, phieuTraPhong.maHopDong);
-
-    if (!hopDong) {
-      throw createServiceError('Không tìm thấy hợp đồng thuê hợp lệ cho phiếu trả phòng.', 400);
-    }
-
-    if (options.requireBienBanKiemTra && safeNumber(suaChua.soBienBanKiemTra) <= 0) {
-      throw createServiceError('Phiếu trả phòng chưa có biên bản kiểm tra phòng.', 400);
-    }
-
-    if (!phieuTraPhong.ngayTraThucTe) {
-      throw createServiceError('Ngày trả thực tế chưa có dữ liệu để tính thời gian lưu trú.', 400);
-    }
-
-    const tienPhat = await doiSoatRepository.getTienPhatChoXuLy(db, hopDong.maHopDong);
-    const tienHoaDonConNo = await doiSoatRepository.getTienHoaDonConNo(db, hopDong.maHopDong);
-    const danhSachPhong = await doiSoatRepository.getPhongTrongPhieuCoc(db, hopDong.maPhieuCoc);
-
-    return {
-      loaiHoSo,
-      hopDong,
-      phieuDatCoc: null,
-      danhSachPhong,
-      defaults: {
-        tienThueConNo: safeNumber(tienHoaDonConNo.tienThueConNo),
-        tienDichVuConNo: safeNumber(tienHoaDonConNo.tienDichVuConNo),
-        tongChiPhiSuaChua: suaChua.tongChiPhiSuaChua,
-        tienPhat
-      },
-      tienCocBanDau: safeNumber(hopDong.soTienCoc),
-      ngayBatDau: hopDong.ngayBatDau,
-      ngayKetThuc: hopDong.ngayKetThuc,
-      ngayTraThucTe: phieuTraPhong.ngayTraThucTe
-    };
-  }
-
-  const phieuDatCoc = await doiSoatRepository.getPhieuDatCocHoSo(db, phieuTraPhong.maPhieuDatCoc);
-
-  if (!phieuDatCoc) {
-    throw createServiceError('Không tìm thấy phiếu đặt cọc cho phiếu trả phòng.', 400);
-  }
-
-  if (phieuDatCoc.trangThaiThanhToan !== 'Đã TT' || phieuDatCoc.trangThaiCoc !== 'Hiệu lực') {
-    throw createServiceError('Phiếu đặt cọc chưa đủ điều kiện đối soát.', 400);
-  }
-
-  const danhSachPhong = await doiSoatRepository.getPhongTrongPhieuCoc(db, phieuDatCoc.maPhieuDatCoc);
-
+function buildDoiSoatContext(hoSoContext, khauTruContext) {
   return {
-    loaiHoSo,
-    hopDong: null,
-    phieuDatCoc,
-    danhSachPhong,
+    ...hoSoContext,
     defaults: {
-      tienThueConNo: 0,
-      tienDichVuConNo: 0,
-      tongChiPhiSuaChua: suaChua.tongChiPhiSuaChua,
-      tienPhat: 0
-    },
-    tienCocBanDau: safeNumber(phieuDatCoc.soTienCoc),
-    ngayBatDau: null,
-    ngayKetThuc: null,
-    ngayTraThucTe: phieuTraPhong.ngayTraThucTe
+      ...hoSoContext.defaults,
+      ...khauTruContext.defaults
+    }
   };
 }
 
@@ -232,27 +153,22 @@ export async function getDanhSachChoDoiSoat(maNhanVienKeToan) {
 export async function getChiTietPhieuTraPhong(maPhieuTraInput, maNhanVienKeToan) {
   const maPhieuTra = requireMaPhieuTra(maPhieuTraInput);
   const pool = await getPool();
-  const phieuTraPhong = await doiSoatRepository.getPhieuTraPhongById(
-    pool,
+  const phieuTraPhong = await phieuTraPhongService.layThongTinPhieuTra(
     maPhieuTra,
-    false,
-    maNhanVienKeToan
+    maNhanVienKeToan,
+    pool
   );
 
-  if (!phieuTraPhong) {
-    throw createServiceError('Không tìm thấy phiếu trả phòng.', 404);
-  }
+  phieuTraPhongService.kiemTraPhieuTraDuDieuKienLapDoiSoat(phieuTraPhong);
 
-  if (phieuTraPhong.trangThai !== TRANG_THAI_CHO_DOI_SOAT) {
-    throw createServiceError(MESSAGE_NOT_READY_FOR_DOI_SOAT, 409);
-  }
-
-  const context = await buildHoSoContext(pool, phieuTraPhong);
-  const chiTietKhauTru = await doiSoatRepository.getChiTietKhauTru(
-    pool,
+  const hoSoContext = await hoSoThueService.layThongTinHoSo(phieuTraPhong, pool);
+  const khauTruContext = await khauTruDoiSoatService.layCacKhoanKhauTru(
     phieuTraPhong.maPhieuTra,
-    phieuTraPhong.maHopDong
+    phieuTraPhong.maHopDong,
+    pool
   );
+  const context = buildDoiSoatContext(hoSoContext, khauTruContext);
+  const chiTietKhauTru = khauTruContext.chiTietKhauTru;
   let tinhToanTam = null;
 
   try {
@@ -298,24 +214,37 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
   try {
     await transaction.begin(sql.ISOLATION_LEVEL.SERIALIZABLE);
 
-    const phieuTraPhong = await doiSoatRepository.getPhieuTraPhongById(
-      transaction,
+    const phieuTraPhong = await phieuTraPhongService.layThongTinPhieuTraKhoaDong(
       maPhieuTra,
-      true,
-      maNhanVienKeToan
+      maNhanVienKeToan,
+      transaction
     );
 
-    if (!phieuTraPhong) {
-      throw createServiceError('Không tìm thấy phiếu trả phòng.', 404);
+    if (!maDoiSoatDieuChinh) {
+      try {
+        phieuTraPhongService.kiemTraPhieuTraDuDieuKienLapDoiSoat(phieuTraPhong);
+      } catch (error) {
+        if (error.statusCode === 409) {
+          throw createServiceError(MESSAGE_STALE, 409);
+        }
+        throw error;
+      }
     }
 
-    if (!maDoiSoatDieuChinh && phieuTraPhong.trangThai !== TRANG_THAI_CHO_DOI_SOAT) {
-      throw createServiceError(MESSAGE_STALE, 409);
+    const hoSoContext = await hoSoThueService.layThongTinHoSo(phieuTraPhong, transaction);
+    const khauTruContext = await khauTruDoiSoatService.layCacKhoanKhauTru(
+      phieuTraPhong.maPhieuTra,
+      phieuTraPhong.maHopDong,
+      transaction
+    );
+
+    if (!maDoiSoatDieuChinh && hoSoContext.hopDong) {
+      khauTruDoiSoatService.kiemTraDaCoBienBanKiemTra(khauTruContext);
     }
 
-    const context = await buildHoSoContext(transaction, phieuTraPhong, { requireBienBanKiemTra: true });
+    const context = buildDoiSoatContext(hoSoContext, khauTruContext);
     const result = buildPreview(phieuTraPhong, context, data);
-    const maQuyDinhHoanCoc = await doiSoatRepository.getMaQuyDinhHoanCoc(
+    const maQuyDinhHoanCoc = await quyDinhHoanCocRepository.getMaQuyDinhHoanCoc(
       transaction,
       result.tyLeHoanCocHienTai
     );
@@ -340,7 +269,7 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
       return {
         maDoiSoat: maDoiSoatDieuChinh,
         maPhieuTra,
-        trangThai: updated.trangThai || 'Chờ phản hồi',
+        trangThai: updated.trangThai || 'Chờ xác nhận',
         maQuyDinhHoanCoc,
         tienCocBanDau: context.tienCocBanDau,
         ...result
@@ -419,11 +348,11 @@ export async function uploadChungTuThanhToan(data, maNhanVienKeToan) {
   }
 
   const pool = await getPool();
-  const detail = await doiSoatRepository.getChiTietThuThem(pool, maDoiSoat, maNhanVienKeToan);
+  const detail = await thuThemDoiSoatRepository.getChiTietThuThem(pool, maDoiSoat, maNhanVienKeToan);
   const hasThuThem = Boolean(detail.chiTiet);
   const hasHoanCoc = hasThuThem
     ? false
-    : Boolean((await doiSoatRepository.getChiTietHoanCoc(pool, maDoiSoat, maNhanVienKeToan)).chiTiet);
+    : Boolean((await hoanCocDoiSoatRepository.getChiTietHoanCoc(pool, maDoiSoat, maNhanVienKeToan)).chiTiet);
 
   if (!hasThuThem && !hasHoanCoc) {
     throw createServiceError('Không tìm thấy phiếu đối soát trong chi nhánh của bạn.', 404);
@@ -447,65 +376,23 @@ export async function uploadChungTuThanhToan(data, maNhanVienKeToan) {
 
 export async function getDanhSachChoHoanCoc(maNhanVienKeToan) {
   const pool = await getPool();
-  return doiSoatRepository.getDanhSachChoHoanCoc(pool, maNhanVienKeToan);
+  return hoanCocDoiSoatRepository.getDanhSachChoHoanCoc(pool, maNhanVienKeToan);
 }
 
 export async function getDanhSachDaHoanCoc(maNhanVienKeToan) {
   const pool = await getPool();
-  return doiSoatRepository.getDanhSachDaHoanCoc(pool, maNhanVienKeToan);
-}
-
-export async function getDanhSachChoThuThem(maNhanVienKeToan) {
-  const pool = await getPool();
-  return doiSoatRepository.getDanhSachChoThuThem(pool, maNhanVienKeToan);
-}
-
-export async function getDanhSachDaThuThem(maNhanVienKeToan) {
-  const pool = await getPool();
-  return doiSoatRepository.getDanhSachDaThuThem(pool, maNhanVienKeToan);
+  return hoanCocDoiSoatRepository.getDanhSachDaHoanCoc(pool, maNhanVienKeToan);
 }
 
 export async function getKetQuaDoiSoat(maNhanVienKeToan) {
   const pool = await getPool();
-  return doiSoatRepository.getKetQuaDoiSoat(pool, maNhanVienKeToan);
-}
-
-export async function getChiTietThuThem(maDoiSoatInput, maNhanVienKeToan) {
-  const maDoiSoat = requireMaDoiSoat(maDoiSoatInput);
-  const pool = await getPool();
-  const data = await doiSoatRepository.getChiTietThuThem(pool, maDoiSoat, maNhanVienKeToan);
-
-  if (!data.chiTiet) {
-    throw createServiceError('Không tìm thấy phiếu đối soát.', 404);
-  }
-
-  return data;
-}
-
-export async function xacNhanThuThem(data, maNhanVienKeToan) {
-  const maDoiSoat = requireMaDoiSoat(data?.maDoiSoat);
-  const phuongThucThanhToan = normalizePaymentMethod(data?.phuongThucThanhToan);
-  const ngayThanhToan = normalizePaymentDate(data?.ngayThanhToan);
-  const chungTuThanhToan = String(data?.chungTuThanhToan || '').trim() || null;
-  const pool = await getPool();
-
-  try {
-    return await doiSoatRepository.xacNhanThuThem(pool, {
-      maDoiSoat,
-      maNhanVienKeToan,
-      phuongThucThanhToan,
-      ngayThanhToan,
-      chungTuThanhToan
-    });
-  } catch (error) {
-    mapThuThemDatabaseError(error);
-  }
+  return ketQuaDoiSoatRepository.getKetQuaDoiSoat(pool, maNhanVienKeToan);
 }
 
 export async function getChiTietHoanCoc(maDoiSoatInput, maNhanVienKeToan) {
   const maDoiSoat = requireMaDoiSoat(maDoiSoatInput);
   const pool = await getPool();
-  const data = await doiSoatRepository.getChiTietHoanCoc(pool, maDoiSoat, maNhanVienKeToan);
+  const data = await hoanCocDoiSoatRepository.getChiTietHoanCoc(pool, maDoiSoat, maNhanVienKeToan);
 
   if (!data.chiTiet) {
     throw createServiceError('Không tìm thấy phiếu đối soát.', 404);
@@ -522,7 +409,7 @@ export async function xacNhanHoanCoc(data, maNhanVienKeToan) {
   const pool = await getPool();
 
   try {
-    return await doiSoatRepository.xacNhanHoanCoc(pool, {
+    return await hoanCocDoiSoatRepository.xacNhanHoanCoc(pool, {
       maDoiSoat,
       maNhanVienKeToan,
       phuongThucThanhToan,
@@ -539,11 +426,7 @@ export default {
   getChiTietPhieuTraPhong,
   taoDoiSoat,
   uploadChungTuThanhToan,
-  getDanhSachChoThuThem,
-  getDanhSachDaThuThem,
   getKetQuaDoiSoat,
-  getChiTietThuThem,
-  xacNhanThuThem,
   getDanhSachChoHoanCoc,
   getDanhSachDaHoanCoc,
   getChiTietHoanCoc,

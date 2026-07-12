@@ -10,6 +10,7 @@ import {
   getDanhSachChoHoanCoc,
   getDanhSachChoThuThem,
   uploadChungTuThanhToan,
+  khongXacNhanThuThem,
   xacNhanHoanCoc,
   xacNhanThuThem,
   taoDoiSoat
@@ -23,6 +24,7 @@ router.get('/cho-thu-them', getDanhSachChoThuThem);
 router.get('/da-thu-them', getDanhSachDaThuThem);
 router.get('/thu-them/:maDoiSoat', getChiTietThuThem);
 router.post('/thu-them/xac-nhan', xacNhanThuThem);
+router.post('/thu-them/khong-xac-nhan', khongXacNhanThuThem);
 router.get('/cho-hoan-coc', getDanhSachChoHoanCoc);
 router.get('/da-hoan-coc', getDanhSachDaHoanCoc);
 router.get('/hoan-coc/:maDoiSoat', getChiTietHoanCoc);

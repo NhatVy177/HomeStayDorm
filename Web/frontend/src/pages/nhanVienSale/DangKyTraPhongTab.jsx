@@ -273,8 +273,9 @@ function BuocChonHopDong({ khach, onChon, onQuayLai }) {
 
 // ─── Bước 3: Nhập ngày và xác nhận ─────────────────────────────────────────
 function BuocXacNhan({ khach, hopDong, onSuccess, onQuayLai }) {
-  const todayISO = new Date().toISOString().split('T')[0];
-  const [ngay, setNgay]           = useState('');
+  const d = new Date();
+  const todayISO = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+  const [ngay, setNgay]           = useState(todayISO);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]           = useState('');
 
@@ -353,7 +354,7 @@ function BuocXacNhan({ khach, hopDong, onSuccess, onQuayLai }) {
 
       <form onSubmit={handleSubmit} className="tp-date-form">
         <label htmlFor="tp-ngay-du-kien" className="tp-date-label">
-          Ngày dự kiến trả phòng <span style={{ color: '#b3261e' }}>*</span>
+          Ngày dự kiến trả phòng
         </label>
         <div className="tp-date-input-wrap">
           <Icon name="calendar_today" className="tp-cal-icon" />

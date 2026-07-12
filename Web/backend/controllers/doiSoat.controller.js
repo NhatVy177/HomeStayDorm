@@ -1,4 +1,5 @@
 import doiSoatService from '../services/doiSoat.service.js';
+import thuThemDoiSoatService from '../services/thuThemDoiSoat.service.js';
 
 export async function uploadChungTuThanhToan(req, res, next) {
   try {
@@ -67,7 +68,7 @@ export async function getDanhSachDaHoanCoc(req, res, next) {
 export async function getDanhSachChoThuThem(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
-    const danhSach = await doiSoatService.getDanhSachChoThuThem(maNhanVienKeToan);
+    const danhSach = await thuThemDoiSoatService.getDanhSachChoThuThem(maNhanVienKeToan, req.query?.filter);
     res.json({ danhSach });
   } catch (error) {
     next(error);
@@ -77,7 +78,7 @@ export async function getDanhSachChoThuThem(req, res, next) {
 export async function getDanhSachDaThuThem(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
-    const danhSach = await doiSoatService.getDanhSachDaThuThem(maNhanVienKeToan);
+    const danhSach = await thuThemDoiSoatService.getDanhSachDaThuThem(maNhanVienKeToan);
     res.json({ danhSach });
   } catch (error) {
     next(error);
@@ -98,7 +99,7 @@ export async function getChiTietThuThem(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
     const { maDoiSoat } = req.params;
-    const data = await doiSoatService.getChiTietThuThem(maDoiSoat, maNhanVienKeToan);
+    const data = await thuThemDoiSoatService.getChiTietThuThem(maDoiSoat, maNhanVienKeToan);
     res.json(data);
   } catch (error) {
     next(error);
@@ -108,9 +109,22 @@ export async function getChiTietThuThem(req, res, next) {
 export async function xacNhanThuThem(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
-    const data = await doiSoatService.xacNhanThuThem(req.body, maNhanVienKeToan);
+    const data = await thuThemDoiSoatService.xacNhanThuThem(req.body, maNhanVienKeToan);
     res.json({
       message: 'Ghi nhận thu thêm thành công.',
+      doiSoat: data
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function khongXacNhanThuThem(req, res, next) {
+  try {
+    const maNhanVienKeToan = req.user?.maNguoiDung;
+    const data = await thuThemDoiSoatService.khongXacNhanThuThem(req.body, maNhanVienKeToan);
+    res.json({
+      message: 'Đã không xác nhận chứng từ. Khách hàng cần tải lại minh chứng thanh toán.',
       doiSoat: data
     });
   } catch (error) {

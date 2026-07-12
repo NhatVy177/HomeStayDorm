@@ -1,4 +1,14 @@
 USE HOMEDORM4;
 GO
-ALTER TABLE PhieuDangKy ALTER COLUMN LoaiPhongYeuCau NVARCHAR(200);
+
+IF COL_LENGTH(N'dbo.PhieuDangKy', N'LoaiPhongYeuCau') IS NULL
+BEGIN
+    ALTER TABLE dbo.PhieuDangKy
+    ADD LoaiPhongYeuCau NVARCHAR(200) NULL;
+END
+ELSE
+BEGIN
+    ALTER TABLE dbo.PhieuDangKy
+    ALTER COLUMN LoaiPhongYeuCau NVARCHAR(200) NULL;
+END
 GO

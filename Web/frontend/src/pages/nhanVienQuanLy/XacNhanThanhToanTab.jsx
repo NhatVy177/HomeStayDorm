@@ -3,6 +3,7 @@ import { useAuth } from '../../auth/AuthContext.jsx';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { datCocApi } from '../datCoc/datCoc.api.js';
 import ResultModal from '../../components/common/ResultModal.jsx';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
 // Cấu hình trạng thái thanh toán (DC05)
 const STATUS_CONFIG = {
@@ -192,25 +193,13 @@ export default function XacNhanThanhToanTab() {
         </div>
 
         {/* Segmented control theo trạng thái */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px', paddingLeft: '16px' }}>
-          {[{ key: 'all', label: 'Tất cả' }, ...STATUS_ORDER.map((s) => ({ key: s, label: STATUS_CONFIG[s].chip }))].map((tab) => {
-            const active = statusFilter === tab.key;
-            return (
-              <button key={tab.key} type="button" onClick={() => chonChip(tab.key)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
-                  fontSize: '13px', fontWeight: 600, transition: 'all .15s',
-                  border: active ? '1px solid #00666d' : '1px solid #d7dcdc',
-                  background: active ? '#00666d' : '#fff', color: active ? '#fff' : '#3f494a'
-                }}>
-                {tab.label}
-                <span style={{ background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3', color: active ? '#fff' : '#6f797a', borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 700, minWidth: '20px', textAlign: 'center' }}>
-                  {counts[tab.key] ?? 0}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          items={[{ key: 'all', label: 'Tất cả' }, ...STATUS_ORDER.map((s) => ({ key: s, label: STATUS_CONFIG[s].chip }))]}
+          activeKey={statusFilter}
+          counts={counts}
+          onChange={chonChip}
+        />
 
         <table className="ktp-table">
           <thead>

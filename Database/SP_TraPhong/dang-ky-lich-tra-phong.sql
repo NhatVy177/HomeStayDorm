@@ -62,6 +62,7 @@ GO
 CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KhachHang_GuiYeuCau
     @MaKhachHang   VARCHAR(6),
     @MaHopDong     VARCHAR(6) = NULL,
+    @MaPhieuDatCoc VARCHAR(6) = NULL,
     @NgayDuKienTra DATE = NULL
 AS
 BEGIN
@@ -70,54 +71,70 @@ BEGIN
 
     SET @MaKhachHang = NULLIF(LTRIM(RTRIM(@MaKhachHang)), '');
     SET @MaHopDong = NULLIF(LTRIM(RTRIM(@MaHopDong)), '');
-    SET @NgayDuKienTra = ISNULL(@NgayDuKienTra, CAST(GETDATE() AS DATE));
+    SET @MaPhieuDatCoc = NULLIF(LTRIM(RTRIM(@MaPhieuDatCoc)), '');
 
     IF @MaKhachHang IS NULL
         THROW 50011, N'Thiếu mã khách hàng.', 1;
 
-    IF @NgayDuKienTra < CAST(GETDATE() AS DATE)
-        THROW 50011, N'Ngày dự kiến trả phòng không hợp lệ.', 1;
+    IF @NgayDuKienTra IS NULL
+        THROW 50011, N'Ngày dự kiến trả phòng không hợp lệ. Vui lòng chọn từ ngày hiện tại trở đi.', 1;
 
-    IF @MaHopDong IS NULL
+    IF @NgayDuKienTra < CAST(GETDATE() AS DATE)
+        THROW 50011, N'Ngày dự kiến trả phòng không hợp lệ. Vui lòng chọn từ ngày hiện tại trở đi.', 1;
+
+    IF @MaHopDong IS NULL AND @MaPhieuDatCoc IS NULL
+        THROW 50011, N'Vui lòng chọn hợp đồng hoặc phiếu đặt cọc để gửi yêu cầu trả phòng.', 1;
+
+    IF @MaHopDong IS NOT NULL AND @MaPhieuDatCoc IS NOT NULL
+        THROW 50011, N'Chỉ được chọn một trong hợp đồng hoặc phiếu đặt cọc.', 1;
+
+    IF @MaHopDong IS NOT NULL
     BEGIN
-        SELECT TOP 1 @MaHopDong = MaHopDong
-        FROM dbo.HopDongThue
-        WHERE MaKhachHang = @MaKhachHang
-          AND TrangThai = N'Hiệu lực'
-        ORDER BY NgayKyHD DESC, MaHopDong DESC;
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dbo.HopDongThue
+            WHERE MaHopDong = @MaHopDong
+              AND MaKhachHang = @MaKhachHang
+              AND TrangThai = N'Hiệu lực'
+        )
+            THROW 50011, N'Hợp đồng không còn hiệu lực hoặc không thuộc khách hàng hiện tại.', 1;
+
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.PhieuTraPhong
+            WHERE MaHopDong = @MaHopDong
+              AND TrangThai NOT IN (N'Hủy', N'Hoàn tất')
+        )
+            THROW 50011, N'Hồ sơ không đủ điều kiện gửi yêu cầu trả phòng hoặc đã có yêu cầu đang được xử lý.', 1;
     END;
 
-    IF @MaHopDong IS NULL
-        THROW 50011, N'Không tìm thấy hợp đồng hiệu lực để gửi yêu cầu trả phòng.', 1;
+    IF @MaPhieuDatCoc IS NOT NULL
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dbo.PhieuDatCoc
+            WHERE MaPhieuDatCoc = @MaPhieuDatCoc
+              AND MaKhachHang = @MaKhachHang
+              AND TrangThaiCoc = N'Hiệu lực'
+              AND TrangThaiThanhToan = N'Đã TT'
+        )
+            THROW 50011, N'Phiếu đặt cọc không còn hiệu lực, chưa thanh toán hoặc không thuộc khách hàng hiện tại.', 1;
 
-    DECLARE @NgayKetThuc DATE;
-    SELECT @NgayKetThuc = NgayKetThuc
-    FROM dbo.HopDongThue
-    WHERE MaHopDong = @MaHopDong
-      AND MaKhachHang = @MaKhachHang
-      AND TrangThai = N'Hiệu lực';
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.HopDongThue
+            WHERE MaPhieuCoc = @MaPhieuDatCoc
+        )
+            THROW 50011, N'Phiếu đặt cọc này đã được chuyển thành hợp đồng thuê.', 1;
 
-    IF @NgayKetThuc IS NULL
-        THROW 50011, N'Hợp đồng không hợp lệ hoặc không thuộc khách hàng hiện tại.', 1;
-
-    IF @NgayDuKienTra > @NgayKetThuc
-        THROW 50011, N'Ngày dự kiến trả phòng không được vượt quá ngày kết thúc hợp đồng.', 1;
-
-    IF EXISTS (
-        SELECT 1
-        FROM dbo.PhieuTraPhong
-        WHERE MaHopDong = @MaHopDong
-          AND TrangThai = N'Chờ xử lý'
-    )
-        THROW 50011, N'Hợp đồng này đã có yêu cầu trả phòng đang chờ xử lý.', 1;
-
-    IF EXISTS (
-        SELECT 1
-        FROM dbo.PhieuTraPhong
-        WHERE MaHopDong = @MaHopDong
-          AND TrangThai NOT IN (N'Hủy', N'Hoàn tất')
-    )
-        THROW 50011, N'Hợp đồng này đang trong quy trình trả phòng, không thể tạo yêu cầu mới.', 1;
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.PhieuTraPhong
+            WHERE MaPhieuDatCoc = @MaPhieuDatCoc
+              AND TrangThai NOT IN (N'Hủy', N'Hoàn tất')
+        )
+            THROW 50011, N'Hồ sơ không đủ điều kiện gửi yêu cầu trả phòng hoặc đã có yêu cầu đang được xử lý.', 1;
+    END;
 
     DECLARE @SoThuTu INT;
     DECLARE @MaPhieuTra VARCHAR(6);
@@ -150,7 +167,7 @@ BEGIN
             NULL,
             N'Chờ xử lý',
             @MaHopDong,
-            NULL
+            @MaPhieuDatCoc
         );
 
         COMMIT TRANSACTION;
@@ -163,6 +180,7 @@ BEGIN
     SELECT
         MaPhieuTra    AS maPhieuTra,
         MaHopDong     AS maHopDong,
+        MaPhieuDatCoc AS maPhieuDatCoc,
         NgayDangKyTra AS ngayDangKyTra,
         NgayDuKienTra AS ngayDuKienTra,
         TrangThai     AS trangThai
@@ -195,9 +213,10 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1
         FROM dbo.PhieuTraPhong AS ptp
-        INNER JOIN dbo.HopDongThue AS hd ON hd.MaHopDong = ptp.MaHopDong
+        LEFT JOIN dbo.HopDongThue AS hd ON hd.MaHopDong = ptp.MaHopDong
+        LEFT JOIN dbo.PhieuDatCoc AS pdc ON pdc.MaPhieuDatCoc = ptp.MaPhieuDatCoc
         WHERE ptp.MaPhieuTra = @MaPhieuTra
-          AND hd.MaKhachHang = @MaKhachHang
+          AND COALESCE(hd.MaKhachHang, pdc.MaKhachHang) = @MaKhachHang
     )
         THROW 50010, N'Không tìm thấy yêu cầu trả phòng của khách hàng hiện tại.', 1;
 
@@ -216,6 +235,7 @@ BEGIN
     SELECT
         MaPhieuTra    AS maPhieuTra,
         MaHopDong     AS maHopDong,
+        MaPhieuDatCoc AS maPhieuDatCoc,
         NgayDangKyTra AS ngayDangKyTra,
         NgayDuKienTra AS ngayDuKienTra,
         TrangThai     AS trangThai
@@ -373,18 +393,13 @@ BEGIN
     -- ── Kiểm tra Hợp đồng thuê ──────────────────────────────────────
     IF @MaHopDong IS NOT NULL
     BEGIN
-        DECLARE @NgayKetThuc DATE;
-        SELECT @NgayKetThuc = NgayKetThuc 
-        FROM dbo.HopDongThue
-        WHERE MaHopDong    = @MaHopDong
-          AND MaKhachHang  = @MaKhachHang
-          AND TrangThai    = N'Hiệu lực';
-          
-        IF @NgayKetThuc IS NULL
+        IF NOT EXISTS (
+            SELECT 1 FROM dbo.HopDongThue
+            WHERE MaHopDong    = @MaHopDong
+              AND MaKhachHang  = @MaKhachHang
+              AND TrangThai    = N'Hiệu lực'
+        )
             THROW 50011, N'Không tìm thấy hợp đồng thuê còn hiệu lực của khách hàng này.', 1;
-
-        IF @NgayDuKienTra > @NgayKetThuc
-            THROW 50011, N'Ngày dự kiến trả phòng không được vượt quá ngày kết thúc hợp đồng.', 1;
 
         -- Kiểm tra đã có phiếu trả phòng đang chờ xử lý chưa (E9)
         IF EXISTS (

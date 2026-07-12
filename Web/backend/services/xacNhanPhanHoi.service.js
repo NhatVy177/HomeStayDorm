@@ -1,6 +1,6 @@
 import sql from 'mssql';
 import { getPool } from '../database/connection.js';
-import * as doiSoatRepository from '../repositories/doiSoat.repository.js';
+import * as khauTruDoiSoatRepository from '../repositories/khauTruDoiSoat.repository.js';
 
 const xacNhanPhanHoiService = {
   getDanhSachChoXuLyPhanHoi: async (maNhanVien) => {
@@ -20,7 +20,13 @@ const xacNhanPhanHoiService = {
     const chiTiet = result.recordsets[0]?.[0] || null;
     let chiTietKhauTru = null;
     if (chiTiet) {
-      chiTietKhauTru = await doiSoatRepository.getChiTietKhauTru(pool, chiTiet.maPhieuTra, chiTiet.maHopDong);
+      chiTietKhauTru = await khauTruDoiSoatRepository.getChiTietKhauTru(pool, chiTiet.maPhieuTra, chiTiet.maHopDong);
+      if (result.recordsets.length > 2) {
+        chiTietKhauTru = {
+          ...chiTietKhauTru,
+          chiTietHuHong: result.recordsets[2] || []
+        };
+      }
     }
 
     return {

@@ -48,7 +48,7 @@ BEGIN
     LEFT  JOIN dbo.Giuong g         ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
     INNER JOIN dbo.KhachHang kh     ON kh.MaKhachHang = pdc.MaKhachHang
     INNER JOIN dbo.NguoiDung nd     ON nd.MaNguoiDung  = kh.MaKhachHang
-    WHERE ds.TrangThai = N'Chờ phản hồi'
+    WHERE ds.TrangThai IN (N'Chờ phản hồi', N'Cần điều chỉnh', N'Chờ hoàn cọc', N'Chờ thanh toán thêm', N'Đã quyết toán')
       AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
     GROUP BY
         ds.MaDoiSoat, ds.NgayLap, ds.TrangThai, ds.GhiChuPhanHoiKhach,
@@ -135,6 +135,26 @@ BEGIN
     INNER JOIN dbo.Phong p            ON p.MaPhong = ctdc.MaPhong
     WHERE ds.MaDoiSoat = @MaDoiSoat
     ORDER BY p.MaPhong, ctdc.MaGiuong;
+
+    -- Chi tiet hu hong / mat mat phuc vu quan ly xu ly phan hoi
+    SELECT
+        bbkt.MaBienBanKT AS maBienBanKT,
+        cthh.MaChiTietHH AS maChiTietHH,
+        cthh.MaPhong AS maPhong,
+        cthh.MaTaiSan AS maTaiSan,
+        ts.TenTaiSan AS tenTaiSan,
+        cthh.MucDoHuHong AS mucDoHuHong,
+        cthh.MoTaHuHong AS moTaHuHong,
+        cthh.ChiPhiSuaChua AS chiPhiSuaChua
+    FROM dbo.DoiSoat ds
+    INNER JOIN dbo.PhieuTraPhong pt ON pt.MaPhieuTra = ds.MaPhieuTra
+    INNER JOIN dbo.BienBanKiemTraPhong bbkt ON bbkt.MaPhieuTra = pt.MaPhieuTra
+    INNER JOIN dbo.ChiTietHuHong cthh ON cthh.MaBienBanKT = bbkt.MaBienBanKT
+    INNER JOIN dbo.Phong p ON p.MaPhong = cthh.MaPhong
+    LEFT JOIN dbo.TaiSan ts ON ts.MaPhong = cthh.MaPhong AND ts.MaTaiSan = cthh.MaTaiSan
+    WHERE ds.MaDoiSoat = @MaDoiSoat
+      AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
+    ORDER BY bbkt.MaBienBanKT ASC, cthh.MaChiTietHH ASC;
 END;
 GO
 

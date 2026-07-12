@@ -100,6 +100,10 @@ function canEditResidenceProfile(status) {
   return !['Chờ duyệt cư trú', 'Đã duyệt cư trú'].includes(status);
 }
 
+function canViewResidenceProfile(status) {
+  return status === 'Đã duyệt cư trú';
+}
+
 function createPrimaryMember(phieu) {
   return {
     hoTen: phieu.hoTenKhachHang || '',
@@ -113,8 +117,11 @@ function createPrimaryMember(phieu) {
 }
 
 function normalizeMember(row = {}) {
+  const maTV = pick(row, 'maThanhVien', 'MaThanhVien', 'maThanhVienCuTru', 'MaThanhVienCuTru', null);
+  const status = pick(row, 'trangThai', 'TrangThai', 'trangThaiDuyet', 'TrangThaiDuyet', '');
   return {
-    maThanhVienCuTru: pick(row, 'maThanhVienCuTru', 'MaThanhVienCuTru', null),
+    maThanhVien: maTV,
+    maThanhVienCuTru: maTV,
     hoTen: pick(row, 'hoTen', 'HoTen'),
     ngaySinh: toDateInput(pick(row, 'ngaySinh', 'NgaySinh')),
     gioiTinh: pick(row, 'gioiTinh', 'GioiTinh', 'Nam'),
@@ -122,7 +129,8 @@ function normalizeMember(row = {}) {
     sdt: pick(row, 'sdt', 'SDT'),
     email: pick(row, 'email', 'Email'),
     quocTich: pick(row, 'quocTich', 'QuocTich', 'Việt Nam'),
-    trangThaiDuyet: pick(row, 'trangThaiDuyet', 'TrangThaiDuyet', ''),
+    trangThai: status,
+    trangThaiDuyet: status,
     lyDoTuChoi: pick(row, 'lyDoTuChoi', 'LyDoTuChoi', '')
   };
 }
@@ -156,14 +164,24 @@ function normalizePhieu(row = {}) {
   };
 }
 
+// Cấu hình trạng thái hồ sơ cư trú: nhãn chip, nhãn badge, màu badge (giống DatCocTab).
+const RESIDENCE_STATUS_CONFIG = {
+  'Chưa cập nhật':     { chip: 'Chờ gửi',      badgeLabel: 'Chờ gửi',          badge: { bg: '#fff4e5', fg: '#b45309' } },
+  'Chờ duyệt cư trú': { chip: 'Chờ duyệt',    badgeLabel: 'Chờ quản lý duyệt', badge: { bg: '#e8f1ff', fg: '#1d4ed8' } },
+  'Đã duyệt cư trú':  { chip: 'Đã duyệt',     badgeLabel: 'Đã duyệt',          badge: { bg: '#e6f6ec', fg: '#15803d' } },
+  'Từ chối cư trú':   { chip: 'Bị từ chối',   badgeLabel: 'Bị từ chối',        badge: { bg: '#fdecec', fg: '#b91c1c' } },
+};
+const RESIDENCE_STATUS_ORDER = ['Chưa cập nhật', 'Chờ duyệt cư trú', 'Đã duyệt cư trú', 'Từ chối cư trú'];
+
 function StatusBadge({ value }) {
   const label = value || 'Chưa cập nhật';
-  const tone = label === 'Đã duyệt cư trú'
-    ? 'is-success'
-    : label === 'Từ chối cư trú'
-      ? 'is-danger'
-      : 'is-primary';
-  return <span className={`residence-badge ${tone}`}>{label}</span>;
+  const cfg = RESIDENCE_STATUS_CONFIG[label];
+  const s = cfg ? cfg.badge : { bg: '#eef2f3', fg: '#3f494a' };
+  return (
+    <span style={{ background: s.bg, color: s.fg, padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-block', textAlign: 'center' }}>
+      {cfg ? cfg.badgeLabel : label}
+    </span>
+  );
 }
 
 export default function NhanPhongTab() {
@@ -176,10 +194,36 @@ export default function NhanPhongTab() {
   const [reviewInfo, setReviewInfo] = useState(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const errorTimerRef = React.useRef(null);
+
+  function showError(msg) {
+    setError(msg);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setError(''), 4000);
+  }
   const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [successInfo, setSuccessInfo] = useState(null);
 
   const normalizedList = useMemo(() => phieuCocs.map(normalizePhieu), [phieuCocs]);
   const pendingCount = normalizedList.filter((item) => item.trangThaiHoSo !== 'Đã duyệt cư trú').length;
+
+  // Đếm số lượng theo từng trạng thái (cho chip filter)
+  const statusCounts = useMemo(() => {
+    const c = { all: normalizedList.length };
+    RESIDENCE_STATUS_ORDER.forEach((s) => { c[s] = 0; });
+    normalizedList.forEach((item) => {
+      const key = item.trangThaiHoSo || 'Chưa cập nhật';
+      if (c[key] != null) c[key] += 1;
+    });
+    return c;
+  }, [normalizedList]);
+
+  // Danh sách đã lọc theo chip trạng thái
+  const filteredList = useMemo(() => {
+    if (statusFilter === 'all') return normalizedList;
+    return normalizedList.filter((item) => (item.trangThaiHoSo || 'Chưa cập nhật') === statusFilter);
+  }, [normalizedList, statusFilter]);
 
   async function loadData(keyword = '') {
     try {
@@ -237,7 +281,7 @@ export default function NhanPhongTab() {
         setMembers(detailMembers);
       }
     } catch (err) {
-      setError('Không tải được hồ sơ cư trú đã nhập trước đó. Bạn thử đóng form rồi mở lại nha.');
+      showError('Không tải được hồ sơ cư trú đã nhập trước đó. Bạn thử đóng form rồi mở lại nha.');
     } finally {
       setLoading(false);
     }
@@ -249,11 +293,23 @@ export default function NhanPhongTab() {
 
   function addMember() {
     if (isIndividualRental(selectedPhieu)) return;
+    
+    const maxCapacity = selectedPhieu.hinhThucThue === 'Ghép giường' 
+      ? selectedPhieu.soGiuongDaCoc 
+      : selectedPhieu.sucChuaToiDa;
+      
+    if (members.length >= maxCapacity) {
+      const typeLabel = selectedPhieu.hinhThucThue === 'Ghép giường' ? 'số giường đã đặt cọc' : 'sức chứa tối đa của phòng';
+      showError(`Không thể thêm người. Số người cư trú không được vượt quá ${typeLabel} (${maxCapacity} người).`);
+      return;
+    }
+    setError('');
     setMembers((prev) => [...prev, { ...emptyMember }]);
   }
 
   function removeMember(index) {
     if (isIndividualRental(selectedPhieu)) return;
+    setError('');
     setMembers((prev) => prev.filter((_, i) => i !== index));
   }
 
@@ -275,7 +331,7 @@ export default function NhanPhongTab() {
   async function handleSubmit() {
     const message = validateForm();
     if (message) {
-      setError(message);
+      showError(message);
       return;
     }
 
@@ -292,18 +348,36 @@ export default function NhanPhongTab() {
       if (maHoSo) {
         await cuTruApi.guiDuyetHoSoCuTru(maHoSo);
       }
-      setNotice(`Đã gửi hồ sơ cư trú của ${selectedPhieu.maPhieuDatCoc} cho quản lý duyệt.`);
+      setSuccessInfo({
+        maPhieuDatCoc: selectedPhieu.maPhieuDatCoc,
+        hoTenKhachHang: selectedPhieu.hoTenKhachHang,
+        viTriThue: selectedPhieu.viTriThue,
+        soNguoi: members.length
+      });
       setSelectedPhieu(null);
       loadData(searchText);
     } catch (err) {
-      setError(err.response?.data?.message || 'Không thể lưu hồ sơ cư trú. Bạn kiểm tra lại dữ liệu hoặc chạy script SQL mới nha.');
+      showError(err.response?.data?.message || 'Không thể lưu hồ sơ cư trú. Bạn kiểm tra lại dữ liệu hoặc chạy script SQL mới nha.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="ktp-container residence-page">
+    <div className="ktp-container residence-page tnp-page">
+      {error && (
+        <div className="residence-error-overlay" onClick={() => setError('')}>
+          <div className="residence-error-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="residence-error-icon">
+              <Icon name="error" />
+            </div>
+            <h4>Có lỗi xảy ra</h4>
+            <p>{error}</p>
+            <button type="button" className="residence-error-ok" onClick={() => setError('')}>Đã hiểu</button>
+          </div>
+        </div>
+      )}
+
       {notice && (
         <div className="residence-notice">
           <Icon name="info" />
@@ -312,20 +386,7 @@ export default function NhanPhongTab() {
         </div>
       )}
 
-      <section className="residence-hero">
-        <div>
-          <p className="residence-eyebrow">Ghi nhận cư trú</p>
-          <h2>Hoàn tất thông tin trước khi lập hợp đồng</h2>
-          <p>Sale đối chiếu giấy tờ, nhập thành viên ở cùng và gửi quản lý duyệt điều kiện lưu trú.</p>
-        </div>
-        <div className="residence-kpi">
-          <span className="residence-kpi-icon"><Icon name="pending_actions" /></span>
-          <div>
-            <strong>{pendingCount}</strong>
-            <span>Hồ sơ cần xử lý</span>
-          </div>
-        </div>
-      </section>
+
 
       <section className="residence-filter">
         <div className="ktp-filter-group">
@@ -345,6 +406,37 @@ export default function NhanPhongTab() {
           Tìm kiếm
         </button>
       </section>
+
+      {/* Bộ lọc trạng thái dạng chip (giống DatCocTab) */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+        {[{ key: 'all', label: 'Tất cả' }, ...RESIDENCE_STATUS_ORDER.map((s) => ({ key: s, label: RESIDENCE_STATUS_CONFIG[s].chip }))].map((tab) => {
+          const active = statusFilter === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setStatusFilter(tab.key)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 600, transition: 'all .15s',
+                border: active ? '1px solid #2f6765' : '1px solid #d7dcdc',
+                background: active ? '#2f6765' : '#fff',
+                color: active ? '#fff' : '#3f494a'
+              }}
+            >
+              {tab.label}
+              <span style={{
+                background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3',
+                color: active ? '#fff' : '#6f797a',
+                borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 700, minWidth: '20px', textAlign: 'center'
+              }}>
+                {statusCounts[tab.key] ?? 0}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       <section className="ktp-table-section">
         <div className="residence-table-head">
@@ -369,11 +461,12 @@ export default function NhanPhongTab() {
               {loading && (
                 <tr><td colSpan="6" className="text-center">Đang tải dữ liệu...</td></tr>
               )}
-              {!loading && normalizedList.length === 0 && (
+              {!loading && filteredList.length === 0 && (
                 <tr><td colSpan="6" className="text-center">Không có phiếu cọc cần ghi nhận cư trú.</td></tr>
               )}
-              {!loading && normalizedList.map((item) => {
+              {!loading && filteredList.map((item) => {
                 const editable = canEditResidenceProfile(item.trangThaiHoSo);
+                const viewOnly = canViewResidenceProfile(item.trangThaiHoSo);
                 return (
                   <tr key={item.maPhieuDatCoc}>
                     <td><strong className="residence-code">{item.maPhieuDatCoc}</strong></td>
@@ -388,15 +481,34 @@ export default function NhanPhongTab() {
                     <td>{formatDate(item.thoiGianNhanPhong)}</td>
                     <td><StatusBadge value={item.trangThaiHoSo} /></td>
                     <td className="text-center">
-                      <button
-                        className="ktp-btn-action-fill"
-                        type="button"
-                        onClick={() => openForm(item)}
-                        disabled={!editable}
-                        title={editable ? 'Ghi nhận thông tin cư trú' : 'Hồ sơ đang chờ quản lý xử lý'}
-                      >
-                        {editable ? 'Ghi nhận' : 'Chờ duyệt'}
-                      </button>
+                      {editable ? (
+                        <button
+                          className="tnp-row-action"
+                          type="button"
+                          onClick={() => openForm(item)}
+                          title="Ghi nhận thông tin cư trú"
+                        >
+                          Ghi nhận
+                        </button>
+                      ) : viewOnly ? (
+                        <button
+                          className="tnp-row-action is-muted"
+                          type="button"
+                          onClick={() => openForm(item)}
+                          title="Xem hồ sơ cư trú đã duyệt"
+                        >
+                          Xem hồ sơ
+                        </button>
+                      ) : (
+                        <button
+                          className="tnp-row-action is-muted"
+                          type="button"
+                          disabled
+                          title="Hồ sơ đang chờ quản lý xử lý"
+                        >
+                          Chờ duyệt
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -412,13 +524,17 @@ export default function NhanPhongTab() {
             <div className="ktp-modal-header-primary">
               <div>
                 <h3>Hồ sơ cư trú {selectedPhieu.maPhieuDatCoc}</h3>
-                <p className="ktp-modal-header-sub">Kiểm tra giấy tờ và danh sách người ở trước khi gửi duyệt.</p>
+                <p className="ktp-modal-header-sub" style={{ color: 'rgba(255, 255, 255, 0.85)' }}>Kiểm tra giấy tờ và danh sách người ở trước khi gửi duyệt.</p>
               </div>
               <button className="ktp-modal-close" type="button" onClick={() => setSelectedPhieu(null)}><Icon name="close" /></button>
             </div>
 
             <div className="ktp-modal-body">
-              {error && <div className="residence-error"><Icon name="error" /> {error}</div>}
+              {/* isViewOnly: chế độ chỉ xem khi hồ sơ đã được duyệt */}
+              {(() => {
+                const isViewOnly = selectedPhieu.trangThaiHoSo === 'Đã duyệt cư trú';
+                return (
+                  <>
 
               {reviewInfo && reviewInfo.trangThaiHoSo !== 'Chờ duyệt cư trú' && (
                 <section className={`residence-feedback-panel ${reviewInfo.trangThaiHoSo === 'Từ chối cư trú' ? 'is-danger' : 'is-warning'}`}>
@@ -431,7 +547,7 @@ export default function NhanPhongTab() {
                 </section>
               )}
 
-              <div className="residence-summary">
+              <div className="residence-summary" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
                 <div><span>Khách hàng</span><strong>{selectedPhieu.hoTenKhachHang}</strong></div>
                 <div><span>Mã phiếu đăng ký</span><strong>{selectedPhieu.maPhieuYeuCauDangKy || 'Chưa có'}</strong></div>
                 <div><span>Vị trí thuê</span><strong>{selectedPhieu.viTriThue}</strong></div>
@@ -451,7 +567,7 @@ export default function NhanPhongTab() {
                     <p className="residence-subtext">Đi đơn nên hệ thống tự nạp thông tin khách hàng từ phiếu đăng ký.</p>
                   )}
                 </div>
-                {!isIndividualRental(selectedPhieu) && (
+                {!isIndividualRental(selectedPhieu) && !isViewOnly && (
                   <button className="ktp-btn-action" type="button" onClick={addMember}>Thêm người</button>
                 )}
               </div>
@@ -461,7 +577,7 @@ export default function NhanPhongTab() {
                   <article className="residence-member-card" key={`member-${index}`}>
                     <div className="residence-member-title">
                       <strong>{isIndividualRental(selectedPhieu) ? 'Người thuê chính' : `Người cư trú ${index + 1}`}</strong>
-                      {!isIndividualRental(selectedPhieu) && members.length > 1 && (
+                      {!isIndividualRental(selectedPhieu) && members.length > 1 && !isViewOnly && (
                         <button type="button" onClick={() => removeMember(index)}>Xóa</button>
                       )}
                     </div>
@@ -481,64 +597,114 @@ export default function NhanPhongTab() {
                       </div>
                     )}
                     <div className="residence-form-grid">
-                      <label>
+                      <label style={{ gridColumn: 'span 2' }}>
                         Họ tên
-                        <input className="ktp-input" value={member.hoTen} onChange={(event) => updateMember(index, 'hoTen', event.target.value)} />
+                        <input className="ktp-input" value={member.hoTen} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'hoTen', event.target.value)} />
                       </label>
                       <label>
                         CCCD
-                        <input className="ktp-input" value={member.cccd} onChange={(event) => updateMember(index, 'cccd', event.target.value)} />
+                        <input className="ktp-input" value={member.cccd} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'cccd', event.target.value)} />
                       </label>
                       <label>
                         Ngày sinh
-                        <input className="ktp-input" type="date" value={member.ngaySinh} onChange={(event) => updateMember(index, 'ngaySinh', event.target.value)} />
+                        <input className="ktp-input" type="date" value={member.ngaySinh} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'ngaySinh', event.target.value)} />
                       </label>
                       <label>
                         Giới tính
-                        <select className="ktp-input" value={member.gioiTinh} onChange={(event) => updateMember(index, 'gioiTinh', event.target.value)}>
+                        <select className="ktp-input" value={member.gioiTinh} disabled={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'gioiTinh', event.target.value)}>
                           <option>Nam</option>
                           <option>Nữ</option>
                         </select>
                       </label>
                       <label>
                         SĐT
-                        <input className="ktp-input" value={member.sdt} onChange={(event) => updateMember(index, 'sdt', event.target.value)} />
+                        <input className="ktp-input" value={member.sdt} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'sdt', event.target.value)} />
                       </label>
-                      <label>
+                      <label style={{ gridColumn: 'span 2' }}>
                         Email
-                        <input className="ktp-input" value={member.email} onChange={(event) => updateMember(index, 'email', event.target.value)} />
+                        <input className="ktp-input" value={member.email} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'email', event.target.value)} />
                       </label>
                       <label>
                         Quốc tịch
-                        <input className="ktp-input" value={member.quocTich} onChange={(event) => updateMember(index, 'quocTich', event.target.value)} />
+                        <input className="ktp-input" value={member.quocTich} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'quocTich', event.target.value)} />
                       </label>
                     </div>
                   </article>
                 ))}
               </div>
 
-              <label className="residence-note">
-                Ghi chú cho quản lý
-                <textarea className="ktp-input" value={note} onChange={(event) => setNote(event.target.value)} rows="3" />
-              </label>
+              {!isViewOnly && (
+                <>
+                  <label className="residence-note">
+                    Ghi chú cho quản lý
+                    <textarea className="ktp-input" value={note} onChange={(event) => setNote(event.target.value)} rows="3" />
+                  </label>
 
-              <div className="residence-checkline residence-checkline-final">
-                <input
-                  id="checkedDocs"
-                  type="checkbox"
-                  checked={checkedDocs}
-                  onChange={(event) => setCheckedDocs(event.target.checked)}
-                />
-                <label htmlFor="checkedDocs">Đã đối chiếu giấy tờ tùy thân bản gốc và thông tin đặt cọc.</label>
-              </div>
+                  <div className="residence-checkline residence-checkline-final">
+                    <input
+                      id="checkedDocs"
+                      type="checkbox"
+                      checked={checkedDocs}
+                      onChange={(event) => setCheckedDocs(event.target.checked)}
+                    />
+                    <label htmlFor="checkedDocs">Đã đối chiếu giấy tờ tùy thân bản gốc và thông tin đặt cọc.</label>
+                  </div>
+                </>
+              )}
+              </>
+            );})()
+            }
             </div>
 
             <div className="ktp-modal-footer">
               <button className="ktp-btn-cancel" type="button" onClick={() => setSelectedPhieu(null)}>Đóng</button>
-              <button className="ktp-btn-submit" type="button" onClick={handleSubmit} disabled={loading}>
-                Gửi quản lý duyệt
-              </button>
+              {selectedPhieu.trangThaiHoSo !== 'Đã duyệt cư trú' && (
+                <button className="ktp-btn-submit" type="button" onClick={handleSubmit} disabled={loading}>
+                  Gửi quản lý duyệt
+                </button>
+              )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {successInfo && (
+        <div className="ktp-modal-overlay" onClick={() => setSuccessInfo(null)}>
+          <div className="residence-success-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="residence-success-icon-wrap">
+              <Icon name="check" style={{ fontSize: '32px' }} />
+            </div>
+            <h3 className="residence-success-title">Ghi nhận cư trú thành công</h3>
+            <p className="residence-success-text">Hệ thống đã lập và gửi hồ sơ cư trú của khách hàng cho quản lý duyệt.</p>
+            
+            <div className="residence-success-details">
+              <div className="residence-success-row">
+                <span className="residence-success-label">Mã phiếu cọc</span>
+                <span className="residence-success-value">{successInfo.maPhieuDatCoc}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Khách hàng</span>
+                <span className="residence-success-value">{successInfo.hoTenKhachHang}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Vị trí thuê</span>
+                <span className="residence-success-value">{successInfo.viTriThue}</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Số người ở</span>
+                <span className="residence-success-value">{successInfo.soNguoi} người</span>
+              </div>
+              <div className="residence-success-row">
+                <span className="residence-success-label">Trạng thái duyệt</span>
+                <span className="residence-success-value">
+                  <StatusBadge value="Chờ duyệt cư trú" />
+                </span>
+              </div>
+            </div>
+
+            <button type="button" className="residence-success-btn" onClick={() => setSuccessInfo(null)}>
+              Đóng
+            </button>
           </div>
         </div>
       )}

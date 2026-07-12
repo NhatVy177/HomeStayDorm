@@ -193,17 +193,87 @@
   width: min(980px, calc(100vw - 32px));
 }
 
-.residence-error {
+/* Màn thông báo lỗi hiển thị giữa màn hình */
+.residence-error-overlay {
   align-items: center;
-  background: #fdeceb;
-  border: 1px solid #efaaa6;
-  border-radius: 10px;
-  color: #9b1c1c;
+  animation: residence-overlay-in 0.2s ease;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 12px 14px;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 9999;
 }
+
+.residence-error-dialog {
+  align-items: center;
+  animation: residence-dialog-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 360px;
+  padding: 32px 28px 24px;
+  text-align: center;
+  width: calc(100vw - 48px);
+}
+
+.residence-error-icon {
+  align-items: center;
+  background: #fff1f0;
+  border-radius: 50%;
+  color: #c0392b;
+  display: flex;
+  font-size: 32px;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.residence-error-dialog h4 {
+  color: #1a1a1a;
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.residence-error-dialog p {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.residence-error-ok {
+  background: #c0392b;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 10px 32px;
+  transition: background 0.15s;
+  width: 100%;
+}
+
+.residence-error-ok:hover {
+  background: #a93226;
+}
+
+@keyframes residence-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes residence-dialog-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
 
 .residence-feedback-panel {
   background: #fff9ec;
@@ -262,8 +332,13 @@
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(4, 1fr);
-  margin-bottom: 18px;
+  margin-bottom: 4px;
   padding: 16px;
+}
+
+/* Giảm gap giữa các block trong modal duyệt cư trú */
+.residence-modal .ktp-modal-body {
+  gap: 16px;
 }
 
 .residence-summary span {
@@ -703,6 +778,29 @@
   opacity: 0.9;
 }
 
+.ktp-btn-action-outline {
+  background: #ffffff;
+  border: 1.5px solid #00666d;
+  border-radius: 8px;
+  color: #00666d;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ktp-btn-action-outline:hover {
+  background: #eef8f8;
+}
+
+.ktp-btn-action-outline:disabled {
+  border-color: #b8c4c5;
+  color: #b8c4c5;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
 @media (max-width: 980px) {
   .residence-hero,
   .residence-filter,
@@ -743,3 +841,95 @@
     width: 100%;
   }
 }
+
+/* Success Modal Styles */
+.residence-success-modal {
+  align-items: center;
+  animation: residence-dialog-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  max-width: 420px;
+  padding: 32px 24px 24px;
+  text-align: center;
+  width: calc(100vw - 32px);
+}
+
+.residence-success-icon-wrap {
+  align-items: center;
+  background: #e6f6ec;
+  border-radius: 50%;
+  color: #15803d;
+  display: flex;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+  margin-bottom: 18px;
+}
+
+.residence-success-title {
+  color: #1a1c1d;
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.residence-success-text {
+  color: #5d6263;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.residence-success-details {
+  background: #f7fbfb;
+  border: 1px solid #d7e4e5;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.residence-success-row {
+  align-items: center;
+  display: flex;
+  font-size: 13px;
+  justify-content: space-between;
+}
+
+.residence-success-label {
+  color: #5d6263;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.residence-success-value {
+  color: #1a1c1d;
+  font-weight: 600;
+}
+
+.residence-success-btn {
+  background: #2f6765;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 24px;
+  transition: background 0.15s;
+  width: 100%;
+}
+
+.residence-success-btn:hover {
+  background: #24514f;
+}
+

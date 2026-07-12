@@ -183,18 +183,25 @@ export default function KiemTraTraPhong() {
   const loadDanhSach = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await kiemTraTraPhongApi.quanLyDanhSachChoXuLy(filterStatus);
+      const res = await kiemTraTraPhongApi.quanLyDanhSachChoXuLy('Tất cả');
       setDsPhieu(res.data.danhSach || []);
     } catch (err) {
       alert(err?.response?.data?.message || 'Lỗi tải danh sách');
     } finally {
       setLoading(false);
     }
-  }, [filterStatus]);
+  }, []);
 
   useEffect(() => {
     loadDanhSach();
   }, [loadDanhSach]);
+
+  const handleRefresh = () => {
+    setSearchQuery('');
+    setActiveSearch('');
+    setFilterStatus('Chờ xử lý');
+    loadDanhSach();
+  };
 
   const openModal = async (phieu) => {
     setSelectedPhieu(phieu);
@@ -275,6 +282,16 @@ export default function KiemTraTraPhong() {
     }
   };
 
+  const countTatCa = dsPhieu.length;
+  const countChoXuLy = dsPhieu.filter(p => p.trangThai === 'Chờ xử lý').length;
+  const countDaXuLy = dsPhieu.filter(p => p.trangThai !== 'Chờ xử lý').length;
+
+  const filteredItems = dsPhieu.filter(p => {
+    if (filterStatus === 'Chờ xử lý') return p.trangThai === 'Chờ xử lý';
+    if (filterStatus === 'Đã xử lý') return p.trangThai !== 'Chờ xử lý';
+    return true;
+  });
+
   return (
     <div>
       {/* Table Section */}
@@ -290,20 +307,32 @@ export default function KiemTraTraPhong() {
             </div>
           </div>
           <button type="submit" className="tp-btn-search" style={{ alignSelf: 'flex-end', height: '42px' }}>Tìm kiếm</button>
+          <button
+            type="button"
+            className="tp-btn-search"
+            style={{ alignSelf: 'flex-end', height: '42px', backgroundColor: 'transparent', color: '#3b8280', border: '1px solid #3b8280', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            onClick={handleRefresh}
+          >
+            <Icon name="refresh" /> Làm mới
+          </button>
         </form>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
-          {['Tất cả', 'Chờ xử lý', 'Đã xử lý'].map(st => (
+          {[
+            { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
+            { id: 'Chờ xử lý', label: 'Chờ xử lý', count: countChoXuLy },
+            { id: 'Đã xử lý', label: 'Đã xử lý', count: countDaXuLy }
+          ].map(st => (
             <button
-              key={st}
-              onClick={() => setFilterStatus(st)}
+              key={st.id}
+              onClick={() => setFilterStatus(st.id)}
               type="button"
               style={{
                 padding: '6px 16px',
                 borderRadius: '20px',
-                border: filterStatus === st ? 'none' : '1px solid #e1e3e4',
-                backgroundColor: filterStatus === st ? '#2f6765' : '#ffffff',
-                color: filterStatus === st ? '#ffffff' : '#3f494a',
+                border: filterStatus === st.id ? 'none' : '1px solid #e1e3e4',
+                backgroundColor: filterStatus === st.id ? '#2f6765' : '#f8f9fa',
+                color: filterStatus === st.id ? '#ffffff' : '#3f494a',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -313,7 +342,17 @@ export default function KiemTraTraPhong() {
                 transition: 'all 0.2s ease'
               }}
             >
-              {st}
+              {st.label}
+              <span style={{
+                backgroundColor: filterStatus === st.id ? '#ffffff' : '#e1e3e4',
+                color: filterStatus === st.id ? '#2f6765' : '#3f494a',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: '600'
+              }}>
+                {st.count}
+              </span>
             </button>
           ))}
         </div>
@@ -337,13 +376,13 @@ export default function KiemTraTraPhong() {
               </tr>
             </thead>
             <tbody>
-              {dsPhieu.filter(p =>
+              {filteredItems.filter(p =>
                 p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
                 p.sdtKhach?.includes(activeSearch) ||
                 p.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase())
               ).length === 0 ? (
                 <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Không có phiếu trả phòng nào phù hợp.</td></tr>
-              ) : dsPhieu.filter(p =>
+              ) : filteredItems.filter(p =>
                 p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
                 p.sdtKhach?.includes(activeSearch) ||
                 p.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase())
@@ -387,8 +426,7 @@ export default function KiemTraTraPhong() {
                       </button>
                     ) : (
                       <button
-                        className="ktp-btn-action-fill"
-                        style={{ backgroundColor: 'transparent', border: '1px solid #004c52', color: '#004c52' }}
+                        className="tp-btn-detail-outline"
                         onClick={() => openModal(row)}
                       >
                         Xem chi tiết
@@ -431,7 +469,7 @@ export default function KiemTraTraPhong() {
                         <strong style={{ color: '#191c1d' }}>{chiTiet.maPhieuTra}</strong>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ color: '#6f797a', whiteSpace: 'nowrap' }}>Ngày đăng ký trả</span>
+                        <span style={{ color: '#6f797a', whiteSpace: 'nowrap' }}>Ngày đăng ký</span> 
                         <strong style={{ color: '#191c1d' }}>{fmtDate(chiTiet.ngayDangKyTra)}</strong>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -629,7 +667,7 @@ export default function KiemTraTraPhong() {
                                   </tbody>
                                 </table>
                               ) : (
-                                <div style={{ padding: '16px', color: '#6f797a', fontStyle: 'italic', fontSize: '13px', textAlign: 'center' }}>Không có lỗi vi phạm</div>
+                                <div style={{ padding: '16px', color: '#6f797a', fontStyle: 'italic', fontSize: '13px', textAlign: 'center' }}>Không có lỗi vi phạm chưa xử lý</div>
                               )}
                             </div>
                           </div>
@@ -638,7 +676,7 @@ export default function KiemTraTraPhong() {
 
                       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
                         <div style={{ marginBottom: '12px' }}>
-                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Ngày trả thực tế <span style={{ color: 'red' }}>*</span></label>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Ngày trả thực tế</label>
                           <input type="date" value={ngayTraThucTe} onChange={(e) => setNgayTraThucTe(e.target.value)} style={{ width: '250px', padding: '10px 12px', border: '1px solid #e1e3e4', borderRadius: '6px', color: '#3f494a', fontSize: '14px', outline: 'none' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'} />
                         </div>
                         <div style={{ marginBottom: '0' }}>
@@ -712,14 +750,14 @@ export default function KiemTraTraPhong() {
       {/* Success Modal */}
       {isSubmitted && (
         <div className="ktp-modal-overlay" style={{ zIndex: 1100 }} onClick={() => { setIsSubmitted(false); setModalType(null); }}>
-          <div className="ktp-modal" style={{ maxWidth: '400px', width: '90%', padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+          <div className="ktp-modal" style={{ maxWidth: '480px', width: 'max-content', minWidth: '400px', padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#e6f4ea', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#137333" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </div>
             <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#191c1d', margin: '0 0 8px 0' }}>Thành công!</h3>
-            <p style={{ fontSize: '15px', color: '#3f494a', margin: '0 0 24px 0' }}>
+            <p style={{ fontSize: '15px', color: '#3f494a', margin: '0 0 24px 0', whiteSpace: 'nowrap' }}>
               {modalType === 'kiem-tra-hd' ? 'Biên bản kiểm tra trả phòng đã được lưu vào hệ thống.' : 'Hồ sơ đặt cọc đã được xác nhận thành công.'}
             </p>
             <button

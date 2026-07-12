@@ -5,6 +5,16 @@ GO
 -- MODULE: LAP PHIEU DOI SOAT TRA PHONG (Nhan vien ke toan)
 -- =============================================
 
+IF OBJECT_ID(N'dbo.DoiSoat', N'U') IS NOT NULL
+   AND COL_LENGTH('dbo.DoiSoat', 'ThongTinNhanHoanCoc') IS NULL
+    ALTER TABLE dbo.DoiSoat ADD ThongTinNhanHoanCoc NVARCHAR(500) NULL;
+GO
+
+IF OBJECT_ID(N'dbo.DichVuHopDong', N'U') IS NOT NULL
+   AND COL_LENGTH('dbo.DichVuHopDong', 'DonGiaApDung') IS NULL
+    ALTER TABLE dbo.DichVuHopDong ADD DonGiaApDung DECIMAL(15,2) NULL;
+GO
+
 IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_DanhSachChoDoiSoat', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachChoDoiSoat AS BEGIN SET NOCOUNT ON; END;');
 GO
@@ -78,7 +88,8 @@ IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_DanhSachChoThuThem', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachChoThuThem AS BEGIN SET NOCOUNT ON; END;');
 GO
 CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_DanhSachChoThuThem
-    @MaNhanVienKeToan VARCHAR(6) = NULL
+    @MaNhanVienKeToan VARCHAR(6) = NULL,
+    @BoLocThuThem VARCHAR(30) = 'all'
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -102,6 +113,7 @@ BEGIN
         COUNT(DISTINCT ctdc.MaChiTietDC) AS soLuongPhongGiuong,
         ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
         ds.PhuongThucThanhToan AS phuongThucThanhToan,
+        ds.ChungTuThanhToan AS chungTuThanhToan,
         ds.TrangThai AS trangThaiDoiSoat,
         pt.TrangThai AS trangThaiPhieuTra
     FROM dbo.DoiSoat ds
@@ -117,6 +129,28 @@ BEGIN
       AND ds.LoaiQuyetToan = N'Thu thêm'
       AND pt.TrangThai = N'Chờ ký biên bản'
       AND ISNULL(ds.SoTienKhachPhaiTT, 0) > 0
+      AND (
+          @BoLocThuThem IS NULL
+          OR @BoLocThuThem = 'all'
+          OR (
+              @BoLocThuThem = 'can-ghi-nhan'
+              AND (
+                  NULLIF(LTRIM(RTRIM(ds.PhuongThucThanhToan)), N'') IS NULL
+                  OR (
+                      ds.PhuongThucThanhToan = N'Chuyển khoản'
+                      AND NULLIF(LTRIM(RTRIM(ISNULL(ds.ChungTuThanhToan, ''))), '') IS NULL
+                  )
+              )
+          )
+          OR (
+              @BoLocThuThem = 'cho-xac-nhan'
+              AND NULLIF(LTRIM(RTRIM(ds.PhuongThucThanhToan)), N'') IS NOT NULL
+              AND (
+                  ds.PhuongThucThanhToan <> N'Chuyển khoản'
+                  OR NULLIF(LTRIM(RTRIM(ISNULL(ds.ChungTuThanhToan, ''))), '') IS NOT NULL
+              )
+          )
+      )
       AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
     GROUP BY
         ds.MaDoiSoat,
@@ -128,6 +162,7 @@ BEGIN
         pt.MaPhieuDatCoc,
         ds.SoTienKhachPhaiTT,
         ds.PhuongThucThanhToan,
+        ds.ChungTuThanhToan,
         ds.TrangThai,
         pt.TrangThai
     ORDER BY ds.NgayLap DESC, ds.MaDoiSoat DESC;
@@ -229,14 +264,20 @@ BEGIN
         hd.TrangThai AS trangThaiHopDong,
         pdc.TrangThaiCoc AS trangThaiCoc,
         ds.TienCocBanDau AS tienCocBanDau,
+        ds.SoThangLuuTru AS soThangLuuTru,
         ds.TyLeHoanCocHienTai AS tyLeHoanCocHienTai,
         ds.TienCocDuocHoan AS tienCocDuocHoan,
+        ds.TienThueConNo AS tienThueConNo,
+        ds.TienDichVuConNo AS tienDichVuConNo,
+        ds.TongChiPhiSuaChua AS tongChiPhiSuaChua,
+        ds.TienPhat AS tienPhat,
         ds.TongKhauTru AS tongKhauTru,
         ds.SoTienHoanThucTe AS soTienHoanThucTe,
         ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
         ds.PhuongThucThanhToan AS phuongThucThanhToan,
         ds.NgayThanhToan AS ngayThanhToan,
         ds.ChungTuThanhToan AS chungTuThanhToan,
+        ds.ThongTinNhanHoanCoc AS thongTinNhanHoanCoc,
         ds.GhiChuPhanHoiKhach AS ghiChuPhanHoiKhach
     FROM dbo.DoiSoat ds
     INNER JOIN dbo.PhieuTraPhong pt ON pt.MaPhieuTra = ds.MaPhieuTra
@@ -297,11 +338,13 @@ BEGIN
             @TrangThaiDoiSoat NVARCHAR(30),
             @TrangThaiPhieuTra NVARCHAR(50),
             @MaPhieuTra VARCHAR(6),
+            @PhuongThucThanhToanHienTai NVARCHAR(20),
             @SoTienKhachPhaiTT DECIMAL(15,2);
 
         SELECT
             @TrangThaiDoiSoat = ds.TrangThai,
             @MaPhieuTra = ds.MaPhieuTra,
+            @PhuongThucThanhToanHienTai = ds.PhuongThucThanhToan,
             @SoTienKhachPhaiTT = ds.SoTienKhachPhaiTT,
             @TrangThaiPhieuTra = pt.TrangThai
         FROM dbo.DoiSoat ds WITH (UPDLOCK, HOLDLOCK)
@@ -328,6 +371,12 @@ BEGIN
             THROW 50700, N'Phiếu đối soát không phát sinh số tiền cần thu thêm.', 1;
         END
 
+        IF NULLIF(LTRIM(RTRIM(ISNULL(@PhuongThucThanhToanHienTai, N''))), N'') IS NOT NULL
+           AND NULLIF(LTRIM(RTRIM(@PhuongThucThanhToanHienTai)), N'') <> @PhuongThucThanhToan
+        BEGIN
+            THROW 50703, N'Khách đã ghi nhận phương thức thanh toán, kế toán không thể thay đổi phương thức.', 1;
+        END
+
         UPDATE dbo.DoiSoat
         SET
             PhuongThucThanhToan = @PhuongThucThanhToan,
@@ -347,6 +396,90 @@ BEGIN
             @PhuongThucThanhToan AS phuongThucThanhToan,
             @NgayThanhToan AS ngayThanhToan,
             @ChungTuThanhToan AS chungTuThanhToan;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+IF OBJECT_ID(N'dbo.SP_TraPhong_KeToan_KhongXacNhanThuThem', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KeToan_KhongXacNhanThuThem AS BEGIN SET NOCOUNT ON; END;');
+GO
+CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_KhongXacNhanThuThem
+    @MaDoiSoat VARCHAR(6),
+    @MaNhanVienKeToan VARCHAR(6)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        DECLARE
+            @TrangThaiDoiSoat NVARCHAR(30),
+            @TrangThaiPhieuTra NVARCHAR(50),
+            @MaPhieuTra VARCHAR(6),
+            @LoaiQuyetToan NVARCHAR(30),
+            @PhuongThucThanhToan NVARCHAR(20),
+            @SoTienKhachPhaiTT DECIMAL(15,2);
+
+        SELECT
+            @TrangThaiDoiSoat = ds.TrangThai,
+            @MaPhieuTra = ds.MaPhieuTra,
+            @LoaiQuyetToan = ds.LoaiQuyetToan,
+            @PhuongThucThanhToan = ds.PhuongThucThanhToan,
+            @SoTienKhachPhaiTT = ds.SoTienKhachPhaiTT,
+            @TrangThaiPhieuTra = pt.TrangThai
+        FROM dbo.DoiSoat ds WITH (UPDLOCK, HOLDLOCK)
+        INNER JOIN dbo.PhieuTraPhong pt WITH (UPDLOCK, HOLDLOCK) ON pt.MaPhieuTra = ds.MaPhieuTra
+        WHERE ds.MaDoiSoat = @MaDoiSoat;
+
+        IF @MaPhieuTra IS NULL
+        BEGIN
+            THROW 50704, N'Không tìm thấy phiếu đối soát.', 1;
+        END
+
+        IF @TrangThaiDoiSoat <> N'Chờ thanh toán thêm'
+        BEGIN
+            THROW 50701, N'Phiếu đối soát này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.', 1;
+        END
+
+        IF @TrangThaiPhieuTra <> N'Chờ ký biên bản'
+        BEGIN
+            THROW 50702, N'Phiếu trả phòng không còn ở trạng thái chờ ký biên bản.', 1;
+        END
+
+        IF ISNULL(@LoaiQuyetToan, N'') <> N'Thu thêm' OR ISNULL(@SoTienKhachPhaiTT, 0) <= 0
+        BEGIN
+            THROW 50700, N'Phiếu đối soát không phát sinh số tiền cần thu thêm.', 1;
+        END
+
+        IF ISNULL(@PhuongThucThanhToan, N'') <> N'Chuyển khoản'
+        BEGIN
+            THROW 50700, N'Chỉ có thể không xác nhận chứng từ khi khách thanh toán chuyển khoản.', 1;
+        END
+
+        UPDATE dbo.DoiSoat
+        SET
+            ChungTuThanhToan = NULL,
+            NgayThanhToan = NULL,
+            TrangThai = N'Chờ thanh toán thêm',
+            MaNhanVienKeToan = COALESCE(@MaNhanVienKeToan, MaNhanVienKeToan)
+        WHERE MaDoiSoat = @MaDoiSoat;
+
+        COMMIT TRANSACTION;
+
+        SELECT
+            @MaDoiSoat AS maDoiSoat,
+            @MaPhieuTra AS maPhieuTra,
+            N'Chờ thanh toán thêm' AS trangThaiDoiSoat,
+            @TrangThaiPhieuTra AS trangThaiPhieuTra,
+            @PhuongThucThanhToan AS phuongThucThanhToan,
+            CAST(NULL AS DATE) AS ngayThanhToan,
+            CAST(NULL AS VARCHAR(500)) AS chungTuThanhToan;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
@@ -397,6 +530,7 @@ BEGIN
     WHERE ds.TrangThai = N'Chờ hoàn cọc'
       AND ds.LoaiQuyetToan = N'Hoàn cọc'
       AND ISNULL(ds.SoTienHoanThucTe, 0) > 0
+      AND pt.TrangThai = N'Chờ hoàn cọc'
       AND (pt.MaHopDong IS NULL OR hd.TrangThai = N'Đã thanh lý')
       AND (@MaChiNhanh IS NULL OR p.MaChiNhanh = @MaChiNhanh)
     GROUP BY
@@ -578,14 +712,20 @@ BEGIN
         hd.TrangThai AS trangThaiHopDong,
         pdc.TrangThaiCoc AS trangThaiCoc,
         ds.TienCocBanDau AS tienCocBanDau,
+        ds.SoThangLuuTru AS soThangLuuTru,
         ds.TyLeHoanCocHienTai AS tyLeHoanCocHienTai,
         ds.TienCocDuocHoan AS tienCocDuocHoan,
+        ds.TienThueConNo AS tienThueConNo,
+        ds.TienDichVuConNo AS tienDichVuConNo,
+        ds.TongChiPhiSuaChua AS tongChiPhiSuaChua,
+        ds.TienPhat AS tienPhat,
         ds.TongKhauTru AS tongKhauTru,
         ds.SoTienHoanThucTe AS soTienHoanThucTe,
         ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
         ds.PhuongThucThanhToan AS phuongThucThanhToan,
         ds.NgayThanhToan AS ngayThanhToan,
         ds.ChungTuThanhToan AS chungTuThanhToan,
+        ds.ThongTinNhanHoanCoc AS thongTinNhanHoanCoc,
         ds.GhiChuPhanHoiKhach AS ghiChuPhanHoiKhach
     FROM dbo.DoiSoat ds
     INNER JOIN dbo.PhieuTraPhong pt ON pt.MaPhieuTra = ds.MaPhieuTra
@@ -674,6 +814,11 @@ BEGIN
             THROW 50601, N'Phiếu đối soát này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.', 1;
         END
 
+        IF @TrangThaiPhieuTra <> N'Chờ hoàn cọc'
+        BEGIN
+            THROW 50602, N'Phiếu trả phòng không còn ở trạng thái chờ hoàn cọc.', 1;
+        END
+
         IF ISNULL(@SoTienHoanThucTe, 0) <= 0
         BEGIN
             THROW 50600, N'Phiếu đối soát không phát sinh số tiền hoàn cọc.', 1;
@@ -697,11 +842,66 @@ BEGIN
         SET TrangThai = N'Hoàn tất'
         WHERE MaPhieuTra = @MaPhieuTra;
 
-        IF @MaPhieuDatCoc IS NOT NULL
+        IF @MaHopDong IS NULL AND @MaPhieuDatCoc IS NOT NULL
         BEGIN
+            DECLARE @PhongCanCapNhat TABLE (MaPhong VARCHAR(4) PRIMARY KEY);
+
+            INSERT INTO @PhongCanCapNhat (MaPhong)
+            SELECT DISTINCT MaPhong
+            FROM dbo.ChiTietDatCoc
+            WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+
             UPDATE dbo.PhieuDatCoc
             SET TrangThaiCoc = N'Đã hủy'
             WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+
+            UPDATE g
+            SET TinhTrang = N'Trống'
+            FROM dbo.Giuong g
+            INNER JOIN dbo.ChiTietDatCoc ctdc
+                ON ctdc.MaPhong = g.MaPhong
+               AND ctdc.MaGiuong = g.MaGiuong
+            WHERE ctdc.MaPhieuDatCoc = @MaPhieuDatCoc
+              AND ctdc.MaGiuong IS NOT NULL;
+
+            UPDATE g
+            SET TinhTrang = N'Trống'
+            FROM dbo.Giuong g
+            INNER JOIN dbo.ChiTietDatCoc ctdc
+                ON ctdc.MaPhong = g.MaPhong
+               AND ctdc.MaGiuong IS NULL
+            WHERE ctdc.MaPhieuDatCoc = @MaPhieuDatCoc;
+
+            UPDATE p
+            SET
+                TinhTrang =
+                    CASE
+                        WHEN NOT EXISTS (
+                            SELECT 1
+                            FROM dbo.Giuong g
+                            WHERE g.MaPhong = p.MaPhong
+                              AND g.TinhTrang <> N'Trống'
+                        ) THEN N'Trống'
+                        WHEN NOT EXISTS (
+                            SELECT 1
+                            FROM dbo.Giuong g
+                            WHERE g.MaPhong = p.MaPhong
+                              AND g.TinhTrang = N'Trống'
+                        ) THEN N'Đầy'
+                        ELSE N'Còn chỗ'
+                    END,
+                GioiTinhChoPhep =
+                    CASE
+                        WHEN NOT EXISTS (
+                            SELECT 1
+                            FROM dbo.Giuong g
+                            WHERE g.MaPhong = p.MaPhong
+                              AND g.TinhTrang <> N'Trống'
+                        ) THEN N'Không phân biệt'
+                        ELSE p.GioiTinhChoPhep
+                    END
+            FROM dbo.Phong p
+            INNER JOIN @PhongCanCapNhat pc ON pc.MaPhong = p.MaPhong;
         END
 
         COMMIT TRANSACTION;
@@ -1070,8 +1270,21 @@ BEGIN
     LEFT JOIN dbo.DieuKhoanViPham dkvp ON dkvp.MaDieuKhoan = bbvp.MaDieuKhoan
     WHERE @MaHopDong IS NOT NULL
       AND bbvp.MaHopDong = @MaHopDong
-      AND bbvp.TrangThai = N'Chờ xử lý'
     ORDER BY bbvp.NgayViPham ASC, bbvp.MaBBViPham ASC;
+
+    -- Recordset 6: Dich vu dang ap dung trong hop dong, dung khi hoa don chua co chi tiet.
+    SELECT
+        dvhd.MaChiTietDVHD AS maChiTietDVHD,
+        dvhd.MaDichVu AS maDichVu,
+        dv.TenDichVu AS tenDichVu,
+        dv.DonViTinh AS donViTinh,
+        COALESCE(dvhd.DonGiaApDung, dv.DonGia, 0) AS donGia,
+        dvhd.GhiChu AS ghiChu
+    FROM dbo.DichVuHopDong dvhd
+    LEFT JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+    WHERE @MaHopDong IS NOT NULL
+      AND dvhd.MaHopDong = @MaHopDong
+    ORDER BY dv.TenDichVu ASC, dvhd.MaChiTietDVHD ASC;
 END;
 GO
 
@@ -1124,6 +1337,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_InsertDoiSoat
     @TongKhauTru DECIMAL(15,2),
     @SoTienHoanThucTe DECIMAL(15,2),
     @SoTienKhachPhaiTT DECIMAL(15,2),
+    @LoaiQuyetToan NVARCHAR(30),
     @MaNhanVienKeToan VARCHAR(6),
     @MaPhieuTra VARCHAR(6),
     @MaQuyDinhHoanCoc VARCHAR(6) = NULL,
@@ -1174,12 +1388,8 @@ BEGIN
         NULL,
         NULL,
         @GhiChuPhanHoiKhach,
-        CASE
-            WHEN ISNULL(@SoTienKhachPhaiTT, 0) > 0 THEN N'Thu thêm'
-            WHEN ISNULL(@SoTienHoanThucTe, 0) > 0 THEN N'Hoàn cọc'
-            ELSE N'Không phát sinh'
-        END,
-        N'Chờ phản hồi',
+        @LoaiQuyetToan,
+        N'Chờ xác nhận',
         @MaNhanVienKeToan,
         @MaPhieuTra,
         @MaQuyDinhHoanCoc
@@ -1203,6 +1413,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KeToan_UpdateDoiSoatCanDieuChinh
     @TongKhauTru DECIMAL(15,2),
     @SoTienHoanThucTe DECIMAL(15,2),
     @SoTienKhachPhaiTT DECIMAL(15,2),
+    @LoaiQuyetToan NVARCHAR(30),
     @MaNhanVienKeToan VARCHAR(6),
     @MaPhieuTra VARCHAR(6),
     @MaQuyDinhHoanCoc VARCHAR(6) = NULL,
@@ -1229,12 +1440,8 @@ BEGIN
         ChungTuThanhToan = NULL,
         NgayThanhToan = NULL,
         GhiChuPhanHoiKhach = @GhiChuPhanHoiKhach,
-        LoaiQuyetToan = CASE
-            WHEN ISNULL(@SoTienKhachPhaiTT, 0) > 0 THEN N'Thu thêm'
-            WHEN ISNULL(@SoTienHoanThucTe, 0) > 0 THEN N'Hoàn cọc'
-            ELSE N'Không phát sinh'
-        END,
-        TrangThai = N'Chờ phản hồi',
+        LoaiQuyetToan = @LoaiQuyetToan,
+        TrangThai = N'Chờ xác nhận',
         MaNhanVienKeToan = @MaNhanVienKeToan,
         MaQuyDinhHoanCoc = @MaQuyDinhHoanCoc
     WHERE MaDoiSoat = @MaDoiSoat
@@ -1254,6 +1461,6 @@ BEGIN
     FROM dbo.DoiSoat
     WHERE MaDoiSoat = @MaDoiSoat
       AND MaPhieuTra = @MaPhieuTra
-      AND TrangThai = N'Chờ phản hồi';
+      AND TrangThai = N'Chờ xác nhận';
 END;
 GO
