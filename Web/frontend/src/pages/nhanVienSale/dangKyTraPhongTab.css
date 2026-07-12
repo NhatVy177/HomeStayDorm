@@ -248,7 +248,6 @@
 .tp-table-wrap { overflow-x: auto; }
 
 /* List panel */
-.tp-list-panel { }
 .tp-list-toolbar {
   display: flex; gap: 12px; align-items: center; margin-bottom: 16px;
 }
@@ -459,4 +458,4 @@
 .tp-toast.show { bottom: 30px; }
 
 input[type='number'].no-spin::-webkit-inner-spin-button, input[type='number'].no-spin::-webkit-outer-spin-button { -webkit-appearance: none !important; margin: 0; }
-input[type='number'].no-spin { -moz-appearance: textfield !important; }
+input[type='number'].no-spin { -moz-appearance: textfield !important; appearance: textfield !important; }

@@ -19,7 +19,7 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
   const [cost, setCost] = useState(0);
 
   const isNormal = status === 'Bình thường';
-  
+
   const getStatusStyle = () => {
     switch (status) {
       case 'Hư hỏng nhẹ': return { color: '#b06000', bg: '#fef7e0', border: '#fbbc04' };
@@ -32,13 +32,13 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
   const statusStyle = getStatusStyle();
 
   const inputStyle = {
-    width: '100%', 
+    width: '100%',
     height: '42px',
-    padding: '8px 12px', 
-    border: '1px solid #e1e3e4', 
-    borderRadius: '6px', 
-    fontSize: '14px', 
-    outline: 'none', 
+    padding: '8px 12px',
+    border: '1px solid #e1e3e4',
+    borderRadius: '6px',
+    fontSize: '14px',
+    outline: 'none',
     backgroundColor: isNormal ? '#f3f4f5' : '#ffffff',
     color: '#191c1d',
     boxSizing: 'border-box'
@@ -53,7 +53,7 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
     if (newStatus === 'Hư hỏng nhẹ') tyLe = 0.2;
     else if (newStatus === 'Hư hỏng nặng') tyLe = 0.6;
     else if (newStatus === 'Mất mát') tyLe = 1.0;
-    
+
     setCost(newSl * (asset.donGiaBoiThuong || 0) * tyLe);
   };
 
@@ -66,15 +66,15 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
       cost
     });
   }, [status, soLuongLoi, note, cost]);
-  
+
   let tyLeStr = '0%';
   if (status === 'Hư hỏng nhẹ') tyLeStr = '20%';
   else if (status === 'Hư hỏng nặng') tyLeStr = '60%';
   else if (status === 'Mất mát') tyLeStr = '100%';
 
   return (
-    <tr style={{ 
-      borderBottom: '1px solid #e1e3e4', 
+    <tr style={{
+      borderBottom: '1px solid #e1e3e4',
       backgroundColor: statusStyle.bg,
       borderLeft: isNormal ? 'none' : `3px solid ${statusStyle.border}`
     }}>
@@ -88,8 +88,8 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
         {asset.soLuongBanGiao}
       </td>
       <td style={{ padding: '12px 10px' }}>
-        <select 
-          value={status} 
+        <select
+          value={status}
           onChange={(e) => {
             const newStatus = e.target.value;
             setStatus(newStatus);
@@ -113,9 +113,9 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
         </select>
       </td>
       <td style={{ padding: '12px 10px' }}>
-        <input 
-          type="text" 
-          value={isNormal ? '-' : soLuongLoi} 
+        <input
+          type="text"
+          value={isNormal ? '-' : soLuongLoi}
           onChange={(e) => {
             const valStr = e.target.value.replace(/[^0-9]/g, '');
             if (valStr === '') {
@@ -127,9 +127,9 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
             if (val > asset.soLuongBanGiao) val = asset.soLuongBanGiao;
             setSoLuongLoi(val);
             updateCost(status, val);
-          }} 
+          }}
           disabled={isNormal || readOnly}
-          style={{ ...inputStyle, textAlign: 'center', backgroundColor: isNormal ? '#f3f4f5' : '#ffffff' }} 
+          style={{ ...inputStyle, textAlign: 'center', backgroundColor: isNormal ? '#f3f4f5' : '#ffffff' }}
         />
       </td>
       <td style={{ padding: '12px 10px', fontSize: '14px', color: statusStyle.color, textAlign: 'center', fontWeight: '600' }}>
@@ -141,13 +141,13 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
         </div>
       </td>
       <td style={{ padding: '12px 10px' }}>
-        <input 
-          type="text" 
-          value={note} 
-          onChange={e => setNote(e.target.value)} 
-          placeholder={isNormal ? "Không có hư hỏng" : "Mô tả..."} 
-          style={inputStyle} 
-          disabled={isNormal} 
+        <input
+          type="text"
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder={isNormal ? "Không có hư hỏng" : "Mô tả..."}
+          style={inputStyle}
+          disabled={isNormal}
         />
       </td>
     </tr>
@@ -167,7 +167,7 @@ export default function KiemTraTraPhong() {
     const timer = setTimeout(() => setToast(''), 3000);
     return () => clearTimeout(timer);
   }, [toast]);
-  
+
   // Modal State
   const [modalType, setModalType] = useState(null); // 'kiem-tra-hd' or 'xac-nhan-pdc'
   const [selectedPhieu, setSelectedPhieu] = useState(null);
@@ -280,7 +280,7 @@ export default function KiemTraTraPhong() {
       {/* Table Section */}
       <div className="tp-search-container">
         <form className="tp-search-row" onSubmit={e => { e.preventDefault(); setActiveSearch(searchQuery); }} style={{ gap: '16px' }}>
-          <div className="tp-search-col" style={{ flex: 2 }}>
+          <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
               <input className="ktp-input tp-search-input-no-icon" type="text"
@@ -289,23 +289,34 @@ export default function KiemTraTraPhong() {
                 onChange={e => setSearchQuery(e.target.value)} />
             </div>
           </div>
-          <div className="tp-search-col" style={{ flex: 1 }}>
-            <div className="tp-search-label">TRẠNG THÁI</div>
-            <div className="tp-search-wrap">
-              <select 
-                className="ktp-input tp-search-input-no-icon"
-                style={{ cursor: 'pointer' }}
-                value={filterStatus}
-                onChange={e => setFilterStatus(e.target.value)}
-              >
-                <option value="Chờ xử lý">Chờ xử lý</option>
-                <option value="Đã xử lý">Đã xử lý</option>
-                <option value="Tất cả">Tất cả</option>
-              </select>
-            </div>
-          </div>
           <button type="submit" className="tp-btn-search" style={{ alignSelf: 'flex-end', height: '42px' }}>Tìm kiếm</button>
         </form>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
+          {['Tất cả', 'Chờ xử lý', 'Đã xử lý'].map(st => (
+            <button
+              key={st}
+              onClick={() => setFilterStatus(st)}
+              type="button"
+              style={{
+                padding: '6px 16px',
+                borderRadius: '20px',
+                border: filterStatus === st ? 'none' : '1px solid #e1e3e4',
+                backgroundColor: filterStatus === st ? '#2f6765' : '#ffffff',
+                color: filterStatus === st ? '#ffffff' : '#3f494a',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {st}
+            </button>
+          ))}
+        </div>
       </div>
 
       <section className="tp-list-panel">
@@ -326,14 +337,14 @@ export default function KiemTraTraPhong() {
               </tr>
             </thead>
             <tbody>
-              {dsPhieu.filter(p => 
-                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) || 
+              {dsPhieu.filter(p =>
+                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
                 p.sdtKhach?.includes(activeSearch) ||
                 p.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase())
               ).length === 0 ? (
                 <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Không có phiếu trả phòng nào phù hợp.</td></tr>
-              ) : dsPhieu.filter(p => 
-                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) || 
+              ) : dsPhieu.filter(p =>
+                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
                 p.sdtKhach?.includes(activeSearch) ||
                 p.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase())
               ).map((row) => (
@@ -355,12 +366,12 @@ export default function KiemTraTraPhong() {
                   </td>
                   <td>{fmtDate(row.ngayDuKienTra)}</td>
                   <td className="text-center">
-                    <span 
-                      className="ktp-badge" 
-                      style={{ 
-                        backgroundColor: row.trangThai === 'Chờ xử lý' ? '#fff3cd' : '#e5f3eb', 
-                        color: row.trangThai === 'Chờ xử lý' ? '#856404' : '#137333', 
-                        borderColor: row.trangThai === 'Chờ xử lý' ? '#ffeeba' : '#c3e6cb' 
+                    <span
+                      className="ktp-badge"
+                      style={{
+                        backgroundColor: row.trangThai === 'Chờ xử lý' ? '#fff3cd' : '#e5f3eb',
+                        color: row.trangThai === 'Chờ xử lý' ? '#856404' : '#137333',
+                        borderColor: row.trangThai === 'Chờ xử lý' ? '#ffeeba' : '#c3e6cb'
                       }}
                     >
                       {row.trangThai || 'Chờ xử lý'}
@@ -368,15 +379,15 @@ export default function KiemTraTraPhong() {
                   </td>
                   <td className="text-center">
                     {row.trangThai === 'Chờ xử lý' ? (
-                      <button 
-                        className="ktp-btn-action-fill" 
+                      <button
+                        className="ktp-btn-action-fill"
                         onClick={() => openModal(row)}
                       >
                         {row.loaiNguon === 'HopDong' ? 'Lập biên bản' : 'Xác nhận'}
                       </button>
                     ) : (
-                      <button 
-                        className="ktp-btn-action-fill" 
+                      <button
+                        className="ktp-btn-action-fill"
                         style={{ backgroundColor: 'transparent', border: '1px solid #004c52', color: '#004c52' }}
                         onClick={() => openModal(row)}
                       >
@@ -403,19 +414,47 @@ export default function KiemTraTraPhong() {
               </div>
               <button className="ktp-modal-close" onClick={() => setModalType(null)} style={{ color: '#ffffff', background: 'transparent', border: 'none', cursor: 'pointer' }}><Icon name="close" /></button>
             </div>
-            
-            <div className="ktp-modal-body" style={{ padding: '16px 24px', maxHeight: '70vh', overflowY: 'auto', backgroundColor: '#f8f9fa' }}>
+
+            <div className="ktp-modal-body" style={{ padding: '16px 24px', maxHeight: '70vh', overflowY: 'auto', backgroundColor: '#f8f9fa', gap: '0' }}>
               {loadingDetail ? (
                 <div style={{ textAlign: 'center', padding: '20px' }}>Đang tải dữ liệu...</div>
               ) : chiTiet ? (
                 <>
+                  {/* Top Ticket Info */}
+                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00666d', fontWeight: '700', fontSize: '14px' }}>
+                      <Icon name="info" style={{ fontSize: '18px' }} /> Thông tin phiếu trả phòng
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ color: '#6f797a', whiteSpace: 'nowrap' }}>Mã phiếu trả phòng</span>
+                        <strong style={{ color: '#191c1d' }}>{chiTiet.maPhieuTra}</strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ color: '#6f797a', whiteSpace: 'nowrap' }}>Ngày đăng ký trả</span>
+                        <strong style={{ color: '#191c1d' }}>{fmtDate(chiTiet.ngayDangKyTra)}</strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ color: '#6f797a', whiteSpace: 'nowrap' }}>Ngày dự kiến trả</span>
+                        <strong style={{ color: '#191c1d' }}>{fmtDate(chiTiet.ngayDuKienTra)}</strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={{ color: '#6f797a', whiteSpace: 'nowrap' }}>Trạng thái hiện tại</span>
+                        <div>
+                          <span style={{ backgroundColor: '#fef7e0', color: '#b06000', padding: '4px 12px', borderRadius: '4px', fontWeight: '600', whiteSpace: 'nowrap' }}>{chiTiet.trangThai}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Form Info Section */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
-                    {/* Card 1: Khách thuê */}
+                    {/* Card 1: Khách hàng */}
                     <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#00666d', fontWeight: '700', fontSize: '14px' }}>
-                        <Icon name="person" style={{ fontSize: '18px' }} /> Khách thuê
+                        <Icon name="person" style={{ fontSize: '18px' }} /> Khách hàng
                       </div>
+              
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                         <span style={{ color: '#6f797a' }}>Họ tên:</span>
                         <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.hoTenKhach}</span>
@@ -424,9 +463,13 @@ export default function KiemTraTraPhong() {
                         <span style={{ color: '#6f797a' }}>SĐT:</span>
                         <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.sdtKhach || '—'}</span>
                       </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                        <span style={{ color: '#6f797a' }}>CMND/CCCD:</span>
+                        <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.cccdKhach || '—'}</span>
+                      </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                        <span style={{ color: '#6f797a' }}>Hình thức:</span>
-                        <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.hinhThucThue || '—'}</span>
+                        <span style={{ color: '#6f797a' }}>Email:</span>
+                        <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.emailKhach || '—'}</span>
                       </div>
                     </div>
 
@@ -435,24 +478,53 @@ export default function KiemTraTraPhong() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#00666d', fontWeight: '700', fontSize: '14px' }}>
                         <Icon name="description" style={{ fontSize: '18px' }} /> {chiTiet.maHopDong ? 'Hợp đồng' : 'Phiếu đặt cọc'}
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                        <span style={{ color: '#6f797a' }}>{chiTiet.maHopDong ? 'Mã HĐ:' : 'Mã PĐC:'}</span>
-                        <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.maHopDong || chiTiet.maPhieuDatCoc}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                        <span style={{ color: '#6f797a' }}>{chiTiet.maHopDong ? 'Thời hạn:' : 'Ngày đặt cọc:'}</span>
-                        <span style={{ fontWeight: '600', color: '#191c1d' }}>
-                          {chiTiet.maHopDong 
-                            ? (chiTiet.ngayBatDauThue ? `${fmtDate(chiTiet.ngayBatDauThue)} - ${fmtDate(chiTiet.ngayKetThucThue)}` : '—') 
-                            : fmtDate(chiTiet.ngayDatCoc)}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                        <span style={{ color: '#6f797a' }}>{chiTiet.maHopDong ? 'Trạng thái HĐ:' : 'Trạng thái PĐC:'}</span>
-                        <span style={{ fontWeight: '600', backgroundColor: '#e5f3eb', color: '#137333', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
-                          {chiTiet.maHopDong ? chiTiet.trangThaiHopDong : chiTiet.trangThaiCoc}
-                        </span>
-                      </div>
+                      {chiTiet.maHopDong ? (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Mã hợp đồng:</span>
+                            <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.maHopDong}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Ngày bắt đầu:</span>
+                            <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.ngayBatDauThue ? fmtDate(chiTiet.ngayBatDauThue) : '—'}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Ngày kết thúc:</span>
+                            <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.ngayKetThucThue ? fmtDate(chiTiet.ngayKetThucThue) : '—'}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Trạng thái hợp đồng:</span>
+                            <span style={{ fontWeight: '600', backgroundColor: '#e5f3eb', color: '#137333', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>{chiTiet.trangThaiHopDong}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Mã phiếu cọc:</span>
+                            <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.maPhieuDatCoc}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Ngày đặt cọc:</span>
+                            <span style={{ fontWeight: '600', color: '#191c1d' }}>{fmtDate(chiTiet.ngayDatCoc)}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Số tiền cọc:</span>
+                            <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.tienCocPDC ? Number(chiTiet.tienCocPDC).toLocaleString() + 'đ' : '—'}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Trạng thái thanh toán:</span>
+                            <span style={{ fontWeight: '600', backgroundColor: '#e5f3eb', color: '#137333', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>{chiTiet.trangThaiThanhToanPDC || 'Đã thanh toán'}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Trạng thái phiếu cọc:</span>
+                            <span style={{ fontWeight: '600', backgroundColor: '#e5f3eb', color: '#137333', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>{chiTiet.trangThaiCoc}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                            <span style={{ color: '#6f797a' }}>Tình trạng lập HĐ:</span>
+                            <span style={{ fontWeight: '600', backgroundColor: '#fef7e0', color: '#b06000', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>{chiTiet.trangThaiCoc === 'Đã lập HĐ' ? 'Đã lập hợp đồng' : 'Chưa lập hợp đồng'}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Card 3: Phòng/Giường */}
@@ -468,9 +540,13 @@ export default function KiemTraTraPhong() {
                         <span style={{ color: '#6f797a' }}>Phòng:</span>
                         <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.tenPhong}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                         <span style={{ color: '#6f797a' }}>Giường:</span>
                         <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.hinhThucThue === 'Nguyên phòng' ? 'Tất cả' : (chiTiet.maGiuong ? chiTiet.maGiuong.replace(/giường/i, '').trim() : '—')}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                        <span style={{ color: '#6f797a' }}>Loại phòng:</span>
+                        <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.loaiPhong || '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -480,40 +556,80 @@ export default function KiemTraTraPhong() {
                       {/* Nghĩa vụ liên quan */}
                       {chiTiet.nghiaVu?.length > 0 && (
                         <div style={{ marginBottom: '16px' }}>
-                          <h4 style={{ fontSize: '15px', fontWeight: '700', color: '#191c1d', margin: '0 0 12px 0' }}>Nghĩa vụ liên quan (Cần thanh toán)</h4>
+                          <h4 style={{ fontSize: '15px', fontWeight: '700', color: '#191c1d', margin: '0 0 4px 0' }}>Nghĩa vụ liên quan</h4>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                             {/* Khung Hóa đơn nợ */}
-                            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px' }}>
-                              <h5 style={{ fontSize: '14px', fontWeight: '700', color: '#00666d', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Icon name="receipt_long" style={{ fontSize: '18px' }} /> Hóa đơn nợ
-                              </h5>
+                            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', overflow: 'hidden' }}>
+                              <div style={{ padding: '12px 16px', borderBottom: '1px solid #e1e3e4', backgroundColor: '#f8f9fa' }}>
+                                <h5 style={{ fontSize: '14px', fontWeight: '700', color: '#00666d', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Icon name="receipt_long" style={{ fontSize: '18px' }} /> Hóa đơn chưa thanh toán/nợ
+                                </h5>
+                              </div>
                               {chiTiet.nghiaVu.filter(nv => nv.LoaiNghiaVu === 'HoaDon').length > 0 ? (
-                                <ul style={{ paddingLeft: '20px', color: '#ba1a1a', fontWeight: '500', margin: 0, fontSize: '13px' }}>
-                                  {chiTiet.nghiaVu.filter(nv => nv.LoaiNghiaVu === 'HoaDon').map((nv, i) => (
-                                    <li key={i} style={{ marginBottom: '6px', color: '#191c1d' }}>{nv.Ten}</li>
-                                  ))}
-                                </ul>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                                  <thead style={{ borderBottom: '1px solid #e1e3e4' }}>
+                                    <tr>
+                                      <th style={{ padding: '8px 16px', textAlign: 'left', color: '#3f494a', fontWeight: '600' }}>Kỳ hóa đơn</th>
+                                      <th style={{ padding: '8px 16px', textAlign: 'center', color: '#3f494a', fontWeight: '600' }}>Trạng thái</th>
+                                      <th style={{ padding: '8px 16px', textAlign: 'center', color: '#3f494a', fontWeight: '600' }}>Số tiền</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {chiTiet.nghiaVu.filter(nv => nv.LoaiNghiaVu === 'HoaDon').map((nv, i) => (
+                                      <tr key={i} style={{ borderBottom: '1px solid #f1f3f4' }}>
+                                        <td style={{ padding: '8px 16px', color: '#191c1d' }}>{nv.Ten.replace('Hóa đơn kỳ ', '')}</td>
+                                        <td style={{ padding: '8px 16px', textAlign: 'center', color: '#b06000', fontWeight: '500' }}>{nv.TrangThai}</td>
+                                        <td style={{ padding: '8px 16px', textAlign: 'center', color: '#191c1d' }}>{nv.SoTien ? Number(nv.SoTien).toLocaleString() + 'đ' : '—'}</td>
+                                      </tr>
+                                    ))}
+                                    <tr style={{ backgroundColor: '#fff9f9' }}>
+                                      <td style={{ padding: '8px 16px', fontWeight: '700', color: '#191c1d', textAlign: 'left' }}>Tổng cộng:</td>
+                                      <td></td>
+                                      <td style={{ padding: '8px 16px', textAlign: 'center', fontWeight: '700', color: '#c5221f' }}>
+                                        {Number(chiTiet.nghiaVu.filter(nv => nv.LoaiNghiaVu === 'HoaDon').reduce((sum, nv) => sum + (nv.SoTien || 0), 0)).toLocaleString()}đ
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
                               ) : (
-                                <div style={{ color: '#6f797a', fontStyle: 'italic', fontSize: '13px', textAlign: 'center' }}>Không có hóa đơn nợ</div>
+                                <div style={{ padding: '16px', color: '#6f797a', fontStyle: 'italic', fontSize: '13px', textAlign: 'center' }}>Không có hóa đơn nợ</div>
                               )}
                             </div>
 
                             {/* Khung Biên bản vi phạm */}
-                            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px' }}>
-                              <h5 style={{ fontSize: '14px', fontWeight: '700', color: '#00666d', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Icon name="gavel" style={{ fontSize: '18px' }} /> Biên bản vi phạm
-                              </h5>
+                            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', overflow: 'hidden' }}>
+                              <div style={{ padding: '12px 16px', borderBottom: '1px solid #e1e3e4', backgroundColor: '#f8f9fa' }}>
+                                <h5 style={{ fontSize: '14px', fontWeight: '700', color: '#00666d', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Icon name="gavel" style={{ fontSize: '18px' }} /> Biên bản vi phạm
+                                </h5>
+                              </div>
                               {chiTiet.nghiaVu.filter(nv => nv.LoaiNghiaVu === 'ViPham').length > 0 ? (
-                                <ul style={{ paddingLeft: '20px', color: '#ba1a1a', fontWeight: '500', margin: 0, fontSize: '13px' }}>
-                                  {chiTiet.nghiaVu.filter(nv => nv.LoaiNghiaVu === 'ViPham').map((nv, i) => (
-                                    <li key={i} style={{ marginBottom: '8px', color: '#191c1d' }}>
-                                      <div>{nv.Ten}</div>
-                                      {nv.ThoiGian && <div style={{ color: '#6f797a', marginTop: '2px' }}>Ngày vi phạm: {nv.ThoiGian}</div>}
-                                    </li>
-                                  ))}
-                                </ul>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                                  <thead style={{ borderBottom: '1px solid #e1e3e4' }}>
+                                    <tr>
+                                      <th style={{ padding: '8px 16px', textAlign: 'left', color: '#3f494a', fontWeight: '600' }}>Nội dung vi phạm</th>
+                                      <th style={{ padding: '8px 16px', textAlign: 'left', color: '#3f494a', fontWeight: '600' }}>Thời gian</th>
+                                      <th style={{ padding: '8px 16px', textAlign: 'right', color: '#3f494a', fontWeight: '600' }}>Mức phạt</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {chiTiet.nghiaVu.filter(nv => nv.LoaiNghiaVu === 'ViPham').map((nv, i) => (
+                                      <tr key={i} style={{ borderBottom: '1px solid #f1f3f4' }}>
+                                        <td style={{ padding: '8px 16px', color: '#191c1d' }}>{nv.Ten}</td>
+                                        <td style={{ padding: '8px 16px', color: '#191c1d' }}>{nv.ThoiGian || '—'}</td>
+                                        <td style={{ padding: '8px 16px', textAlign: 'right', color: '#191c1d' }}>{nv.SoTien ? Number(nv.SoTien).toLocaleString() + 'đ' : '—'}</td>
+                                      </tr>
+                                    ))}
+                                    <tr style={{ backgroundColor: '#fff9f9' }}>
+                                      <td colSpan="2" style={{ padding: '8px 16px', fontWeight: '700', color: '#191c1d' }}>Tổng tiền phạt:</td>
+                                      <td style={{ padding: '8px 16px', textAlign: 'right', fontWeight: '700', color: '#c5221f' }}>
+                                        {Number(chiTiet.nghiaVu.filter(nv => nv.LoaiNghiaVu === 'ViPham').reduce((sum, nv) => sum + (nv.SoTien || 0), 0)).toLocaleString()}đ
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
                               ) : (
-                                <div style={{ color: '#6f797a', fontStyle: 'italic', fontSize: '13px', textAlign: 'center' }}>Không có lỗi vi phạm</div>
+                                <div style={{ padding: '16px', color: '#6f797a', fontStyle: 'italic', fontSize: '13px', textAlign: 'center' }}>Không có lỗi vi phạm</div>
                               )}
                             </div>
                           </div>
@@ -526,8 +642,8 @@ export default function KiemTraTraPhong() {
                           <input type="date" value={ngayTraThucTe} onChange={(e) => setNgayTraThucTe(e.target.value)} style={{ width: '250px', padding: '10px 12px', border: '1px solid #e1e3e4', borderRadius: '6px', color: '#3f494a', fontSize: '14px', outline: 'none' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'} />
                         </div>
                         <div style={{ marginBottom: '0' }}>
-                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Tình trạng phòng thực tế (Mô tả chung)</label>
-                          <textarea rows="3" value={tinhTrangPhong} onChange={(e) => setTinhTrangPhong(e.target.value)} placeholder="Nhập đánh giá tổng quan về vệ sinh, mùi, hư hỏng kết cấu chung..." style={{ width: '100%', padding: '12px', border: '1px solid #e1e3e4', borderRadius: '6px', fontSize: '14px', resize: 'vertical', display: 'block' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'}></textarea>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Tình trạng phòng thực tế</label>
+                          <textarea rows="3" value={tinhTrangPhong} onChange={(e) => setTinhTrangPhong(e.target.value)} placeholder="Nhập đánh giá tổng quan" style={{ width: '100%', padding: '12px', border: '1px solid #e1e3e4', borderRadius: '6px', fontSize: '14px', resize: 'vertical', display: 'block' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'}></textarea>
                         </div>
                       </div>
 
@@ -550,10 +666,10 @@ export default function KiemTraTraPhong() {
                               </thead>
                               <tbody>
                                 {chiTiet.taiSan.map((asset) => (
-                                  <AssetRow 
-                                    key={asset.maTaiSan} 
-                                    asset={asset} 
-                                    onChange={handleAssetChange} 
+                                  <AssetRow
+                                    key={asset.maTaiSan}
+                                    asset={asset}
+                                    onChange={handleAssetChange}
                                     readOnly={selectedPhieu?.trangThai !== 'Chờ xử lý'}
                                   />
                                 ))}
@@ -568,8 +684,17 @@ export default function KiemTraTraPhong() {
                 </>
               ) : null}
             </div>
-            
-            <div className="ktp-modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e1e3e4', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#ffffff', borderRadius: '0 0 12px 12px' }}>
+
+            <div className="ktp-modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e1e3e4', display: 'flex', justifyContent: modalType === 'kiem-tra-hd' ? 'space-between' : 'flex-end', alignItems: 'center', backgroundColor: '#ffffff', borderRadius: '0 0 12px 12px' }}>
+              {modalType === 'kiem-tra-hd' && (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', backgroundColor: '#fff8e1', padding: '8px 12px', borderRadius: '6px', flex: 1, marginRight: '16px' }}>
+                  <Icon name="info" style={{ color: '#b06000', fontSize: '18px', marginTop: '2px' }} />
+                  <div>
+                    <strong style={{ color: '#b06000', fontSize: '13px', display: 'block', marginBottom: '2px' }}>Lưu ý:</strong>
+                    <span style={{ color: '#b06000', fontSize: '12px' }}>Vui lòng kiểm tra, đối chiếu đầy đủ thông tin với hồ sơ, chứng từ và tình trạng thực tế trước khi xác nhận lưu biên bản.</span>
+                  </div>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={() => setModalType(null)} style={{ backgroundColor: '#ffffff', border: '1px solid #004c52', color: '#004c52', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Đóng</button>
                 {!isSubmitted && modalType === 'kiem-tra-hd' && selectedPhieu?.trangThai === 'Chờ xử lý' && (
@@ -583,7 +708,7 @@ export default function KiemTraTraPhong() {
           </div>
         </div>
       )}
-      
+
       {/* Success Modal */}
       {isSubmitted && (
         <div className="ktp-modal-overlay" style={{ zIndex: 1100 }} onClick={() => { setIsSubmitted(false); setModalType(null); }}>
@@ -597,8 +722,8 @@ export default function KiemTraTraPhong() {
             <p style={{ fontSize: '15px', color: '#3f494a', margin: '0 0 24px 0' }}>
               {modalType === 'kiem-tra-hd' ? 'Biên bản kiểm tra trả phòng đã được lưu vào hệ thống.' : 'Hồ sơ đặt cọc đã được xác nhận thành công.'}
             </p>
-            <button 
-              onClick={() => { setIsSubmitted(false); setModalType(null); }} 
+            <button
+              onClick={() => { setIsSubmitted(false); setModalType(null); }}
               style={{ backgroundColor: '#004c52', color: '#ffffff', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', border: 'none', width: '100%', fontSize: '15px' }}
             >
               Đóng

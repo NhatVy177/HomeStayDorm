@@ -98,13 +98,18 @@ BEGIN
         cn.TenChiNhanh                              AS tenChiNhanh,
         CONVERT(VARCHAR(19), pdc.ThoiDiemDatCoc, 120) AS ngayDatCoc,
         hdt.TrangThai                               AS trangThaiHopDong,
-        pdc.TrangThaiCoc                            AS trangThaiCoc
+        pdc.TrangThaiCoc                            AS trangThaiCoc,
+        pdc.TrangThaiThanhToan                      AS trangThaiThanhToanPDC,
+        nd.Email                                    AS emailKhach,
+        p.TinhTrang                                 AS tinhTrangPhongDB,
+        lp.TenLoaiPhong                             AS loaiPhong
     FROM dbo.PhieuTraPhong ptp
     LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = ptp.MaHopDong
     LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hdt.MaPhieuCoc)
     INNER JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
     INNER JOIN dbo.ChiNhanh cn ON cn.MaChiNhanh = p.MaChiNhanh
+    INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong
     INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hdt.MaKhachHang, pdc.MaKhachHang)
     INNER JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
     WHERE ptp.MaPhieuTra = @MaPhieuTra AND p.MaChiNhanh = @MaChiNhanh;
@@ -134,9 +139,10 @@ BEGIN
             hd.MaHoaDon AS Ma,
             N'Hóa đơn kỳ ' + hd.KyThanhToan AS Ten,
             hd.TongTien AS SoTien,
-            CAST(NULL AS VARCHAR(10)) AS ThoiGian
+            CAST(NULL AS VARCHAR(10)) AS ThoiGian,
+            hd.TrangThai AS TrangThai
         FROM dbo.HoaDon hd
-        WHERE hd.MaHopDong = @MaHopDong AND (hd.TrangThai = N'Chưa TT' OR hd.TrangThai = N'Nợ')
+        WHERE hd.MaHopDong = @MaHopDong AND hd.TrangThai IN (N'Chưa TT', N'Nợ')
         
         UNION ALL
         
@@ -145,7 +151,8 @@ BEGIN
             bbvp.MaBBViPham AS Ma,
             bbvp.MoTaViPham AS Ten,
             bbvp.SoTienPhat AS SoTien,
-            CONVERT(VARCHAR(10), bbvp.NgayViPham, 103) AS ThoiGian
+            CONVERT(VARCHAR(10), bbvp.NgayViPham, 103) AS ThoiGian,
+            CAST(NULL AS NVARCHAR(50)) AS TrangThai
         FROM dbo.BienBanViPham bbvp
         WHERE bbvp.MaHopDong = @MaHopDong AND bbvp.TrangThai = N'Chờ xử lý';
     END
@@ -196,14 +203,14 @@ BEGIN
     -- Cập nhật trạng thái phiếu
     UPDATE dbo.PhieuTraPhong
     SET TrangThai = N'Chờ đối soát',
-        NgayTraThucTe = GETDATE()
+        NgayTraThucTe = NgayDuKienTra
     WHERE MaPhieuTra = @MaPhieuTra;
 END;
 GO
 
 -- =============================================
 -- 4. SP_TraPhong_QuanLy_LapBienBanKiemTra
--- Lập biên bản kiểm tra trả phòng và ghi nhận hư hỏng (cho hợp đồng)
+-- Lập biên bản kiểm tra trả phòng
 -- =============================================
 IF OBJECT_ID(N'dbo.SP_TraPhong_QuanLy_LapBienBanKiemTra', N'P') IS NULL
     EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_QuanLy_LapBienBanKiemTra AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
@@ -214,7 +221,8 @@ CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_QuanLy_LapBienBanKiemTra
     @MaNhanVien     VARCHAR(6),
     @NgayTraThucTe  DATE,
     @TinhTrangPhong NVARCHAR(MAX),
-    @JSONHuHong     NVARCHAR(MAX) -- Dạng: [{"maTaiSan":"TS01", "moTa":"Hỏng", "chiPhi": 100000}]
+    @TongChiPhi     DECIMAL(15,2),
+    @MaBienBanKT    VARCHAR(6) OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -222,29 +230,67 @@ BEGIN
         BEGIN TRANSACTION;
 
         -- 1. Kiểm tra trạng thái
-        IF NOT EXISTS (SELECT 1 FROM dbo.PhieuTraPhong WHERE MaPhieuTra = @MaPhieuTra AND TrangThai = N'Chờ xử lý')
+        DECLARE @MaHD VARCHAR(6);
+        SELECT @MaHD = MaHopDong FROM dbo.PhieuTraPhong WHERE MaPhieuTra = @MaPhieuTra AND TrangThai = N'Chờ xử lý';
+
+        IF @MaHD IS NULL
         BEGIN
             THROW 50010, N'Phiếu trả phòng này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.', 1;
         END
 
+        IF EXISTS (SELECT 1 FROM dbo.HopDongThue WHERE MaHopDong = @MaHD AND TrangThai = N'Đã thanh lý')
+        BEGIN
+            THROW 50011, N'Hợp đồng đã thanh lý, không đủ điều kiện lập biên bản.', 1;
+        END
+
         -- 2. Tạo mã Biên Bản Kiểm Tra
-        DECLARE @MaBienBanKT VARCHAR(6);
         SELECT @MaBienBanKT = 'KT' + RIGHT('0000' + CAST(ISNULL(MAX(CAST(SUBSTRING(MaBienBanKT, 3, 4) AS INT)), 0) + 1 AS VARCHAR), 4)
         FROM dbo.BienBanKiemTraPhong;
 
-        -- 3. Tính tổng chi phí sửa chữa từ JSON
-        DECLARE @TongChiPhi DECIMAL(15,2) = 0;
-        IF @JSONHuHong IS NOT NULL AND LTRIM(RTRIM(@JSONHuHong)) <> '' AND @JSONHuHong <> '[]'
-        BEGIN
-            SELECT @TongChiPhi = SUM(CAST(JSON_VALUE(value, '$.chiPhi') AS DECIMAL(15,2)))
-            FROM OPENJSON(@JSONHuHong);
-        END
-
-        -- 4. Insert Biên Bản
+        -- 3. Insert Biên Bản
         INSERT INTO dbo.BienBanKiemTraPhong (MaBienBanKT, MaPhieuTra, MaNhanVienQL, NgayKiemTra, TinhTrangPhong, TongChiPhiSuaChua)
         VALUES (@MaBienBanKT, @MaPhieuTra, @MaNhanVien, GETDATE(), @TinhTrangPhong, @TongChiPhi);
 
-        -- 5. Lấy mã phòng
+        -- 4. Cập nhật trạng thái phiếu trả phòng
+        UPDATE dbo.PhieuTraPhong
+        SET TrangThai = N'Chờ đối soát',
+            NgayTraThucTe = @NgayTraThucTe
+        WHERE MaPhieuTra = @MaPhieuTra;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- =============================================
+-- 5. SP_TraPhong_QuanLy_ThemChiTietHuHong
+-- Ghi nhận từng chi tiết hư hỏng tài sản (gọi nhiều lần từ backend)
+-- =============================================
+IF OBJECT_ID(N'dbo.SP_TraPhong_QuanLy_ThemChiTietHuHong', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_QuanLy_ThemChiTietHuHong AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_QuanLy_ThemChiTietHuHong
+    @MaBienBanKT    VARCHAR(6),
+    @MaPhieuTra     VARCHAR(6),
+    @MaTaiSan       VARCHAR(6),
+    @MoTaHuHong     NVARCHAR(MAX),
+    @ChiPhiSuaChua  DECIMAL(15,2),
+    @SoLuong        INT,
+    @MucDoHuHong    NVARCHAR(100),
+    @TyLeHuHong     DECIMAL(5,2),
+    @MaQuyDinhTruTien VARCHAR(6)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Lấy mã phòng từ phiếu trả
         DECLARE @MaPhong VARCHAR(4);
         SELECT @MaPhong = p.MaPhong 
         FROM dbo.PhieuTraPhong ptp
@@ -254,33 +300,13 @@ BEGIN
         INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
         WHERE ptp.MaPhieuTra = @MaPhieuTra;
 
-        -- 6. Insert Chi Tiết Hư Hỏng nếu có
-        IF @JSONHuHong IS NOT NULL AND LTRIM(RTRIM(@JSONHuHong)) <> '' AND @JSONHuHong <> '[]'
-        BEGIN
-            -- Lấy max ID để sinh mã tự động
-            DECLARE @MaxID INT = 0;
-            SELECT @MaxID = ISNULL(MAX(CAST(SUBSTRING(MaChiTietHH, 3, 4) AS INT)), 0) FROM dbo.ChiTietHuHong;
+        -- Tạo mã chi tiết hư hỏng
+        DECLARE @MaChiTietHH VARCHAR(6);
+        SELECT @MaChiTietHH = 'HH' + RIGHT('0000' + CAST(ISNULL(MAX(CAST(SUBSTRING(MaChiTietHH, 3, 4) AS INT)), 0) + 1 AS VARCHAR), 4) FROM dbo.ChiTietHuHong;
 
-            INSERT INTO dbo.ChiTietHuHong (MaChiTietHH, MaBienBanKT, MaPhong, MaTaiSan, MoTaHuHong, ChiPhiSuaChua, SoLuong, MucDoHuHong, TyLeHuHong, MaQuyDinhTruTien)
-            SELECT 
-                'HH' + RIGHT('0000' + CAST((@MaxID + ROW_NUMBER() OVER(ORDER BY (SELECT NULL))) AS VARCHAR), 4),
-                @MaBienBanKT,
-                @MaPhong,
-                JSON_VALUE(value, '$.maTaiSan'),
-                JSON_VALUE(value, '$.moTa'),
-                CAST(JSON_VALUE(value, '$.chiPhi') AS DECIMAL(15,2)),
-                CAST(JSON_VALUE(value, '$.soLuong') AS INT),
-                JSON_VALUE(value, '$.mucDoHuHong'),
-                CAST(JSON_VALUE(value, '$.tyLeHuHong') AS DECIMAL(5,2)),
-                JSON_VALUE(value, '$.maQuyDinhTruTien')
-            FROM OPENJSON(@JSONHuHong);
-        END
-
-        -- 7. Cập nhật trạng thái phiếu trả phòng
-        UPDATE dbo.PhieuTraPhong
-        SET TrangThai = N'Chờ đối soát',
-            NgayTraThucTe = @NgayTraThucTe
-        WHERE MaPhieuTra = @MaPhieuTra;
+        -- Insert Chi Tiết
+        INSERT INTO dbo.ChiTietHuHong (MaChiTietHH, MaBienBanKT, MaPhong, MaTaiSan, MoTaHuHong, ChiPhiSuaChua, SoLuong, MucDoHuHong, TyLeHuHong, MaQuyDinhTruTien)
+        VALUES (@MaChiTietHH, @MaBienBanKT, @MaPhong, @MaTaiSan, @MoTaHuHong, @ChiPhiSuaChua, @SoLuong, @MucDoHuHong, @TyLeHuHong, @MaQuyDinhTruTien);
 
         COMMIT TRANSACTION;
     END TRY

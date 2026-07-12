@@ -90,14 +90,18 @@ BEGIN
     IF @MaHopDong IS NULL
         THROW 50011, N'Không tìm thấy hợp đồng hiệu lực để gửi yêu cầu trả phòng.', 1;
 
-    IF NOT EXISTS (
-        SELECT 1
-        FROM dbo.HopDongThue
-        WHERE MaHopDong = @MaHopDong
-          AND MaKhachHang = @MaKhachHang
-          AND TrangThai = N'Hiệu lực'
-    )
+    DECLARE @NgayKetThuc DATE;
+    SELECT @NgayKetThuc = NgayKetThuc
+    FROM dbo.HopDongThue
+    WHERE MaHopDong = @MaHopDong
+      AND MaKhachHang = @MaKhachHang
+      AND TrangThai = N'Hiệu lực';
+
+    IF @NgayKetThuc IS NULL
         THROW 50011, N'Hợp đồng không hợp lệ hoặc không thuộc khách hàng hiện tại.', 1;
+
+    IF @NgayDuKienTra > @NgayKetThuc
+        THROW 50011, N'Ngày dự kiến trả phòng không được vượt quá ngày kết thúc hợp đồng.', 1;
 
     IF EXISTS (
         SELECT 1
@@ -369,13 +373,18 @@ BEGIN
     -- ── Kiểm tra Hợp đồng thuê ──────────────────────────────────────
     IF @MaHopDong IS NOT NULL
     BEGIN
-        IF NOT EXISTS (
-            SELECT 1 FROM dbo.HopDongThue
-            WHERE MaHopDong    = @MaHopDong
-              AND MaKhachHang  = @MaKhachHang
-              AND TrangThai    = N'Hiệu lực'
-        )
+        DECLARE @NgayKetThuc DATE;
+        SELECT @NgayKetThuc = NgayKetThuc 
+        FROM dbo.HopDongThue
+        WHERE MaHopDong    = @MaHopDong
+          AND MaKhachHang  = @MaKhachHang
+          AND TrangThai    = N'Hiệu lực';
+          
+        IF @NgayKetThuc IS NULL
             THROW 50011, N'Không tìm thấy hợp đồng thuê còn hiệu lực của khách hàng này.', 1;
+
+        IF @NgayDuKienTra > @NgayKetThuc
+            THROW 50011, N'Ngày dự kiến trả phòng không được vượt quá ngày kết thúc hợp đồng.', 1;
 
         -- Kiểm tra đã có phiếu trả phòng đang chờ xử lý chưa (E9)
         IF EXISTS (
