@@ -4,7 +4,7 @@ import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import KiemTraTraPhong from './KiemTraTraPhong.jsx';
 import XacNhanPhanHoi from './XacNhanPhanHoi.jsx';
 import ThanhLyTraPhong from './thanhlytraphong.jsx';
-import CapNhatTraPhong from './capnhattraphong.jsx';
+import GhiNhanBanGiaoRa from './GhiNhanBanGiaoRa.jsx';
 
 export default function XuLyTraPhongTab() {
   const [modalType, setModalType] = useState(null);
@@ -37,16 +37,16 @@ export default function XuLyTraPhongTab() {
           Thanh lý trả phòng
         </button>
         <button 
-          onClick={() => setActiveSubTab('cap-nhat-hoan-tat')}
-          style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'cap-nhat-hoan-tat' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'cap-nhat-hoan-tat' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
-          Cập nhật hoàn tất
+          onClick={() => setActiveSubTab('ban-giao-ra')}
+          style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'ban-giao-ra' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'ban-giao-ra' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
+          Ghi nhận bàn giao ra
         </button>
       </div>
 
       {activeSubTab === 'cho-lap-bien-ban' && <KiemTraTraPhong />}
       {activeSubTab === 'xu-ly-phan-hoi' && <XacNhanPhanHoi />}
       {activeSubTab === 'thanh-ly-tra-phong' && <ThanhLyTraPhong />}
-      {activeSubTab === 'cap-nhat-hoan-tat' && <CapNhatTraPhong />}
+      {activeSubTab === 'ban-giao-ra' && <GhiNhanBanGiaoRa />}
 
       {/* Modal Quyết Toán */}
       {(modalType === 'quyet-toan' || modalType === 'detail-quyet-toan') && (

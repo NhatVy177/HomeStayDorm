@@ -160,7 +160,7 @@ CREATE TABLE PhieuDatCoc (
     ThoiDiemDatCoc          DATETIME        NOT NULL,
     ThoiHanThanhToan        DATETIME        NOT NULL,
     SoTienCoc               DECIMAL(15,2),
-    PhuongThucThanhToan     NVARCHAR(20)    
+    PhuongThucThanhToan     NVARCHAR(20),    
     TrangThaiThanhToan      NVARCHAR(20)     NOT NULL DEFAULT N'Chờ TT',
     ThoiGianXacNhanTT       DATETIME,
     ChungTuThanhToan        VARCHAR(500),

@@ -34,7 +34,7 @@ const thanhLyTraPhongService = {
       request.input('MaPhieuTra', sql.VarChar(6), maPhieuTra);
       request.input('MaNhanVien', sql.VarChar(6), maNhanVien);
       const result = await request.execute('SP_TraPhong_QuanLy_XacNhanThanhLy');
-      return result;
+      return result.recordset?.[0] || null;
     } catch (err) {
       throw err;
     }

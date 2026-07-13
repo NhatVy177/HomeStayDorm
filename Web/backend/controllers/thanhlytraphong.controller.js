@@ -32,8 +32,11 @@ const thanhLyTraPhongController = {
       const { maPhieuTra } = req.body;
       const maNhanVien = req.user?.maNguoiDung || 'NV0001';
       
-      await thanhLyTraPhongService.xacNhanThanhLy(maPhieuTra, maNhanVien);
-      res.status(200).json({ message: 'Thanh lý trả phòng thành công' });
+      const result = await thanhLyTraPhongService.xacNhanThanhLy(maPhieuTra, maNhanVien);
+      res.status(200).json({
+        message: result?.message || 'Thanh lý trả phòng thành công',
+        result
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: err.message || 'Lỗi server' });

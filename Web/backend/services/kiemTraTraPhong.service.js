@@ -41,13 +41,44 @@ export const kiemTraTraPhongService = {
 
   quanLyLapBienBanKiemTra: async (maPhieuTra, maNhanVien, ngayTraThucTe, tinhTrangPhong, dsHuHong) => {
     const pool = await getPool();
-    const result = await pool.request()
-      .input('MaPhieuTra', sql.VarChar(6), maPhieuTra)
-      .input('MaNhanVien', sql.VarChar(6), maNhanVien)
-      .input('NgayTraThucTe', sql.Date, ngayTraThucTe)
-      .input('TinhTrangPhong', sql.NVarChar(sql.MAX), tinhTrangPhong)
-      .input('JSONHuHong', sql.NVarChar(sql.MAX), JSON.stringify(dsHuHong || []))
-      .execute('SP_TraPhong_QuanLy_LapBienBanKiemTra');
-    return true;
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+
+    try {
+      const tongChiPhi = dsHuHong ? dsHuHong.reduce((sum, item) => sum + (Number(item.chiPhi) || 0), 0) : 0;
+
+      const result = await transaction.request()
+        .input('MaPhieuTra', sql.VarChar(6), maPhieuTra)
+        .input('MaNhanVien', sql.VarChar(6), maNhanVien)
+        .input('NgayTraThucTe', sql.Date, ngayTraThucTe)
+        .input('TinhTrangPhong', sql.NVarChar(sql.MAX), tinhTrangPhong)
+        .input('TongChiPhi', sql.Decimal(15,2), tongChiPhi)
+        .output('MaBienBanKT', sql.VarChar(6))
+        .execute('SP_TraPhong_QuanLy_LapBienBanKiemTra');
+
+      const maBienBanKT = result.output.MaBienBanKT;
+
+      if (dsHuHong && dsHuHong.length > 0) {
+        for (const hh of dsHuHong) {
+          await transaction.request()
+            .input('MaBienBanKT', sql.VarChar(6), maBienBanKT)
+            .input('MaPhieuTra', sql.VarChar(6), maPhieuTra)
+            .input('MaTaiSan', sql.VarChar(6), hh.maTaiSan)
+            .input('MoTaHuHong', sql.NVarChar(sql.MAX), hh.moTa || '')
+            .input('ChiPhiSuaChua', sql.Decimal(15,2), hh.chiPhi || 0)
+            .input('SoLuong', sql.Int, hh.soLuong || 1)
+            .input('MucDoHuHong', sql.NVarChar(100), hh.mucDoHuHong || '')
+            .input('TyLeHuHong', sql.Decimal(5,2), hh.tyLeHuHong || 0)
+            .input('MaQuyDinhTruTien', sql.VarChar(6), hh.maQuyDinhTruTien || null)
+            .execute('SP_TraPhong_QuanLy_ThemChiTietHuHong');
+        }
+      }
+
+      await transaction.commit();
+      return true;
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
   }
 };

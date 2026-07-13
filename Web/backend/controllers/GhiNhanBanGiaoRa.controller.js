@@ -1,31 +1,31 @@
-import { capNhatTraPhongService } from '../services/capnhattraphong.service.js';
+import { banGiaoRaService } from '../services/GhiNhanBanGiaoRa.service.js';
 
-export const getDanhSachHoanTat = async (req, res, next) => {
+export const getDanhSachBanGiaoRa = async (req, res, next) => {
   try {
     const maNhanVien = req.user.maNguoiDung;
-    const status = req.query.status || 'Chờ hoàn tất';
-    const danhSach = await capNhatTraPhongService.getDanhSachHoanTat(maNhanVien, status);
+    const status = req.query.status || 'Chờ bàn giao';
+    const danhSach = await banGiaoRaService.getDanhSachBanGiaoRa(maNhanVien, status);
     res.json({ success: true, danhSach });
   } catch (error) {
     next(error);
   }
 };
 
-export const getChiTietHoanTat = async (req, res, next) => {
+export const getChiTietBanGiaoRa = async (req, res, next) => {
   try {
     const maNhanVien = req.user.maNguoiDung;
     const { maPhieuTra } = req.params;
     if (!maPhieuTra) {
       return res.status(400).json({ success: false, message: 'Thiếu mã phiếu trả' });
     }
-    const data = await capNhatTraPhongService.getChiTietHoanTat(maPhieuTra, maNhanVien);
+    const data = await banGiaoRaService.getChiTietBanGiaoRa(maPhieuTra, maNhanVien);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
   }
 };
 
-export const capNhatHoanTat = async (req, res, next) => {
+export const ghiNhanBanGiaoRa = async (req, res, next) => {
   try {
     const maNhanVien = req.user.maNguoiDung;
     const { maPhieuTra, danhSachBanGiao } = req.body;
@@ -38,8 +38,8 @@ export const capNhatHoanTat = async (req, res, next) => {
       ? JSON.stringify(danhSachBanGiao) 
       : null;
 
-    await capNhatTraPhongService.capNhatHoanTat(maPhieuTra, maNhanVien, jsonBanGiaoRa);
-    res.json({ success: true, message: 'Cập nhật hoàn tất thành công' });
+    const result = await banGiaoRaService.ghiNhanBanGiaoRa(maPhieuTra, maNhanVien, jsonBanGiaoRa);
+    res.json({ success: true, message: result?.message || 'Ghi nhận bàn giao ra thành công', result });
   } catch (error) {
     next(error);
   }

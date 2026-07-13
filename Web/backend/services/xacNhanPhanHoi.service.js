@@ -21,6 +21,12 @@ const xacNhanPhanHoiService = {
     let chiTietKhauTru = null;
     if (chiTiet) {
       chiTietKhauTru = await khauTruDoiSoatRepository.getChiTietKhauTru(pool, chiTiet.maPhieuTra, chiTiet.maHopDong);
+      if (result.recordsets.length > 2) {
+        chiTietKhauTru = {
+          ...chiTietKhauTru,
+          chiTietHuHong: result.recordsets[2] || []
+        };
+      }
     }
 
     return {

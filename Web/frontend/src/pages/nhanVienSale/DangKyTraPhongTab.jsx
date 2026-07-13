@@ -273,8 +273,9 @@ function BuocChonHopDong({ khach, onChon, onQuayLai }) {
 
 // ─── Bước 3: Nhập ngày và xác nhận ─────────────────────────────────────────
 function BuocXacNhan({ khach, hopDong, onSuccess, onQuayLai }) {
-  const todayISO = new Date().toISOString().split('T')[0];
-  const [ngay, setNgay]           = useState('');
+  const d = new Date();
+  const todayISO = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+  const [ngay, setNgay]           = useState(todayISO);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]           = useState('');
 
@@ -353,7 +354,7 @@ function BuocXacNhan({ khach, hopDong, onSuccess, onQuayLai }) {
 
       <form onSubmit={handleSubmit} className="tp-date-form">
         <label htmlFor="tp-ngay-du-kien" className="tp-date-label">
-          Ngày dự kiến trả phòng <span style={{ color: '#b3261e' }}>*</span>
+          Ngày dự kiến trả phòng
         </label>
         <div className="tp-date-input-wrap">
           <Icon name="calendar_today" className="tp-cal-icon" />
@@ -386,7 +387,9 @@ function BuocXacNhan({ khach, hopDong, onSuccess, onQuayLai }) {
 }
 
 // ─── Bước 4: Thành công ─────────────────────────────────────────────────────
-function BuocThanhCong({ phieu, onDangKyMoi }) {
+function BuocThanhCong({ phieu, khach, hopDong, onDangKyMoi }) {
+  const isHD = hopDong?.loai === 'HopDong';
+
   return (
     <div className="tp-step-card tp-success-card">
       <div className="tp-success-icon-wrap">
@@ -395,24 +398,40 @@ function BuocThanhCong({ phieu, onDangKyMoi }) {
         </span>
       </div>
       <h3>Đăng ký lịch trả phòng thành công!</h3>
-      <p>Phiếu trả phòng đã được tạo với trạng thái <strong>Chờ xử lý</strong>.</p>
 
-      <div className="tp-confirm-summary" style={{ maxWidth: 420, margin: '16px auto' }}>
-        <div className="tp-cs-row">
-          <span>Mã phiếu</span>
-          <strong style={{ color: '#2f6765', fontSize: 15 }}>{phieu?.maPhieuTra || '—'}</strong>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', margin: '24px 0', textAlign: 'left' }}>
+        {/* Card 1: Khách hàng */}
+        <div style={{ backgroundColor: '#f8f9fa', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px', fontSize: '14px' }}>
+          <h4 style={{ color: '#00666d', fontSize: '15px', fontWeight: '600', margin: '0 0 12px 0' }}>Thông tin khách hàng</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Mã khách hàng:</span><span style={{ fontWeight: 500 }}>{khach?.maKhachHang || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Họ tên:</span><span style={{ fontWeight: 500 }}>{khach?.hoTen || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Số điện thoại:</span><span style={{ fontWeight: 500 }}>{khach?.sdt || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>CCCD:</span><span style={{ fontWeight: 500 }}>{khach?.cccd || '—'}</span></div>
+          </div>
         </div>
-        <div className="tp-cs-row">
-          <span>Ngày đăng ký</span>
-          <strong>{fmtDate(phieu?.ngayDangKyTra)}</strong>
+
+        {/* Card 2: Hồ sơ */}
+        <div style={{ backgroundColor: '#f8f9fa', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px', fontSize: '14px' }}>
+          <h4 style={{ color: '#00666d', fontSize: '15px', fontWeight: '600', margin: '0 0 12px 0' }}>Hồ sơ đăng ký</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Loại hồ sơ:</span><span style={{ fontWeight: 500 }}>{isHD ? 'Hợp đồng thuê' : 'Phiếu đặt cọc'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Mã hồ sơ:</span><span style={{ fontWeight: 500 }}>{hopDong?.maHopDong || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Chi nhánh:</span><span style={{ fontWeight: 500 }}>{hopDong?.tenChiNhanh || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Phòng/giường:</span><span style={{ fontWeight: 500, textAlign: 'right' }}>{hopDong?.tenPhong || '—'} {hopDong?.hinhThucThue === 'Ghép giường' && hopDong?.maGiuong ? `- ${hopDong.maGiuong}` : ''}</span></div>
+            {/* {isHD && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Hình thức thuê:</span><span style={{ fontWeight: 500 }}>{hopDong?.hinhThucThue || '—'}</span></div>} */}
+          </div>
         </div>
-        <div className="tp-cs-row">
-          <span>Ngày dự kiến trả</span>
-          <strong>{fmtDate(phieu?.ngayDuKienTra)}</strong>
-        </div>
-        <div className="tp-cs-row">
-          <span>Trạng thái</span>
-          <span className="ktp-badge ktp-badge-warning">Chờ xử lý</span>
+
+        {/* Card 3: Phiếu trả phòng */}
+        <div style={{ backgroundColor: '#f8f9fa', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px', fontSize: '14px' }}>
+          <h4 style={{ color: '#00666d', fontSize: '15px', fontWeight: '600', margin: '0 0 12px 0' }}>Thông tin phiếu trả phòng</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Mã phiếu:</span><span style={{ fontWeight: 500 }}>{phieu?.maPhieuTra || '—'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Ngày đăng ký:</span><span style={{ fontWeight: 500 }}>{fmtDate(phieu?.ngayDangKyTra)}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Ngày dự kiến trả:</span><span style={{ fontWeight: 500 }}>{fmtDate(phieu?.ngayDuKienTra)}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ color: '#6f797a' }}>Trạng thái:</span><span className="ktp-badge ktp-badge-warning" style={{ fontSize: '12px' }}>Chờ xử lý</span></div>
+          </div>
         </div>
       </div>
 
@@ -458,7 +477,7 @@ export default function DangKyTraPhongTab() {
         {buoc === 1 && <BuocTimKhach onChon={handleChonKhach} />}
         {buoc === 2 && <BuocChonHopDong khach={khach} onChon={handleChonHD} onQuayLai={handleQuayLaiB1} />}
         {buoc === 3 && <BuocXacNhan khach={khach} hopDong={hopDong} onSuccess={handleSuccess} onQuayLai={handleQuayLaiB2} />}
-        {buoc === 4 && <BuocThanhCong phieu={phieuMoi} onDangKyMoi={handleDangKyMoi} />}
+        {buoc === 4 && <BuocThanhCong phieu={phieuMoi} khach={khach} hopDong={hopDong} onDangKyMoi={handleDangKyMoi} />}
       </div>
     </div>
   );
