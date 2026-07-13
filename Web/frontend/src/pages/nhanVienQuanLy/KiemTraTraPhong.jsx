@@ -13,7 +13,7 @@ function fmtDate(d) {
 }
 
 const AssetRow = ({ asset, onChange, readOnly }) => {
-  const [status, setStatus] = useState(asset.hienTrang || 'Bình thường');
+  const [status, setStatus] = useState(asset.mucDoHuHong || 'Bình thường');
   const [soLuongLoi, setSoLuongLoi] = useState(asset.soLuongHuMat || 0);
   const [note, setNote] = useState(asset.moTaHuHong || '');
   const [cost, setCost] = useState(asset.chiPhiSuaChua || 0);
@@ -308,7 +308,7 @@ export default function KiemTraTraPhong() {
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
               <input className="ktp-input tp-search-input-no-icon" type="text"
-                placeholder="Tra cứu theo tên, số điện thoại hoặc mã phiếu..."
+                placeholder="Tra cứu theo tên khách hàng, số điện thoại hoặc mã phiếu trả phòng"
                 value={searchQuery}
                 spellCheck={false}
                 onChange={e => setSearchQuery(e.target.value)} />
@@ -460,7 +460,7 @@ export default function KiemTraTraPhong() {
                         <strong style={{ color: '#191c1d' }}>{chiTiet.maPhieuTra}</strong>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ color: '#6f797a', whiteSpace: 'nowrap' }}>Ngày đăng ký</span> 
+                        <span style={{ color: '#6f797a', whiteSpace: 'nowrap' }}>Ngày đăng ký</span>
                         <strong style={{ color: '#191c1d' }}>{fmtDate(chiTiet.ngayDangKyTra)}</strong>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -483,7 +483,7 @@ export default function KiemTraTraPhong() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#00666d', fontWeight: '700', fontSize: '14px' }}>
                         <Icon name="person" style={{ fontSize: '18px' }} /> Khách hàng
                       </div>
-              
+
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                         <span style={{ color: '#6f797a' }}>Họ tên:</span>
                         <span style={{ fontWeight: '600', color: '#191c1d' }}>{chiTiet.hoTenKhach}</span>

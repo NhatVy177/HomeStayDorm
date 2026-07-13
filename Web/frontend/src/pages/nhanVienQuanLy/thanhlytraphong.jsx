@@ -169,7 +169,7 @@ export default function ThanhLyTraPhong() {
               <input
                 className="ktp-input tp-search-input-no-icon"
                 type="text"
-                placeholder="Tra cứu theo tên, số điện thoại hoặc mã phiếu..."
+                placeholder="Tra cứu theo tên khách hàng, mã phiếu trả phòng"
                 value={searchQuery}
                 spellCheck={false}
                 onChange={e => setSearchQuery(e.target.value)}

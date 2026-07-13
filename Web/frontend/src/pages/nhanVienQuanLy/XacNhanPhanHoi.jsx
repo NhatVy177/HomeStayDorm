@@ -260,7 +260,8 @@ export default function XacNhanPhanHoi() {
       const res = await xacNhanPhanHoiApi.getDanhSachChoXuLy();
       const rawDs = res.data.danhSach || [];
       // Lọc bỏ những phiếu không có phản hồi (ví dụ khách đồng ý luôn thì không vào luồng này)
-      const validDs = rawDs.filter(r => r.trangThaiDoiSoat === 'Chờ phản hồi' || r.ghiChuPhanHoiKhach);
+     const validDs = rawDs.filter(r => r.trangThaiDoiSoat === 'Chờ phản hồi');
+     //const validDs = rawDs;
       setDs(validDs);
     } catch (err) {
       showToast(err?.response?.data?.message || 'Lỗi tải danh sách.', 'error');
@@ -378,7 +379,7 @@ export default function XacNhanPhanHoi() {
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
-              <input className="ktp-input tp-search-input-no-icon" type="text" placeholder="Tìm theo tên khách, mã đối soát, mã phiếu trả..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} spellCheck={false} />
+              <input className="ktp-input tp-search-input-no-icon" type="text" placeholder="Tìm theo tên khách, mã đối soát" value={searchQ} onChange={(e) => setSearchQ(e.target.value)} spellCheck={false} />
             </div>
           </div>
         </div>

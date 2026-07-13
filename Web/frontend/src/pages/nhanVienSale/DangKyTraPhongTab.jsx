@@ -80,7 +80,7 @@ function BuocTimKhach({ onChon }) {
                 id="tp-tim-khach-input"
                 className="ktp-input tp-search-input-no-icon"
                 type="text"
-                placeholder="Tra cứu theo tên, số điện thoại hoặc CCCD..."
+                placeholder="Tra cứu theo tên khách hàng, số điện thoại hoặc CCCD..."
                 value={tuKhoa}
                 spellCheck={false}
                 onChange={handleInputChange}

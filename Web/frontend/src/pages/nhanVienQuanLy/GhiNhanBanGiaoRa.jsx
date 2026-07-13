@@ -72,7 +72,7 @@ export default function GhiNhanBanGiaoRa() {
       const dsWithInput = ds.map(ts => ({
         ...ts,
         soLuongThuHoi: ts.soLuongThuHoi !== undefined && ts.soLuongThuHoi !== null ? ts.soLuongThuHoi : ts.soLuongBanGiaoVao, // Dùng số lượng cũ nếu có
-        ghiChu: ts.ghiChu || ts.moTaHuHong || ''
+        ghiChu: ts.ghiChu || ''
       }));
       setDsTaiSan(dsWithInput);
     } catch (err) {
@@ -143,33 +143,33 @@ export default function GhiNhanBanGiaoRa() {
   return (
     <div>
       <div className="tp-search-container">
-          <div className="tp-search-row">
-            <div className="tp-search-col" style={{ flex: 1 }}>
-              <div className="tp-search-label">TÌM KIẾM</div>
-              <div className="tp-search-wrap">
-                <input
-                  className="ktp-input tp-search-input-no-icon"
-                  type="text"
-                  placeholder="Tra cứu theo tên, mã phiếu..."
-                  value={searchQuery}
-                  spellCheck={false}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-              </div>
+        <div className="tp-search-row">
+          <div className="tp-search-col" style={{ flex: 1 }}>
+            <div className="tp-search-label">TÌM KIẾM</div>
+            <div className="tp-search-wrap">
+              <input
+                className="ktp-input tp-search-input-no-icon"
+                type="text"
+                placeholder="Tra cứu theo tên khách hàng, mã phiếu..."
+                value={searchQuery}
+                spellCheck={false}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
-          <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <StatusFilterTabs
-              className="tp-search-status-tabs"
-              items={[
-                { key: 'Tất cả', label: 'Tất cả', count: statusCounts['Tất cả'] },
-                { key: 'Chờ bàn giao', label: 'Chờ bàn giao', count: statusCounts['Chờ bàn giao'] },
-                { key: 'Đã bàn giao', label: 'Đã bàn giao', count: statusCounts['Đã bàn giao'] }
-              ]}
-              activeKey={filterStatus}
-              onChange={setFilterStatus}
-            />
-          </div>
+        </div>
+        <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <StatusFilterTabs
+            className="tp-search-status-tabs"
+            items={[
+              { key: 'Tất cả', label: 'Tất cả', count: statusCounts['Tất cả'] },
+              { key: 'Chờ bàn giao', label: 'Chờ bàn giao', count: statusCounts['Chờ bàn giao'] },
+              { key: 'Đã bàn giao', label: 'Đã bàn giao', count: statusCounts['Đã bàn giao'] }
+            ]}
+            activeKey={filterStatus}
+            onChange={setFilterStatus}
+          />
+        </div>
       </div>
 
       <section className="tp-list-panel">
@@ -196,7 +196,7 @@ export default function GhiNhanBanGiaoRa() {
                   <td style={{ fontWeight: 600, color: '#2f6765' }}>{row.maPhieuTra}</td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{row.hoTenKhach}</div>
-                    <div style={{ fontSize: 12, color: '#6f797a' }}>Hợp đồng thuê</div>
+                    <div style={{ fontSize: 12, color: '#6f797a' }}> {row.sdtKhach} </div>
                   </td>
                   <td>
                     <div style={{ fontWeight: 500 }}>{row.tenPhong}</div>
