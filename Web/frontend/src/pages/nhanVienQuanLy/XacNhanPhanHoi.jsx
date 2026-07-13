@@ -234,7 +234,6 @@ export default function XacNhanPhanHoi() {
   const [ds, setDs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQ, setSearchQ] = useState('');
-  const [activeSearch, setActive] = useState('');
   const [filterStatus, setFilterStatus] = useState('Tất cả');
   const [toast, setToast] = useState({ msg: '', type: 'success' });
   const [modalOpen, setModalOpen] = useState(false);
@@ -259,7 +258,10 @@ export default function XacNhanPhanHoi() {
     setLoading(true);
     try {
       const res = await xacNhanPhanHoiApi.getDanhSachChoXuLy();
-      setDs(res.data.danhSach || []);
+      const rawDs = res.data.danhSach || [];
+      // Lọc bỏ những phiếu không có phản hồi (ví dụ khách đồng ý luôn thì không vào luồng này)
+      const validDs = rawDs.filter(r => r.trangThaiDoiSoat === 'Chờ phản hồi' || r.ghiChuPhanHoiKhach);
+      setDs(validDs);
     } catch (err) {
       showToast(err?.response?.data?.message || 'Lỗi tải danh sách.', 'error');
     } finally {
@@ -318,12 +320,14 @@ export default function XacNhanPhanHoi() {
     if (filterStatus === 'Chờ phản hồi') return r.trangThaiDoiSoat === 'Chờ phản hồi';
     if (filterStatus === 'Đã phản hồi') return r.trangThaiDoiSoat !== 'Chờ phản hồi';
     return true;
-  }).filter((r) =>
-    r.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
-    r.maDoiSoat?.toLowerCase().includes(activeSearch.toLowerCase()) ||
-    r.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase()) ||
-    r.maHoSo?.toLowerCase().includes(activeSearch.toLowerCase())
-  );
+  }).filter((r) => {
+    const q = searchQ.toLowerCase();
+    return !q ||
+      r.hoTenKhach?.toLowerCase().includes(q) ||
+      r.maDoiSoat?.toLowerCase().includes(q) ||
+      r.maPhieuTra?.toLowerCase().includes(q) ||
+      r.maHoSo?.toLowerCase().includes(q);
+  });
 
   const financeGroups = useMemo(
     () => buildFinanceGroups(chiTiet, chiTietKhauTru),
@@ -370,20 +374,16 @@ export default function XacNhanPhanHoi() {
         }
       `}</style>
       <div className="tp-search-container">
-        <form className="tp-search-row" onSubmit={(e) => { e.preventDefault(); setActive(searchQ); }}>
-          <div className="tp-search-col">
+        <div className="tp-search-row">
+          <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
-              <input className="ktp-input tp-search-input-no-icon" type="text" placeholder="Tìm theo tên khách, mã đối soát, mã phiếu trả..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} />
+              <input className="ktp-input tp-search-input-no-icon" type="text" placeholder="Tìm theo tên khách, mã đối soát, mã phiếu trả..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} spellCheck={false} />
             </div>
           </div>
-          <button type="submit" className="tp-btn-search">Tìm kiếm</button>
-          <button type="button" className="tp-btn-search" style={{ backgroundColor: 'transparent', color: '#3b8280', border: '1px solid #3b8280' }} onClick={load}>
-            <Icon name="refresh" /> Làm mới
-          </button>
-        </form>
+        </div>
 
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 24 }}>
           {[
             { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
             { id: 'Chờ phản hồi', label: 'Chờ phản hồi', count: countChoPhanHoi },

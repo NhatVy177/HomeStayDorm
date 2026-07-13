@@ -16,7 +16,6 @@ export default function GhiNhanBanGiaoRa() {
   const [dsBanGiaoRa, setDsBanGiaoRa] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSearch, setActiveSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('Chờ bàn giao');
   const [toast, setToast] = useState('');
 
@@ -53,12 +52,7 @@ export default function GhiNhanBanGiaoRa() {
     loadDanhSach();
   }, [loadDanhSach]);
 
-  const handleRefresh = () => {
-    setSearchQuery('');
-    setActiveSearch('');
-    setFilterStatus('Chờ bàn giao');
-    loadDanhSach();
-  };
+
 
   const openModal = async (row) => {
     setSelectedPhieu(row);
@@ -135,7 +129,7 @@ export default function GhiNhanBanGiaoRa() {
   }), [dsBanGiaoRa]);
 
   const filteredRows = useMemo(() => {
-    const keyword = activeSearch.trim().toLowerCase();
+    const keyword = searchQuery.trim().toLowerCase();
     return dsBanGiaoRa.filter((p) => {
       const matchStatus = filterStatus === 'Tất cả' || p.trangThaiBanGiao === filterStatus;
       const matchSearch = !keyword
@@ -144,18 +138,11 @@ export default function GhiNhanBanGiaoRa() {
         || p.maPhieuTra?.toLowerCase().includes(keyword);
       return matchStatus && matchSearch;
     });
-  }, [activeSearch, dsBanGiaoRa, filterStatus]);
+  }, [searchQuery, dsBanGiaoRa, filterStatus]);
 
   return (
     <div>
       <div className="tp-search-container">
-        <form
-          style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            setActiveSearch(searchQuery);
-          }}
-        >
           <div className="tp-search-row">
             <div className="tp-search-col" style={{ flex: 1 }}>
               <div className="tp-search-label">TÌM KIẾM</div>
@@ -165,23 +152,13 @@ export default function GhiNhanBanGiaoRa() {
                   type="text"
                   placeholder="Tra cứu theo tên, mã phiếu..."
                   value={searchQuery}
+                  spellCheck={false}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
-            <button type="submit" className="tp-btn-search" style={{ alignSelf: 'flex-end', height: '42px' }}>
-              Tìm kiếm
-            </button>
-            <button
-              type="button"
-              className="tp-btn-search"
-              style={{ alignSelf: 'flex-end', height: '42px', backgroundColor: 'transparent', color: '#3b8280', border: '1px solid #3b8280', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-              onClick={handleRefresh}
-            >
-              <Icon name="refresh" /> Làm mới
-            </button>
           </div>
-          <div>
+          <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <StatusFilterTabs
               className="tp-search-status-tabs"
               items={[
@@ -193,7 +170,6 @@ export default function GhiNhanBanGiaoRa() {
               onChange={setFilterStatus}
             />
           </div>
-        </form>
       </div>
 
       <section className="tp-list-panel">

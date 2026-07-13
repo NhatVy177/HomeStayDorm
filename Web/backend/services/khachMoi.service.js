@@ -614,6 +614,7 @@ export async function getDatCoc(user) {
         pdc.TrangThaiThanhToan     AS trangThaiThanhToan,
         pdc.TrangThaiCoc           AS trangThaiCoc,
         pdc.HinhThucThue            AS hinhThucThue,
+
         pdc.ChungTuThanhToan       AS minhChungThanhToan,
         pdc.ThoiGianXacNhanTT      AS thoiGianXacNhanTT,
         khUser.HoTen               AS tenKhachHang,
@@ -766,6 +767,7 @@ export async function getDatCoc(user) {
         p.GioiTinhChoPhep  AS gioiTinhChoPhep,
         p.TinhTrang        AS tinhTrangPhong,
         pdc.HinhThucThue   AS hinhThucThue,
+
         lp.TenLoaiPhong    AS loaiPhong,
         cn.TenChiNhanh     AS tenChiNhanh,
         cn.DiaChi          AS diaChi,
@@ -956,6 +958,7 @@ export async function getHopDongDashboard(user, options = {}) {
         hd.MaPhieuCoc,
         hd.MaKhachHang,
         pdc.HinhThucThue AS HinhThucThue,
+
         pdc.SoTienCoc,
         p.MaPhong,
         p.TenPhong,

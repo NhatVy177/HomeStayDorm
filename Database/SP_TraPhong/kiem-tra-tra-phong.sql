@@ -102,7 +102,10 @@ BEGIN
         pdc.TrangThaiThanhToan                      AS trangThaiThanhToanPDC,
         nd.Email                                    AS emailKhach,
         p.TinhTrang                                 AS tinhTrangPhongDB,
-        lp.TenLoaiPhong                             AS loaiPhong
+        bbkt.TinhTrangPhong                       AS tinhTrangPhongThucTe,
+        CONVERT(VARCHAR(19), bbkt.NgayKiemTra, 120) AS ngayLapBBKT,
+        lp.TenLoaiPhong                             AS loaiPhong,
+        CONVERT(VARCHAR(10), ptp.NgayTraThucTe, 120) AS ngayTraThucTe
     FROM dbo.PhieuTraPhong ptp
     LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = ptp.MaHopDong
     LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hdt.MaPhieuCoc)
@@ -112,6 +115,7 @@ BEGIN
     INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong
     INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hdt.MaKhachHang, pdc.MaKhachHang)
     INNER JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
+    LEFT JOIN dbo.BienBanKiemTraPhong bbkt ON bbkt.MaPhieuTra = ptp.MaPhieuTra
     WHERE ptp.MaPhieuTra = @MaPhieuTra AND p.MaChiNhanh = @MaChiNhanh;
 
     IF @@ROWCOUNT = 0
@@ -154,7 +158,7 @@ BEGIN
             CONVERT(VARCHAR(10), bbvp.NgayViPham, 103) AS ThoiGian,
             CAST(NULL AS NVARCHAR(50)) AS TrangThai
         FROM dbo.BienBanViPham bbvp
-        WHERE bbvp.MaHopDong = @MaHopDong AND bbvp.TrangThai = N'Chờ xử lý';
+        WHERE bbvp.MaHopDong = @MaHopDong;
     END
     ELSE
     BEGIN
@@ -165,12 +169,18 @@ BEGIN
     IF @MaHopDong IS NOT NULL
     BEGIN
         SELECT 
-            MaTaiSan AS maTaiSan,
-            TenTaiSan AS tenTaiSan,
-            SoLuong AS soLuongBanGiao,
-            DonGia AS donGiaBoiThuong
-        FROM dbo.TaiSan
-        WHERE MaPhong = @MaPhong;
+            ts.MaTaiSan AS maTaiSan,
+            ts.TenTaiSan AS tenTaiSan,
+            ts.SoLuong AS soLuongBanGiao,
+            ts.DonGia AS donGiaBoiThuong,
+            cthh.MucDoHuHong AS mucDoHuHong,
+            cthh.SoLuong AS soLuongHuMat,
+            cthh.MoTaHuHong AS moTaHuHong,
+            cthh.ChiPhiSuaChua AS chiPhiSuaChua
+        FROM dbo.TaiSan ts
+        LEFT JOIN dbo.BienBanKiemTraPhong bbkt ON bbkt.MaPhieuTra = @MaPhieuTra
+        LEFT JOIN dbo.ChiTietHuHong cthh ON cthh.MaBienBanKT = bbkt.MaBienBanKT AND cthh.MaTaiSan = ts.MaTaiSan
+        WHERE ts.MaPhong = @MaPhong;
     END
     ELSE
     BEGIN

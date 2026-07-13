@@ -13,10 +13,10 @@ function fmtDate(d) {
 }
 
 const AssetRow = ({ asset, onChange, readOnly }) => {
-  const [status, setStatus] = useState('Bình thường');
-  const [soLuongLoi, setSoLuongLoi] = useState(0);
-  const [note, setNote] = useState('');
-  const [cost, setCost] = useState(0);
+  const [status, setStatus] = useState(asset.hienTrang || 'Bình thường');
+  const [soLuongLoi, setSoLuongLoi] = useState(asset.soLuongHuMat || 0);
+  const [note, setNote] = useState(asset.moTaHuHong || '');
+  const [cost, setCost] = useState(asset.chiPhiSuaChua || 0);
 
   const isNormal = status === 'Bình thường';
 
@@ -148,6 +148,7 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
           placeholder={isNormal ? "Không có hư hỏng" : "Mô tả..."}
           style={inputStyle}
           disabled={isNormal}
+          spellCheck={false}
         />
       </td>
     </tr>
@@ -158,7 +159,6 @@ export default function KiemTraTraPhong() {
   const [dsPhieu, setDsPhieu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSearch, setActiveSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('Chờ xử lý');
   const [toast, setToast] = useState('');
 
@@ -196,12 +196,7 @@ export default function KiemTraTraPhong() {
     loadDanhSach();
   }, [loadDanhSach]);
 
-  const handleRefresh = () => {
-    setSearchQuery('');
-    setActiveSearch('');
-    setFilterStatus('Chờ xử lý');
-    loadDanhSach();
-  };
+
 
   const openModal = async (phieu) => {
     setSelectedPhieu(phieu);
@@ -209,12 +204,21 @@ export default function KiemTraTraPhong() {
     setLoadingDetail(true);
     setTinhTrangPhong('');
     setDsHuHong({});
-    setNgayTraThucTe(new Date().toISOString().split('T')[0]);
     setIsSubmitted(false);
 
     try {
       const res = await kiemTraTraPhongApi.quanLyChiTietPhieu(phieu.maPhieuTra);
-      setChiTiet(res.data);
+      const data = res.data;
+      setChiTiet(data);
+      // Nếu phiếu đã có ngày trả thực tế (đã xử lý) thì hiển thị đúng ngày đó
+      if (data.ngayTraThucTe) {
+        setNgayTraThucTe(data.ngayTraThucTe.split('T')[0]);
+      } else {
+        setNgayTraThucTe(new Date().toISOString().split('T')[0]);
+      }
+      if (data.tinhTrangPhongThucTe) {
+        setTinhTrangPhong(data.tinhTrangPhongThucTe);
+      }
     } catch (err) {
       alert(err?.response?.data?.message || 'Không thể tải chi tiết phiếu');
       setModalType(null);
@@ -287,6 +291,9 @@ export default function KiemTraTraPhong() {
   const countDaXuLy = dsPhieu.filter(p => p.trangThai !== 'Chờ xử lý').length;
 
   const filteredItems = dsPhieu.filter(p => {
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !q || p.hoTenKhach?.toLowerCase().includes(q) || p.sdtKhach?.includes(q) || p.maPhieuTra?.toLowerCase().includes(q);
+    if (!matchSearch) return false;
     if (filterStatus === 'Chờ xử lý') return p.trangThai === 'Chờ xử lý';
     if (filterStatus === 'Đã xử lý') return p.trangThai !== 'Chờ xử lý';
     return true;
@@ -296,28 +303,20 @@ export default function KiemTraTraPhong() {
     <div>
       {/* Table Section */}
       <div className="tp-search-container">
-        <form className="tp-search-row" onSubmit={e => { e.preventDefault(); setActiveSearch(searchQuery); }} style={{ gap: '16px' }}>
+        <div className="tp-search-row" style={{ gap: '16px' }}>
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
               <input className="ktp-input tp-search-input-no-icon" type="text"
                 placeholder="Tra cứu theo tên, số điện thoại hoặc mã phiếu..."
                 value={searchQuery}
+                spellCheck={false}
                 onChange={e => setSearchQuery(e.target.value)} />
             </div>
           </div>
-          <button type="submit" className="tp-btn-search" style={{ alignSelf: 'flex-end', height: '42px' }}>Tìm kiếm</button>
-          <button
-            type="button"
-            className="tp-btn-search"
-            style={{ alignSelf: 'flex-end', height: '42px', backgroundColor: 'transparent', color: '#3b8280', border: '1px solid #3b8280', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-            onClick={handleRefresh}
-          >
-            <Icon name="refresh" /> Làm mới
-          </button>
-        </form>
+        </div>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '24px' }}>
           {[
             { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
             { id: 'Chờ xử lý', label: 'Chờ xử lý', count: countChoXuLy },
@@ -376,17 +375,9 @@ export default function KiemTraTraPhong() {
               </tr>
             </thead>
             <tbody>
-              {filteredItems.filter(p =>
-                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
-                p.sdtKhach?.includes(activeSearch) ||
-                p.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase())
-              ).length === 0 ? (
+              {filteredItems.length === 0 ? (
                 <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Không có phiếu trả phòng nào phù hợp.</td></tr>
-              ) : filteredItems.filter(p =>
-                p.hoTenKhach?.toLowerCase().includes(activeSearch.toLowerCase()) ||
-                p.sdtKhach?.includes(activeSearch) ||
-                p.maPhieuTra?.toLowerCase().includes(activeSearch.toLowerCase())
-              ).map((row) => (
+              ) : filteredItems.map((row) => (
                 <tr key={row.maPhieuTra}>
                   <td style={{ fontWeight: 600, color: '#2f6765' }}>{row.maPhieuTra}</td>
                   <td>
@@ -446,9 +437,9 @@ export default function KiemTraTraPhong() {
           <div className="ktp-modal" style={{ maxWidth: '900px', width: '90%', padding: '0', backgroundColor: '#ffffff', borderRadius: '12px' }} onClick={(e) => e.stopPropagation()}>
             <div className="ktp-modal-header" style={{ padding: '16px 24px', backgroundColor: '#3b8280', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '12px 12px 0 0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff', fontWeight: '700' }}>
-                  {modalType === 'kiem-tra-hd' ? 'Lập biên bản kiểm tra trả phòng' : 'Xác nhận hồ sơ trả phòng'}
-                </h3>
+                <h2 className="ktp-modal-title" style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#ffffff' }}>
+                  {modalType === 'kiem-tra-hd' ? (selectedPhieu?.trangThai === 'Chờ xử lý' ? 'Lập biên bản kiểm tra trả phòng' : 'Chi tiết biên bản kiểm tra trả phòng') : 'Xác nhận hồ sơ trả phòng'}
+                </h2>
               </div>
               <button className="ktp-modal-close" onClick={() => setModalType(null)} style={{ color: '#ffffff', background: 'transparent', border: 'none', cursor: 'pointer' }}><Icon name="close" /></button>
             </div>
@@ -617,7 +608,7 @@ export default function KiemTraTraPhong() {
                                       <tr key={i} style={{ borderBottom: '1px solid #f1f3f4' }}>
                                         <td style={{ padding: '8px 16px', color: '#191c1d' }}>{nv.Ten.replace('Hóa đơn kỳ ', '')}</td>
                                         <td style={{ padding: '8px 16px', textAlign: 'center', color: '#b06000', fontWeight: '500' }}>{nv.TrangThai}</td>
-                                        <td style={{ padding: '8px 16px', textAlign: 'center', color: '#191c1d' }}>{nv.SoTien ? Number(nv.SoTien).toLocaleString() + 'đ' : '—'}</td>
+                                        <td style={{ padding: '8px 16px', textAlign: 'center', color: '#191c1d' }}>{nv.SoTien != null ? Number(nv.SoTien).toLocaleString() + 'đ' : '0đ'}</td>
                                       </tr>
                                     ))}
                                     <tr style={{ backgroundColor: '#fff9f9' }}>
@@ -655,7 +646,7 @@ export default function KiemTraTraPhong() {
                                       <tr key={i} style={{ borderBottom: '1px solid #f1f3f4' }}>
                                         <td style={{ padding: '8px 16px', color: '#191c1d' }}>{nv.Ten}</td>
                                         <td style={{ padding: '8px 16px', color: '#191c1d' }}>{nv.ThoiGian || '—'}</td>
-                                        <td style={{ padding: '8px 16px', textAlign: 'right', color: '#191c1d' }}>{nv.SoTien ? Number(nv.SoTien).toLocaleString() + 'đ' : '—'}</td>
+                                        <td style={{ padding: '8px 16px', textAlign: 'right', color: '#191c1d' }}>{nv.SoTien != null ? Number(nv.SoTien).toLocaleString() + 'đ' : '0đ'}</td>
                                       </tr>
                                     ))}
                                     <tr style={{ backgroundColor: '#fff9f9' }}>
@@ -681,7 +672,7 @@ export default function KiemTraTraPhong() {
                         </div>
                         <div style={{ marginBottom: '0' }}>
                           <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Tình trạng phòng thực tế</label>
-                          <textarea rows="3" value={tinhTrangPhong} onChange={(e) => setTinhTrangPhong(e.target.value)} placeholder="Nhập đánh giá tổng quan" style={{ width: '100%', padding: '12px', border: '1px solid #e1e3e4', borderRadius: '6px', fontSize: '14px', resize: 'vertical', display: 'block' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'}></textarea>
+                          <textarea rows="3" value={tinhTrangPhong} onChange={(e) => setTinhTrangPhong(e.target.value)} placeholder="Nhập đánh giá tổng quan" style={{ width: '100%', padding: '12px', border: '1px solid #e1e3e4', borderRadius: '6px', fontSize: '14px', resize: 'vertical', display: 'block' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'} spellCheck={false}></textarea>
                         </div>
                       </div>
 

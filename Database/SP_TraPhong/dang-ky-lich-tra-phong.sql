@@ -95,9 +95,9 @@ BEGIN
             FROM dbo.HopDongThue
             WHERE MaHopDong = @MaHopDong
               AND MaKhachHang = @MaKhachHang
-              AND TrangThai = N'Hiệu lực'
+              AND TrangThai IN (N'Hiệu lực', N'Hết hạn')
         )
-            THROW 50011, N'Hợp đồng không còn hiệu lực hoặc không thuộc khách hàng hiện tại.', 1;
+            THROW 50011, N'Hợp đồng không còn hiệu lực/hết hạn hoặc không thuộc khách hàng hiện tại.', 1;
 
         IF EXISTS (
             SELECT 1
@@ -397,9 +397,9 @@ BEGIN
             SELECT 1 FROM dbo.HopDongThue
             WHERE MaHopDong    = @MaHopDong
               AND MaKhachHang  = @MaKhachHang
-              AND TrangThai    = N'Hiệu lực'
+              AND TrangThai    IN (N'Hiệu lực', N'Hết hạn')
         )
-            THROW 50011, N'Không tìm thấy hợp đồng thuê còn hiệu lực của khách hàng này.', 1;
+            THROW 50011, N'Không tìm thấy hợp đồng thuê còn hiệu lực hoặc đã hết hạn của khách hàng này.', 1;
 
         -- Kiểm tra đã có phiếu trả phòng đang chờ xử lý chưa (E9)
         IF EXISTS (
