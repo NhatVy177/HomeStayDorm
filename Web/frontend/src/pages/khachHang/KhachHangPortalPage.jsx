@@ -525,7 +525,7 @@ function RoomPhoto({ room }) {
   const fallbackSrc = getDemoRoomImage(room.maPhong || room.id, 0);
 
   if (!src && !fallbackSrc) {
-    return <div className="kh-room-placeholder"><Icon name="room" /><span>{room.maPhong}</span></div>;
+    return <div className="kh-room-placeholder"><Icon name="room" /><span>{room.tenPhong || room.maPhong}</span></div>;
   }
 
   return <img src={failed ? fallbackSrc : (src || fallbackSrc)} alt={room.tenPhong} onError={() => setFailed(true)} />;
@@ -679,7 +679,8 @@ function ChiTietPhongView({ phong, onBack, onRent }) {
 
           <div className="kh-detail-info-card">
             <div><span>Chi nhánh</span><strong>{phong.chiNhanh || 'Chưa cập nhật'}</strong></div>
-            <div><span>Mã phòng</span><strong>{phong.maPhong}</strong></div>
+            {/* Khách biết TÊN phòng, không biết mã. Mã chỉ dùng để xử lý dữ liệu bên trong. */}
+            <div><span>Phòng</span><strong>{phong.tenPhong || phong.maPhong}</strong></div>
             {phong.giaThueTheoGiuong && (
               <div><span>Giá/giường</span><strong>{Number(phong.giaThueTheoGiuong).toLocaleString('vi-VN')}đ</strong></div>
             )}
@@ -2771,12 +2772,13 @@ export default function KhachHangPortalPage() {
 
       // Endpoint khách: gửi file thật + qua SP_CapNhatMinhChungThanhToanCoc (check hạn 24h + sở hữu).
       await datCocApi.capNhatMinhChungKhach(datCocSelected.maPhieuCoc, fd);
-      setToast('Đã gửi chứng từ thành công. Vui lòng chờ nhân viên kiểm tra.');
-      const updated = { ...datCocSelected, trangThai: 'Chờ xác nhận', minhChungThanhToan: uploadForm.fileName };
+      setToast('Đã gửi chứng từ. Vui lòng chờ nhân viên kiểm tra.');
+      // Gửi chứng từ mới -> backend đã xóa lý do từ chối; đồng bộ state để thoát trạng thái "Bị từ chối".
+      const updated = { ...datCocSelected, trangThai: 'Chờ xác nhận', minhChungThanhToan: uploadForm.fileName, lyDoTuChoi: null };
       setDatCocSelected(updated);
       setDatCocList((prev) => prev.map((p) => p.maPhieuCoc === updated.maPhieuCoc ? updated : p));
-    } catch (err) {
-      setToast(err.response?.data?.message || 'Không thể gửi chứng từ.');
+    } catch {
+      setToast('Gửi chứng từ thất bại.');
     } finally {
       setUploading(false);
     }
@@ -2790,11 +2792,9 @@ export default function KhachHangPortalPage() {
       const updated = { ...datCocSelected, phuongThucThanhToan: method };
       setDatCocSelected(updated);
       setDatCocList((prev) => prev.map((p) => p.maPhieuCoc === updated.maPhieuCoc ? updated : p));
-      setToast(method === 'Tiền mặt'
-        ? 'Đã chọn thanh toán tiền mặt. Vui lòng đến quầy để nộp tiền cọc.'
-        : 'Đã chọn chuyển khoản. Vui lòng chuyển khoản rồi gửi chứng từ.');
-    } catch (err) {
-      setToast(err.response?.data?.message || 'Không thể chọn phương thức thanh toán.');
+      setToast(`Đã chọn thanh toán ${method.toLowerCase()}.`);
+    } catch {
+      setToast('Không chọn được phương thức thanh toán.');
     }
   }
 
@@ -2828,6 +2828,8 @@ export default function KhachHangPortalPage() {
     const isWaiting = phieu.trangThai === 'Chờ thanh toán';
     const isSent = phieu.trangThai === 'Chờ xác nhận';
     const isDone = phieu.trangThai === 'Hoàn tất';
+    // DC05: quản lý từ chối chứng từ -> giữ file cũ + có lý do. Khách phải gửi lại chứng từ mới.
+    const isRejected = phieu.trangThai === 'Bị từ chối';
     const yeuCauTraPhongCoc = phieu.yeuCauTraPhong || null;
     const doiSoatTraPhongCoc = yeuCauTraPhongCoc?.doiSoat || null;
     const coYeuCauTraPhongCoc = Boolean(yeuCauTraPhongCoc);
@@ -2849,7 +2851,7 @@ export default function KhachHangPortalPage() {
       && doiSoatTraPhongCoc?.trangThai === 'Chờ thanh toán thêm'
       && !daCoChungTuDoiSoatCoc;
     const showDoiSoatPaymentCoc = (laHoanCocDoiSoatCoc || laThuThemDoiSoatCoc) && (!daGuiPhuongThucDoiSoatCoc || canUploadThuThemProofAgainCoc);
-    const showDatCocSide = (isSent && minhChung) || isExpired || isWaiting;
+    const showDatCocSide = (isSent && minhChung) || isExpired;
 
     return (
       <section className="dc-detail">
@@ -2890,6 +2892,7 @@ export default function KhachHangPortalPage() {
                     {isExpired && <span className="dc-chip dc-chip-danger">Hết hạn</span>}
                     {isExpired && <span className="dc-chip dc-chip-danger">Đã hủy</span>}
                     {isWaiting && <span className="dc-chip dc-chip-warn">Chờ TT</span>}
+                    {isRejected && <span className="dc-chip dc-chip-danger">Chứng từ bị từ chối</span>}
                     {isSent && <span className="dc-chip dc-chip-info">Chờ xác nhận</span>}
                     {isDone && <span className="dc-chip dc-chip-done">Hoàn tất</span>}
                   </div>
@@ -2918,24 +2921,36 @@ export default function KhachHangPortalPage() {
               </div>
             </div>
 
+            {/* DC05: chứng từ bị quản lý từ chối → giữ nguyên file cũ, hiện lý do để khách gửi lại */}
+            {isRejected && (
+              <div className="dc-section-card" style={{ borderColor: 'var(--dc-danger)', background: '#fee2e2' }}>
+                <h3 className="dc-section-title" style={{ color: 'var(--dc-danger)' }}>
+                  <Icon name="invoice" />Chứng từ thanh toán bị từ chối
+                </h3>
+                <div style={{ color: '#7f1d1d', marginTop: '8px', fontSize: '14px', lineHeight: '1.5', textAlign: 'left' }}>
+                  <strong>Lý do từ chối:</strong> {phieu.lyDoTuChoi || 'Chứng từ không hợp lệ.'}
+                </div>
+              </div>
+            )}
+
             {/* Case 1a: Chờ thanh toán, CHƯA chọn phương thức → cho khách chọn */}
             {isWaiting && !phieu.phuongThucThanhToan && (
               <div className="dc-section-card">
                 <h3 className="dc-section-title"><Icon name="invoice" />Chọn phương thức thanh toán</h3>
                 <p className="dc-bank-note">Vui lòng chọn cách bạn muốn thanh toán tiền cọc.</p>
                 <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                  <button type="button" className="kp-btn kp-btn-primary kp-full" onClick={() => chonPhuongThucCoc('Chuyển khoản')}>
+                  <button type="button" className="kp-btn kp-btn-primary kp-full" onClick={() => chonPhuongThucCoc('Chuyển khoản')} style={{ backgroundColor: '#2f6765', borderColor: '#2f6765', color: '#fff' }}>
                     <Icon name="invoice" /> Chuyển khoản
                   </button>
-                  <button type="button" className="kp-btn kp-btn-primary kp-full" onClick={() => chonPhuongThucCoc('Tiền mặt')}>
+                  <button type="button" className="kp-btn kp-btn-primary kp-full" onClick={() => chonPhuongThucCoc('Tiền mặt')} style={{ backgroundColor: '#2f6765', borderColor: '#2f6765', color: '#fff' }}>
                     <Icon name="profile" /> Tiền mặt tại quầy
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Case 1b: Chờ thanh toán + Chuyển khoản → Form upload + Thông tin CK */}
-            {isWaiting && phieu.phuongThucThanhToan === 'Chuyển khoản' && (
+            {/* Case 1b: Chờ thanh toán (hoặc bị từ chối, cần gửi lại) + Chuyển khoản → Form upload + Thông tin CK */}
+            {(isWaiting || isRejected) && phieu.phuongThucThanhToan === 'Chuyển khoản' && (
               <>
                 <div className="dc-section-card">
                   <h3 className="dc-section-title"><Icon name="profile" />Gửi chứng từ thanh toán</h3>
@@ -2946,7 +2961,7 @@ export default function KhachHangPortalPage() {
                         ? <span className="dc-file-name">📎 {uploadForm.fileName}</span>
                         : <><Icon name="profile" /><span>Kéo thả file vào đây hoặc <u>Chọn từ máy tính</u></span><small>Định dạng hỗ trợ: JPG, PNG, PDF (Tối đa 5MB)</small></>}
                     </label>
-                    <button className="kp-btn kp-btn-primary kp-full" type="submit" disabled={uploading}>
+                    <button className="kp-btn kp-btn-primary kp-full" type="submit" disabled={uploading} style={{ backgroundColor: '#2f6765', borderColor: '#2f6765', color: '#fff' }}>
                       {uploading ? 'Đang gửi...' : 'Gửi chứng từ thanh toán'}
                     </button>
                   </form>
@@ -2958,15 +2973,13 @@ export default function KhachHangPortalPage() {
                     <div><span>Ngân hàng</span><strong>Vietcombank (VCB)</strong></div>
                     <div><span>Số tài khoản</span><strong>1012345678</strong></div>
                     <div><span>Chủ tài khoản</span><strong>CÔNG TY TNHH HOMESTAYDORM</strong></div>
-                    <div><span>Nội dung chuyển khoản</span><strong style={{ color: 'var(--dc-primary)' }}>DATCOC_{phieu.maPhieuCoc?.toUpperCase()}</strong></div>
                   </div>
-                  <p className="dc-bank-note">Vui lòng chuyển đúng nội dung để hệ thống tự động xác nhận nhanh hơn.</p>
                 </div>
               </>
             )}
 
-            {/* Case 1c: Chờ thanh toán + Tiền mặt → hướng dẫn ra quầy, KHÔNG upload */}
-            {isWaiting && phieu.phuongThucThanhToan === 'Tiền mặt' && (
+            {/* Case 1c: Chờ thanh toán (hoặc bị từ chối) + Tiền mặt → hướng dẫn ra quầy, KHÔNG upload */}
+            {(isWaiting || isRejected) && phieu.phuongThucThanhToan === 'Tiền mặt' && (
               <div className="dc-section-card">
                 <h3 className="dc-section-title"><Icon name="profile" />Thanh toán tiền mặt tại quầy</h3>
                 <p className="dc-bank-note">
@@ -2998,7 +3011,6 @@ export default function KhachHangPortalPage() {
                   <div><span>Ngân hàng</span><strong>Vietcombank (VCB)</strong></div>
                   <div><span>Số tài khoản</span><strong>1012345678</strong></div>
                   <div><span>Chủ tài khoản</span><strong>CÔNG TY TNHH HOMESTAYDORM</strong></div>
-                  <div><span>Nội dung chuyển khoản</span><strong style={{ color: 'var(--dc-primary)' }}>DATCOC_{phieu.maPhieuCoc?.toUpperCase()}</strong></div>
                 </div>
               </div>
             )}
@@ -3034,13 +3046,7 @@ export default function KhachHangPortalPage() {
                 <a className="kp-btn kp-btn-primary kp-full" href="tel:19006789" style={{ marginTop: 12 }}>Liên hệ tư vấn ngay</a>
               </div>
             )}
-            {isWaiting && (
-              <div className="dc-section-card dc-support-card">
-                <Icon name="support" />
-                <p>Cần hỗ trợ? Liên hệ nhân viên ngay để được giải đáp thắc mắc về quy trình đặt cọc.</p>
-                <a className="kp-btn kp-btn-soft kp-full" href="tel:19006789" style={{ marginTop: 12 }}>Liên hệ hỗ trợ</a>
-              </div>
-            )}
+
           </aside>
           )}
         </div>

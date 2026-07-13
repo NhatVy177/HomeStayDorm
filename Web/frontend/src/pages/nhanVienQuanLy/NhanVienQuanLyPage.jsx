@@ -45,7 +45,7 @@ export default function NhanVienQuanLyPage() {
   }, []);
 
   const navItems = [
-    { id: 'xac-nhan-nhan-phong', label: 'Xác nhận khả năng nhận cọc', icon: 'assignment_turned_in' },
+    { id: 'xac-nhan-nhan-phong', label: 'Duyệt nhận cọc', icon: 'assignment_turned_in' },
     { id: 'duyet-cu-tru', label: 'Duyệt cư trú', icon: 'fact_check' },
     { id: 'xac-nhan-thanh-toan', label: 'Duyệt thanh toán', icon: 'payments' },
     { id: 'lap-bien-ban-ban-giao', label: 'Bàn giao phòng', icon: 'description' },

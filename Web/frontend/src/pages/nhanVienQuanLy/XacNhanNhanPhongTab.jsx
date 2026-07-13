@@ -62,12 +62,10 @@ export default function XacNhanNhanPhongTab() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
-  // Lọc / tìm kiếm / sắp xếp (client-side)
+  // Tìm kiếm + chip trạng thái (client-side). Bỏ lọc ngày & bộ chọn sắp xếp:
+  // luồng đặt cọc xử lý theo hàng đợi, không cần người dùng tự sắp xếp.
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
-  const [tuNgay, setTuNgay] = useState('');
-  const [denNgay, setDenNgay] = useState('');
-  const [sortDir, setSortDir] = useState('desc');
 
   const loadDanhSach = useCallback(async () => {
     setLoading(true);
@@ -84,22 +82,14 @@ export default function XacNhanNhanPhongTab() {
 
   useEffect(() => { loadDanhSach(); }, [loadDanhSach]);
 
-  // Lọc theo tìm kiếm + khoảng ngày (chưa áp chip) — dùng để đếm chip
+  // Lọc theo tìm kiếm (chưa áp chip) — dùng để đếm chip
   const baseFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const tuMs = tuNgay ? new Date(tuNgay).setHours(0, 0, 0, 0) : null;
-    const denMs = denNgay ? new Date(denNgay).setHours(23, 59, 59, 999) : null;
-    return list.filter((it) => {
-      const okSearch = !q
-        || (it.hoTen || '').toLowerCase().includes(q)
-        || String(it.soDienThoai || '').toLowerCase().includes(q)
-        || (it.maDangKy || '').toLowerCase().includes(q);
-      const t = it.ngayDangKy ? new Date(it.ngayDangKy).getTime() : null;
-      const okTu = tuMs == null || (t != null && t >= tuMs);
-      const okDen = denMs == null || (t != null && t <= denMs);
-      return okSearch && okTu && okDen;
-    });
-  }, [list, search, tuNgay, denNgay]);
+    if (!q) return list;
+    return list.filter((it) => (it.hoTen || '').toLowerCase().includes(q)
+      || String(it.soDienThoai || '').toLowerCase().includes(q)
+      || (it.maDangKy || '').toLowerCase().includes(q));
+  }, [list, search]);
 
   const counts = useMemo(() => {
     const c = { all: baseFiltered.length };
@@ -108,24 +98,23 @@ export default function XacNhanNhanPhongTab() {
     return c;
   }, [baseFiltered]);
 
+  // Thứ tự CỐ ĐỊNH (người dùng không đổi được nữa):
+  // "Chờ duyệt" -> cũ nhất trước (FIFO, hồ sơ chờ lâu xử lý trước); các nhóm khác -> mới nhất trước.
   const filteredList = useMemo(() => {
     const arr = statusFilter === 'all' ? baseFiltered : baseFiltered.filter((it) => it.trangThai === statusFilter);
+    const fifo = statusFilter === 'Chờ xác nhận cọc';
     return [...arr].sort((a, b) => {
       const da = a.ngayDangKy ? new Date(a.ngayDangKy).getTime() : 0;
       const db = b.ngayDangKy ? new Date(b.ngayDangKy).getTime() : 0;
-      return sortDir === 'asc' ? da - db : db - da;
+      return fifo ? da - db : db - da;
     });
-  }, [baseFiltered, statusFilter, sortDir]);
+  }, [baseFiltered, statusFilter]);
 
-  const coLoc = !!(search || tuNgay || denNgay);
-  const xoaLoc = () => { setSearch(''); setTuNgay(''); setDenNgay(''); };
-  // "Chờ duyệt" -> cũ nhất (FIFO); nhóm khác -> mới nhất.
-  const defaultSortFor = (key) => (key === 'Chờ xác nhận cọc' ? 'asc' : 'desc');
-  const chonChip = (key) => { setStatusFilter(key); setSortDir(defaultSortFor(key)); };
+  const chonChip = (key) => setStatusFilter(key);
 
   // Phân trang (client-side)
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [statusFilter, search, tuNgay, denNgay, sortDir]);
+  useEffect(() => { setPage(1); }, [statusFilter, search]);
   const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
   const pageSafe = Math.min(page, totalPages);
   const pagedList = useMemo(
@@ -143,8 +132,13 @@ export default function XacNhanNhanPhongTab() {
 
   const openXuLy = (item) => {
     setSelected(item);
-    setDecision('xac-nhan');
-    setLyDo('');
+    if (item.trangThai === 'Chờ xác nhận cọc' && !item.coTheNhanCoc) {
+      setDecision('tu-choi');
+      setLyDo(item.lyDoKhongKhaDung || '');
+    } else {
+      setDecision('xac-nhan');
+      setLyDo('');
+    }
   };
   const readOnly = !!(selected && selected.trangThai && selected.trangThai !== 'Chờ xác nhận cọc');
 
@@ -152,65 +146,47 @@ export default function XacNhanNhanPhongTab() {
     if (!selected) return;
     const duocNhanCoc = decision === 'xac-nhan';
     if (!duocNhanCoc && !lyDo.trim()) {
-      setResult({ type: 'error', title: 'Thiếu lý do.', message: 'Vui lòng nhập lý do từ chối nhận cọc.' });
+      setResult({ type: 'error', title: 'Chưa nhập lý do từ chối.' });
       return;
     }
     setSubmitting(true);
     try {
-      await datCocApi.xacNhanKhaNang(selected.maDangKy, {
+      const { data } = await datCocApi.xacNhanKhaNang(selected.maDangKy, {
         maQuanLy: user?.maNguoiDung,
         duocNhanCoc,
         lyDo: duocNhanCoc ? null : lyDo.trim()
       });
       setSelected(null);
       await loadDanhSach();
+
+      // Từ chối KHÔNG đóng hồ sơ: phòng bị loại, hồ sơ quay lại DC01 để Sale chọn phòng khác
+      // trong các phòng khách đã xem còn lại. Chỉ khi hết phòng thì hồ sơ mới bị từ chối hẳn.
+      const conPhongKhac = data?.conPhongKhac === 1 || data?.conPhongKhac === true;
       setResult({
         type: 'success',
-        title: duocNhanCoc ? 'Đã chấp nhận!' : 'Đã từ chối.',
-        message: duocNhanCoc
-          ? 'Hồ sơ đã chuyển sang bộ phận Kế toán để lập phiếu đặt cọc.'
-          : 'Đã gửi thông báo từ chối kèm lý do đến nhân viên Sale.'
+        title: duocNhanCoc
+          ? 'Đã chấp nhận.'
+          : (conPhongKhac ? 'Đã trả hồ sơ về Sale chọn phòng khác.' : 'Đã từ chối hồ sơ.')
       });
-    } catch (err) {
-      setResult({ type: 'error', title: 'Thao tác thất bại.', message: err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.' });
+    } catch {
+      setResult({ type: 'error', title: 'Thao tác thất bại.' });
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const phongKhaDung = (item) => {
-    const phongOk = !item.tinhTrangPhong || ['Trống', 'Còn chỗ'].includes(item.tinhTrangPhong);
-    const giuongOk = !item.maGiuong || item.tinhTrangGiuong === 'Trống';
-    return phongOk && giuongOk;
   };
 
   return (
     <div className="ktp-container">
       {/* Table Section */}
       <section className="ktp-table-section">
-        {/* Thanh tìm kiếm + lọc ngày + sắp xếp */}
+        {/* Thanh tìm kiếm (đã bỏ lọc ngày & sắp xếp — xử lý theo hàng đợi) */}
         <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
           <div style={{ flex: '2 1 240px' }}>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên khách hàng, SĐT hoặc mã phiếu..." className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
           </div>
-          <div style={{ flex: '1 1 140px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Từ ngày</label>
-            <input type="date" value={tuNgay} onChange={(e) => setTuNgay(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
-          </div>
-          <div style={{ flex: '1 1 140px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Đến ngày</label>
-            <input type="date" value={denNgay} onChange={(e) => setDenNgay(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
-          </div>
-          <div style={{ flex: '1 1 170px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Sắp xếp</label>
-            <select value={sortDir} onChange={(e) => setSortDir(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }}>
-              <option value="desc">Ngày đăng ký: mới nhất</option>
-              <option value="asc">Ngày đăng ký: cũ nhất</option>
-            </select>
-          </div>
-          {coLoc && (
-            <button type="button" onClick={xoaLoc} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          {search && (
+            <button type="button" onClick={() => setSearch('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
           )}
         </div>
 
@@ -290,113 +266,161 @@ export default function XacNhanNhanPhongTab() {
         <div className="ktp-modal-overlay" onClick={() => !submitting && setSelected(null)}>
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
 
-            <div className="ktp-modal-header" style={{ alignItems: 'center', backgroundColor: '#3b8280', color: '#ffffff', borderBottom: 'none', padding: '24px 32px' }}>
+            <div className="ktp-modal-header" style={{ alignItems: 'center', backgroundColor: '#3b8280', color: '#ffffff', borderBottom: 'none', padding: '16px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff', fontWeight: '700' }}>Chi tiết phiếu đăng ký</h3>
+                <h3 style={{ fontSize: '18px', margin: 0, color: '#ffffff', fontWeight: '700' }}>Chi tiết phiếu đăng ký #{selected.maDangKy}</h3>
               </div>
               <button className="ktp-modal-close" onClick={() => setSelected(null)} style={{ color: '#ffffff' }}><Icon name="close" /></button>
             </div>
 
-            <div className="ktp-modal-body" style={{ padding: '32px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div className="ktp-section ktp-info-box-outline" style={{ backgroundColor: '#f8f9fa', border: 'none', padding: '24px', marginBottom: 0 }}>
-                  <h4 className="ktp-section-title" style={{ marginBottom: '16px', color: '#3b8280' }}><Icon name="person" /> THÔNG TIN KHÁCH HÀNG</h4>
-                  <div className="ktp-grid-2" style={{ rowGap: '16px' }}>
-                    <div><p className="ktp-mini-label" style={{ color: '#6f797a' }}>Họ và tên</p><p className="ktp-mini-value" style={{ fontWeight: '600' }}>{selected.hoTen}</p></div>
-                    <div><p className="ktp-mini-label" style={{ color: '#6f797a' }}>Số điện thoại</p><p className="ktp-mini-value" style={{ fontWeight: '600' }}>{selected.soDienThoai || '—'}</p></div>
-                  </div>
+            <div className="ktp-modal-body" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                
+                {/* Dòng tóm tắt */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '13px', color: '#6f797a', borderBottom: '1px solid #e1e3e4', paddingBottom: '16px' }}>
+                  <span>Ngày đăng ký: <strong style={{ color: '#191c1d' }}>{formatNgay(selected.ngayDangKy)}</strong></span>
+                  <span>Sale phụ trách: <strong style={{ color: '#191c1d' }}>{selected.tenNhanVienSale || selected.maNhanVienSale || '—'}</strong>{selected.tenNhanVienSale && selected.maNhanVienSale ? ` (${selected.maNhanVienSale})` : ''}</span>
                 </div>
 
-                <div className="ktp-section ktp-info-box-outline" style={{ backgroundColor: '#f8f9fa', border: 'none', padding: '24px', marginBottom: 0 }}>
-                  <h4 className="ktp-section-title" style={{ marginBottom: '16px', color: '#3b8280' }}><Icon name="description" /> THÔNG TIN ĐĂNG KÝ</h4>
-                  <div className="ktp-grid-2" style={{ rowGap: '16px' }}>
-                    <div><p className="ktp-mini-label" style={{ color: '#6f797a' }}>Mã phiếu</p><p className="ktp-mini-value" style={{ fontWeight: '600' }}>{selected.maDangKy}</p></div>
-                    <div><p className="ktp-mini-label" style={{ color: '#6f797a' }}>Ngày đăng ký</p><p className="ktp-mini-value" style={{ fontWeight: '600' }}>{formatNgay(selected.ngayDangKy)}</p></div>
-                    <div><p className="ktp-mini-label" style={{ color: '#6f797a' }}>Hình thức thuê</p><p className="ktp-mini-value" style={{ fontWeight: '600' }}>{selected.hinhThucThue || '—'}</p></div>
-                    <div><p className="ktp-mini-label" style={{ color: '#6f797a' }}>Sale phụ trách</p><p className="ktp-mini-value" style={{ fontWeight: '600' }}>{selected.maNhanVienSale || '—'}</p></div>
-                  </div>
-                </div>
-
-                <div className="ktp-section ktp-info-box-outline" style={{ backgroundColor: '#f8f9fa', border: 'none', padding: '24px', marginBottom: 0 }}>
-                  <h4 className="ktp-section-title" style={{ marginBottom: '16px', color: '#3b8280' }}><Icon name="home" /> THÔNG TIN PHÒNG</h4>
-                  <div className="ktp-grid-2" style={{ rowGap: '16px' }}>
-                    <div><p className="ktp-mini-label" style={{ color: '#6f797a' }}>Phòng/Giường</p><p className="ktp-mini-value" style={{ fontWeight: '600' }}>{moTaPhong(selected)}</p></div>
-                    <div>
-                      <p className="ktp-mini-label" style={{ color: '#6f797a' }}>Trạng thái phòng/giường hiện tại</p>
-                      <span style={{ display: 'inline-block', border: `1px solid ${phongKhaDung(selected) ? '#86d3da' : '#f1b0b0'}`, color: phongKhaDung(selected) ? '#00666d' : '#b3261e', backgroundColor: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: '600', marginTop: '4px' }}>
-                        {phongKhaDung(selected) ? 'Còn trống' : 'Không khả dụng'}
-                      </span>
+                {/* 2 Cột thông tin */}
+                <div className="ktp-grid-2" style={{ gap: '24px' }}>
+                  <div>
+                    <h4 style={{ fontSize: '12px', fontWeight: '700', color: '#8e9696', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Thông tin khách hàng</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div><p className="ktp-mini-label" style={{ color: '#6f797a', margin: '0 0 4px 0' }}>Họ và tên</p><p className="ktp-mini-value" style={{ fontWeight: '600', margin: 0 }}>{selected.hoTen}</p></div>
+                      <div><p className="ktp-mini-label" style={{ color: '#6f797a', margin: '0 0 4px 0' }}>Số điện thoại</p><p className="ktp-mini-value" style={{ fontWeight: '600', margin: 0 }}>{selected.soDienThoai || '—'}</p></div>
                     </div>
                   </div>
-                  {!phongKhaDung(selected) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#b3261e', fontSize: '12px', marginTop: '12px' }}>
-                      <Icon name="warning" /><span>Phòng/giường không còn khả dụng — không thể chấp nhận nhận cọc.</span>
+                  <div>
+                    <h4 style={{ fontSize: '12px', fontWeight: '700', color: '#8e9696', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Yêu cầu thuê</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div><p className="ktp-mini-label" style={{ color: '#6f797a', margin: '0 0 4px 0' }}>Nhóm khách</p><p className="ktp-mini-value" style={{ fontWeight: '600', margin: 0 }}>{selected.soNam} Nam, {selected.soNu} Nữ</p></div>
+                      <div><p className="ktp-mini-label" style={{ color: '#6f797a', margin: '0 0 4px 0' }}>Ngày đăng ký</p><p className="ktp-mini-value" style={{ fontWeight: '600', margin: 0 }}>{formatNgay(selected.ngayDangKy)}</p></div>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Phiếu đã xử lý: chỉ xem trạng thái + lý do (nếu từ chối) */}
-              {readOnly && (
-                <div style={{ borderTop: '1px solid #e1e3e4', marginTop: '16px', paddingTop: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: selected.trangThai === 'Từ chối' ? '16px' : 0 }}>
-                    <span style={{ fontWeight: 700, color: '#191c1d', fontSize: '15px' }}>Trạng thái:</span>
-                    <StatusBadge trangThai={selected.trangThai} />
-                  </div>
-                  {selected.trangThai === 'Từ chối' && (
-                    <div style={{ background: '#fdecec', border: '1px solid #f5c2c2', borderRadius: '8px', padding: '16px' }}>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#b91c1c', marginBottom: '4px' }}>Lý do từ chối</div>
-                      <div style={{ fontSize: '14px', color: '#7f1d1d', lineHeight: 1.5 }}>{selected.ghiChuSale || 'Không có ghi chú.'}</div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!readOnly && (
-              <div style={{ borderTop: '1px solid #e1e3e4', marginTop: '16px', paddingTop: '24px' }}>
-                <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#191c1d', marginBottom: '24px' }}>Quyết định của quản lý</h3>
-
-                <div className="ktp-grid-2" style={{ marginBottom: '24px' }}>
-                  <div
-                    onClick={() => setDecision('xac-nhan')}
-                    style={{ padding: '20px', borderRadius: '8px', border: decision === 'xac-nhan' ? '2px solid #00666d' : '1px solid #bec8c9', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', backgroundColor: decision === 'xac-nhan' ? '#f5feff' : '#ffffff' }}
-                  >
-                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: decision === 'xac-nhan' ? '6px solid #00666d' : '2px solid #bec8c9' }}></div>
-                    <span style={{ fontWeight: '700', color: '#191c1d', fontSize: '15px' }}>Xác nhận nhận cọc</span>
-                  </div>
-                  <div
-                    onClick={() => setDecision('tu-choi')}
-                    style={{ padding: '20px', borderRadius: '8px', border: decision === 'tu-choi' ? '2px solid #00666d' : '1px solid #bec8c9', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', backgroundColor: decision === 'tu-choi' ? '#f5feff' : '#ffffff' }}
-                  >
-                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: decision === 'tu-choi' ? '6px solid #00666d' : '2px solid #bec8c9' }}></div>
-                    <span style={{ fontWeight: '700', color: '#191c1d', fontSize: '15px' }}>Từ chối nhận cọc</span>
                   </div>
                 </div>
 
-                {decision === 'tu-choi' && (
-                  <div style={{ backgroundColor: '#f8f9fa', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '24px' }}>
-                    <label style={{ display: 'block', fontWeight: '700', color: '#191c1d', marginBottom: '12px', fontSize: '14px' }}>Lý do từ chối <span style={{ color: '#ba1a1a' }}>*</span></label>
-                    <textarea
-                      value={lyDo}
-                      onChange={(e) => setLyDo(e.target.value)}
-                      style={{ width: '100%', border: '1px solid #bec8c9', borderRadius: '8px', padding: '16px', fontSize: '14px', boxSizing: 'border-box', minHeight: '100px', resize: 'vertical' }}
-                      placeholder="Ví dụ: Phòng đã được khách khác cọc trước đó."
-                    ></textarea>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6f797a', fontSize: '12px', marginTop: '12px' }}>
-                      <Icon name="info" />
-                      <span>Lý do từ chối sẽ được gửi cho nhân viên sale để thông báo lại cho khách hàng.</span>
+                {/* Phân tích PHÒNG KHÁCH CHỐT: Sale đã chốt phòng ở DC01, nên Quản lý duyệt
+                    đúng phòng đó (sức chứa, giới tính, tình trạng thật). */}
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{ flex: 1, borderTop: '1px solid #e1e3e4' }}></div>
+                    <span style={{ padding: '0 16px', fontSize: '14px', fontWeight: '700', color: '#191c1d' }}>Phòng khách chốt thuê</span>
+                    <div style={{ flex: 1, borderTop: '1px solid #e1e3e4' }}></div>
+                  </div>
+
+                  <div style={{ borderRadius: '8px', border: `2px solid ${selected.coTheNhanCoc === true ? '#86d3da' : (selected.coTheNhanCoc === false ? '#f1b0b0' : '#e1e3e4')}`, backgroundColor: selected.coTheNhanCoc === true ? '#f5feff' : (selected.coTheNhanCoc === false ? '#fdecec' : '#f8f9fa'), padding: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <Icon name="meeting_room" style={{ color: '#6f797a' }} />
+                          <span style={{ fontWeight: '700', color: '#191c1d', fontSize: '16px' }}>
+                            {moTaPhong(selected)} {selected.tenLoaiPhong ? `(${selected.tenLoaiPhong})` : ''}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '24px', fontSize: '14px', color: '#6f797a', flexWrap: 'wrap' }}>
+                          {/* 'Không phân biệt' là mặc định -> chỉ nêu khi phòng ĐÃ BỊ KHÓA giới */}
+                          {(selected.gioiTinhChoPhep === 'Nam' || selected.gioiTinhChoPhep === 'Nữ') && (
+                            <span>Giới tính: <strong style={{ color: '#191c1d' }}>{selected.gioiTinhChoPhep}</strong></span>
+                          )}
+                          <span>Sức chứa: <strong style={{ color: '#191c1d' }}>{selected.sucChuaToiDa ?? 0}</strong></span>
+                          <span>Trống: <strong style={{ color: '#191c1d' }}>{selected.soChoTrong ?? 0}</strong> giường</span>
+                        </div>
+                      </div>
+
+                      {/* Không dùng icon: màu viền + chữ đã đủ phân biệt */}
+                      {selected.coTheNhanCoc != null && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 20px', borderRadius: '8px', backgroundColor: '#ffffff', border: `1px solid ${selected.coTheNhanCoc === true ? '#86d3da' : '#f1b0b0'}`, color: selected.coTheNhanCoc === true ? '#00666d' : '#b3261e' }}>
+                          <span style={{ fontWeight: '700', textAlign: 'center', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                            {selected.coTheNhanCoc === true ? 'ĐỦ ĐIỀU KIỆN NHẬN CỌC' : 'KHÔNG ĐỦ ĐIỀU KIỆN'}
+                          </span>
+                        </div>
+                      )}
                     </div>
+
+                    {selected.coTheNhanCoc === false && selected.trangThai === 'Chờ xác nhận cọc' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#b3261e', fontSize: '13px', marginTop: '16px', backgroundColor: 'rgba(179, 38, 30, 0.1)', padding: '12px', borderRadius: '4px' }}>
+                        <Icon name="warning" style={{ fontSize: '18px' }} />
+                        <span><strong>Lý do:</strong> {selected.lyDoKhongKhaDung}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Phiếu đã xử lý */}
+                {readOnly && (
+                  <div style={{ borderTop: '1px solid #e1e3e4', paddingTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontWeight: 700, color: '#191c1d', fontSize: '15px' }}>Trạng thái:</span>
+                      <StatusBadge trangThai={selected.trangThai} />
+                    </div>
+                    {selected.trangThai === 'Từ chối' && (
+                      <div style={{ background: '#fdecec', border: '1px solid #f5c2c2', borderRadius: '8px', padding: '16px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#b91c1c', marginBottom: '4px' }}>Lý do từ chối trước đó</div>
+                        <div style={{ fontSize: '14px', color: '#7f1d1d', lineHeight: 1.5 }}>{selected.ghiChuSale || 'Không có ghi chú.'}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Quyết định của quản lý */}
+                {!readOnly && (
+                  <div style={{ marginTop: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                      <div style={{ flex: 1, borderTop: '1px solid #e1e3e4' }}></div>
+                      <span style={{ padding: '0 16px', fontSize: '14px', fontWeight: '700', color: '#191c1d' }}>Quyết định của quản lý</span>
+                      <div style={{ flex: 1, borderTop: '1px solid #e1e3e4' }}></div>
+                    </div>
+
+                    <div className="ktp-grid-2" style={{ gap: '12px', marginBottom: '16px' }}>
+                      <div
+                        onClick={() => { if (selected.coTheNhanCoc !== false) setDecision('xac-nhan'); }}
+                        style={{ padding: '16px', borderRadius: '8px', border: decision === 'xac-nhan' ? '2px solid #00666d' : '1px solid #bec8c9', display: 'flex', alignItems: 'center', gap: '12px', cursor: selected.coTheNhanCoc === false ? 'not-allowed' : 'pointer', backgroundColor: decision === 'xac-nhan' ? '#f5feff' : (selected.coTheNhanCoc === false ? '#f4f7f7' : '#ffffff'), opacity: selected.coTheNhanCoc === false ? 0.6 : 1 }}
+                      >
+                        {/* boxSizing tường minh: không có nó, 20px + border 6px cho ra kích thước
+                            khác nhau tùy ngữ cảnh CSS -> hai màn hình ra hai kiểu radio khác nhau. */}
+                        <div style={{ width: '20px', height: '20px', boxSizing: 'border-box', borderRadius: '50%', border: decision === 'xac-nhan' ? '2px solid #00666d' : '2px solid #bec8c9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {decision === 'xac-nhan' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00666d' }}></div>}
+                        </div>
+                        <span style={{ fontWeight: '700', color: '#191c1d', fontSize: '14px' }}>Xác nhận nhận cọc</span>
+                      </div>
+                      <div
+                        onClick={() => setDecision('tu-choi')}
+                        style={{ padding: '16px', borderRadius: '8px', border: decision === 'tu-choi' ? '2px solid #00666d' : '1px solid #bec8c9', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', backgroundColor: decision === 'tu-choi' ? '#f5feff' : '#ffffff' }}
+                      >
+                        <div style={{ width: '20px', height: '20px', boxSizing: 'border-box', borderRadius: '50%', border: decision === 'tu-choi' ? '2px solid #00666d' : '2px solid #bec8c9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {decision === 'tu-choi' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00666d' }}></div>}
+                        </div>
+                        <span style={{ fontWeight: '700', color: '#191c1d', fontSize: '14px' }}>Từ chối phòng này</span>
+                      </div>
+                    </div>
+
+                    {decision === 'tu-choi' && (
+                      <div style={{ backgroundColor: '#f8f9fa', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '16px' }}>
+                        <label style={{ display: 'block', fontWeight: '700', color: '#191c1d', marginBottom: '8px', fontSize: '13px' }}>Lý do từ chối <span style={{ color: '#ba1a1a' }}>*</span></label>
+                        <textarea
+                          value={lyDo}
+                          onChange={(e) => setLyDo(e.target.value)}
+                          style={{ width: '100%', border: '1px solid #bec8c9', borderRadius: '8px', padding: '12px', fontSize: '14px', boxSizing: 'border-box', minHeight: '80px', resize: 'vertical' }}
+                          placeholder="Ví dụ: Phòng đã được khách khác cọc trước đó."
+                        ></textarea>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6f797a', fontSize: '12px', marginTop: '8px' }}>
+                          <Icon name="info" style={{ fontSize: '16px' }} />
+                          <span>Lý do từ chối sẽ được gửi cho nhân viên sale để thông báo lại cho khách hàng.</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-              )}
-
             </div>
 
-            <div className="ktp-modal-footer" style={{ borderTop: '1px solid #e1e3e4', backgroundColor: '#ffffff', padding: '16px 32px', display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
-              <button className="ktp-btn-cancel" onClick={() => setSelected(null)} disabled={submitting} style={{ border: '1px solid #bec8c9' }}>Đóng</button>
+            <div className="ktp-modal-footer" style={{ borderTop: '1px solid #e1e3e4', backgroundColor: '#f8f9fa', padding: '16px 24px', display: 'flex', gap: '12px', justifyContent: 'flex-end', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
+              <button className="ktp-btn-cancel" onClick={() => setSelected(null)} disabled={submitting} style={{ border: '1px solid #bec8c9', padding: '10px 24px', backgroundColor: '#ffffff', borderRadius: '8px', fontWeight: '600' }}>Đóng</button>
               {!readOnly && (
-                <button className="ktp-btn-submit" onClick={handleSubmit} disabled={submitting}>{submitting ? 'Đang xử lý...' : 'Xác nhận'}</button>
+                <button className="ktp-btn-submit" onClick={handleSubmit} disabled={submitting || (decision === 'tu-choi' && !lyDo.trim())} style={{ padding: '10px 24px', backgroundColor: '#3b8280', color: '#ffffff', border: 'none', borderRadius: '8px', fontWeight: '600', opacity: (submitting || (decision === 'tu-choi' && !lyDo.trim())) ? 0.6 : 1, cursor: (submitting || (decision === 'tu-choi' && !lyDo.trim())) ? 'not-allowed' : 'pointer' }}>
+                  {submitting ? 'Đang xử lý...' : 'Xác nhận'}
+                </button>
               )}
             </div>
           </div>

@@ -41,11 +41,8 @@ const formatHan = (v) => {
   const d = new Date(v);
   return isNaN(d.getTime()) ? '—' : d.toLocaleString('vi-VN');
 };
-const moTaPhong = (item) => {
-  const phong = item.tenPhong || item.maPhong;
-  if (!phong) return '—';
-  return item.maGiuong ? `${phong} - ${item.maGiuong}` : phong;
-};
+// 1 phiếu = 1 phòng -> bảng chỉ cần tên phòng; mã giường là chi tiết, xem trong modal.
+const moTaPhong = (item) => item.tenPhong || item.maPhong || '—';
 // ChungTuThanhToan giờ chỉ là ĐƯỜNG DẪN file (ảnh/PDF). Gốc backend để tải file:
 const FILE_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 const anhUrl = (path) => (path ? `${FILE_BASE}${path}` : null);
@@ -63,10 +60,9 @@ export default function XacNhanThanhToanTab() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
-  // Lọc / tìm kiếm / sắp xếp / phân trang
+  // Tìm kiếm + chip trạng thái + phân trang (đã bỏ bộ chọn sắp xếp)
   const [statusFilter, setStatusFilter] = useState('Chờ TT'); // mặc định nhóm cần xử lý
   const [search, setSearch] = useState('');
-  const [sortDir, setSortDir] = useState('asc'); // theo hạn TT: gần nhất trước
   const [page, setPage] = useState(1);
 
   const loadDanhSach = useCallback(async () => {
@@ -99,18 +95,21 @@ export default function XacNhanThanhToanTab() {
     return c;
   }, [baseFiltered]);
 
+  // Thứ tự CỐ ĐỊNH: "Chờ TT" -> hạn gần nhất trước (sắp hết hạn xử lý trước);
+  // các nhóm khác -> hạn xa nhất trước.
   const filteredList = useMemo(() => {
     const arr = statusFilter === 'all' ? baseFiltered : baseFiltered.filter((it) => it.trangThaiThanhToan === statusFilter);
+    const gapNhatTruoc = statusFilter === 'Chờ TT';
     return [...arr].sort((a, b) => {
       const da = a.thoiHanThanhToan ? new Date(a.thoiHanThanhToan).getTime() : 0;
       const db = b.thoiHanThanhToan ? new Date(b.thoiHanThanhToan).getTime() : 0;
-      return sortDir === 'asc' ? da - db : db - da;
+      return gapNhatTruoc ? da - db : db - da;
     });
-  }, [baseFiltered, statusFilter, sortDir]);
+  }, [baseFiltered, statusFilter]);
 
-  const chonChip = (key) => { setStatusFilter(key); setSortDir(key === 'Chờ TT' ? 'asc' : 'desc'); };
+  const chonChip = (key) => setStatusFilter(key);
 
-  useEffect(() => { setPage(1); }, [statusFilter, search, sortDir]);
+  useEffect(() => { setPage(1); }, [statusFilter, search]);
   const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
   const pageSafe = Math.min(page, totalPages);
   const pagedList = useMemo(
@@ -141,7 +140,7 @@ export default function XacNhanThanhToanTab() {
     if (!selected) return;
     const hopLe = decision === 'xac-nhan';
     if (!hopLe && !lyDo.trim()) {
-      setResult({ type: 'error', title: 'Thiếu lý do.', message: 'Vui lòng nhập lý do từ chối xác nhận.' });
+      setResult({ type: 'error', title: 'Chưa nhập lý do từ chối.' });
       return;
     }
     setSubmitting(true);
@@ -153,15 +152,9 @@ export default function XacNhanThanhToanTab() {
       });
       setSelected(null);
       await loadDanhSach();
-      setResult({
-        type: 'success',
-        title: hopLe ? 'Đã xác nhận!' : 'Đã từ chối.',
-        message: hopLe
-          ? 'Thanh toán cọc hợp lệ. Phòng/giường đã chuyển trạng thái "Đã đặt cọc".'
-          : 'Đã gửi thông báo từ chối kèm lý do đến khách hàng và Sale (phiếu giữ trạng thái "Chờ TT").'
-      });
-    } catch (err) {
-      setResult({ type: 'error', title: 'Thao tác thất bại.', message: err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.' });
+      setResult({ type: 'success', title: hopLe ? 'Đã xác nhận!' : 'Đã từ chối.' });
+    } catch {
+      setResult({ type: 'error', title: 'Thao tác thất bại.' });
     } finally {
       setSubmitting(false);
     }
@@ -174,18 +167,11 @@ export default function XacNhanThanhToanTab() {
     <div className="ktp-container">
       {/* Table Section */}
       <section className="ktp-table-section">
-        {/* Thanh tìm kiếm + sắp xếp */}
+        {/* Thanh tìm kiếm (đã bỏ bộ chọn sắp xếp — phiếu sắp hết hạn luôn lên đầu) */}
         <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
           <div style={{ flex: '2 1 260px' }}>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên khách hàng, SĐT hoặc mã phiếu cọc..." className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
-          </div>
-          <div style={{ flex: '1 1 200px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Sắp xếp</label>
-            <select value={sortDir} onChange={(e) => setSortDir(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }}>
-              <option value="asc">Hạn thanh toán: gần nhất</option>
-              <option value="desc">Hạn thanh toán: xa nhất</option>
-            </select>
           </div>
           {search && (
             <button type="button" onClick={() => setSearch('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
@@ -206,7 +192,7 @@ export default function XacNhanThanhToanTab() {
             <tr>
               <th>Mã phiếu</th>
               <th>Khách hàng</th>
-              <th>Phòng/Giường</th>
+              <th>Phòng</th>
               <th className="text-right">Số tiền đặt cọc</th>
               <th>Hạn thanh toán</th>
               <th className="text-center">Trạng thái</th>
@@ -290,7 +276,9 @@ export default function XacNhanThanhToanTab() {
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a', fontSize: '14px' }}>Mã phiếu:</span> <span style={{ fontWeight: '600', fontSize: '14px', color: '#191c1d' }}>{selected.maPhieuDatCoc}</span></div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a', fontSize: '14px' }}>Phòng/Giường:</span> <span style={{ fontWeight: '600', fontSize: '14px', color: '#191c1d' }}>{moTaPhong(selected)}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a', fontSize: '14px' }}>Phòng:</span> <span style={{ fontWeight: '600', fontSize: '14px', color: '#191c1d' }}>{selected.tenPhong || selected.maPhong || '—'}</span></div>
+                      {/* Ghép giường -> liệt kê mã giường; nguyên phòng -> không có giường nào */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a', fontSize: '14px' }}>Giường:</span> <span style={{ fontWeight: '600', fontSize: '14px', color: '#191c1d' }}>{selected.danhSachGiuong || 'Trọn phòng'}</span></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a', fontSize: '14px' }}>Số tiền cọc:</span> <span style={{ fontWeight: '600', fontSize: '14px', color: '#fe7e50' }}>{formatTien(selected.soTienCoc)}đ</span></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a', fontSize: '14px' }}>Hạn thanh toán:</span> <span style={{ fontWeight: '600', fontSize: '14px', color: '#191c1d' }}>{formatHan(selected.thoiHanThanhToan)}</span></div>
                     </div>
@@ -317,37 +305,45 @@ export default function XacNhanThanhToanTab() {
                       )}
                     </div>
                   </div>
+                </div>
 
-                  {readOnly && (
-                    <div className="ktp-section" style={{ padding: '20px', marginBottom: 0 }}>
-                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600', color: '#3b8280', margin: '0 0 12px 0' }}>
-                        <Icon name="fact_check" /> Kết quả xử lý
-                      </h4>
-                      <StatusBadge trangThai={selected.trangThaiThanhToan} />
-                    </div>
-                  )}
-                  {!readOnly && (
-                  <div className="ktp-section" style={{ padding: '20px', marginBottom: 0 }}>
+                {/* Khối quyết định: TRẢI HẾT chiều ngang lưới (gridColumn 1 / -1),
+                    không nằm gọn trong cột phải nữa */}
+                {readOnly && (
+                  <div className="ktp-section" style={{ gridColumn: '1 / -1', padding: '20px', marginBottom: 0 }}>
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600', color: '#3b8280', margin: '0 0 12px 0' }}>
+                      <Icon name="fact_check" /> Kết quả xử lý
+                    </h4>
+                    <StatusBadge trangThai={selected.trangThaiThanhToan} />
+                  </div>
+                )}
+                {!readOnly && (
+                  <div className="ktp-section" style={{ gridColumn: '1 / -1', padding: '20px', marginBottom: 0 }}>
                     <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600', color: '#3b8280', margin: '0 0 16px 0' }}>
                       <Icon name="fact_check" /> Kết quả đối chiếu & Quyết định
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div
-                        onClick={() => setDecision('xac-nhan')}
-                        style={{ padding: '16px', borderRadius: '8px', border: decision === 'xac-nhan' ? '1px solid #3b8280' : '1px solid #bec8c9', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', backgroundColor: decision === 'xac-nhan' ? '#eefafb' : '#ffffff' }}
-                      >
-                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: decision === 'xac-nhan' ? '6px solid #14595b' : '2px solid #bec8c9', flexShrink: 0 }}></div>
-                        <span style={{ fontWeight: '600', color: '#191c1d', fontSize: '14px' }}>Xác nhận thanh toán hợp lệ</span>
-                      </div>
+                      {/* Hai lựa chọn xếp NGANG: cùng cấp, cùng độ dài -> không lệch như xếp dọc */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div
+                          onClick={() => setDecision('xac-nhan')}
+                          style={{ padding: '16px', borderRadius: '8px', border: decision === 'xac-nhan' ? '2px solid #00666d' : '1px solid #bec8c9', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', backgroundColor: decision === 'xac-nhan' ? '#f5feff' : '#ffffff' }}
+                        >
+                          {/* Giống hệt radio ở màn Duyệt nhận cọc (DC02) — xem chú thích ở file đó */}
+                          <div style={{ width: '20px', height: '20px', boxSizing: 'border-box', borderRadius: '50%', border: decision === 'xac-nhan' ? '2px solid #00666d' : '2px solid #bec8c9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {decision === 'xac-nhan' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00666d' }}></div>}
+                          </div>
+                          <span style={{ fontWeight: '600', color: '#191c1d', fontSize: '14px' }}>Xác nhận hợp lệ</span>
+                        </div>
 
-                      <div
-                        onClick={() => setDecision('tu-choi')}
-                        style={{ padding: '16px', borderRadius: '8px', border: decision === 'tu-choi' ? '1px solid #3b8280' : '1px solid #bec8c9', display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', backgroundColor: decision === 'tu-choi' ? '#eefafb' : '#ffffff' }}
-                      >
-                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: decision === 'tu-choi' ? '6px solid #14595b' : '2px solid #bec8c9', flexShrink: 0, marginTop: '2px' }}></div>
-                        <div>
-                          <span style={{ fontWeight: '600', color: '#191c1d', fontSize: '14px', display: 'block', marginBottom: '2px' }}>Từ chối xác nhận</span>
-                          <span style={{ fontSize: '12px', color: '#6f797a' }}>Yêu cầu khách hàng kiểm tra lại hoặc cung cấp chứng từ khác.</span>
+                        <div
+                          onClick={() => setDecision('tu-choi')}
+                          style={{ padding: '16px', borderRadius: '8px', border: decision === 'tu-choi' ? '2px solid #00666d' : '1px solid #bec8c9', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', backgroundColor: decision === 'tu-choi' ? '#f5feff' : '#ffffff' }}
+                        >
+                          <div style={{ width: '20px', height: '20px', boxSizing: 'border-box', borderRadius: '50%', border: decision === 'tu-choi' ? '2px solid #00666d' : '2px solid #bec8c9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {decision === 'tu-choi' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00666d' }}></div>}
+                          </div>
+                          <span style={{ fontWeight: '600', color: '#191c1d', fontSize: '14px' }}>Từ chối xác nhận</span>
                         </div>
                       </div>
 
@@ -364,8 +360,7 @@ export default function XacNhanThanhToanTab() {
                       )}
                     </div>
                   </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
 
