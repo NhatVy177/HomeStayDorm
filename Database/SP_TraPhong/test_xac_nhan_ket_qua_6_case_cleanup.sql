@@ -7,11 +7,30 @@ GO
 BEGIN TRANSACTION;
 
 BEGIN TRY
+    DELETE FROM dbo.YeuCauSuaChua
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926')
+       OR MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
+
+    DELETE FROM dbo.ChiTietHuHong
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
     DELETE cthh
     FROM dbo.ChiTietHuHong cthh
     INNER JOIN dbo.BienBanKiemTraPhong bbkt
         ON bbkt.MaBienBanKT = cthh.MaBienBanKT
     WHERE bbkt.MaPhieuTra IN ('TP9201', 'TP9202', 'TP9203', 'TP9204', 'TP9205', 'TP9206');
+
+    DELETE ctbg
+    FROM dbo.ChiTietBanGiao ctbg
+    WHERE ctbg.MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926')
+       OR ctbg.MaBienBan IN (
+            SELECT bbbg.MaBienBan
+            FROM dbo.BienBanBanGiao bbbg
+            WHERE bbbg.MaHopDong IN ('HD9201', 'HD9202', 'HD9203')
+       );
+
+    DELETE FROM dbo.BienBanBanGiao
+    WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
 
     DELETE FROM dbo.DoiSoat
     WHERE MaDoiSoat IN ('DS9201', 'DS9202', 'DS9203', 'DS9204', 'DS9205', 'DS9206');
@@ -25,6 +44,12 @@ BEGIN TRY
         ON hd.MaHoaDon = cthd.MaHoaDon
     WHERE hd.MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
 
+    DELETE cthd
+    FROM dbo.ChiTietHoaDon cthd
+    INNER JOIN dbo.PhieuGhiChiSo pgcs
+        ON pgcs.MaPhieuGhi = cthd.MaPhieuGhi
+    WHERE pgcs.MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
     DELETE FROM dbo.HoaDon
     WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
 
@@ -34,9 +59,25 @@ BEGIN TRY
     DELETE FROM dbo.ThanhVienHopDong
     WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
 
+    IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NOT NULL
+       AND COL_LENGTH(N'dbo.ThanhVienHopDong', N'MaHoSoCuTru') IS NOT NULL
+        EXEC sp_executesql N'
+            DELETE tvhd
+            FROM dbo.ThanhVienHopDong tvhd
+            INNER JOIN dbo.HoSoCuTru hsct
+                ON hsct.MaHoSoCuTru = tvhd.MaHoSoCuTru
+            WHERE hsct.MaPhieuDatCoc IN (''DC9201'', ''DC9202'', ''DC9203'', ''DC9204'', ''DC9205'', ''DC9206'');
+        ';
+
     DELETE FROM dbo.BienBanViPham
     WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203')
        OR MaKhachHang IN ('KH9201', 'KH9202', 'KH9203', 'KH9204', 'KH9205', 'KH9206');
+
+    IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NOT NULL
+        EXEC sp_executesql N'
+            DELETE FROM dbo.HoSoCuTru
+            WHERE MaPhieuDatCoc IN (''DC9201'', ''DC9202'', ''DC9203'', ''DC9204'', ''DC9205'', ''DC9206'');
+        ';
 
     DELETE FROM dbo.PhieuTraPhong
     WHERE MaPhieuTra IN ('TP9201', 'TP9202', 'TP9203', 'TP9204', 'TP9205', 'TP9206');
@@ -57,6 +98,13 @@ BEGIN TRY
             WHERE MaDangKy IN (''DK9201'', ''DK9202'', ''DK9203'', ''DK9204'', ''DK9205'', ''DK9206'');
         ';
 
+    DELETE FROM dbo.ChiTietXemPhong
+    WHERE MaDangKy IN ('DK9201', 'DK9202', 'DK9203', 'DK9204', 'DK9205', 'DK9206')
+       OR MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
+    DELETE FROM dbo.LichXemPhong
+    WHERE MaDangKy IN ('DK9201', 'DK9202', 'DK9203', 'DK9204', 'DK9205', 'DK9206');
+
     DELETE FROM dbo.PhieuDangKy
     WHERE MaDangKy IN ('DK9201', 'DK9202', 'DK9203', 'DK9204', 'DK9205', 'DK9206');
 
@@ -69,7 +117,16 @@ BEGIN TRY
     DELETE FROM dbo.NguoiDung
     WHERE MaNguoiDung IN ('KH9201', 'KH9202', 'KH9203', 'KH9204', 'KH9205', 'KH9206');
 
+    DELETE FROM dbo.HinhAnhPhong
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
+    DELETE FROM dbo.PhieuGhiChiSo
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
     DELETE FROM dbo.Giuong
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
+    DELETE FROM dbo.TaiSan
     WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
 
     DELETE FROM dbo.Phong

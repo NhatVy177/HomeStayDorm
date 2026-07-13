@@ -145,12 +145,11 @@ BEGIN
            hdt.SoGiuongThue = lp.SucChuaToiDa
     FROM   HopDongThue   hdt
     INNER JOIN inserted      i    ON hdt.MaHopDong        = i.MaHopDong
-    INNER JOIN PhieuDatCoc   pdc  ON pdc.MaPhieuDatCoc    = i.MaPhieuCoc
-    INNER JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc   = pdc.MaPhieuDatCoc
+    INNER JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc   = i.MaPhieuCoc
                                   AND ctdc.MaGiuong IS NULL
     INNER JOIN Phong         p    ON p.MaPhong             = ctdc.MaPhong
     INNER JOIN LoaiPhong     lp   ON lp.MaLoaiPhong        = p.MaLoaiPhong
-    WHERE  pdc.HinhThucThue = N'Nguyên phòng'
+    WHERE  COALESCE(ctdc.HinhThucThue, N'Nguyên phòng') = N'Nguyên phòng'
       AND  (i.GiaThue IS NULL OR i.SoGiuongThue IS NULL);
 
     -- Ghép giường
@@ -159,17 +158,17 @@ BEGIN
            hdt.SoGiuongThue = sub.SoGiuong
     FROM   HopDongThue hdt
     INNER JOIN inserted    i   ON hdt.MaHopDong = i.MaHopDong
-    INNER JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = i.MaPhieuCoc
     INNER JOIN (
         SELECT MaPhieuDatCoc,
                SUM(GiaThue)    AS TongGia,
                COUNT(MaGiuong) AS SoGiuong
         FROM   ChiTietDatCoc
-        WHERE  MaGiuong IS NOT NULL AND GiaThue IS NOT NULL
+        WHERE  MaGiuong IS NOT NULL
+          AND  GiaThue IS NOT NULL
+          AND  COALESCE(HinhThucThue, N'Ghép giường') = N'Ghép giường'
         GROUP BY MaPhieuDatCoc
     ) sub ON sub.MaPhieuDatCoc = i.MaPhieuCoc
-    WHERE  pdc.HinhThucThue = N'Ghép giường'
-      AND  (i.GiaThue IS NULL OR i.SoGiuongThue IS NULL);
+    WHERE  (i.GiaThue IS NULL OR i.SoGiuongThue IS NULL);
 END;
 GO
 
@@ -237,12 +236,14 @@ BEGIN
     INNER JOIN inserted        i    ON cthd.MaChiTietHD   = i.MaChiTietHD
     INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = cthd.MaHoaDon
     INNER JOIN HopDongThue     hdt  ON hdt.MaHopDong      = hd.MaHopDong
-    INNER JOIN PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc  = hdt.MaPhieuCoc
+    INNER JOIN ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
+                                    AND ctdc.MaGiuong IS NULL
     INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = cthd.MaPhieuGhi
+                                    AND pgcs.MaPhong       = ctdc.MaPhong
     WHERE  cthd.SoLuong IS NULL
       AND  cthd.DonViTinh = N'kWh'
       AND  cthd.MaPhieuGhi IS NOT NULL
-      AND  pdc.HinhThucThue = N'Nguyên phòng';
+      AND  COALESCE(ctdc.HinhThucThue, N'Nguyên phòng') = N'Nguyên phòng';
 
     -- ---- C: NƯỚC — Nguyên phòng ----
     UPDATE cthd
@@ -251,12 +252,14 @@ BEGIN
     INNER JOIN inserted        i    ON cthd.MaChiTietHD   = i.MaChiTietHD
     INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = cthd.MaHoaDon
     INNER JOIN HopDongThue     hdt  ON hdt.MaHopDong      = hd.MaHopDong
-    INNER JOIN PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc  = hdt.MaPhieuCoc
+    INNER JOIN ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
+                                    AND ctdc.MaGiuong IS NULL
     INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = cthd.MaPhieuGhi
+                                    AND pgcs.MaPhong       = ctdc.MaPhong
     WHERE  cthd.SoLuong IS NULL
       AND  cthd.DonViTinh = N'm3'
       AND  cthd.MaPhieuGhi IS NOT NULL
-      AND  pdc.HinhThucThue = N'Nguyên phòng';
+      AND  COALESCE(ctdc.HinhThucThue, N'Nguyên phòng') = N'Nguyên phòng';
 
     -- ---- D: ĐIỆN — Ghép giường ----
     UPDATE cthd
@@ -269,29 +272,27 @@ BEGIN
     INNER JOIN inserted        i    ON cthd.MaChiTietHD   = i.MaChiTietHD
     INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = cthd.MaHoaDon
     INNER JOIN HopDongThue     hdt  ON hdt.MaHopDong      = hd.MaHopDong
-    INNER JOIN PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc  = hdt.MaPhieuCoc
-    INNER JOIN ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+    INNER JOIN ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
                                     AND ctdc.MaGiuong IS NOT NULL
     INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = cthd.MaPhieuGhi
                                     AND pgcs.MaPhong       = ctdc.MaPhong
     INNER JOIN (
         SELECT ctdc2.MaPhong, pgcs2.KyGhi, SUM(hdt2.SoGiuongThue) AS TongGiuong
         FROM   HopDongThue     hdt2
-        INNER JOIN PhieuDatCoc   pdc2  ON pdc2.MaPhieuDatCoc  = hdt2.MaPhieuCoc
-        INNER JOIN ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = pdc2.MaPhieuDatCoc
+        INNER JOIN ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = hdt2.MaPhieuCoc
                                        AND ctdc2.MaGiuong IS NOT NULL
         INNER JOIN HoaDon        hd2   ON hd2.MaHopDong  = hdt2.MaHopDong
         INNER JOIN ChiTietHoaDon ch2   ON ch2.MaHoaDon   = hd2.MaHoaDon
                                        AND ch2.DonViTinh  = N'kWh'
         INNER JOIN PhieuGhiChiSo pgcs2 ON pgcs2.MaPhieuGhi = ch2.MaPhieuGhi
                                        AND pgcs2.MaPhong    = ctdc2.MaPhong
-        WHERE  pdc2.HinhThucThue = N'Ghép giường'
+        WHERE  COALESCE(ctdc2.HinhThucThue, N'Ghép giường') = N'Ghép giường'
         GROUP BY ctdc2.MaPhong, pgcs2.KyGhi
     ) tong ON tong.MaPhong = ctdc.MaPhong AND tong.KyGhi = pgcs.KyGhi
     WHERE  cthd.SoLuong IS NULL
       AND  cthd.DonViTinh = N'kWh'
       AND  cthd.MaPhieuGhi IS NOT NULL
-      AND  pdc.HinhThucThue = N'Ghép giường'
+      AND  COALESCE(ctdc.HinhThucThue, N'Ghép giường') = N'Ghép giường'
       AND  tong.TongGiuong > 0;
 
     -- ---- E: NƯỚC — Ghép giường ----
@@ -305,29 +306,27 @@ BEGIN
     INNER JOIN inserted        i    ON cthd.MaChiTietHD   = i.MaChiTietHD
     INNER JOIN HoaDon          hd   ON hd.MaHoaDon        = cthd.MaHoaDon
     INNER JOIN HopDongThue     hdt  ON hdt.MaHopDong      = hd.MaHopDong
-    INNER JOIN PhieuDatCoc     pdc  ON pdc.MaPhieuDatCoc  = hdt.MaPhieuCoc
-    INNER JOIN ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+    INNER JOIN ChiTietDatCoc   ctdc ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
                                     AND ctdc.MaGiuong IS NOT NULL
     INNER JOIN PhieuGhiChiSo   pgcs ON pgcs.MaPhieuGhi    = cthd.MaPhieuGhi
                                     AND pgcs.MaPhong       = ctdc.MaPhong
     INNER JOIN (
         SELECT ctdc2.MaPhong, pgcs2.KyGhi, SUM(hdt2.SoGiuongThue) AS TongGiuong
         FROM   HopDongThue     hdt2
-        INNER JOIN PhieuDatCoc   pdc2  ON pdc2.MaPhieuDatCoc  = hdt2.MaPhieuCoc
-        INNER JOIN ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = pdc2.MaPhieuDatCoc
+        INNER JOIN ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = hdt2.MaPhieuCoc
                                        AND ctdc2.MaGiuong IS NOT NULL
         INNER JOIN HoaDon        hd2   ON hd2.MaHopDong  = hdt2.MaHopDong
         INNER JOIN ChiTietHoaDon ch2   ON ch2.MaHoaDon   = hd2.MaHoaDon
                                        AND ch2.DonViTinh  = N'm3'
         INNER JOIN PhieuGhiChiSo pgcs2 ON pgcs2.MaPhieuGhi = ch2.MaPhieuGhi
                                        AND pgcs2.MaPhong    = ctdc2.MaPhong
-        WHERE  pdc2.HinhThucThue = N'Ghép giường'
+        WHERE  COALESCE(ctdc2.HinhThucThue, N'Ghép giường') = N'Ghép giường'
         GROUP BY ctdc2.MaPhong, pgcs2.KyGhi
     ) tong ON tong.MaPhong = ctdc.MaPhong AND tong.KyGhi = pgcs.KyGhi
     WHERE  cthd.SoLuong IS NULL
       AND  cthd.DonViTinh = N'm3'
       AND  cthd.MaPhieuGhi IS NOT NULL
-      AND  pdc.HinhThucThue = N'Ghép giường'
+      AND  COALESCE(ctdc.HinhThucThue, N'Ghép giường') = N'Ghép giường'
       AND  tong.TongGiuong > 0;
 
     -- ---- F: ThanhTien = SoLuong * DonGia ----
@@ -731,13 +730,11 @@ BEGIN
             ON pbh.MaPhong = ctdc.MaPhong
         JOIN HopDongThue hdt 
             ON ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc
-        JOIN PhieuDatCoc pdc
-            ON pdc.MaPhieuDatCoc = hdt.MaPhieuCoc
         JOIN ThanhVienHopDong tvhd 
             ON hdt.MaHopDong = tvhd.MaHopDong
         WHERE tvhd.TrangThai = N'Đang ở'
           AND hdt.TrangThai  = N'Hiệu lực'
-          AND pdc.HinhThucThue = N'Ghép giường'
+          AND COALESCE(ctdc.HinhThucThue, N'Ghép giường') = N'Ghép giường'
         GROUP BY pbh.MaPhong
         HAVING COUNT(DISTINCT tvhd.GioiTinh) > 1
     )
@@ -758,7 +755,7 @@ BEGIN
         (
             SELECT
                 CASE
-                    WHEN MAX(CASE WHEN pdc2.HinhThucThue = N'Nguyên phòng'
+                    WHEN MAX(CASE WHEN COALESCE(ctdc2.HinhThucThue, CASE WHEN ctdc2.MaGiuong IS NULL THEN N'Nguyên phòng' ELSE N'Ghép giường' END) = N'Nguyên phòng'
                                        AND hdt2.TrangThai = N'Hiệu lực'
                                   THEN 1 ELSE 0 END) = 1
                         THEN N'Không phân biệt'
@@ -767,8 +764,6 @@ BEGIN
             FROM ChiTietDatCoc ctdc2
             JOIN HopDongThue hdt2
                 ON ctdc2.MaPhieuDatCoc = hdt2.MaPhieuCoc
-            JOIN PhieuDatCoc pdc2
-                ON pdc2.MaPhieuDatCoc = hdt2.MaPhieuCoc
             JOIN ThanhVienHopDong tvhd2
                 ON hdt2.MaHopDong = tvhd2.MaHopDong
             WHERE ctdc2.MaPhong = p.MaPhong
