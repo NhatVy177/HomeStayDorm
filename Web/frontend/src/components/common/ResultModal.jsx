@@ -69,7 +69,8 @@ export default function ResultModal({ open, type = 'success', title, message, co
 
         <div className="rm-body">
           <h3 className="rm-title">{heading}</h3>
-          <p className="rm-msg">{message}</p>
+          {/* Không có message thì bỏ luôn thẻ <p>, tránh để lại khoảng trống thừa */}
+          {message ? <p className="rm-msg">{message}</p> : null}
           <button className={`rm-btn rm-btn--${isSuccess ? 'success' : 'error'}`} onClick={onClose}>
             {btnText}
           </button>
