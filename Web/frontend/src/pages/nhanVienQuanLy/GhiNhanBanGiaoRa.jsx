@@ -307,13 +307,13 @@ export default function GhiNhanBanGiaoRa() {
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>{chiTiet.hasHopDong ? 'Thời hạn:' : 'Ngày đặt cọc:'}</span><span style={{ fontWeight: 500 }}>{chiTiet.hasHopDong ? `${fmtDate(chiTiet.ngayBatDauHopDong)} - ${fmtDate(chiTiet.ngayKetThucHopDong)}` : fmtDate(chiTiet.ngayDatCoc)}</span></div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#6f797a' }}>Trạng thái {chiTiet.hasHopDong ? 'HĐ' : 'PĐC'}:</span>
-                          <span style={{ 
-                            padding: '2px 8px', 
-                            backgroundColor: (chiTiet.hasHopDong ? chiTiet.trangThaiHopDong === 'Đã thanh lý' : chiTiet.trangThaiCoc === 'Đã hủy') ? '#f1f3f4' : '#e6f4ea', 
-                            color: (chiTiet.hasHopDong ? chiTiet.trangThaiHopDong === 'Đã thanh lý' : chiTiet.trangThaiCoc === 'Đã hủy') ? '#5f6368' : '#137333', 
-                            borderRadius: '4px', 
-                            fontSize: '12px', 
-                            fontWeight: 500 
+                          <span style={{
+                            padding: '2px 8px',
+                            backgroundColor: (chiTiet.hasHopDong ? chiTiet.trangThaiHopDong === 'Đã thanh lý' : chiTiet.trangThaiCoc === 'Đã hủy') ? '#f1f3f4' : '#e6f4ea',
+                            color: (chiTiet.hasHopDong ? chiTiet.trangThaiHopDong === 'Đã thanh lý' : chiTiet.trangThaiCoc === 'Đã hủy') ? '#5f6368' : '#137333',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 500
                           }}>
                             {chiTiet.hasHopDong ? chiTiet.trangThaiHopDong : chiTiet.trangThaiCoc}
                           </span>
@@ -335,53 +335,53 @@ export default function GhiNhanBanGiaoRa() {
                   </div>
 
                   <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '14px', margin: 0 }}>
-                      <h4 style={{ fontSize: '16px', fontWeight: '700', color: '#191c1d', margin: '0 0 8px 0' }}>Ghi nhận bàn giao tài sản</h4>
-                      {dsTaiSan.length > 0 ? (
-                        <table className="ktp-table" style={{ margin: 0 }}>
-                          <thead>
-                            <tr>
-                              <th style={{ width: '20%', whiteSpace: 'nowrap' }}>Tên tài sản</th>
-                              <th className="text-center" style={{ width: '8%', whiteSpace: 'nowrap' }}>Đã giao</th>
-                              <th className="text-center" style={{ width: '8%', whiteSpace: 'nowrap' }}>Thu hồi</th>
-                              <th style={{ width: '64%' }}>Ghi chú</th>
+                    <h4 style={{ fontSize: '16px', fontWeight: '700', color: '#191c1d', margin: '0 0 8px 0' }}>Ghi nhận bàn giao tài sản</h4>
+                    {dsTaiSan.length > 0 ? (
+                      <table className="ktp-table" style={{ margin: 0 }}>
+                        <thead>
+                          <tr>
+                            <th style={{ width: '20%', whiteSpace: 'nowrap' }}>Tên tài sản</th>
+                            <th className="text-center" style={{ width: '8%', whiteSpace: 'nowrap' }}>Đã giao</th>
+                            <th className="text-center" style={{ width: '8%', whiteSpace: 'nowrap' }}>Thu hồi</th>
+                            <th style={{ width: '64%' }}>Ghi chú</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dsTaiSan.map((ts, idx) => (
+                            <tr key={ts.maTaiSan}>
+                              <td>{ts.tenTaiSan}</td>
+                              <td className="text-center">{ts.soLuongBanGiaoVao}</td>
+                              <td className="text-center">
+                                <input
+                                  type="number"
+                                  className="ktp-input no-spin"
+                                  style={{ width: '60px', textAlign: 'center', padding: '4px' }}
+                                  min="0"
+                                  max={ts.soLuongBanGiaoVao}
+                                  value={ts.soLuongThuHoi}
+                                  onChange={(e) => handleTaiSanChange(idx, 'soLuongThuHoi', e.target.value)}
+                                  disabled={selectedPhieu?.trangThaiBanGiao !== 'Chờ bàn giao'}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="ktp-input"
+                                  style={{ width: '100%', padding: '4px 8px' }}
+                                  // placeholder="Ghi chú (Tốt, Mất...)"
+                                  value={ts.ghiChu}
+                                  title={ts.ghiChu}
+                                  onChange={(e) => handleTaiSanChange(idx, 'ghiChu', e.target.value)}
+                                  disabled={selectedPhieu?.trangThaiBanGiao !== 'Chờ bàn giao'}
+                                />
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {dsTaiSan.map((ts, idx) => (
-                              <tr key={ts.maTaiSan}>
-                                <td>{ts.tenTaiSan}</td>
-                                <td className="text-center">{ts.soLuongBanGiaoVao}</td>
-                                <td className="text-center">
-                                  <input
-                                    type="number"
-                                    className="ktp-input no-spin"
-                                    style={{ width: '60px', textAlign: 'center', padding: '4px' }}
-                                    min="0"
-                                    max={ts.soLuongBanGiaoVao}
-                                    value={ts.soLuongThuHoi}
-                                    onChange={(e) => handleTaiSanChange(idx, 'soLuongThuHoi', e.target.value)}
-                                    disabled={selectedPhieu?.trangThaiBanGiao !== 'Chờ bàn giao'}
-                                  />
-                                </td>
-                                <td>
-                                  <input
-                                    type="text"
-                                    className="ktp-input"
-                                    style={{ width: '100%', padding: '4px 8px' }}
-                                    // placeholder="Ghi chú (Tốt, Mất...)"
-                                    value={ts.ghiChu}
-                                    title={ts.ghiChu}
-                                    onChange={(e) => handleTaiSanChange(idx, 'ghiChu', e.target.value)}
-                                    disabled={selectedPhieu?.trangThaiBanGiao !== 'Chờ bàn giao'}
-                                  />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      ) : (
-                        <div style={{ color: '#6f797a', fontStyle: 'italic', padding: '10px 0' }}>Không có tài sản bàn giao trước đó.</div>
-                      )}
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div style={{ color: '#6f797a', fontStyle: 'italic', padding: '10px 0' }}>Không có tài sản bàn giao trước đó.</div>
+                    )}
                   </div>
 
                   <div style={{ margin: 0 }}>
