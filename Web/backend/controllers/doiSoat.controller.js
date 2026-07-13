@@ -1,4 +1,5 @@
 import doiSoatService from '../services/doiSoat.service.js';
+import hoanCocDoiSoatService from '../services/hoanCocDoiSoat.service.js';
 import thuThemDoiSoatService from '../services/thuThemDoiSoat.service.js';
 
 export async function uploadChungTuThanhToan(req, res, next) {
@@ -48,7 +49,7 @@ export async function taoDoiSoat(req, res, next) {
 export async function getDanhSachChoHoanCoc(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
-    const danhSach = await doiSoatService.getDanhSachChoHoanCoc(maNhanVienKeToan);
+    const danhSach = await hoanCocDoiSoatService.getDanhSachChoHoanCoc(maNhanVienKeToan);
     res.json({ danhSach });
   } catch (error) {
     next(error);
@@ -58,7 +59,7 @@ export async function getDanhSachChoHoanCoc(req, res, next) {
 export async function getDanhSachDaHoanCoc(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
-    const danhSach = await doiSoatService.getDanhSachDaHoanCoc(maNhanVienKeToan);
+    const danhSach = await hoanCocDoiSoatService.getDanhSachDaHoanCoc(maNhanVienKeToan);
     res.json({ danhSach });
   } catch (error) {
     next(error);
@@ -136,7 +137,7 @@ export async function getChiTietHoanCoc(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
     const { maDoiSoat } = req.params;
-    const data = await doiSoatService.getChiTietHoanCoc(maDoiSoat, maNhanVienKeToan);
+    const data = await hoanCocDoiSoatService.getChiTietHoanCoc(maDoiSoat, maNhanVienKeToan);
     res.json(data);
   } catch (error) {
     next(error);
@@ -146,7 +147,7 @@ export async function getChiTietHoanCoc(req, res, next) {
 export async function xacNhanHoanCoc(req, res, next) {
   try {
     const maNhanVienKeToan = req.user?.maNguoiDung;
-    const data = await doiSoatService.xacNhanHoanCoc(req.body, maNhanVienKeToan);
+    const data = await hoanCocDoiSoatService.xacNhanHoanCoc(req.body, maNhanVienKeToan);
     res.json({
       message: 'Ghi nhận hoàn cọc thành công.',
       doiSoat: data

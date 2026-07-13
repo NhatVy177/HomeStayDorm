@@ -249,25 +249,25 @@ BEGIN TRY
     INSERT INTO dbo.PhieuDatCoc (
         MaPhieuDatCoc, ThoiDiemDatCoc, ThoiHanThanhToan, SoTienCoc,
         PhuongThucThanhToan, TrangThaiThanhToan, ThoiGianXacNhanTT,
-        ChungTuThanhToan, ThoiGianNhanPhong, TrangThaiCoc,
+        ChungTuThanhToan, ThoiGianNhanPhong, HinhThucThue, TrangThaiCoc,
         MaPhieuYeuCauDangKy, MaKhachHang, MaNhanVienKeToan
     )
     VALUES
-        ('DC9201', '2026-06-02 09:00:00', '2026-06-03 09:00:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:20:00', '/uploads/chung-tu-coc/DC9201.pdf', '2026-06-10 09:00:00', N'Đã lập HĐ', 'DK9201', 'KH9201', 'NV0004'),
-        ('DC9202', '2026-06-02 09:10:00', '2026-06-03 09:10:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:30:00', '/uploads/chung-tu-coc/DC9202.pdf', '2026-06-10 09:00:00', N'Đã lập HĐ', 'DK9202', 'KH9202', 'NV0004'),
-        ('DC9203', '2026-06-02 09:20:00', '2026-06-03 09:20:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:40:00', '/uploads/chung-tu-coc/DC9203.pdf', '2026-06-10 09:00:00', N'Đã lập HĐ', 'DK9203', 'KH9203', 'NV0004'),
-        ('DC9204', '2026-06-02 09:30:00', '2026-06-03 09:30:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:50:00', '/uploads/chung-tu-coc/DC9204.pdf', '2026-06-10 09:00:00', N'Hiệu lực',  'DK9204', 'KH9204', 'NV0004'),
-        ('DC9205', '2026-06-02 09:40:00', '2026-06-03 09:40:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:00:00', '/uploads/chung-tu-coc/DC9205.pdf', '2026-06-10 09:00:00', N'Hiệu lực',  'DK9205', 'KH9205', 'NV0004'),
-        ('DC9206', '2026-06-02 09:50:00', '2026-06-03 09:50:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:10:00', '/uploads/chung-tu-coc/DC9206.pdf', '2026-06-10 09:00:00', N'Hiệu lực',  'DK9206', 'KH9206', 'NV0004');
+        ('DC9201', '2026-06-02 09:00:00', '2026-06-03 09:00:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:20:00', '/uploads/chung-tu-coc/DC9201.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9201', 'KH9201', 'NV0004'),
+        ('DC9202', '2026-06-02 09:10:00', '2026-06-03 09:10:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:30:00', '/uploads/chung-tu-coc/DC9202.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9202', 'KH9202', 'NV0004'),
+        ('DC9203', '2026-06-02 09:20:00', '2026-06-03 09:20:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:40:00', '/uploads/chung-tu-coc/DC9203.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9203', 'KH9203', 'NV0004'),
+        ('DC9204', '2026-06-02 09:30:00', '2026-06-03 09:30:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:50:00', '/uploads/chung-tu-coc/DC9204.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Hiệu lực',  'DK9204', 'KH9204', 'NV0004'),
+        ('DC9205', '2026-06-02 09:40:00', '2026-06-03 09:40:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:00:00', '/uploads/chung-tu-coc/DC9205.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Hiệu lực',  'DK9205', 'KH9205', 'NV0004'),
+        ('DC9206', '2026-06-02 09:50:00', '2026-06-03 09:50:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:10:00', '/uploads/chung-tu-coc/DC9206.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Hiệu lực',  'DK9206', 'KH9206', 'NV0004');
 
-    INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue, HinhThucThue)
+    INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue)
     VALUES
-        ('CD9201', 'DC9201', 'P921', 'G01', 2200000, N'Ghép giường'),
-        ('CD9202', 'DC9202', 'P922', 'G01', 2200000, N'Ghép giường'),
-        ('CD9203', 'DC9203', 'P923', 'G01', 2200000, N'Ghép giường'),
-        ('CD9204', 'DC9204', 'P924', 'G01', 1800000, N'Ghép giường'),
-        ('CD9205', 'DC9205', 'P925', 'G01', 1800000, N'Ghép giường'),
-        ('CD9206', 'DC9206', 'P926', 'G01', 1800000, N'Ghép giường');
+        ('CD9201', 'DC9201', 'P921', 'G01', 2200000),
+        ('CD9202', 'DC9202', 'P922', 'G01', 2200000),
+        ('CD9203', 'DC9203', 'P923', 'G01', 2200000),
+        ('CD9204', 'DC9204', 'P924', 'G01', 1800000),
+        ('CD9205', 'DC9205', 'P925', 'G01', 1800000),
+        ('CD9206', 'DC9206', 'P926', 'G01', 1800000);
 
     INSERT INTO dbo.HopDongThue (
         MaHopDong, NgayKyHD, NgayBatDau, NgayKetThuc, SoGiuongThue,

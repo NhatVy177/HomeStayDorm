@@ -329,10 +329,12 @@ function getTraPhongActiveStep(yeuCauTraPhong) {
     && trangThaiDoiSoat === 'Chờ thanh toán thêm'
     && !String(yeuCauTraPhong.doiSoat?.chungTuThanhToan || '').trim();
 
+  if (trangThai === 'Chờ xử lý') return 1;
   if (['Hoàn tất', 'Chờ hoàn tất'].includes(trangThai) || trangThaiDoiSoat === 'Đã quyết toán') return 4;
   if (['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThaiDoiSoat) && daGuiPhuongThucThanhToan && !canUploadThuThemProofAgain) return 4;
   if (['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThai) || ['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThaiDoiSoat)) return 3;
-  if (trangThai === 'Chờ đối soát' || trangThai === 'Chờ ký biên bản' || yeuCauTraPhong.doiSoat) return 2;
+  if (trangThai === 'Chờ đối soát' && !yeuCauTraPhong.doiSoat) return 1;
+  if (trangThai === 'Chờ ký biên bản' || yeuCauTraPhong.doiSoat) return 2;
   return 1;
 }
 
@@ -740,6 +742,7 @@ export default function KhachHangPortalPage() {
   const [profileFilter, setProfileFilter] = useState('Tất cả');
   const [datCocFilter, setDatCocFilter] = useState('Tất cả');
   const [hopDongDashboard, setHopDongDashboard] = useState(null);
+  const [selectedHopDongId, setSelectedHopDongId] = useState(null);
   const [hopDongLoading, setHopDongLoading] = useState(false);
   const [hopDongLoadError, setHopDongLoadError] = useState('');
   const [traPhongSubmitting, setTraPhongSubmitting] = useState(false);
@@ -1396,12 +1399,24 @@ export default function KhachHangPortalPage() {
   }
 
   // ─── Hợp đồng ────────────────────────────────────────────────────────────
-  async function loadHopDongDashboard() {
+  async function loadHopDongDashboard(maHopDong = selectedHopDongId) {
     setHopDongLoading(true);
     setHopDongLoadError('');
     try {
-      const { data } = await khachMoiApi.getHopDongDashboard();
-      setHopDongDashboard(data?.data || data || {});
+      const params = maHopDong ? { maHopDong } : {};
+      const { data } = await khachMoiApi.getHopDongDashboard(params);
+      const dashboard = data?.data || data || {};
+      const danhSachHopDong = Array.isArray(dashboard.danhSachHopDong)
+        ? dashboard.danhSachHopDong
+        : dashboard.MaHopDong
+          ? [dashboard]
+          : [];
+      setHopDongDashboard(dashboard);
+      setSelectedHopDongId((current) => {
+        if (maHopDong && danhSachHopDong.some((item) => item.MaHopDong === maHopDong)) return maHopDong;
+        if (current && danhSachHopDong.some((item) => item.MaHopDong === current)) return current;
+        return dashboard.MaHopDong || danhSachHopDong[0]?.MaHopDong || null;
+      });
     } catch {
       setHopDongDashboard(null);
       setHopDongLoadError('Không thể tải thông tin hợp đồng/trả phòng. Vui lòng thử lại.');
@@ -1436,7 +1451,10 @@ export default function KhachHangPortalPage() {
       } else {
         setHopDongDashboard((current) => ({
           ...current,
-          yeuCauTraPhong: yeuCauMoi
+          yeuCauTraPhong: current?.MaHopDong === hoSo.MaHopDong ? yeuCauMoi : current?.yeuCauTraPhong,
+          danhSachHopDong: Array.isArray(current?.danhSachHopDong)
+            ? current.danhSachHopDong.map((item) => item.MaHopDong === hoSo.MaHopDong ? { ...item, yeuCauTraPhong: yeuCauMoi } : item)
+            : current?.danhSachHopDong
         }));
       }
 
@@ -1453,7 +1471,7 @@ export default function KhachHangPortalPage() {
     }
   }
 
-  async function huyYeuCauTraPhong(yeuCau, loaiHoSo = 'hop-dong') {
+  async function huyYeuCauTraPhong(yeuCau, loaiHoSo = 'hop-dong', maHopDong = null) {
     if (!yeuCau?.maPhieuTra) return;
     setTraPhongSubmitting(true);
     try {
@@ -1468,9 +1486,13 @@ export default function KhachHangPortalPage() {
             : item)
           : current);
       } else {
+        const targetHopDongId = maHopDong || yeuCau.maHopDong || selectedHopDongId;
         setHopDongDashboard((current) => ({
           ...current,
-          yeuCauTraPhong: null
+          yeuCauTraPhong: current?.MaHopDong === targetHopDongId ? null : current?.yeuCauTraPhong,
+          danhSachHopDong: Array.isArray(current?.danhSachHopDong)
+            ? current.danhSachHopDong.map((item) => item.MaHopDong === targetHopDongId ? { ...item, yeuCauTraPhong: null } : item)
+            : current?.danhSachHopDong
         }));
       }
       setResultModal({
@@ -2005,10 +2027,20 @@ export default function KhachHangPortalPage() {
       );
     }
 
-    const hd = hopDongDashboard;
+    const danhSachHopDong = Array.isArray(hopDongDashboard.danhSachHopDong)
+      ? hopDongDashboard.danhSachHopDong
+      : hopDongDashboard.MaHopDong
+        ? [hopDongDashboard]
+        : [];
+    const currentHopDongId = selectedHopDongId || hopDongDashboard.MaHopDong || danhSachHopDong[0]?.MaHopDong || null;
+    const selectedHopDongFromList = danhSachHopDong.find((item) => item.MaHopDong === currentHopDongId) || hopDongDashboard;
+    const hd = hopDongDashboard.MaHopDong === currentHopDongId
+      ? hopDongDashboard
+      : selectedHopDongFromList;
+    const showContractPicker = !hd.yeuCauTraPhong?.doiSoat && danhSachHopDong.length > 1;
     const taiSan = hd.taiSan || [];
     const quyDinh = hd.quyDinh || [];
-    const hinhThucThue = hd.HinhThucThue || (hd.MaGiuong ? 'Ghép giường' : 'Nguyên phòng');
+    const hinhThucThue = hd.HinhThucThue || '';
     const yeuCauTraPhong = hd.yeuCauTraPhong || null;
     const coYeuCauChoXuLy = yeuCauTraPhong?.trangThai === 'Chờ xử lý';
     const coYeuCauTraPhong = Boolean(yeuCauTraPhong);
@@ -2144,6 +2176,73 @@ export default function KhachHangPortalPage() {
             </div>
           ))}
         </div>
+
+        {showContractPicker && (
+          <section className="hd-contract-picker hd-card">
+            <div className="hd-card-header">
+              <Icon name="contract" />
+              <h3>Chọn hợp đồng cần trả phòng</h3>
+            </div>
+            <div className="hd-contract-picker-body">
+              <div className="hd-contract-list">
+                {danhSachHopDong.map((item) => {
+                  const isSelected = item.MaHopDong === hd.MaHopDong;
+                  const itemHinhThuc = item.HinhThucThue || '';
+
+                  return (
+                    <button
+                      className={`hd-contract-choice ${isSelected ? 'is-selected' : ''}`}
+                      key={item.MaHopDong}
+                      type="button"
+                      onClick={() => {
+                        setSelectedHopDongId(item.MaHopDong);
+                        setTraPhongStepOverride(null);
+                        if (item.MaHopDong !== hopDongDashboard.MaHopDong) {
+                          loadHopDongDashboard(item.MaHopDong);
+                        }
+                      }}
+                    >
+                      <span className="hd-contract-choice-main">
+                        <strong>{item.TenPhong || 'Phòng đang thuê'}</strong>
+                        <small>{item.MaHopDong} · {item.TenChiNhanh || 'HomestayDorm'} · {item.MaGiuong ? `Giường ${item.MaGiuong}` : itemHinhThuc}</small>
+                      </span>
+                      <span className="hd-contract-choice-meta">
+                        <strong>{formatMoney(item.GiaThue)}</strong>
+                        <small>{formatDate(item.NgayBatDau)} - {formatDate(item.NgayKetThuc)}</small>
+                      </span>
+                      <Icon name={isSelected ? 'check' : 'arrow-right'} />
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="hd-contract-action-panel">
+                <span className="hd-mini-label">Hợp đồng đang chọn</span>
+                <strong>{hd.MaHopDong}</strong>
+                <p>{hd.TenPhong || 'Phòng đang thuê'} · {hd.MaGiuong ? `Giường ${hd.MaGiuong}` : hinhThucThue}</p>
+                {!coYeuCauTraPhong && (
+                  <label className="hd-return-date-field">
+                    <span>Ngày dự kiến trả phòng</span>
+                    <input
+                      type="date"
+                      min={toLocalDateInputValue(new Date())}
+                      value={traPhongNgayDuKien}
+                      onChange={(event) => setTraPhongNgayDuKien(event.target.value)}
+                    />
+                  </label>
+                )}
+                <button
+                  className={`kp-btn ${coYeuCauChoXuLy ? 'hd-btn-danger' : coYeuCauDaTiepNhan ? 'hd-btn-outline' : 'hd-btn-teal'}`}
+                  type="button"
+                  disabled={traPhongSubmitting || coYeuCauDaTiepNhan}
+                  onClick={() => coYeuCauChoXuLy ? huyYeuCauTraPhong(yeuCauTraPhong, 'hop-dong', hd.MaHopDong) : guiYeuCauTraPhong(hd)}
+                >
+                  <Icon name={coYeuCauTraPhong ? 'lock' : 'contract'} />
+                  {traPhongSubmitting ? 'Đang xử lý...' : coYeuCauChoXuLy ? 'Hủy yêu cầu' : coYeuCauDaTiepNhan ? 'Đang xử lý trả phòng' : 'Yêu cầu trả phòng'}
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {!doiSoatTraPhong && (
         <div className="hd-overview-top">
@@ -2554,7 +2653,7 @@ export default function KhachHangPortalPage() {
               <span>Kỳ thanh toán</span>
               <strong>{hd.KyThanhToan || 'Chưa cập nhật'}</strong>
             </div>
-            {!coYeuCauTraPhong && (
+            {!showContractPicker && !coYeuCauTraPhong && (
               <label className="hd-return-date-field">
                 <span>Ngày dự kiến trả phòng</span>
                 <input
@@ -2565,18 +2664,20 @@ export default function KhachHangPortalPage() {
                 />
               </label>
             )}
+            {!showContractPicker && (
             <div className="hd-action-buttons" style={{ justifyContent: 'flex-end', display: 'flex' }}>
               <button
                 className={`kp-btn ${coYeuCauChoXuLy ? 'hd-btn-danger' : coYeuCauDaTiepNhan ? 'hd-btn-outline' : 'hd-btn-teal'}`}
                 type="button"
                 disabled={traPhongSubmitting || coYeuCauDaTiepNhan}
-                onClick={() => coYeuCauChoXuLy ? huyYeuCauTraPhong(yeuCauTraPhong) : guiYeuCauTraPhong(hd)}
+                onClick={() => coYeuCauChoXuLy ? huyYeuCauTraPhong(yeuCauTraPhong, 'hop-dong', hd.MaHopDong) : guiYeuCauTraPhong(hd)}
                 style={{ padding: '6px 16px', fontSize: '13px', width: 'auto' }}
               >
                 <Icon name={coYeuCauTraPhong ? 'lock' : 'contract'} />
                 {traPhongSubmitting ? 'Đang xử lý...' : coYeuCauChoXuLy ? 'Hủy yêu cầu' : coYeuCauDaTiepNhan ? 'Đang xử lý trả phòng' : 'Gửi yêu cầu trả phòng'}
               </button>
             </div>
+            )}
           </div>
 
 

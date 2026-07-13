@@ -332,9 +332,7 @@ function Sidebar({ user, onAuthRequired }) {
   const lockedItems = [
     { icon: 'payment', label: 'Đặt cọc' },
     { icon: 'bed', label: 'Phòng/Giường của tôi' },
-    { icon: 'contract', label: 'Hợp đồng' },
-    { icon: 'invoice', label: 'Hóa đơn' },
-    { icon: 'repair', label: 'Bảo trì' }
+    { icon: 'contract', label: 'Hợp đồng' }
   ];
 
   return (

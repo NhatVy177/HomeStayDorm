@@ -276,10 +276,7 @@ BEGIN
         p.TenPhong                  AS tenPhong,
         cn.TenChiNhanh              AS tenChiNhanh,
         cn.DiaChi                   AS diaChiChiNhanh,
-        COALESCE(
-            pdc.HinhThucThue,
-            CASE WHEN ctdc.MaGiuong IS NULL THEN N'Nguyên phòng' ELSE N'Ghép giường' END
-        )                           AS hinhThucThue,
+        pdc.HinhThucThue            AS hinhThucThue,
         hdt.GiaThue                 AS giaThu,
         hdt.SoGiuongThue            AS soGiuong,
         ctdc.MaGiuong               AS maGiuong,
@@ -313,10 +310,7 @@ BEGIN
         p.TenPhong                  AS tenPhong,
         cn.TenChiNhanh              AS tenChiNhanh,
         cn.DiaChi                   AS diaChiChiNhanh,
-        COALESCE(
-            pdc.HinhThucThue,
-            CASE WHEN ctdc.MaGiuong IS NULL THEN N'Nguyên phòng' ELSE N'Ghép giường' END
-        )                           AS hinhThucThue,
+        pdc.HinhThucThue            AS hinhThucThue,
         ctdc.GiaThue                AS giaThu,
         NULL                        AS soGiuong,
         ctdc.MaGiuong               AS maGiuong,
