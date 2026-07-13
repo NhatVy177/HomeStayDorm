@@ -613,7 +613,14 @@ export async function getDatCoc(user) {
         pdc.PhuongThucThanhToan    AS phuongThucThanhToan,
         pdc.TrangThaiThanhToan     AS trangThaiThanhToan,
         pdc.TrangThaiCoc           AS trangThaiCoc,
-        pdc.HinhThucThue           AS hinhThucThue,
+        COALESCE(
+          ct.HinhThucThue,
+          CASE
+            WHEN ct.MaPhong IS NULL THEN NULL
+            WHEN ct.MaGiuong IS NULL THEN N'Nguyên phòng'
+            ELSE N'Ghép giường'
+          END
+        )                          AS hinhThucThue,
         pdc.ChungTuThanhToan       AS minhChungThanhToan,
         pdc.ThoiGianXacNhanTT      AS thoiGianXacNhanTT,
         khUser.HoTen               AS tenKhachHang,
@@ -681,7 +688,7 @@ export async function getDatCoc(user) {
       FROM dbo.PhieuDatCoc AS pdc
       -- Lấy 1 chi tiết đặt cọc đầu tiên (phòng/giường đầu tiên)
       OUTER APPLY (
-        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.GiaThue
+        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.GiaThue, ctdc.HinhThucThue
         FROM dbo.ChiTietDatCoc AS ctdc
         WHERE ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
         ORDER BY ctdc.MaChiTietDC
@@ -710,7 +717,7 @@ export async function getDatCoc(user) {
           ptra.TrangThai AS TrangThaiTraPhong
         FROM dbo.PhieuTraPhong AS ptra
         WHERE ptra.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-          AND ptra.TrangThai <> N'Hủy'
+          AND ptra.TrangThai NOT IN (N'Hủy', N'Hoàn tất')
         ORDER BY ptra.NgayDangKyTra DESC, ptra.MaPhieuTra DESC
       ) AS ptp
       OUTER APPLY (
@@ -765,13 +772,15 @@ export async function getDatCoc(user) {
         ctdc.GiaThue       AS giaThue,
         p.GioiTinhChoPhep  AS gioiTinhChoPhep,
         p.TinhTrang        AS tinhTrangPhong,
-        pdc.HinhThucThue   AS hinhThucThue,
+        COALESCE(
+          ctdc.HinhThucThue,
+          CASE WHEN ctdc.MaGiuong IS NULL THEN N'Nguyên phòng' ELSE N'Ghép giường' END
+        )                  AS hinhThucThue,
         lp.TenLoaiPhong    AS loaiPhong,
         cn.TenChiNhanh     AS tenChiNhanh,
         cn.DiaChi          AS diaChi,
         ha.UrlImg          AS urlImg
       FROM dbo.ChiTietDatCoc AS ctdc
-      INNER JOIN dbo.PhieuDatCoc AS pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
       LEFT JOIN dbo.Phong AS p ON p.MaPhong = ctdc.MaPhong
       LEFT JOIN dbo.LoaiPhong AS lp ON lp.MaLoaiPhong = p.MaLoaiPhong
       LEFT JOIN dbo.ChiNhanh AS cn ON cn.MaChiNhanh = p.MaChiNhanh
@@ -953,7 +962,14 @@ export async function getHopDongDashboard(user) {
         hd.TrangThai,
         hd.MaPhieuCoc,
         hd.MaKhachHang,
-        pdc.HinhThucThue,
+        COALESCE(
+          ct.HinhThucThue,
+          CASE
+            WHEN ct.MaPhong IS NULL THEN NULL
+            WHEN ct.MaGiuong IS NULL THEN N'Nguyên phòng'
+            ELSE N'Ghép giường'
+          END
+        ) AS HinhThucThue,
         pdc.SoTienCoc,
         p.MaPhong,
         p.TenPhong,
@@ -991,7 +1007,7 @@ export async function getHopDongDashboard(user) {
       INNER JOIN dbo.PhieuDatCoc AS pdc
         ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
       OUTER APPLY (
-        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong
+        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.HinhThucThue
         FROM dbo.ChiTietDatCoc AS ctdc
         WHERE ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
         ORDER BY ctdc.MaChiTietDC
@@ -1017,7 +1033,7 @@ export async function getHopDongDashboard(user) {
           p.TrangThai
         FROM dbo.PhieuTraPhong AS p
         WHERE p.MaHopDong = hd.MaHopDong
-          AND p.TrangThai <> N'Hủy'
+          AND p.TrangThai NOT IN (N'Hủy', N'Hoàn tất')
         ORDER BY p.NgayDangKyTra DESC, p.MaPhieuTra DESC
       ) AS ptp
       OUTER APPLY (
@@ -1047,6 +1063,10 @@ export async function getHopDongDashboard(user) {
         ORDER BY d.NgayLap DESC, d.MaDoiSoat DESC
       ) AS ds
       WHERE hd.MaKhachHang = @MaKhachHang
+        AND (
+          hd.TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
+          OR ptp.MaPhieuTra IS NOT NULL
+        )
       ORDER BY
         CASE WHEN hd.TrangThai = N'Hiệu lực' THEN 0 ELSE 1 END,
         hd.NgayKyHD DESC,

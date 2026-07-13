@@ -2790,7 +2790,7 @@
 }
 
 .hd-overview-top {
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 340px;
 }
 
 .hd-overview-middle {
@@ -3294,10 +3294,52 @@
   padding-top: 4px;
 }
 
+.hd-card.hd-payment-panel {
+  border-top: 0;
+  gap: 18px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 920px;
+  padding: 22px 24px 24px;
+  width: 100%;
+}
+
+.hd-card.hd-payment-panel .hd-card-header {
+  border-bottom: 1px solid var(--kp-border);
+  margin-bottom: 0 !important;
+  padding-bottom: 14px;
+}
+
+.hd-payment-amount-box {
+  align-items: center;
+  background: linear-gradient(180deg, #f7fbfb 0%, #edf7f6 100%);
+  border: 1px solid rgba(0, 102, 109, 0.16);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 18px 20px;
+}
+
+.hd-payment-amount-box span {
+  color: var(--kp-primary);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.hd-payment-amount-box strong {
+  color: var(--kp-primary);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: right;
+}
+
 .hd-payment-section-title {
   color: var(--kp-text);
   font-size: 13px;
   font-weight: 850;
+  margin-top: 2px;
 }
 
 .hd-payment-methods {
@@ -3316,8 +3358,8 @@
   display: grid;
   gap: 10px;
   grid-template-columns: 32px minmax(0, 1fr) 24px;
-  min-height: 54px;
-  padding: 10px 12px;
+  min-height: 58px;
+  padding: 12px 14px;
   text-align: left;
 }
 
@@ -3462,7 +3504,7 @@
 
 .hd-refund-account-grid {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -3482,9 +3524,9 @@
   border: 1px solid var(--kp-border);
   border-radius: 8px;
   color: var(--kp-text);
-  font-size: 13px;
-  min-height: 42px;
-  padding: 9px 11px;
+  font-size: 14px;
+  min-height: 46px;
+  padding: 10px 12px;
 }
 
 .hd-refund-account-grid input:focus {
@@ -3495,6 +3537,29 @@
 
 .hd-payment-submit {
   width: 100%;
+}
+
+.hd-payment-actions {
+  align-items: center;
+  border-top: 1px solid var(--kp-border);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 18px;
+}
+
+.hd-payment-actions .hd-payment-submit {
+  flex: 0 1 auto;
+  min-width: 280px;
+  width: auto;
+}
+
+.hd-payment-actions .hd-payment-back {
+  flex: 0 0 auto;
+  min-width: 120px;
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 .hd-payment-review-link {
@@ -3542,6 +3607,26 @@
   display: flex;
   gap: 12px;
   margin-top: 16px;
+}
+
+.hd-action-buttons.is-compact {
+  justify-content: flex-end;
+}
+
+.hd-action-buttons.is-compact .kp-btn {
+  flex: 0 0 auto;
+}
+
+.hd-btn-compact {
+  border-radius: 8px;
+  font-size: 13px;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.hd-btn-compact svg {
+  height: 16px;
+  width: 16px;
 }
 
 .hd-return-date-field {
@@ -3648,18 +3733,6 @@
 .hd-btn-teal:disabled {
   cursor: not-allowed;
   opacity: 0.72;
-}
-
-.hd-request-note {
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 8px;
-  color: #8a4b12;
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.45;
-  margin: 12px 0 0;
-  padding: 10px 12px;
 }
 
 .hd-btn-outline {
@@ -3822,6 +3895,22 @@
     text-align: left;
   }
 
+  .hd-card.hd-payment-panel {
+    max-width: none;
+    padding: 18px 16px;
+  }
+
+  .hd-payment-amount-box {
+    align-items: flex-start;
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .hd-payment-amount-box strong {
+    font-size: 28px;
+    text-align: left;
+  }
+
   .hd-settlement-actions {
     grid-template-columns: 1fr;
   }
@@ -3843,6 +3932,17 @@
   .hd-bank-box div,
   .hd-bank-box div:not(:has(button)) {
     grid-template-columns: 1fr;
+  }
+
+  .hd-payment-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .hd-payment-actions .hd-payment-submit,
+  .hd-payment-actions .hd-payment-back {
+    min-width: 0;
+    width: 100%;
   }
 }
  

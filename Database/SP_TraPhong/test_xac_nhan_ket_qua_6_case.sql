@@ -48,11 +48,77 @@ BEGIN TRANSACTION;
 
 BEGIN TRY
     -- Cleanup nhe de file co the chay lai nhieu lan.
+    DELETE FROM dbo.YeuCauSuaChua
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926')
+       OR MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
+
+    DELETE FROM dbo.ChiTietHuHong
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
+    DELETE cthh
+    FROM dbo.ChiTietHuHong cthh
+    INNER JOIN dbo.BienBanKiemTraPhong bbkt
+        ON bbkt.MaBienBanKT = cthh.MaBienBanKT
+    WHERE bbkt.MaPhieuTra IN ('TP9201', 'TP9202', 'TP9203', 'TP9204', 'TP9205', 'TP9206');
+
+    DELETE ctbg
+    FROM dbo.ChiTietBanGiao ctbg
+    WHERE ctbg.MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926')
+       OR ctbg.MaBienBan IN (
+            SELECT bbbg.MaBienBan
+            FROM dbo.BienBanBanGiao bbbg
+            WHERE bbbg.MaHopDong IN ('HD9201', 'HD9202', 'HD9203')
+       );
+
+    DELETE FROM dbo.BienBanBanGiao
+    WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
+
     DELETE FROM dbo.DoiSoat
     WHERE MaDoiSoat IN ('DS9201', 'DS9202', 'DS9203', 'DS9204', 'DS9205', 'DS9206');
 
     DELETE FROM dbo.BienBanKiemTraPhong
     WHERE MaPhieuTra IN ('TP9201', 'TP9202', 'TP9203', 'TP9204', 'TP9205', 'TP9206');
+
+    DELETE cthd
+    FROM dbo.ChiTietHoaDon cthd
+    INNER JOIN dbo.HoaDon hd
+        ON hd.MaHoaDon = cthd.MaHoaDon
+    WHERE hd.MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
+
+    DELETE cthd
+    FROM dbo.ChiTietHoaDon cthd
+    INNER JOIN dbo.PhieuGhiChiSo pgcs
+        ON pgcs.MaPhieuGhi = cthd.MaPhieuGhi
+    WHERE pgcs.MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
+    DELETE FROM dbo.HoaDon
+    WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
+
+    DELETE FROM dbo.DichVuHopDong
+    WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
+
+    DELETE FROM dbo.ThanhVienHopDong
+    WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203');
+
+    IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NOT NULL
+       AND COL_LENGTH(N'dbo.ThanhVienHopDong', N'MaHoSoCuTru') IS NOT NULL
+        EXEC sp_executesql N'
+            DELETE tvhd
+            FROM dbo.ThanhVienHopDong tvhd
+            INNER JOIN dbo.HoSoCuTru hsct
+                ON hsct.MaHoSoCuTru = tvhd.MaHoSoCuTru
+            WHERE hsct.MaPhieuDatCoc IN (''DC9201'', ''DC9202'', ''DC9203'', ''DC9204'', ''DC9205'', ''DC9206'');
+        ';
+
+    DELETE FROM dbo.BienBanViPham
+    WHERE MaHopDong IN ('HD9201', 'HD9202', 'HD9203')
+       OR MaKhachHang IN ('KH9201', 'KH9202', 'KH9203', 'KH9204', 'KH9205', 'KH9206');
+
+    IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NOT NULL
+        EXEC sp_executesql N'
+            DELETE FROM dbo.HoSoCuTru
+            WHERE MaPhieuDatCoc IN (''DC9201'', ''DC9202'', ''DC9203'', ''DC9204'', ''DC9205'', ''DC9206'');
+        ';
 
     DELETE FROM dbo.PhieuTraPhong
     WHERE MaPhieuTra IN ('TP9201', 'TP9202', 'TP9203', 'TP9204', 'TP9205', 'TP9206');
@@ -73,6 +139,13 @@ BEGIN TRY
             WHERE MaDangKy IN (''DK9201'', ''DK9202'', ''DK9203'', ''DK9204'', ''DK9205'', ''DK9206'');
         ';
 
+    DELETE FROM dbo.ChiTietXemPhong
+    WHERE MaDangKy IN ('DK9201', 'DK9202', 'DK9203', 'DK9204', 'DK9205', 'DK9206')
+       OR MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
+    DELETE FROM dbo.LichXemPhong
+    WHERE MaDangKy IN ('DK9201', 'DK9202', 'DK9203', 'DK9204', 'DK9205', 'DK9206');
+
     DELETE FROM dbo.PhieuDangKy
     WHERE MaDangKy IN ('DK9201', 'DK9202', 'DK9203', 'DK9204', 'DK9205', 'DK9206');
 
@@ -85,7 +158,16 @@ BEGIN TRY
     DELETE FROM dbo.NguoiDung
     WHERE MaNguoiDung IN ('KH9201', 'KH9202', 'KH9203', 'KH9204', 'KH9205', 'KH9206');
 
+    DELETE FROM dbo.HinhAnhPhong
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
+    DELETE FROM dbo.PhieuGhiChiSo
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
     DELETE FROM dbo.Giuong
+    WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
+
+    DELETE FROM dbo.TaiSan
     WHERE MaPhong IN ('P921', 'P922', 'P923', 'P924', 'P925', 'P926');
 
     DELETE FROM dbo.Phong
@@ -167,25 +249,25 @@ BEGIN TRY
     INSERT INTO dbo.PhieuDatCoc (
         MaPhieuDatCoc, ThoiDiemDatCoc, ThoiHanThanhToan, SoTienCoc,
         PhuongThucThanhToan, TrangThaiThanhToan, ThoiGianXacNhanTT,
-        ChungTuThanhToan, ThoiGianNhanPhong, HinhThucThue, TrangThaiCoc,
+        ChungTuThanhToan, ThoiGianNhanPhong, TrangThaiCoc,
         MaPhieuYeuCauDangKy, MaKhachHang, MaNhanVienKeToan
     )
     VALUES
-        ('DC9201', '2026-06-02 09:00:00', '2026-06-03 09:00:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:20:00', '/uploads/chung-tu-coc/DC9201.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9201', 'KH9201', 'NV0004'),
-        ('DC9202', '2026-06-02 09:10:00', '2026-06-03 09:10:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:30:00', '/uploads/chung-tu-coc/DC9202.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9202', 'KH9202', 'NV0004'),
-        ('DC9203', '2026-06-02 09:20:00', '2026-06-03 09:20:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:40:00', '/uploads/chung-tu-coc/DC9203.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9203', 'KH9203', 'NV0004'),
-        ('DC9204', '2026-06-02 09:30:00', '2026-06-03 09:30:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:50:00', '/uploads/chung-tu-coc/DC9204.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Hiệu lực',  'DK9204', 'KH9204', 'NV0004'),
-        ('DC9205', '2026-06-02 09:40:00', '2026-06-03 09:40:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:00:00', '/uploads/chung-tu-coc/DC9205.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Hiệu lực',  'DK9205', 'KH9205', 'NV0004'),
-        ('DC9206', '2026-06-02 09:50:00', '2026-06-03 09:50:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:10:00', '/uploads/chung-tu-coc/DC9206.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Hiệu lực',  'DK9206', 'KH9206', 'NV0004');
+        ('DC9201', '2026-06-02 09:00:00', '2026-06-03 09:00:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:20:00', '/uploads/chung-tu-coc/DC9201.pdf', '2026-06-10 09:00:00', N'Đã lập HĐ', 'DK9201', 'KH9201', 'NV0004'),
+        ('DC9202', '2026-06-02 09:10:00', '2026-06-03 09:10:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:30:00', '/uploads/chung-tu-coc/DC9202.pdf', '2026-06-10 09:00:00', N'Đã lập HĐ', 'DK9202', 'KH9202', 'NV0004'),
+        ('DC9203', '2026-06-02 09:20:00', '2026-06-03 09:20:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:40:00', '/uploads/chung-tu-coc/DC9203.pdf', '2026-06-10 09:00:00', N'Đã lập HĐ', 'DK9203', 'KH9203', 'NV0004'),
+        ('DC9204', '2026-06-02 09:30:00', '2026-06-03 09:30:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:50:00', '/uploads/chung-tu-coc/DC9204.pdf', '2026-06-10 09:00:00', N'Hiệu lực',  'DK9204', 'KH9204', 'NV0004'),
+        ('DC9205', '2026-06-02 09:40:00', '2026-06-03 09:40:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:00:00', '/uploads/chung-tu-coc/DC9205.pdf', '2026-06-10 09:00:00', N'Hiệu lực',  'DK9205', 'KH9205', 'NV0004'),
+        ('DC9206', '2026-06-02 09:50:00', '2026-06-03 09:50:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:10:00', '/uploads/chung-tu-coc/DC9206.pdf', '2026-06-10 09:00:00', N'Hiệu lực',  'DK9206', 'KH9206', 'NV0004');
 
-    INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue)
+    INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue, HinhThucThue)
     VALUES
-        ('CD9201', 'DC9201', 'P921', 'G01', 2200000),
-        ('CD9202', 'DC9202', 'P922', 'G01', 2200000),
-        ('CD9203', 'DC9203', 'P923', 'G01', 2200000),
-        ('CD9204', 'DC9204', 'P924', 'G01', 1800000),
-        ('CD9205', 'DC9205', 'P925', 'G01', 1800000),
-        ('CD9206', 'DC9206', 'P926', 'G01', 1800000);
+        ('CD9201', 'DC9201', 'P921', 'G01', 2200000, N'Ghép giường'),
+        ('CD9202', 'DC9202', 'P922', 'G01', 2200000, N'Ghép giường'),
+        ('CD9203', 'DC9203', 'P923', 'G01', 2200000, N'Ghép giường'),
+        ('CD9204', 'DC9204', 'P924', 'G01', 1800000, N'Ghép giường'),
+        ('CD9205', 'DC9205', 'P925', 'G01', 1800000, N'Ghép giường'),
+        ('CD9206', 'DC9206', 'P926', 'G01', 1800000, N'Ghép giường');
 
     INSERT INTO dbo.HopDongThue (
         MaHopDong, NgayKyHD, NgayBatDau, NgayKetThuc, SoGiuongThue,

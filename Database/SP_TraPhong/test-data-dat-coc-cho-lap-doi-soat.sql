@@ -69,7 +69,6 @@ BEGIN
         ThoiGianXacNhanTT,
         ChungTuThanhToan,
         ThoiGianNhanPhong,
-        HinhThucThue,
         TrangThaiCoc,
         MaPhieuYeuCauDangKy,
         MaKhachHang,
@@ -85,7 +84,6 @@ BEGIN
         '2026-07-10 09:30:00',
         '/uploads/chung-tu-coc/DC9097.pdf',
         '2026-07-15 09:00:00',
-        N'Ghép giường',
         N'Hiệu lực',
         'DK9097',
         'KH0016',
@@ -112,22 +110,30 @@ BEGIN
         MaPhieuDatCoc,
         MaPhong,
         MaGiuong,
-        GiaThue
+        GiaThue,
+        HinhThucThue
     )
     VALUES (
         'CD9097',
         'DC9097',
         'P305',
         'G01',
-        1400000
+        1400000,
+        N'Ghép giường'
     );
 END
 GO
 
 UPDATE dbo.ChiTietDatCoc
-SET GiaThue = 1400000
+SET GiaThue = 1400000,
+    HinhThucThue = N'Ghép giường'
 WHERE MaChiTietDC = 'CD9097'
-  AND (GiaThue IS NULL OR GiaThue <> 1400000);
+  AND (
+      GiaThue IS NULL
+      OR GiaThue <> 1400000
+      OR HinhThucThue IS NULL
+      OR HinhThucThue <> N'Ghép giường'
+  );
 GO
 
 UPDATE dbo.PhieuDatCoc
