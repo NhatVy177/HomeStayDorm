@@ -613,14 +613,7 @@ export async function getDatCoc(user) {
         pdc.PhuongThucThanhToan    AS phuongThucThanhToan,
         pdc.TrangThaiThanhToan     AS trangThaiThanhToan,
         pdc.TrangThaiCoc           AS trangThaiCoc,
-        COALESCE(
-          ct.HinhThucThue,
-          CASE
-            WHEN ct.MaPhong IS NULL THEN NULL
-            WHEN ct.MaGiuong IS NULL THEN N'Nguyên phòng'
-            ELSE N'Ghép giường'
-          END
-        )                          AS hinhThucThue,
+        pdc.HinhThucThue            AS hinhThucThue,
         pdc.ChungTuThanhToan       AS minhChungThanhToan,
         pdc.ThoiGianXacNhanTT      AS thoiGianXacNhanTT,
         khUser.HoTen               AS tenKhachHang,
@@ -688,7 +681,7 @@ export async function getDatCoc(user) {
       FROM dbo.PhieuDatCoc AS pdc
       -- Lấy 1 chi tiết đặt cọc đầu tiên (phòng/giường đầu tiên)
       OUTER APPLY (
-        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.GiaThue, ctdc.HinhThucThue
+        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.GiaThue
         FROM dbo.ChiTietDatCoc AS ctdc
         WHERE ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
         ORDER BY ctdc.MaChiTietDC
@@ -772,15 +765,13 @@ export async function getDatCoc(user) {
         ctdc.GiaThue       AS giaThue,
         p.GioiTinhChoPhep  AS gioiTinhChoPhep,
         p.TinhTrang        AS tinhTrangPhong,
-        COALESCE(
-          ctdc.HinhThucThue,
-          CASE WHEN ctdc.MaGiuong IS NULL THEN N'Nguyên phòng' ELSE N'Ghép giường' END
-        )                  AS hinhThucThue,
+        pdc.HinhThucThue   AS hinhThucThue,
         lp.TenLoaiPhong    AS loaiPhong,
         cn.TenChiNhanh     AS tenChiNhanh,
         cn.DiaChi          AS diaChi,
         ha.UrlImg          AS urlImg
       FROM dbo.ChiTietDatCoc AS ctdc
+      INNER JOIN dbo.PhieuDatCoc AS pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
       LEFT JOIN dbo.Phong AS p ON p.MaPhong = ctdc.MaPhong
       LEFT JOIN dbo.LoaiPhong AS lp ON lp.MaLoaiPhong = p.MaLoaiPhong
       LEFT JOIN dbo.ChiNhanh AS cn ON cn.MaChiNhanh = p.MaChiNhanh
@@ -944,14 +935,16 @@ export async function uploadMinhChungKhachHang(user, maPhieuCoc, data = {}) {
   return { maPhieuCoc, trangThai: 'Chờ xác nhận' };
 }
 
-export async function getHopDongDashboard(user) {
+export async function getHopDongDashboard(user, options = {}) {
   const khachHangId = requireCustomer(user);
+  const maHopDongChon = String(options.maHopDong || options.MaHopDong || '').trim() || null;
   const pool = await getPool();
 
   const hopDongResult = await pool.request()
     .input('MaKhachHang', sql.VarChar(6), khachHangId)
+    .input('MaHopDongChon', sql.VarChar(6), maHopDongChon)
     .query(`
-      SELECT TOP 1
+      SELECT
         hd.MaHopDong,
         hd.NgayKyHD,
         hd.NgayBatDau,
@@ -962,14 +955,7 @@ export async function getHopDongDashboard(user) {
         hd.TrangThai,
         hd.MaPhieuCoc,
         hd.MaKhachHang,
-        COALESCE(
-          ct.HinhThucThue,
-          CASE
-            WHEN ct.MaPhong IS NULL THEN NULL
-            WHEN ct.MaGiuong IS NULL THEN N'Nguyên phòng'
-            ELSE N'Ghép giường'
-          END
-        ) AS HinhThucThue,
+        pdc.HinhThucThue AS HinhThucThue,
         pdc.SoTienCoc,
         p.MaPhong,
         p.TenPhong,
@@ -1007,7 +993,7 @@ export async function getHopDongDashboard(user) {
       INNER JOIN dbo.PhieuDatCoc AS pdc
         ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
       OUTER APPLY (
-        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.HinhThucThue
+        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong
         FROM dbo.ChiTietDatCoc AS ctdc
         WHERE ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
         ORDER BY ctdc.MaChiTietDC
@@ -1068,6 +1054,7 @@ export async function getHopDongDashboard(user) {
           OR ptp.MaPhieuTra IS NOT NULL
         )
       ORDER BY
+        CASE WHEN @MaHopDongChon IS NOT NULL AND hd.MaHopDong = @MaHopDongChon THEN 0 ELSE 1 END,
         CASE WHEN hd.TrangThai = N'Hiệu lực' THEN 0 ELSE 1 END,
         hd.NgayKyHD DESC,
         hd.MaHopDong DESC;
@@ -1244,47 +1231,63 @@ export async function getHopDongDashboard(user) {
     };
   }
 
-  hopDong.yeuCauTraPhong = hopDong.MaPhieuTra
-    ? {
-        maPhieuTra: hopDong.MaPhieuTra,
-        ngayDangKyTra: hopDong.NgayDangKyTra,
-        ngayDuKienTra: hopDong.NgayDuKienTra,
-        ngayTraThucTe: hopDong.NgayTraThucTe,
-        trangThai: hopDong.TrangThaiTraPhong,
-        doiSoat: hopDong.MaDoiSoatTraPhong
-          ? {
-              maDoiSoat: hopDong.MaDoiSoatTraPhong,
-              ngayLap: hopDong.NgayLapDoiSoatTraPhong,
-              tienCocBanDau: hopDong.TienCocBanDauTraPhong,
-              soThangLuuTru: hopDong.SoThangLuuTruTraPhong,
-              tyLeHoanCocHienTai: hopDong.TyLeHoanCocHienTaiTraPhong,
-              tienCocDuocHoan: hopDong.TienCocDuocHoanTraPhong,
-              tienThueConNo: hopDong.TienThueConNoTraPhong,
-              tienDichVuConNo: hopDong.TienDichVuConNoTraPhong,
-              tongChiPhiSuaChua: hopDong.TongChiPhiSuaChuaTraPhong,
-              tienPhat: hopDong.TienPhatTraPhong,
-              tongKhauTru: hopDong.TongKhauTruTraPhong,
-              soTienHoanThucTe: hopDong.SoTienHoanThucTeTraPhong,
-              soTienKhachPhaiTT: hopDong.SoTienKhachPhaiTTTraPhong,
-              phuongThucThanhToan: hopDong.PhuongThucThanhToanTraPhong,
-              chungTuThanhToan: hopDong.ChungTuThanhToanTraPhong,
-              ngayThanhToan: hopDong.NgayThanhToanTraPhong,
-              thongTinNhanHoanCoc: hopDong.ThongTinNhanHoanCocTraPhong,
-              ghiChuPhanHoiKhach: hopDong.GhiChuPhanHoiKhachTraPhong,
-              loaiQuyetToan: hopDong.LoaiQuyetToanTraPhong,
-              trangThai: hopDong.TrangThaiDoiSoatTraPhong,
-              chiTietKhauTru
-            }
-          : null
-      }
-    : null;
-  hopDong.taiKhoanThanhToan = {
+  const taiKhoanThanhToan = {
     nganHang: process.env.BANK_NAME || 'Vietcombank',
     soTaiKhoan: process.env.BANK_ACCOUNT_NUMBER || '1234567890',
     chuTaiKhoan: process.env.BANK_ACCOUNT_HOLDER || 'CONG TY HOMESTAY DORM'
   };
 
-  return { data: hopDong };
+  const normalizeHopDongDashboardItem = (row, chiTietKhauTruOverride = null) => ({
+    ...row,
+    yeuCauTraPhong: row.MaPhieuTra
+      ? {
+          maPhieuTra: row.MaPhieuTra,
+          maHopDong: row.MaHopDong,
+          ngayDangKyTra: row.NgayDangKyTra,
+          ngayDuKienTra: row.NgayDuKienTra,
+          ngayTraThucTe: row.NgayTraThucTe,
+          trangThai: row.TrangThaiTraPhong,
+          doiSoat: row.MaDoiSoatTraPhong
+            ? {
+                maDoiSoat: row.MaDoiSoatTraPhong,
+                ngayLap: row.NgayLapDoiSoatTraPhong,
+                tienCocBanDau: row.TienCocBanDauTraPhong,
+                soThangLuuTru: row.SoThangLuuTruTraPhong,
+                tyLeHoanCocHienTai: row.TyLeHoanCocHienTaiTraPhong,
+                tienCocDuocHoan: row.TienCocDuocHoanTraPhong,
+                tienThueConNo: row.TienThueConNoTraPhong,
+                tienDichVuConNo: row.TienDichVuConNoTraPhong,
+                tongChiPhiSuaChua: row.TongChiPhiSuaChuaTraPhong,
+                tienPhat: row.TienPhatTraPhong,
+                tongKhauTru: row.TongKhauTruTraPhong,
+                soTienHoanThucTe: row.SoTienHoanThucTeTraPhong,
+                soTienKhachPhaiTT: row.SoTienKhachPhaiTTTraPhong,
+                phuongThucThanhToan: row.PhuongThucThanhToanTraPhong,
+                chungTuThanhToan: row.ChungTuThanhToanTraPhong,
+                ngayThanhToan: row.NgayThanhToanTraPhong,
+                thongTinNhanHoanCoc: row.ThongTinNhanHoanCocTraPhong,
+                ghiChuPhanHoiKhach: row.GhiChuPhanHoiKhachTraPhong,
+                loaiQuyetToan: row.LoaiQuyetToanTraPhong,
+                trangThai: row.TrangThaiDoiSoatTraPhong,
+                ...(chiTietKhauTruOverride ? { chiTietKhauTru: chiTietKhauTruOverride } : {})
+              }
+            : null
+        }
+      : null,
+    taiKhoanThanhToan
+  });
+
+  const danhSachHopDong = (hopDongResult.recordset || []).map((row) => normalizeHopDongDashboardItem(row));
+  const hopDongDaChon = normalizeHopDongDashboardItem(hopDong, chiTietKhauTru);
+  hopDongDaChon.taiSan = taiSanResult.recordset || [];
+  hopDongDaChon.quyDinh = quyDinhResult.recordset || [];
+  hopDongDaChon.danhSachHopDong = danhSachHopDong.map((item) => (
+    item.MaHopDong === hopDongDaChon.MaHopDong
+      ? { ...item, yeuCauTraPhong: hopDongDaChon.yeuCauTraPhong }
+      : item
+  ));
+
+  return { data: hopDongDaChon };
 }
 
 export async function guiYeuCauTraPhong(user, data = {}) {

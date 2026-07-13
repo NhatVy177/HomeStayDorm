@@ -5,7 +5,6 @@ import '../khachHang/khachHangPortal.css'; // Reuse main layout styles
 import './nhanVienKeToanPortal.css'; // Use specific styles for content
 import LapPhieuDatCocTab, { Icon } from './LapPhieuDatCocTab.jsx';
 import ThuNhanPhongTab from './ThuNhanPhongTab.jsx';
-import HoaDonDinhKyTab from './HoaDonDinhKyTab.jsx';
 import QuyetToanTraPhongTab from './QuyetToanTraPhongTab.jsx';
 
 function Brand() {
@@ -45,7 +44,6 @@ export default function NhanVienKeToanPage() {
   const navItems = [
     { id: 'lap-phieu', label: 'Lập phiếu đặt cọc', icon: 'calculate' },
     { id: 'thu-nhan-phong', label: 'Thu nhận phòng', icon: 'login' },
-    { id: 'hoa-don', label: 'Hóa đơn định kỳ', icon: 'receipt_long' },
     { id: 'quyet-toan', label: 'Quyết toán trả phòng', icon: 'account_balance_wallet' }
   ];
 
@@ -118,9 +116,8 @@ export default function NhanVienKeToanPage() {
         <main className="kp-main" style={{ padding: 0 }}>
           {activeTab === 'lap-phieu' && <LapPhieuDatCocTab />}
           {activeTab === 'thu-nhan-phong' && <ThuNhanPhongTab />}
-          {activeTab === 'hoa-don' && <HoaDonDinhKyTab />}
           {activeTab === 'quyet-toan' && <QuyetToanTraPhongTab />}
-          {(activeTab !== 'lap-phieu' && activeTab !== 'thu-nhan-phong' && activeTab !== 'hoa-don' && activeTab !== 'quyet-toan') && (
+          {(activeTab !== 'lap-phieu' && activeTab !== 'thu-nhan-phong' && activeTab !== 'quyet-toan') && (
             <div className="ktp-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
               <h2 style={{ color: '#6f797a' }}>Đang phát triển chức năng: {navItems.find(i => i.id === activeTab)?.label}</h2>
             </div>

@@ -290,3 +290,465 @@ RequestError: Invalid object name 'dbo.ChiTietHopDong'.
     at Readable.push (node:internal/streams/readable:391:5)
     at nextAsync (node:internal/streams/from:194:22)
 
+2026-07-12T11:16:37.789Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-12T11:16:40.299Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-12T16:39:51.916Z
+Error: Không tìm thấy khách hàng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at getCustomerState (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:206:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async assertNewCustomer (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:211:17)
+    at async Module.getPhongKhaDung (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:292:3)
+    at async getPhongKhaDung (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:34:14)
+
+2026-07-12T16:39:51.921Z
+Error: Không tìm thấy khách hàng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at getCustomerState (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:206:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async assertNewCustomer (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:211:17)
+    at async Module.getTongQuan (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:275:21)
+    at async getTongQuan (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:26:14)
+
+2026-07-12T16:39:51.931Z
+Error: Không tìm thấy khách hàng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at getCustomerState (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:206:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async assertNewCustomer (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:211:17)
+    at async Module.getPhongKhaDung (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:292:3)
+    at async getPhongKhaDung (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:34:14)
+
+2026-07-12T16:39:51.935Z
+Error: Không tìm thấy khách hàng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:13:3)
+    at getCustomerState (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:206:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async assertNewCustomer (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:211:17)
+    at async Module.getTongQuan (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:275:21)
+    at async getTongQuan (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:26:14)
+
+2026-07-12T16:43:15.586Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-13T06:04:53.754Z
+Error: Phiếu đối soát này đã được phản hồi hoặc không còn chờ xử lý.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.phanHoiDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:1351:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async phanHoiDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:124:18)
+
+2026-07-13T06:04:57.762Z
+Error: Phiếu đối soát này đã được phản hồi hoặc không còn chờ xử lý.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.phanHoiDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:1351:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async phanHoiDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:124:18)
+
+2026-07-13T07:47:18.640Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T07:47:18.654Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T07:47:18.665Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T07:47:33.770Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T07:47:33.781Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T07:47:33.811Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T07:56:58.760Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T07:56:58.771Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T10:20:23.892Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T10:20:23.905Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T10:30:22.576Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T10:30:22.591Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T10:40:55.215Z
+RequestError
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at Parser.onEndOfMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2662:22)
+    at Object.onceWrapper (node:events:622:28)
+    at Parser.emit (node:events:508:28)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:25:12)
+    at Readable.emit (node:events:508:28)
+    at endReadableNT (node:internal/streams/readable:1701:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+2026-07-13T10:40:55.236Z
+RequestError
+    at Request.userCallback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:857:19)
+    at Request.callback (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\request.js:239:14)
+    at Parser.onEndOfMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:2662:22)
+    at Object.onceWrapper (node:events:622:28)
+    at Parser.emit (node:events:508:28)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:25:12)
+    at Readable.emit (node:events:508:28)
+    at endReadableNT (node:internal/streams/readable:1701:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+2026-07-13T10:45:24.851Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T10:45:24.861Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:01:59.871Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-13T11:19:09.191Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:19:09.201Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:19:09.231Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:19:12.432Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 4 ("@MaHopDongChon"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:19:13.234Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 4 ("@MaHopDongChon"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:19:19.590Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-13T11:27:40.608Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:27:40.614Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:27:40.628Z
+RequestError: Invalid column name 'HinhThucThue'.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:27:48.168Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 4 ("@MaHopDongChon"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-13T11:29:49.316Z
+Error: Tên đăng nhập đã tồn tại.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangKy (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:131:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangKy (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:10:26)
+
+2026-07-13T11:29:56.016Z
+Error: Số điện thoại này đã được liên kết với một tài khoản. Vui lòng đăng nhập.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangKy (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:131:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangKy (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:10:26)
+
+2026-07-13T12:32:36.839Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-13T12:32:39.985Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+

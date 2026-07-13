@@ -180,13 +180,13 @@ BEGIN TRY
         INSERT INTO dbo.PhieuDatCoc (
             MaPhieuDatCoc, ThoiDiemDatCoc, ThoiHanThanhToan, SoTienCoc,
             PhuongThucThanhToan, TrangThaiThanhToan, ThoiGianXacNhanTT,
-            ChungTuThanhToan, ThoiGianNhanPhong, TrangThaiCoc,
+            ChungTuThanhToan, ThoiGianNhanPhong, HinhThucThue, TrangThaiCoc,
             MaPhieuYeuCauDangKy, MaKhachHang, MaNhanVienKeToan
         )
         VALUES (
             'DC9207', '2026-07-02 09:00:00', '2026-07-03 09:00:00', 4400000,
             N'Chuyển khoản', N'Đã TT', '2026-07-02 09:20:00',
-            '/uploads/chung-tu-coc/DC9207.pdf', '2026-07-10 09:00:00', N'Đã lập HĐ',
+            '/uploads/chung-tu-coc/DC9207.pdf', '2026-07-10 09:00:00', N'Ghép giường', N'Đã lập HĐ',
             'DK9207', 'KH9207', 'NV0004'
         );
     ELSE
@@ -197,6 +197,7 @@ BEGIN TRY
             ThoiGianXacNhanTT = '2026-07-02 09:20:00',
             ChungTuThanhToan = '/uploads/chung-tu-coc/DC9207.pdf',
             ThoiGianNhanPhong = '2026-07-10 09:00:00',
+            HinhThucThue = N'Ghép giường',
             TrangThaiCoc = N'Đã lập HĐ',
             MaPhieuYeuCauDangKy = 'DK9207',
             MaKhachHang = 'KH9207',
@@ -207,13 +208,13 @@ BEGIN TRY
         INSERT INTO dbo.PhieuDatCoc (
             MaPhieuDatCoc, ThoiDiemDatCoc, ThoiHanThanhToan, SoTienCoc,
             PhuongThucThanhToan, TrangThaiThanhToan, ThoiGianXacNhanTT,
-            ChungTuThanhToan, ThoiGianNhanPhong, TrangThaiCoc,
+            ChungTuThanhToan, ThoiGianNhanPhong, HinhThucThue, TrangThaiCoc,
             MaPhieuYeuCauDangKy, MaKhachHang, MaNhanVienKeToan
         )
         VALUES (
             'DC9208', '2026-07-02 10:00:00', '2026-07-03 10:00:00', 4400000,
             N'Chuyển khoản', N'Đã TT', '2026-07-02 10:20:00',
-            '/uploads/chung-tu-coc/DC9208.pdf', '2026-07-10 09:00:00', N'Hiệu lực',
+            '/uploads/chung-tu-coc/DC9208.pdf', '2026-07-10 09:00:00', N'Ghép giường', N'Hiệu lực',
             'DK9208', 'KH9208', 'NV0004'
         );
     ELSE
@@ -224,6 +225,7 @@ BEGIN TRY
             ThoiGianXacNhanTT = '2026-07-02 10:20:00',
             ChungTuThanhToan = '/uploads/chung-tu-coc/DC9208.pdf',
             ThoiGianNhanPhong = '2026-07-10 09:00:00',
+            HinhThucThue = N'Ghép giường',
             TrangThaiCoc = N'Hiệu lực',
             MaPhieuYeuCauDangKy = 'DK9208',
             MaKhachHang = 'KH9208',
@@ -231,27 +233,25 @@ BEGIN TRY
         WHERE MaPhieuDatCoc = 'DC9208';
 
     IF NOT EXISTS (SELECT 1 FROM dbo.ChiTietDatCoc WHERE MaChiTietDC = 'CD9207')
-        INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue, HinhThucThue)
-        VALUES ('CD9207', 'DC9207', 'P927', 'G01', 2200000, N'Ghép giường');
+        INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue)
+        VALUES ('CD9207', 'DC9207', 'P927', 'G01', 2200000);
     ELSE
         UPDATE dbo.ChiTietDatCoc
         SET MaPhieuDatCoc = 'DC9207',
             MaPhong = 'P927',
             MaGiuong = 'G01',
-            GiaThue = 2200000,
-            HinhThucThue = N'Ghép giường'
+            GiaThue = 2200000
         WHERE MaChiTietDC = 'CD9207';
 
     IF NOT EXISTS (SELECT 1 FROM dbo.ChiTietDatCoc WHERE MaChiTietDC = 'CD9208')
-        INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue, HinhThucThue)
-        VALUES ('CD9208', 'DC9208', 'P928', 'G01', 2200000, N'Ghép giường');
+        INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue)
+        VALUES ('CD9208', 'DC9208', 'P928', 'G01', 2200000);
     ELSE
         UPDATE dbo.ChiTietDatCoc
         SET MaPhieuDatCoc = 'DC9208',
             MaPhong = 'P928',
             MaGiuong = 'G01',
-            GiaThue = 2200000,
-            HinhThucThue = N'Ghép giường'
+            GiaThue = 2200000
         WHERE MaChiTietDC = 'CD9208';
 
     -- Chi tao hop dong cho KH9207. KH9208 giu nguyen la chi co phieu coc.

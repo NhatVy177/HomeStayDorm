@@ -1271,6 +1271,9 @@ function KetQuaDoiSoatPanel() {
     }
   }
 
+  const selectedKetQuaKey = selected ? ketQuaFilterKey(selected) : '';
+  const shouldShowPaymentInfo = selectedKetQuaKey !== 'khong-phat-sinh';
+
   return (
     <>
       <section className="qt-settlement-toolbar">
@@ -1408,12 +1411,14 @@ function KetQuaDoiSoatPanel() {
                     <InfoRow label="Số tiền khách thanh toán thêm" value={formatMoney(detail.soTienKhachPhaiTT)} strong />
                   </section>
 
-                  <section className="ktp-section ktp-info-box-outline">
-                    <h4 className="ktp-section-title"><Icon name="payments" /> Thông tin thanh toán</h4>
-                    <InfoRow label="Phương thức thanh toán" value={detail.phuongThucThanhToan} />
-                    <InfoRow label="Ngày thanh toán" value={formatDate(detail.ngayThanhToan)} />
-                    <InfoRow label="Chứng từ thanh toán" value={<EvidenceValue value={detail.chungTuThanhToan} />} />
-                  </section>
+                  {shouldShowPaymentInfo && (
+                    <section className="ktp-section ktp-info-box-outline">
+                      <h4 className="ktp-section-title"><Icon name="payments" /> Thông tin thanh toán</h4>
+                      <InfoRow label="Phương thức thanh toán" value={detail.phuongThucThanhToan} />
+                      <InfoRow label="Ngày thanh toán" value={formatDate(detail.ngayThanhToan)} />
+                      <InfoRow label="Chứng từ thanh toán" value={<EvidenceValue value={detail.chungTuThanhToan} />} />
+                    </section>
+                  )}
                 </>
               ) : null}
             </div>

@@ -11,7 +11,6 @@ import XacNhanThanhToanTab from './XacNhanThanhToanTab.jsx';
 import BanGiaoPhongTab from './BanGiaoPhongTab.jsx';
 import XuLyTraPhongTab from './XuLyTraPhongTab.jsx';
 import CapNhatDichVuTab from './CapNhatDichVuTab.jsx';
-import BaoTriSuaChuaTab from './BaoTriSuaChuaTab.jsx';
 
 function Brand() {
   return (
@@ -53,8 +52,7 @@ export default function NhanVienQuanLyPage() {
     { id: 'xac-nhan-thanh-toan', label: 'Duyệt thanh toán', icon: 'payments' },
     { id: 'lap-bien-ban-ban-giao', label: 'Bàn giao phòng', icon: 'description' },
     { id: 'lap-bien-ban-kiem-tra-phong', label: 'Xử lý trả phòng', icon: 'receipt_long' },
-    { id: 'cap-nhat-dich-vu', label: 'Cập nhật dịch vụ', icon: 'bolt' },
-    { id: 'bao-tri-sua-chua', label: 'Bảo trì', icon: 'info' }
+    { id: 'cap-nhat-dich-vu', label: 'Cập nhật dịch vụ', icon: 'bolt' }
   ];
 
   return (
@@ -130,8 +128,7 @@ export default function NhanVienQuanLyPage() {
           {activeTab === 'lap-bien-ban-ban-giao' && <BanGiaoPhongTab />}
           {activeTab === 'lap-bien-ban-kiem-tra-phong' && <XuLyTraPhongTab />}
           {activeTab === 'cap-nhat-dich-vu' && <CapNhatDichVuTab />}
-          {activeTab === 'bao-tri-sua-chua' && <BaoTriSuaChuaTab />}
-          {activeTab !== 'xac-nhan-nhan-phong' && activeTab !== 'duyet-cu-tru' && activeTab !== 'xac-nhan-thanh-toan' && activeTab !== 'lap-bien-ban-ban-giao' && activeTab !== 'lap-bien-ban-kiem-tra-phong' && activeTab !== 'cap-nhat-dich-vu' && activeTab !== 'bao-tri-sua-chua' && (
+          {activeTab !== 'xac-nhan-nhan-phong' && activeTab !== 'duyet-cu-tru' && activeTab !== 'xac-nhan-thanh-toan' && activeTab !== 'lap-bien-ban-ban-giao' && activeTab !== 'lap-bien-ban-kiem-tra-phong' && activeTab !== 'cap-nhat-dich-vu' && (
             <div className="ktp-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                 <h2 style={{ color: '#6f797a' }}>Đang phát triển chức năng: {navItems.find(i => i.id === activeTab)?.label}</h2>
             </div>

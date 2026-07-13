@@ -9,14 +9,12 @@ const navigationGroups = [
     title: 'Menu chính',
     items: [
       { id: 'tong-quan', icon: 'home', title: 'Tổng quan', note: 'Việc cần chú ý hôm nay' },
-      { id: 'hop-dong', icon: 'contract', title: 'Phòng / Hợp đồng', note: 'Thông tin lưu trú hiện tại' },
-      { id: 'hoa-don', icon: 'payment', title: 'Hóa đơn / Thanh toán', note: 'Hạn đóng và biên nhận' }
+      { id: 'hop-dong', icon: 'contract', title: 'Phòng / Hợp đồng', note: 'Thông tin lưu trú hiện tại' }
     ]
   },
   {
     title: 'Hỗ trợ',
     items: [
-      { id: 'bao-tri', icon: 'repair', title: 'Bảo trì / Sửa chữa', note: 'Theo dõi yêu cầu hỗ trợ' },
       { id: 'tra-phong', icon: 'checkout', title: 'Trả phòng', note: 'Lịch trả phòng, quyết toán' }
     ]
   }
@@ -387,7 +385,7 @@ export default function KhachDangThuePage() {
         <div className="rt-frame rt-footer-grid">
           <div>
             <Brand />
-            <p>Cổng khách hàng giúp người đang thuê theo dõi phòng, hợp đồng, hóa đơn, bảo trì và trả phòng.</p>
+            <p>Cổng khách hàng giúp người đang thuê theo dõi phòng, hợp đồng và trả phòng.</p>
           </div>
           <div>
             <h3>Chi nhánh đang thuê</h3>
@@ -398,8 +396,6 @@ export default function KhachDangThuePage() {
           <div>
             <h3>Hỗ trợ khách hàng</h3>
             <button type="button" onClick={() => goTo('tong-quan')}>Tổng quan</button>
-            <button type="button" onClick={() => goTo('hoa-don')}>Hóa đơn / Thanh toán</button>
-            <button type="button" onClick={() => goTo('bao-tri')}>Bảo trì / Sửa chữa</button>
           </div>
         </div>
         <div className="rt-frame rt-copyright">© 2026 Homestay Dorm. Giao diện khách đang thuê.</div>

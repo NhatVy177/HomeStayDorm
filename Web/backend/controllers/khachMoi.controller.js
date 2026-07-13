@@ -95,7 +95,7 @@ export async function uploadMinhChung(req, res, next) {
 
 export async function getHopDongDashboard(req, res, next) {
   try {
-    res.json(await service.getHopDongDashboard(req.user));
+    res.json(await service.getHopDongDashboard(req.user, req.query));
   } catch (error) {
     next(error);
   }

@@ -22,7 +22,6 @@ export default function MainLayout() {
           <NavLink to="/dashboard/dat-coc">Đặt cọc</NavLink>
           <NavLink to="/dashboard/nhan-phong">Nhận phòng</NavLink>
           <NavLink to="/dashboard/tra-phong">Trả phòng</NavLink>
-          <NavLink to="/dashboard/sua-chua-bao-tri">Sửa chữa / bảo trì</NavLink>
         </nav>
         <div className="account-menu">
           <strong>{user.hoTen}</strong>

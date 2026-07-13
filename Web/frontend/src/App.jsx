@@ -12,7 +12,6 @@ import DangKyThuePage from './pages/dangKyThue/DangKyThuePage.jsx';
 import LichXemPhongPage from './pages/lichXemPhong/LichXemPhongPage.jsx';
 import DatCocPage from './pages/datCoc/DatCocPage.jsx';
 import NhanPhongPage from './pages/nhanPhong/NhanPhongPage.jsx';
-import SuaChuaBaoTriPage from './pages/suaChuaBaoTri/SuaChuaBaoTriPage.jsx';
 import KhachHangPortalPage from './pages/khachHang/KhachHangPortalPage.jsx';
 import NhanVienSalePage from './pages/nhanVienSale/NhanVienSalePage.jsx';
 import NhanVienQuanLyPage from './pages/nhanVienQuanLy/NhanVienQuanLyPage.jsx';
@@ -144,7 +143,6 @@ export default function App() {
         <Route path="lich-xem-phong" element={<LichXemPhongPage />} />
         <Route path="dat-coc" element={<DatCocPage />} />
         <Route path="nhan-phong" element={<NhanPhongPage />} />
-        <Route path="sua-chua-bao-tri" element={<SuaChuaBaoTriPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

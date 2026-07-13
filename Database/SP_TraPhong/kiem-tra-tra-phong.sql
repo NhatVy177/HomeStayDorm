@@ -91,10 +91,7 @@ BEGIN
         ctdc.MaGiuong                               AS maGiuong,
         pdc.SoTienCoc                               AS tienCocHD,
         pdc.SoTienCoc                               AS tienCocPDC,
-        COALESCE(
-            ctdc.HinhThucThue,
-            CASE WHEN ctdc.MaGiuong IS NULL THEN N'Nguyên phòng' ELSE N'Ghép giường' END
-        )                                           AS hinhThucThue,
+        pdc.HinhThucThue                            AS hinhThucThue,
         COALESCE(hdt.GiaThue, ctdc.GiaThue)         AS giaThue,
         CONVERT(VARCHAR(10), hdt.NgayBatDau, 120)   AS ngayBatDauThue,
         CONVERT(VARCHAR(10), hdt.NgayKetThuc, 120)  AS ngayKetThucThue,
