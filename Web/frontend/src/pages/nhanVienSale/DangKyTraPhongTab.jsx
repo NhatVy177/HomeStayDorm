@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { dangKyTraPhongApi } from './dangKyTraPhong.api.js';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import './dangKyTraPhongTab.css';
@@ -30,23 +30,31 @@ function BuocTimKhach({ onChon }) {
   const [ds, setDs]           = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+  const debounceRef = useRef(null);
 
-  // Load ban đầu (danh sách rỗng)
+  // Load ban đầu
   React.useEffect(() => {
     handleSearch('');
   }, []);
 
-  async function handleSearch(keyword = tuKhoa) {
+  async function handleSearch(keyword) {
     setLoading(true);
     setError('');
     try {
-      const { data } = await dangKyTraPhongApi.saleTimKhachHang(keyword);
+      const { data } = await dangKyTraPhongApi.saleTimKhachHang(keyword ?? tuKhoa);
       setDs(data.danhSach || []);
     } catch (err) {
       setError(err?.response?.data?.message || 'Lỗi tra cứu, vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleInputChange(e) {
+    const val = e.target.value;
+    setTuKhoa(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => handleSearch(val), 300);
   }
 
   function getInitials(name) {
@@ -64,11 +72,8 @@ function BuocTimKhach({ onChon }) {
       </div>
 
       <div className="tp-search-container">
-        <form 
-          className="tp-search-row" 
-          onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
-        >
-          <div className="tp-search-col">
+        <div className="tp-search-row">
+          <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
               <input
@@ -77,14 +82,12 @@ function BuocTimKhach({ onChon }) {
                 type="text"
                 placeholder="Tra cứu theo tên, số điện thoại hoặc CCCD..."
                 value={tuKhoa}
-                onChange={e => setTuKhoa(e.target.value)}
+                spellCheck={false}
+                onChange={handleInputChange}
               />
             </div>
           </div>
-          <button type="submit" className="tp-btn-search">
-            Tìm kiếm
-          </button>
-        </form>
+        </div>
       </div>
 
       {loading && <div className="tp-loading"><span className="tp-spinner" /> Đang tải...</div>}

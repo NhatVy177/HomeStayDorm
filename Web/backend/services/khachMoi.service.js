@@ -614,7 +614,7 @@ export async function getDatCoc(user) {
         pdc.TrangThaiThanhToan     AS trangThaiThanhToan,
         pdc.TrangThaiCoc           AS trangThaiCoc,
         COALESCE(
-          ct.HinhThucThue,
+          pdc.HinhThucThue,
           CASE
             WHEN ct.MaPhong IS NULL THEN NULL
             WHEN ct.MaGiuong IS NULL THEN N'Nguyên phòng'
@@ -688,7 +688,7 @@ export async function getDatCoc(user) {
       FROM dbo.PhieuDatCoc AS pdc
       -- Lấy 1 chi tiết đặt cọc đầu tiên (phòng/giường đầu tiên)
       OUTER APPLY (
-        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.GiaThue, ctdc.HinhThucThue
+        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.GiaThue
         FROM dbo.ChiTietDatCoc AS ctdc
         WHERE ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
         ORDER BY ctdc.MaChiTietDC
@@ -773,7 +773,7 @@ export async function getDatCoc(user) {
         p.GioiTinhChoPhep  AS gioiTinhChoPhep,
         p.TinhTrang        AS tinhTrangPhong,
         COALESCE(
-          ctdc.HinhThucThue,
+          pdc.HinhThucThue,
           CASE WHEN ctdc.MaGiuong IS NULL THEN N'Nguyên phòng' ELSE N'Ghép giường' END
         )                  AS hinhThucThue,
         lp.TenLoaiPhong    AS loaiPhong,
@@ -781,6 +781,7 @@ export async function getDatCoc(user) {
         cn.DiaChi          AS diaChi,
         ha.UrlImg          AS urlImg
       FROM dbo.ChiTietDatCoc AS ctdc
+      INNER JOIN dbo.PhieuDatCoc AS pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
       LEFT JOIN dbo.Phong AS p ON p.MaPhong = ctdc.MaPhong
       LEFT JOIN dbo.LoaiPhong AS lp ON lp.MaLoaiPhong = p.MaLoaiPhong
       LEFT JOIN dbo.ChiNhanh AS cn ON cn.MaChiNhanh = p.MaChiNhanh
@@ -963,7 +964,7 @@ export async function getHopDongDashboard(user) {
         hd.MaPhieuCoc,
         hd.MaKhachHang,
         COALESCE(
-          ct.HinhThucThue,
+          pdc.HinhThucThue,
           CASE
             WHEN ct.MaPhong IS NULL THEN NULL
             WHEN ct.MaGiuong IS NULL THEN N'Nguyên phòng'
@@ -1007,7 +1008,7 @@ export async function getHopDongDashboard(user) {
       INNER JOIN dbo.PhieuDatCoc AS pdc
         ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
       OUTER APPLY (
-        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong, ctdc.HinhThucThue
+        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong
         FROM dbo.ChiTietDatCoc AS ctdc
         WHERE ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
         ORDER BY ctdc.MaChiTietDC

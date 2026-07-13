@@ -69,27 +69,25 @@ export default function ThanhLyTraPhong() {
   const [dsThanhLy, setDsThanhLy] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSearch, setActiveSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [toast, setToast] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const filteredData = React.useMemo(() => {
-    const q = activeSearch.toLowerCase();
+    const q = searchQuery.toLowerCase();
     return dsThanhLy.filter(p => {
-      const matchSearch =
+      const matchSearch = !q ||
         p.hoTenKhach?.toLowerCase().includes(q) ||
         p.sdtKhach?.toLowerCase().includes(q) ||
         p.maDoiSoat?.toLowerCase().includes(q) ||
         p.maPhieuTra?.toLowerCase().includes(q);
-
       if (!matchSearch) return false;
       if (filterStatus === 'PENDING') return p.trangThai === 'Chờ ký biên bản';
       if (filterStatus === 'SIGNED') return p.trangThai !== 'Chờ ký biên bản';
       return true;
     });
-  }, [dsThanhLy, activeSearch, filterStatus]);
+  }, [dsThanhLy, searchQuery, filterStatus]);
 
   const countAll = dsThanhLy.length;
   const countPending = dsThanhLy.filter(p => p.trangThai === 'Chờ ký biên bản').length;
@@ -124,12 +122,7 @@ export default function ThanhLyTraPhong() {
     loadDanhSach();
   }, [loadDanhSach]);
 
-  const handleRefresh = () => {
-    setSearchQuery('');
-    setActiveSearch('');
-    setFilterStatus('ALL');
-    loadDanhSach();
-  };
+
 
   const openModal = async (row) => {
     setSelectedPhieu(row);
@@ -169,14 +162,8 @@ export default function ThanhLyTraPhong() {
   return (
     <div>
       <div className="tp-search-container">
-        <form
-          className="tp-search-row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setActiveSearch(searchQuery);
-          }}
-        >
-          <div className="tp-search-col">
+        <div className="tp-search-row">
+          <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
               <input
@@ -184,23 +171,13 @@ export default function ThanhLyTraPhong() {
                 type="text"
                 placeholder="Tra cứu theo tên, số điện thoại hoặc mã phiếu..."
                 value={searchQuery}
+                spellCheck={false}
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
-          <button type="submit" className="tp-btn-search">
-            Tìm kiếm
-          </button>
-          <button
-            type="button"
-            className="tp-btn-search"
-            style={{ backgroundColor: 'transparent', color: '#3b8280', border: '1px solid #3b8280', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-            onClick={handleRefresh}
-          >
-            <Icon name="refresh" /> Làm mới
-          </button>
-        </form>
-        <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '24px' }}>
           {[
             { key: 'ALL', label: 'Tất cả', count: countAll },
             { key: 'PENDING', label: 'Chờ ký biên bản', count: countPending },
