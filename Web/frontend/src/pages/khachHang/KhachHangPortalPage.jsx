@@ -329,6 +329,7 @@ function getTraPhongActiveStep(yeuCauTraPhong) {
     && trangThaiDoiSoat === 'Chờ thanh toán thêm'
     && !String(yeuCauTraPhong.doiSoat?.chungTuThanhToan || '').trim();
 
+  if (trangThai === 'Chờ xử lý') return 1;
   if (['Hoàn tất', 'Chờ hoàn tất'].includes(trangThai) || trangThaiDoiSoat === 'Đã quyết toán') return 4;
   if (['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThaiDoiSoat) && daGuiPhuongThucThanhToan && !canUploadThuThemProofAgain) return 4;
   if (['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThai) || ['Chờ hoàn cọc', 'Chờ thanh toán thêm'].includes(trangThaiDoiSoat)) return 3;
