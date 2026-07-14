@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { thanhLyTraPhongApi } from './thanhlytraphong.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import '../nhanVienSale/dangKyTraPhongTab.css';
 
 function fmtDate(d) {
@@ -166,8 +167,9 @@ export default function ThanhLyTraPhong() {
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
+              <Icon name="search" className="tp-search-icon" />
               <input
-                className="ktp-input tp-search-input-no-icon"
+                className="ktp-input tp-search-input"
                 type="text"
                 placeholder="Tra cứu theo tên khách hàng, mã phiếu trả phòng"
                 value={searchQuery}
@@ -177,45 +179,28 @@ export default function ThanhLyTraPhong() {
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '24px' }}>
-          {[
-            { key: 'ALL', label: 'Tất cả', count: countAll },
-            { key: 'PENDING', label: 'Chờ ký biên bản', count: countPending },
-            { key: 'SIGNED', label: 'Đã ký biên bản', count: countSigned },
-          ].map(item => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setFilterStatus(item.key)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '20px',
-                border: '1px solid #d5dddd',
-                cursor: 'pointer',
-                backgroundColor: filterStatus === item.key ? '#2f6765' : '#f4f7f7',
-                color: filterStatus === item.key ? '#fff' : '#3f494a',
-                fontWeight: filterStatus === item.key ? '600' : '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '13px'
-              }}
-            >
-              {item.label}
-              <span style={{
-                backgroundColor: filterStatus === item.key ? '#fff' : '#e1e3e4',
-                color: filterStatus === item.key ? '#2f6765' : '#3f494a',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                fontSize: '11px',
-                fontWeight: '700'
-              }}>{item.count}</span>
-            </button>
-          ))}
-        </div>
       </div>
 
       <section className="tp-list-panel">
+        <div className="tp-list-head">
+          <div>
+            <h3>Danh sách phiếu trả phòng chờ ký biên bản</h3>
+          </div>
+        </div>
+
+        <div className="tp-list-status-row">
+          <StatusFilterTabs
+            className="tp-search-status-tabs"
+            items={[
+              { key: 'ALL', label: 'Tất cả', count: countAll },
+              { key: 'PENDING', label: 'Chờ ký biên bản', count: countPending },
+              { key: 'SIGNED', label: 'Đã ký biên bản', count: countSigned },
+            ]}
+            activeKey={filterStatus}
+            onChange={setFilterStatus}
+          />
+        </div>
+
         {loading ? (
           <div style={{ padding: '20px', textAlign: 'center' }}>Đang tải...</div>
         ) : (

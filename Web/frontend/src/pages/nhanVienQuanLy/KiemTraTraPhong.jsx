@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { kiemTraTraPhongApi } from './kiemTraTraPhong.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import '../nhanVienSale/dangKyTraPhongTab.css';
 
 
@@ -250,6 +251,10 @@ export default function KiemTraTraPhong() {
       setToast('Vui lòng chọn ngày trả phòng thực tế');
       return;
     }
+    if (!tinhTrangPhong.trim()) {
+      setToast('Vui lòng nhập tình trạng phòng thực tế');
+      return;
+    }
 
     const huHongArr = Object.values(dsHuHong)
       .filter(item => item.status !== 'Bình thường')
@@ -303,11 +308,12 @@ export default function KiemTraTraPhong() {
     <div>
       {/* Table Section */}
       <div className="tp-search-container">
-        <div className="tp-search-row" style={{ gap: '16px' }}>
+        <div className="tp-search-row">
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
-              <input className="ktp-input tp-search-input-no-icon" type="text"
+              <Icon name="search" className="tp-search-icon" />
+              <input className="ktp-input tp-search-input" type="text"
                 placeholder="Tra cứu theo tên khách hàng, số điện thoại hoặc mã phiếu trả phòng"
                 value={searchQuery}
                 spellCheck={false}
@@ -315,49 +321,27 @@ export default function KiemTraTraPhong() {
             </div>
           </div>
         </div>
-
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '24px' }}>
-          {[
-            { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
-            { id: 'Chờ xử lý', label: 'Chờ xử lý', count: countChoXuLy },
-            { id: 'Đã xử lý', label: 'Đã xử lý', count: countDaXuLy }
-          ].map(st => (
-            <button
-              key={st.id}
-              onClick={() => setFilterStatus(st.id)}
-              type="button"
-              style={{
-                padding: '6px 16px',
-                borderRadius: '20px',
-                border: filterStatus === st.id ? 'none' : '1px solid #e1e3e4',
-                backgroundColor: filterStatus === st.id ? '#2f6765' : '#f8f9fa',
-                color: filterStatus === st.id ? '#ffffff' : '#3f494a',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {st.label}
-              <span style={{
-                backgroundColor: filterStatus === st.id ? '#ffffff' : '#e1e3e4',
-                color: filterStatus === st.id ? '#2f6765' : '#3f494a',
-                padding: '2px 8px',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: '600'
-              }}>
-                {st.count}
-              </span>
-            </button>
-          ))}
-        </div>
       </div>
 
       <section className="tp-list-panel">
+        <div className="tp-list-head">
+          <div>
+            <h3>Danh sách phiếu trả phòng chờ xử lý</h3>
+          </div>
+        </div>
+
+        <div className="tp-list-status-row">
+          <StatusFilterTabs
+            className="tp-search-status-tabs"
+            items={[
+              { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
+              { id: 'Chờ xử lý', label: 'Chờ xử lý', count: countChoXuLy },
+              { id: 'Đã xử lý', label: 'Đã xử lý', count: countDaXuLy }
+            ].map(st => ({ key: st.id, label: st.label, count: st.count }))}
+            activeKey={filterStatus}
+            onChange={setFilterStatus}
+          />
+        </div>
 
         {loading ? (
           <div style={{ padding: '20px', textAlign: 'center' }}>Đang tải...</div>
@@ -667,11 +651,11 @@ export default function KiemTraTraPhong() {
 
                       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e1e3e4', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
                         <div style={{ marginBottom: '12px' }}>
-                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Ngày trả thực tế</label>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Ngày trả thực tế <span style={{ color: '#c5221f' }}>*</span></label>
                           <input type="date" value={ngayTraThucTe} onChange={(e) => setNgayTraThucTe(e.target.value)} style={{ width: '250px', padding: '10px 12px', border: '1px solid #e1e3e4', borderRadius: '6px', color: '#3f494a', fontSize: '14px', outline: 'none' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'} />
                         </div>
                         <div style={{ marginBottom: '0' }}>
-                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Tình trạng phòng thực tế</label>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Tình trạng phòng thực tế <span style={{ color: '#c5221f' }}>*</span></label>
                           <textarea rows="3" value={tinhTrangPhong} onChange={(e) => setTinhTrangPhong(e.target.value)} placeholder="Nhập đánh giá tổng quan" style={{ width: '100%', padding: '12px', border: '1px solid #e1e3e4', borderRadius: '6px', fontSize: '14px', resize: 'vertical', display: 'block' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'} spellCheck={false}></textarea>
                         </div>
                       </div>

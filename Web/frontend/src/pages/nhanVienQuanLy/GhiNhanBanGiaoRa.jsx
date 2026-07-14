@@ -147,8 +147,9 @@ export default function GhiNhanBanGiaoRa() {
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
+              <Icon name="search" className="tp-search-icon" />
               <input
-                className="ktp-input tp-search-input-no-icon"
+                className="ktp-input tp-search-input"
                 type="text"
                 placeholder="Tra cứu theo tên khách hàng, mã phiếu..."
                 value={searchQuery}
@@ -158,7 +159,16 @@ export default function GhiNhanBanGiaoRa() {
             </div>
           </div>
         </div>
-        <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      </div>
+
+      <section className="tp-list-panel">
+        <div className="tp-list-head">
+          <div>
+            <h3>Danh sách hợp đồng chờ bàn giao</h3>
+          </div>
+        </div>
+
+        <div className="tp-list-status-row">
           <StatusFilterTabs
             className="tp-search-status-tabs"
             items={[
@@ -170,9 +180,7 @@ export default function GhiNhanBanGiaoRa() {
             onChange={setFilterStatus}
           />
         </div>
-      </div>
 
-      <section className="tp-list-panel">
         {loading ? (
           <div style={{ padding: '20px', textAlign: 'center' }}>Đang tải...</div>
         ) : (

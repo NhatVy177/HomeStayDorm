@@ -2,25 +2,24 @@ import { httpClient } from '../../api/httpClient.js';
 
 export const dangKyTraPhongApi = {
   /**
-   * Tìm kiếm khách hàng theo từ khóa.
-   * Kèm cờ coPhieuTraHienHanh để UI quyết định nút "Chọn" / "Xem phiếu".
+   * Tìm kiếm khách hàng theo từ khóa
    * @param {string} tuKhoa
    */
   saleTimKhachHang: (tuKhoa) =>
     httpClient.get('/dang-ky-tra-phong/sale/tim-khach', { params: { tuKhoa } }),
 
   /**
-   * Lấy hồ sơ lưu trú hiện hành của khách tại chi nhánh NV sale.
-   * Trả về { hoSo } – null nếu không có hồ sơ hợp lệ.
+   * Lấy danh sách HĐ + Phiếu cọc hợp lệ của một khách hàng
    * @param {string} maKhachHang
    */
-  saleLayHoSoHienHanh: (maKhachHang) =>
-    httpClient.get(`/dang-ky-tra-phong/sale/ho-so-hien-hanh/${maKhachHang}`),
+  saleDanhSachHopDong: (maKhachHang) =>
+    httpClient.get(`/dang-ky-tra-phong/sale/hop-dong/${maKhachHang}`),
 
   /**
-   * Nhân viên Sale tạo phiếu đăng ký lịch trả phòng.
+   * Nhân viên Sale tạo phiếu đăng ký lịch trả phòng
    * @param {{ maKhachHang: string, maHopDong?: string, maPhieuDatCoc?: string, ngayDuKienTra: string }} data
    */
   saleDangKyLichTraPhong: (data) =>
     httpClient.post('/dang-ky-tra-phong/sale/dang-ky', data),
+
 };

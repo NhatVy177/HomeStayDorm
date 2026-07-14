@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { xacNhanPhanHoiApi } from './xacnhanphanhoi.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import '../nhanVienSale/dangKyTraPhongTab.css';
 import '../nhanVienKeToan/nhanVienKeToanPortal.css';
 
@@ -379,38 +380,33 @@ export default function XacNhanPhanHoi() {
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
-              <input className="ktp-input tp-search-input-no-icon" type="text" placeholder="Tìm theo tên khách, mã đối soát" value={searchQ} onChange={(e) => setSearchQ(e.target.value)} spellCheck={false} />
+              <Icon name="search" className="tp-search-icon" />
+              <input className="ktp-input tp-search-input" type="text" placeholder="Tìm theo tên khách, mã đối soát" value={searchQ} onChange={(e) => setSearchQ(e.target.value)} spellCheck={false} />
             </div>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 24 }}>
-          {[
-            { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
-            { id: 'Chờ phản hồi', label: 'Chờ phản hồi', count: countChoPhanHoi },
-            { id: 'Đã phản hồi', label: 'Đã phản hồi', count: countDaPhanHoi },
-          ].map((st) => (
-            <button key={st.id} onClick={() => setFilterStatus(st.id)} type="button" style={{
-              padding: '6px 16px',
-              borderRadius: 20,
-              border: filterStatus === st.id ? 'none' : '1px solid #e1e3e4',
-              backgroundColor: filterStatus === st.id ? '#2f6765' : '#f8f9fa',
-              color: filterStatus === st.id ? '#fff' : '#3f494a',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}>
-              {st.label}
-              <span style={{ backgroundColor: filterStatus === st.id ? '#fff' : '#e1e3e4', color: filterStatus === st.id ? '#2f6765' : '#3f494a', padding: '2px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600 }}>{st.count}</span>
-            </button>
-          ))}
         </div>
       </div>
 
       <section className="tp-list-panel">
+        <div className="tp-list-head">
+          <div>
+            <h3>Danh sách phiếu đối soát phản hồi từ khách hàng</h3>
+          </div>
+        </div>
+
+        <div className="tp-list-status-row">
+          <StatusFilterTabs
+            className="tp-search-status-tabs"
+            items={[
+              { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
+              { id: 'Chờ phản hồi', label: 'Chờ phản hồi', count: countChoPhanHoi },
+              { id: 'Đã phản hồi', label: 'Đã phản hồi', count: countDaPhanHoi },
+            ].map((st) => ({ key: st.id, label: st.label, count: st.count }))}
+            activeKey={filterStatus}
+            onChange={setFilterStatus}
+          />
+        </div>
+
         {loading ? (
           <div style={{ padding: 32, textAlign: 'center', color: '#6f797a' }}>Đang tải...</div>
         ) : (
