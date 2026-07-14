@@ -278,6 +278,33 @@ BEGIN TRY
         ('HD9202', '2026-06-05', '2026-06-10', '2026-12-10', 1, 2200000, N'Hàng tháng', N'Hiệu lực', 'DC9202', 'KH9202', 'NV0003'),
         ('HD9203', '2026-06-05', '2026-06-10', '2026-12-10', 1, 2200000, N'Hàng tháng', N'Hiệu lực', 'DC9203', 'KH9203', 'NV0003');
 
+    -- Du lieu hoa don con no cho KH9202/HD9202 de man doi soat hien chi tiet dich vu that.
+    INSERT INTO dbo.DichVuHopDong (MaChiTietDVHD, MaDichVu, MaHopDong, GhiChu)
+    VALUES
+        ('V2001', 'DV0001', 'HD9202', N'Dịch vụ điện test đối soát KH9202.'),
+        ('V2002', 'DV0002', 'HD9202', N'Dịch vụ nước test đối soát KH9202.'),
+        ('V2003', 'DV0003', 'HD9202', N'Dịch vụ wifi test đối soát KH9202.'),
+        ('V2004', 'DV0004', 'HD9202', N'Dịch vụ gửi xe test đối soát KH9202.'),
+        ('V2005', 'DV0005', 'HD9202', N'Dịch vụ vệ sinh test đối soát KH9202.');
+
+    INSERT INTO dbo.HoaDon (
+        MaHoaDon, KyThanhToan, NgayLap, NgayHanTT, TongTien,
+        TrangThai, NgayThanhToan, PhuongThucThanhToan, MaHopDong, MaNhanVienKeToan
+    )
+    VALUES
+        ('HO9202', '2026-07', '2026-07-05', '2026-07-12', NULL, N'Nợ', NULL, NULL, 'HD9202', 'NV0004');
+
+    INSERT INTO dbo.ChiTietHoaDon (
+        MaChiTietHD, SoLuong, DonViTinh, DonGia, ThanhTien,
+        MaHoaDon, MaChiTietDVHD, MaPhieuGhi
+    )
+    VALUES
+        ('C9201', 1, 'kWh', 2273.00, NULL, 'HO9202', 'V2001', NULL),
+        ('C9202', 1, 'm3', 10227.00, NULL, 'HO9202', 'V2002', NULL),
+        ('C9203', 1, 'tháng', 56818.00, NULL, 'HO9202', 'V2003', NULL),
+        ('C9204', 1, 'tháng', 85227.00, NULL, 'HO9202', 'V2004', NULL),
+        ('C9205', 1, 'tháng', 45455.00, NULL, 'HO9202', 'V2005', NULL);
+
     INSERT INTO dbo.PhieuTraPhong (
         MaPhieuTra, NgayDangKyTra, NgayDuKienTra, NgayTraThucTe,
         TrangThai, MaHopDong, MaPhieuDatCoc

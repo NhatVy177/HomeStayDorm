@@ -1525,7 +1525,7 @@ export default function KhachHangPortalPage() {
       setDoiSoatRejectReason('');
       await Promise.all([
         loadHopDongDashboard(),
-        activeTab === 'dat-coc' ? loadDatCoc() : Promise.resolve()
+        loadDatCoc()
       ]);
       setResultModal({
         type: 'success',
@@ -1593,7 +1593,7 @@ export default function KhachHangPortalPage() {
       setTraPhongStepOverride(null);
       await Promise.all([
         loadHopDongDashboard(),
-        activeTab === 'dat-coc' ? loadDatCoc() : Promise.resolve()
+        loadDatCoc()
       ]);
       const officeAddress = hopDongDashboard?.DiaChi || hopDongDashboard?.TenChiNhanh || 'văn phòng HomestayDorm';
       setResultModal({
@@ -1700,138 +1700,182 @@ export default function KhachHangPortalPage() {
         </div>
 
         {traPhongActiveStep === 1 && (
-          <div className="hd-card hd-rent-details">
-            <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: 10, marginBottom: 15 }}><Icon name="contract" />Gửi yêu cầu trả phòng</h3>
-            
-            <div className="dc-settlement-summary" style={{ marginBottom: 20 }}>
-              <div><span>Mã phiếu cọc</span><strong>{phieu.maPhieuCoc}</strong></div>
-              <div><span>Trạng thái</span><strong>{phieu.trangThaiCoc || phieu.trangThai}</strong></div>
-              <div><span>Số tiền cọc</span><strong>{Number(phieu.soTienCoc || 0).toLocaleString('vi-VN')} VNĐ</strong></div>
+          <>
+            <div className="hd-overview-top">
+              <div className="hd-banner" style={{ backgroundImage: `url(${phieu.UrlImg || getDemoRoomImage(phieu.maPhong, 0)})` }}>
+                <div className="hd-banner-overlay" />
+                <div className="hd-banner-content">
+                  <span className={`hd-badge ${phieu.trangThaiCoc === 'Hiệu lực' ? 'is-active' : ''}`}>{phieu.trangThaiCoc || 'Phiếu cọc'}</span>
+                  <h2>{phieu.tenPhong || phieu.loaiPhong || 'Phòng đang thuê'} - {phieu.tenLoaiPhong || phieu.loaiPhong || 'Loại phòng'}</h2>
+                  <p>{phieu.tenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(phieu.maPhong) || 1} • {phieu.maGiuong ? `Giường ${phieu.maGiuong}` : 'Nguyên phòng'}</p>
+                </div>
+              </div>
+
+              <div className="hd-card hd-contract-summary">
+                <h3>Phiếu cọc của bạn</h3>
+                <div className="hd-summary-row"><span>Mã phiếu cọc</span><strong>{phieu.maPhieuCoc}</strong></div>
+                <div className="hd-summary-row"><span>Ngày lập</span><strong>{formatDate(phieu.ngayDatCoc || phieu.ngayLapPhieu || phieu.ngayLap)}</strong></div>
+              </div>
             </div>
 
-            {!coYeuCauTraPhongCoc && (
-              <label className="hd-return-date-field" style={{ margin: 0, marginBottom: 15 }}>
-                <span style={{ fontWeight: 600, display: 'block', marginBottom: 8, fontSize: 13, color: '#4a5568' }}>Ngày dự kiến trả phòng</span>
-                <input
-                  type="date"
-                  min={toLocalDateInputValue(new Date())}
-                  value={traPhongNgayDuKien}
-                  onChange={(event) => setTraPhongNgayDuKien(event.target.value)}
-                  className="kp-input"
-                  style={{ width: '100%', maxWidth: 300, padding: '10px 14px', borderRadius: 6, border: '1px solid #ccc' }}
-                />
-              </label>
-            )}
-            <div className="hd-action-buttons" style={{ justifyContent: 'flex-end', display: 'flex' }}>
-              {coYeuCauChoXuLyCoc ? (
-                <button
-                  className="kp-btn hd-btn-danger"
-                  type="button"
-                  disabled={traPhongSubmitting}
-                  onClick={() => huyYeuCauTraPhong(yeuCauTraPhongCoc, 'phieu-coc')}
-                >
-                  <Icon name="lock" />
-                  {traPhongSubmitting ? 'Đang xử lý...' : 'Hủy yêu cầu'}
-                </button>
-              ) : (
-                <button
-                  className={`kp-btn ${coYeuCauTraPhongCoc ? 'hd-btn-da-gui' : 'hd-btn-teal'}`}
-                  type="button"
-                  disabled={traPhongSubmitting || coYeuCauTraPhongCoc}
-                  onClick={() => guiYeuCauTraPhong(phieu, 'phieu-coc')}
-                >
-                  <Icon name={coYeuCauTraPhongCoc ? 'lock' : 'logout'} />
-                  {traPhongSubmitting ? 'Đang xử lý...' : coYeuCauTraPhongCoc ? 'Đã gửi yêu cầu trả phòng' : 'Gửi yêu cầu trả phòng'}
-                </button>
-              )}
+            <div className="hd-overview-middle">
+              <div className="hd-card hd-rent-details">
+                <div className="hd-card-header">
+                  <Icon name="payment" />
+                  <h3>Chi tiết cọc</h3>
+                </div>
+                <div className="hd-detail-row">
+                  <span>Số tiền cọc</span>
+                  <strong className="hd-price">{Number(phieu.soTienCoc || 0).toLocaleString('vi-VN')} VNĐ</strong>
+                </div>
+                <div className="hd-detail-row">
+                  <span>Loại phòng</span>
+                  <span className="hd-chip-gray">{phieu.loaiPhong || phieu.tenLoaiPhong || 'Phòng'}</span>
+                </div>
+                <div className="hd-detail-row">
+                  <span>Trạng thái</span>
+                  <strong>{phieu.trangThaiCoc || phieu.trangThai}</strong>
+                </div>
+
+                {!coYeuCauTraPhongCoc && (
+                  <label className="hd-return-date-field">
+                    <span>Ngày dự kiến trả phòng</span>
+                    <input
+                      type="date"
+                      min={toLocalDateInputValue(new Date())}
+                      value={traPhongNgayDuKien}
+                      onChange={(event) => setTraPhongNgayDuKien(event.target.value)}
+                    />
+                  </label>
+                )}
+                <div className="hd-action-buttons" style={{ justifyContent: 'flex-end', display: 'flex' }}>
+                  {coYeuCauChoXuLyCoc ? (
+                    <button
+                      className="kp-btn hd-btn-danger"
+                      type="button"
+                      disabled={traPhongSubmitting}
+                      onClick={() => huyYeuCauTraPhong(yeuCauTraPhongCoc, 'phieu-coc')}
+                      style={{ padding: '6px 16px', fontSize: '13px', width: 'auto' }}
+                    >
+                      <Icon name="lock" />
+                      {traPhongSubmitting ? 'Đang xử lý...' : 'Hủy yêu cầu'}
+                    </button>
+                  ) : (
+                    <button
+                      className={`kp-btn ${coYeuCauTraPhongCoc ? 'hd-btn-outline' : 'hd-btn-teal'}`}
+                      type="button"
+                      disabled={traPhongSubmitting || coYeuCauTraPhongCoc}
+                      onClick={() => guiYeuCauTraPhong(phieu, 'phieu-coc')}
+                      style={{ padding: '6px 16px', fontSize: '13px', width: 'auto' }}
+                    >
+                      <Icon name={coYeuCauTraPhongCoc ? 'lock' : 'contract'} />
+                      {traPhongSubmitting ? 'Đang xử lý...' : coYeuCauTraPhongCoc ? 'Đang xử lý trả phòng' : 'Gửi yêu cầu trả phòng'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {(traPhongActiveStep === 2 || isReviewingDoiSoatBeforePayment) && doiSoatTraPhongCoc && (
-          <div className="hd-card" style={{ padding: 20 }}>
-            <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: 10, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 8, fontSize: 16 }}><Icon name="invoice" />Chi tiết đối soát (Đặt cọc)</h3>
-            <div className="dc-settlement-summary">
-              <div>
-                <span>Mã phiếu cọc</span>
-                <strong>{phieu.maPhieuCoc}</strong>
-              </div>
-              <div>
-                <span>Số tiền cọc</span>
-                <strong>{Number(phieu.soTienCoc || 0).toLocaleString('vi-VN')} VNĐ</strong>
-              </div>
-              <div>
-                <span>Tỷ lệ hoàn cọc</span>
-                <strong>{formatPercent(doiSoatTraPhongCoc.tyLeHoanCocHienTai)}</strong>
-              </div>
-              <div>
-                <span>Phiếu đối soát</span>
-                <strong>{doiSoatTraPhongCoc.maDoiSoat}</strong>
-              </div>
-              <div>
-                <span>Trạng thái đối soát</span>
-                <strong>{doiSoatTraPhongCoc.trangThai}</strong>
-              </div>
-              <div>
-                <span>{doiSoatCocLabel}</span>
-                <strong className={soTienThuThemCoc > 0 ? 'is-danger' : 'is-success'}>
-                  {formatSettlementMoney(doiSoatCocAmount)}
-                </strong>
-              </div>
-            </div>
+          <div className={`hd-settlement-review-grid ${showDoiSoatPaymentCoc ? 'is-payment-only' : ''}`}>
+            {!showDoiSoatPaymentCoc && (
+              <div className="hd-card hd-settlement-card">
+                <div className="hd-card-header">
+                  <Icon name="invoice" />
+                  <h3>Chi tiết đối soát</h3>
+                </div>
+                <div className="hd-settlement-money">
+                  <section>
+                    <h4>Tiền cọc và tỷ lệ hoàn</h4>
+                    <div className="hd-money-row">
+                      <span>Tiền cọc ban đầu</span>
+                      <strong>{formatSettlementMoney(phieu.soTienCoc)}</strong>
+                    </div>
+                    <div className="hd-money-row">
+                      <span>Tỷ lệ hoàn cọc hiện tại</span>
+                      <strong>{formatPercent(doiSoatTraPhongCoc.tyLeHoanCocHienTai)}</strong>
+                    </div>
+                    <div className="hd-money-row">
+                      <span>Tiền cọc được hoàn theo quy định</span>
+                      <strong>{formatSettlementMoney(doiSoatTraPhongCoc.tienCocDuocHoan)}</strong>
+                    </div>
+                  </section>
 
-            {doiSoatCanRespondCoc ? (
-              <div className="hd-action-buttons" style={{ marginTop: 20 }}>
-                <button
-                  className="kp-btn hd-btn-teal"
-                  type="button"
-                  disabled={doiSoatSubmitting}
-                  onClick={() => phanHoiDoiSoat(doiSoatTraPhongCoc, true)}
-                >
-                  <Icon name="check" />
-                  Đồng ý kết quả
-                </button>
-                <button
-                  className="kp-btn hd-btn-outline"
-                  type="button"
-                  disabled={doiSoatSubmitting}
-                  onClick={() => setShowDoiSoatReject((value) => !value)}
-                >
-                  <Icon name="support" />
-                  Yêu cầu điều chỉnh
-                </button>
-              </div>
-            ) : isReviewingDoiSoatBeforePayment ? (
-              <div className="hd-action-buttons" style={{ marginTop: 20 }}>
-                <button className="kp-btn hd-btn-teal" onClick={() => setTraPhongStepOverride(null)}>
-                  Tiếp tục thanh toán <Icon name="arrow-right" />
-                </button>
-              </div>
-            ) : null}
-
-            {doiSoatCanRespondCoc && showDoiSoatReject && (
-              <div className="hd-reject-box" style={{ marginTop: 15 }}>
-                <label>
-                  <span>Lý do yêu cầu điều chỉnh</span>
-                  <textarea
-                    rows={3}
-                    value={doiSoatRejectReason}
-                    onChange={(event) => setDoiSoatRejectReason(event.target.value)}
-                    placeholder="Nhập nội dung cần kế toán/ quản lý kiểm tra lại..."
-                    style={{ width: '100%', padding: '10px', borderRadius: 6, border: '1px solid #ccc', marginTop: 5 }}
-                  />
-                </label>
-                <button
-                  className="kp-btn hd-btn-danger"
-                  type="button"
-                  disabled={doiSoatSubmitting}
-                  onClick={() => phanHoiDoiSoat(doiSoatTraPhongCoc, false)}
-                  style={{ marginTop: 10 }}
-                >
-                  {doiSoatSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu điều chỉnh'}
-                </button>
+                </div>
               </div>
             )}
+
+            <div className="hd-card hd-settlement-summary-card">
+              <div className="hd-card-header">
+                <Icon name="payment" />
+                <h3>Tóm tắt quyết toán</h3>
+              </div>
+              <div className="hd-summary-money-row">
+                <span>Tiền cọc được hoàn</span>
+                <strong>{formatSettlementMoney(doiSoatTraPhongCoc.tienCocDuocHoan)}</strong>
+              </div>
+
+              <div className="hd-settlement-result">
+                <span>{doiSoatFinalLabel}</span>
+                <strong>{formatSettlementMoney(doiSoatCocAmount)}</strong>
+              </div>
+
+              {doiSoatCanRespondCoc ? (
+                <>
+                  <div className="hd-settlement-actions">
+                    <button
+                      className="kp-btn hd-btn-teal"
+                      type="button"
+                      disabled={doiSoatSubmitting}
+                      onClick={() => phanHoiDoiSoat(doiSoatTraPhongCoc, true)}
+                    >
+                      <Icon name="check" />
+                      Đồng ý kết quả
+                    </button>
+                    <button
+                      className="kp-btn hd-btn-orange"
+                      type="button"
+                      disabled={doiSoatSubmitting}
+                      onClick={() => setShowDoiSoatReject((value) => !value)}
+                    >
+                      × Không đồng ý
+                    </button>
+                  </div>
+                  {showDoiSoatReject && (
+                    <div className="hd-reject-box">
+                      <label>
+                        <span>Nội dung cần điều chỉnh</span>
+                        <textarea
+                          value={doiSoatRejectReason}
+                          onChange={(event) => setDoiSoatRejectReason(event.target.value)}
+                          placeholder="Nhập lý do cần điều chỉnh..."
+                          rows={3}
+                        />
+                      </label>
+                      <button
+                        className="kp-btn hd-btn-orange is-solid"
+                        type="button"
+                        disabled={doiSoatSubmitting}
+                        onClick={() => phanHoiDoiSoat(doiSoatTraPhongCoc, false)}
+                      >
+                        {doiSoatSubmitting ? 'Đang gửi...' : 'Gửi lý do từ chối'}
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : isReviewingDoiSoatBeforePayment ? (
+                <button
+                  className="kp-btn hd-btn-teal hd-payment-submit"
+                  type="button"
+                  onClick={() => setTraPhongStepOverride(null)}
+                >
+                  <Icon name="payment" />
+                  Quay lại thanh toán
+                </button>
+              ) : null}
+            </div>
           </div>
         )}
 
@@ -2452,10 +2496,6 @@ export default function KhachHangPortalPage() {
                         </button>
                       </div>
                     )}
-                    <div className="hd-settlement-note">
-                      <Icon name="info" />
-                      <p>Nếu bạn không đồng ý với kết quả, hãy gửi yêu cầu điều chỉnh cho quản lý.</p>
-                    </div>
                   </>
                 ) : null}
 
@@ -2682,25 +2722,6 @@ export default function KhachHangPortalPage() {
 
 
 
-          <div className="hd-card hd-rules">
-            <div className="hd-card-header">
-              <Icon name="info" />
-              <h3>Quy định phòng</h3>
-            </div>
-            {quyDinh.length ? (
-              <div className="hd-rule-list">
-                {quyDinh.map(qd => (
-                  <div key={qd.MaQuyDinh} className="hd-rule-item">
-                    <Icon name="check" />
-                    <div>
-                      <strong>{qd.TieuDeNoiQuy}</strong>
-                      <p>{qd.NoiDung}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : <p className="hd-muted">Chưa có quy định đang áp dụng.</p>}
-          </div>
         </div>
 
         </>

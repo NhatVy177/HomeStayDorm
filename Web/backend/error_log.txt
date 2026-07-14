@@ -1,0 +1,75 @@
+2026-07-13T16:06:23.186Z
+Error: Chuc nang nay chi danh cho khach hang
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at requireCustomer (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:7:11)
+    at Module.getHopDongDashboard (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:941:23)
+    at getHopDongDashboard (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:98:28)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+
+2026-07-13T16:06:23.196Z
+Error: Chuc nang nay chi danh cho khach hang
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at requireCustomer (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:7:11)
+    at Module.getDatCoc (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:602:23)
+    at getDatCoc (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:82:28)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+
+2026-07-13T16:06:23.201Z
+Error: Chuc nang nay chi danh cho khach hang
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at requireCustomer (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:7:11)
+    at Module.getHopDongDashboard (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:941:23)
+    at getHopDongDashboard (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:98:28)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+
+2026-07-13T16:06:24.777Z
+Error: Chuc nang nay chi danh cho khach hang
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at requireCustomer (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:7:11)
+    at Module.getHopDongDashboard (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:941:23)
+    at getHopDongDashboard (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:98:28)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+
+2026-07-13T17:51:09.638Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
+
+2026-07-13T17:52:20.181Z
+Error: Phiếu đối soát này đã được phản hồi hoặc không còn chờ xử lý.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.phanHoiDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:1377:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async phanHoiDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:124:18)
+
+2026-07-13T17:53:00.038Z
+Error: Phiếu đối soát này đã được phản hồi hoặc không còn chờ xử lý.
+    at createServiceError (file:///D:/NAM3/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at Module.phanHoiDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/services/khachMoi.service.js:1377:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async phanHoiDoiSoatTraPhong (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:124:18)
+

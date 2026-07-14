@@ -10,8 +10,6 @@ import DuyetCuTruTab from './DuyetCuTruTab.jsx';
 import XacNhanThanhToanTab from './XacNhanThanhToanTab.jsx';
 import BanGiaoPhongTab from './BanGiaoPhongTab.jsx';
 import XuLyTraPhongTab from './XuLyTraPhongTab.jsx';
-import CapNhatDichVuTab from './CapNhatDichVuTab.jsx';
-
 function Brand() {
   return (
     <Link className="kp-brand" to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '16px 20px', textDecoration: 'none' }}>
@@ -51,8 +49,7 @@ export default function NhanVienQuanLyPage() {
     { id: 'duyet-cu-tru', label: 'Duyệt cư trú', icon: 'fact_check' },
     { id: 'xac-nhan-thanh-toan', label: 'Duyệt thanh toán', icon: 'payments' },
     { id: 'lap-bien-ban-ban-giao', label: 'Bàn giao phòng', icon: 'description' },
-    { id: 'lap-bien-ban-kiem-tra-phong', label: 'Xử lý trả phòng', icon: 'receipt_long' },
-    { id: 'cap-nhat-dich-vu', label: 'Cập nhật dịch vụ', icon: 'bolt' }
+    { id: 'lap-bien-ban-kiem-tra-phong', label: 'Xử lý trả phòng', icon: 'receipt_long' }
   ];
 
   return (
@@ -127,8 +124,7 @@ export default function NhanVienQuanLyPage() {
           {activeTab === 'xac-nhan-thanh-toan' && <XacNhanThanhToanTab />}
           {activeTab === 'lap-bien-ban-ban-giao' && <BanGiaoPhongTab />}
           {activeTab === 'lap-bien-ban-kiem-tra-phong' && <XuLyTraPhongTab />}
-          {activeTab === 'cap-nhat-dich-vu' && <CapNhatDichVuTab />}
-          {activeTab !== 'xac-nhan-nhan-phong' && activeTab !== 'duyet-cu-tru' && activeTab !== 'xac-nhan-thanh-toan' && activeTab !== 'lap-bien-ban-ban-giao' && activeTab !== 'lap-bien-ban-kiem-tra-phong' && activeTab !== 'cap-nhat-dich-vu' && (
+          {activeTab !== 'xac-nhan-nhan-phong' && activeTab !== 'duyet-cu-tru' && activeTab !== 'xac-nhan-thanh-toan' && activeTab !== 'lap-bien-ban-ban-giao' && activeTab !== 'lap-bien-ban-kiem-tra-phong' && (
             <div className="ktp-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                 <h2 style={{ color: '#6f797a' }}>Đang phát triển chức năng: {navItems.find(i => i.id === activeTab)?.label}</h2>
             </div>

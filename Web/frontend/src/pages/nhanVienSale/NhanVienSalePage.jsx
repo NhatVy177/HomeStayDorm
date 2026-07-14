@@ -8,7 +8,6 @@ import HoSoDangKyTab from './HoSoDangKyTab.jsx';
 import LichXemPhongTab from './LichXemPhongTab.jsx';
 import DatCocTab from './DatCocTab.jsx';
 import LapHopDongTab from './LapHopDongTab.jsx';
-import KhachHangTab from './KhachHangTab.jsx';
 import TraCuuPhongTab from './TraCuuPhongTab.jsx';
 import DangKyTraPhongTab from './DangKyTraPhongTab.jsx';
 import NhanPhongTab from './NhanPhongTab.jsx';
@@ -56,8 +55,7 @@ export default function NhanVienSalePage() {
     { id: 'dat-coc', label: 'Đặt cọc', icon: 'account_balance_wallet' },
     { id: 'nhan-phong', label: 'Ghi nhận cư trú', icon: 'badge' },
     { id: 'hop-dong-thue', label: 'Hợp đồng thuê', icon: 'article' },
-    { id: 'tra-phong', label: 'Trả phòng', icon: 'logout' },
-    { id: 'khach-hang', label: 'Khách hàng', icon: 'person' }
+    { id: 'tra-phong', label: 'Trả phòng', icon: 'logout' }
   ];
 
   function handleTabChange(tabId) {
@@ -141,7 +139,6 @@ export default function NhanVienSalePage() {
           {activeTab === 'nhan-phong' && <NhanPhongTab />}
           {activeTab === 'hop-dong-thue' && <LapHopDongTab />}
           {activeTab === 'tra-phong' && <DangKyTraPhongTab />}
-          {activeTab === 'khach-hang' && <KhachHangTab />}
         </main>
       </div>
     </div>
