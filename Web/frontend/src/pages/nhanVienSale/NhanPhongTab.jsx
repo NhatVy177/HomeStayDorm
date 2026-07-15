@@ -316,14 +316,14 @@ export default function NhanPhongTab() {
   function validateForm() {
     if (!selectedPhieu) return 'Vui lòng chọn phiếu đặt cọc.';
     if (!checkedDocs) return 'Cần xác nhận đã đối chiếu giấy tờ tùy thân.';
-    if (members.some((item) => !item.hoTen || !item.cccd || !item.gioiTinh)) {
-      return 'Mỗi người cư trú cần có họ tên, CCCD và giới tính.';
+    if (members.some((item) => !item.hoTen || !item.cccd || !item.gioiTinh || !item.sdt)) {
+      return 'Mỗi người cư trú cần có họ tên, CCCD, giới tính và SĐT.';
     }
-    if (selectedPhieu.hinhThucThue === 'Ghép giường' && members.length > selectedPhieu.soGiuongDaCoc) {
-      return 'Số thành viên vượt số giường đã đặt cọc.';
+    if (members.some((item) => item.sdt.length !== 10)) {
+      return 'Số điện thoại của người cư trú phải có đúng 10 chữ số.';
     }
-    if (selectedPhieu.hinhThucThue === 'Nguyên phòng' && members.length > selectedPhieu.sucChuaToiDa) {
-      return 'Số thành viên vượt sức chứa tối đa của phòng.';
+    if (members.some((item) => item.cccd.length !== 12)) {
+      return 'CCCD của người cư trú phải có đúng 12 chữ số.';
     }
     return '';
   }
@@ -603,7 +603,17 @@ export default function NhanPhongTab() {
                       </label>
                       <label>
                         <div>CCCD <span style={{ color: '#dc2626', marginLeft: '4px' }}>(*)</span></div>
-                        <input className="ktp-input" value={member.cccd} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'cccd', event.target.value)} />
+                        <input
+                          className="ktp-input"
+                          value={member.cccd}
+                          maxLength={12}
+                          readOnly={isViewOnly}
+                          onChange={(event) => {
+                            if (isViewOnly) return;
+                            const val = event.target.value.replace(/\D/g, '');
+                            updateMember(index, 'cccd', val);
+                          }}
+                        />
                       </label>
                       <label>
                         Ngày sinh
@@ -617,8 +627,18 @@ export default function NhanPhongTab() {
                         </select>
                       </label>
                       <label>
-                        SĐT
-                        <input className="ktp-input" value={member.sdt} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'sdt', event.target.value)} />
+                        <div>SĐT <span style={{ color: '#dc2626', marginLeft: '4px' }}>(*)</span></div>
+                        <input
+                          className="ktp-input"
+                          value={member.sdt}
+                          maxLength={10}
+                          readOnly={isViewOnly}
+                          onChange={(event) => {
+                            if (isViewOnly) return;
+                            const val = event.target.value.replace(/\D/g, '');
+                            updateMember(index, 'sdt', val);
+                          }}
+                        />
                       </label>
                       <label style={{ gridColumn: 'span 2' }}>
                         Email
