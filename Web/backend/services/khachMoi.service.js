@@ -1147,6 +1147,8 @@ export async function getHopDongDashboard(user, options = {}) {
   hopDongDaChon.dichVu = result.recordsets[5] || [];
   hopDongDaChon.viPham = result.recordsets[6] || [];
   hopDongDaChon.hoanCoc = result.recordsets[7] || [];
+  hopDongDaChon.quyDinhHoanCoc = result.recordsets[8] || [];
+  hopDongDaChon.dieuKhoanViPham = result.recordsets[9] || [];
 
   hopDongDaChon.danhSachHopDong = danhSachHopDong.map((item) => (
     item.MaHopDong === hopDongDaChon.MaHopDong

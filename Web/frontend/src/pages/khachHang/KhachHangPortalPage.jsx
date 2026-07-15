@@ -2041,23 +2041,47 @@ export default function KhachHangPortalPage() {
       return true;
     });
 
-    const currentHopDongId = selectedHopDongId || filteredHopDong[0]?.MaHopDong || hopDongDashboard.MaHopDong || null;
-    const selectedHdFromList = danhSachHopDongAll.find((item) => item.MaHopDong === currentHopDongId) || hopDongDashboard;
-    const selectedHd = selectedHdFromList.MaHopDong === currentHopDongId ? selectedHdFromList : hopDongDashboard;
+    const selectedHd = hopDongDashboard;
 
     return (
       <section className="kh-hop-dong-tab">
         {danhSachHopDongAll.length > 0 && (
-          <div className="lxp-chips-bar" style={{ marginBottom: 16 }}>
-            <StatusFilterTabs
-              items={[
-                { key: 'Tất cả', label: 'Tất cả', count: countHopDongs('Tất cả') },
-                { key: 'Hiệu lực', label: 'Hiệu lực', count: countHopDongs('Hiệu lực') },
-                { key: 'Đã thanh lý', label: 'Đã thanh lý / Hết hạn', count: countHopDongs('Đã thanh lý') }
-              ]}
-              activeKey={hopDongFilter}
-              onChange={setHopDongFilter}
-            />
+          <div className="hd-control-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
+            <div className="hd-contract-selector-container">
+              {danhSachHopDongAll.length > 1 && (
+                <div className="hd-select-wrapper" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <label htmlFor="hd-contract-select" style={{ fontWeight: 650, fontSize: 14 }}>Hợp đồng của bạn:</label>
+                  <select
+                    id="hd-contract-select"
+                    value={selectedHd.MaHopDong}
+                    style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--kp-border)', fontSize: 14, color: 'var(--kp-text)', background: '#fff', cursor: 'pointer', outline: 'none' }}
+                    onChange={(e) => {
+                      setSelectedHopDongId(e.target.value);
+                      if (e.target.value !== hopDongDashboard.MaHopDong) {
+                        loadHopDongDashboard(e.target.value, true);
+                      }
+                    }}
+                  >
+                    {filteredHopDong.map((item) => (
+                      <option key={item.MaHopDong} value={item.MaHopDong}>
+                        {item.TenPhong || 'Phòng'} ({item.MaHopDong}) - {item.TrangThai}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="hd-filters-container">
+              <StatusFilterTabs
+                items={[
+                  { key: 'Tất cả', label: 'Tất cả', count: countHopDongs('Tất cả') },
+                  { key: 'Hiệu lực', label: 'Hiệu lực', count: countHopDongs('Hiệu lực') },
+                  { key: 'Đã thanh lý', label: 'Đã thanh lý / Hết hạn', count: countHopDongs('Đã thanh lý') }
+                ]}
+                activeKey={hopDongFilter}
+                onChange={setHopDongFilter}
+              />
+            </div>
           </div>
         )}
 
@@ -2067,38 +2091,7 @@ export default function KhachHangPortalPage() {
           </Empty>
         ) : (
           <div className="hd-tab-container">
-            <div className="hd-sidebar-list">
-              {filteredHopDong.map((item) => {
-                const isSelected = item.MaHopDong === selectedHd.MaHopDong;
-                return (
-                  <button
-                    className={`hd-contract-choice ${isSelected ? 'is-selected' : ''}`}
-                    key={item.MaHopDong}
-                    type="button"
-                    onClick={() => {
-                      setSelectedHopDongId(item.MaHopDong);
-                      if (item.MaHopDong !== hopDongDashboard.MaHopDong) {
-                        loadHopDongDashboard(item.MaHopDong, true);
-                      }
-                    }}
-                  >
-                    <span className="hd-contract-choice-main">
-                      <strong>{item.TenPhong || 'Phòng đang thuê'}</strong>
-                      <small>{item.MaHopDong} · {item.TenChiNhanh || 'HomestayDorm'} {item.MaGiuong ? `· Giường ${item.MaGiuong}` : ''}</small>
-                    </span>
-                    <span className="hd-contract-choice-meta">
-                      <strong>{formatMoney(item.GiaThue)}</strong>
-                      <span className={`hd-badge ${item.TrangThai === 'Hiệu lực' ? 'is-active' : 'is-inactive'}`} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
-                        {item.TrangThai}
-                      </span>
-                    </span>
-                    <Icon name={isSelected ? 'check' : 'arrow-right'} />
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="hd-detail-content">
+            <div className="hd-detail-content" style={{ width: '100%' }}>
               <div className="hd-banner" style={{ backgroundImage: `url(${selectedHd.UrlImg || getDemoRoomImage(selectedHd.MaPhong, 0)})` }}>
                 <div className="hd-banner-overlay" />
                 <div className="hd-banner-content">
@@ -2327,6 +2320,68 @@ export default function KhachHangPortalPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quy định hoàn cọc */}
+              {selectedHd.quyDinhHoanCoc && selectedHd.quyDinhHoanCoc.length > 0 && (
+                <div className="hd-card" style={{ marginTop: 20 }}>
+                  <div className="hd-card-header">
+                    <Icon name="calendar" />
+                    <h3>Quy định hoàn cọc</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <table className="hd-table">
+                      <thead>
+                        <tr>
+                          <th>Điều kiện / Quy định hoàn cọc</th>
+                          <th style={{ textAlign: 'right' }}>Tỷ lệ hoàn trả cọc</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedHd.quyDinhHoanCoc.map((qd) => (
+                          <tr key={qd.MaQuyDinhHoanCoc}>
+                            <td>{qd.TenQuyDinh}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#0d9488' }}>
+                              {qd.TyLeHoanCoc}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Danh mục điều khoản & Khấu trừ vi phạm */}
+              {selectedHd.dieuKhoanViPham && selectedHd.dieuKhoanViPham.length > 0 && (
+                <div className="hd-card" style={{ marginTop: 20 }}>
+                  <div className="hd-card-header">
+                    <Icon name="lock" />
+                    <h3>Danh mục điều khoản &amp; Khấu trừ vi phạm</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <table className="hd-table">
+                      <thead>
+                        <tr>
+                          <th>Nội dung điều khoản vi phạm</th>
+                          <th>Hình thức xử phạt</th>
+                          <th style={{ textAlign: 'right' }}>Mức phạt tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedHd.dieuKhoanViPham.map((dk) => (
+                          <tr key={dk.MaDieuKhoan}>
+                            <td>{dk.TenDieuKhoan}</td>
+                            <td>{dk.HinhThucXuPhat}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 'bold', color: dk.MucPhat > 0 ? '#dc2626' : 'inherit' }}>
+                              {dk.MucPhat > 0 ? formatMoney(dk.MucPhat) : 'Nhắc nhở / Cảnh cáo'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}

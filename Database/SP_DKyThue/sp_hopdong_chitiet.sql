@@ -352,5 +352,16 @@ BEGIN
     INNER JOIN dbo.PhieuTraPhong ptp ON ptp.MaPhieuTra = ds.MaPhieuTra
     WHERE ptp.MaHopDong = @MaHopDong
     ORDER BY ds.NgayLap DESC, ds.MaDoiSoat DESC;
+
+    -- 10. RECORDSET 8: Quy định hoàn cọc
+    SELECT MaQuyDinhHoanCoc, TenQuyDinh, TyLeHoanCoc
+    FROM dbo.QuyDinhHoanCoc
+    ORDER BY MaQuyDinhHoanCoc;
+
+    -- 11. RECORDSET 9: Các điều khoản vi phạm nội quy
+    SELECT MaDieuKhoan, TenDieuKhoan, HinhThucXuPhat, MucPhat
+    FROM dbo.DieuKhoanViPham
+    WHERE TrangThai = N'Hiệu lực'
+    ORDER BY MaDieuKhoan;
 END;
 GO
