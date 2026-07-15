@@ -1,0 +1,176 @@
+---
+title: "Thiết kế 3 lớp - UC05 - Ghi nhận bàn giao ra"
+---
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff", "mainBkg": "#ffffff", "primaryColor": "#ffffff", "primaryBorderColor": "#000000", "primaryTextColor": "#000000", "lineColor": "#000000", "secondaryColor": "#ffffff", "tertiaryColor": "#ffffff", "classText": "#000000"}}}%%
+classDiagram
+direction TB
+classDef default fill:#ffffff,stroke:#000000,color:#000000;
+
+%% ================= TẦNG GIAO DIỆN (GUI) =================
+class MHGhiNhanBanGiaoRa {
+  -txtTimKiem: TextBox
+  -dsPhieuTraPhong: GridView
+  -btnGhiNhanBanGiao: Button
+  -btnXemChiTiet: Button
+  --
+  +HienThi(): void
+  +TaiDanhSach(status: String): void
+  +btnGhiNhanBanGiao_Click(maPhieuTra: String): void
+  +HienThiThongBao(thongBao: String): void
+}
+
+class MHChiTietBanGiaoRa {
+  -lblHoTenKhach: Label
+  -lblMaHoSo: Label
+  -dsTaiSanBanGiao: GridView
+  -txtSoLuongThuHoi: TextBox
+  -txtGhiChuTaiSan: TextBox
+  -dsThanhVienHopDong: GridView
+  -chkXacNhanRoi: CheckBox
+  -btnLapBienBanBanGiaoRa: Button
+  -btnDong: Button
+  --
+  +HienThiChiTiet(maPhieuTra: String): void
+  +txtSoLuongThuHoi_Change(maTaiSan: String, soLuong: Integer): void
+  +chkXacNhanRoi_Change(isChecked: Boolean): void
+  +btnLapBienBanBanGiaoRa_Click(): void
+}
+
+%% ================= TẦNG NGHIỆP VỤ (BUS) =================
+class PhieuTraPhongBUS {
+  -maPhieuTra: String
+  -maHopDong: String
+  -trangThai: String
+  --
+  +LayDanhSachBanGiaoRa(maNhanVien: String, status: String): List~PhieuTraPhong~
+  +LayChiTietBanGiaoRa(maPhieuTra: String, maNhanVien: String): Object
+  +KiemTraDuDieuKienBanGiaoRa(maPhieuTra: String): Boolean
+}
+
+class TaiSanBUS {
+  -maTaiSan: String
+  -tenTaiSan: String
+  -soLuongBanGiaoVao: Integer
+  -soLuongThuHoi: Integer
+  --
+  +LayDanhSachTaiSanTheoPhieuTra(maPhieuTra: String): List~TaiSan~
+  +XacNhanThuHoiTaiSan(danhSachThuHoi: List): Boolean
+}
+
+class BienBanBanGiaoBUS {
+  -maBienBanBanGiao: String
+  -maPhieuTra: String
+  -ngayBanGiao: Date
+  -ghiChu: String
+  --
+  +LapBienBanBanGiaoRa(maPhieuTra: String, maNhanVien: String, dsThuHoi: List): Boolean
+  +KiemTraThongTinBanGiaoHopLe(dsThuHoi: List, xacNhanRoi: Boolean): Boolean
+}
+
+class ThanhVienHopDongBUS {
+  -maThanhVien: String
+  -maHopDong: String
+  -hoTen: String
+  -trangThai: String
+  --
+  +LayThanhVienTheoHopDong(maHopDong: String): List~ThanhVienHopDong~
+  +XacNhanKhachDaRoi(maHopDong: String): Boolean
+}
+
+class PhongGiuongBUS {
+  -maPhong: String
+  -maGiuong: String
+  -tinhTrangPhong: String
+  -tinhTrangGiuong: String
+  --
+  +CapNhatGiuongTrong(maHopDong: String): Boolean
+  +TinhToanLaiTrangThaiPhong(maPhong: String): String
+}
+
+class PhieuDatCocBUS {
+  -maPhieuDatCoc: String
+  -trangThaiCoc: String
+  --
+  +HuyPhieuDatCocLienQuan(maHopDong: String): Boolean
+}
+
+%% ================= TẦNG DỮ LIỆU (DAL - THEO SCHEMA) =================
+class PhieuTraPhongDB {
+  --
+  +DocDanhSachBanGiaoRa(maNhanVien: String): List~PhieuTraPhong~
+}
+
+class TaiSanDB {
+  --
+  +CapNhatSoLuongTaiSan(maTaiSan: String, soLuong: Integer): Boolean
+}
+
+class BienBanBanGiaoDB {
+  --
+  +ThemBienBanBanGiao(bienBan: BienBanBanGiao): Boolean
+}
+
+class ChiTietBanGiaoDB {
+  --
+  +DocChiTietBanGiaoVao(maHopDong: String): List~ChiTietBanGiao~
+  +ThemChiTietBanGiao(chiTiet: ChiTietBanGiao): Boolean
+}
+
+class ThanhVienHopDongDB {
+  --
+  +DocThanhVien(maHopDong: String): List~ThanhVienHopDong~
+  +CapNhatTrangThaiThanhVien(maHopDong: String, trangThai: String): Boolean
+}
+
+class GiuongDB {
+  --
+  +CapNhatTrangThaiGiuong(maGiuong: String, trangThai: String): Boolean
+}
+
+class PhongDB {
+  --
+  +DocDanhSachGiuongTheoPhong(maPhong: String): List~Giuong~
+  +CapNhatTrangThaiPhong(maPhong: String, trangThai: String): Boolean
+}
+
+class PhieuDatCocDB {
+  --
+  +CapNhatTrangThaiPhieuCoc(maPhieuDatCoc: String, trangThai: String): Boolean
+}
+
+%% Giao dien -> Nghiep vu
+MHGhiNhanBanGiaoRa o-- PhieuTraPhongBUS
+MHChiTietBanGiaoRa o-- PhieuTraPhongBUS
+MHChiTietBanGiaoRa o-- TaiSanBUS
+MHChiTietBanGiaoRa o-- BienBanBanGiaoBUS
+MHChiTietBanGiaoRa o-- ThanhVienHopDongBUS
+
+%% Nghiep vu -> Du lieu
+PhieuTraPhongBUS o-- PhieuTraPhongDB
+TaiSanBUS o-- ChiTietBanGiaoDB
+BienBanBanGiaoBUS o-- BienBanBanGiaoDB
+BienBanBanGiaoBUS o-- ChiTietBanGiaoDB
+BienBanBanGiaoBUS o-- TaiSanDB
+BienBanBanGiaoBUS o-- ThanhVienHopDongDB
+BienBanBanGiaoBUS o-- GiuongDB
+BienBanBanGiaoBUS o-- PhongDB
+BienBanBanGiaoBUS o-- PhieuDatCocDB
+ThanhVienHopDongBUS o-- ThanhVienHopDongDB
+PhongGiuongBUS o-- GiuongDB
+PhongGiuongBUS o-- PhongDB
+PhieuDatCocBUS o-- PhieuDatCocDB
+
+%% Ep bo cuc 3 hang: Giao dien / Nghiep vu / Du lieu
+MHGhiNhanBanGiaoRa ~~~ MHChiTietBanGiaoRa
+PhieuTraPhongBUS ~~~ TaiSanBUS
+TaiSanBUS ~~~ BienBanBanGiaoBUS
+BienBanBanGiaoBUS ~~~ ThanhVienHopDongBUS
+ThanhVienHopDongBUS ~~~ PhongGiuongBUS
+PhongGiuongBUS ~~~ PhieuDatCocBUS
+PhieuTraPhongDB ~~~ TaiSanDB
+TaiSanDB ~~~ BienBanBanGiaoDB
+BienBanBanGiaoDB ~~~ ChiTietBanGiaoDB
+ChiTietBanGiaoDB ~~~ ThanhVienHopDongDB
+ThanhVienHopDongDB ~~~ GiuongDB
+GiuongDB ~~~ PhongDB
+PhongDB ~~~ PhieuDatCocDB

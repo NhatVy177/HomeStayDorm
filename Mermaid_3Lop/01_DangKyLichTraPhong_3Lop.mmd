@@ -1,0 +1,161 @@
+---
+title: "Thiết kế 3 lớp - UC01 - Đăng ký lịch trả phòng"
+---
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff", "mainBkg": "#ffffff", "primaryColor": "#ffffff", "primaryBorderColor": "#000000", "primaryTextColor": "#000000", "lineColor": "#000000", "secondaryColor": "#ffffff", "tertiaryColor": "#ffffff", "classText": "#000000"}}}%%
+classDiagram
+direction TB
+classDef default fill:#ffffff,stroke:#000000,color:#000000;
+
+%% ================= TẦNG GIAO DIỆN (GUI) =================
+class MHDangKyLichTraPhong {
+  -txtTimKiem: TextBox
+  -chkDaTiepNhan: CheckBox
+  -dsKhachHang: GridView
+  -btnChonKhachHang: Button
+  -btnXemPhieuTra: Button
+  --
+  +HienThi(): void
+  +txtTimKiem_Change(tuKhoa: String): void
+  +btnChonKhachHang_Click(maKhachHang: String): void
+  +btnXemPhieuTra_Click(maKhachHang: String): void
+  +HienThiThongBao(thongBao: String): void
+}
+ 
+class MHDangKyLichTraPhongModal {
+  -lblHoTenKhach: Label
+  -lblSoDienThoai: Label
+  -lblLoaiHoSo: Label
+  -lblMaHoSo: Label
+  -lblTrangThaiHoSo: Label
+  -lblNgayBatDau: Label
+  -lblNgayKetThuc: Label
+  -lblNgayDatCoc: Label
+  -lblGiaThue: Label
+  -lblTienCoc: Label
+  -lblPhongGiuong: Label
+  -lblHinhThucThue: Label
+  -dtpNgayDuKienTra: DatePicker
+  -btnXacNhanDangKy: Button
+  -btnHuy: Button
+  --
+  +HienThi(maKhachHang: String): void
+  +HienThiThongTinHoSo(hoSo: Object): void
+  +btnXacNhanDangKy_Click(): void
+  +btnHuy_Click(): void
+}
+
+class MHXemPhieuTraPhong {
+  -lblHoTenKhach: Label
+  -lblSoDienThoai: Label
+  -lblLoaiHoSo: Label
+  -lblMaHoSo: Label
+  -lblTrangThaiHoSo: Label
+  -lblNgayBatDau: Label
+  -lblNgayKetThuc: Label
+  -lblNgayDatCoc: Label
+  -lblGiaThue: Label
+  -lblTienCoc: Label
+  -lblPhongGiuong: Label
+  -lblHinhThucThue: Label
+  -lblNgayDuKienTra: Label
+  -lblTrangThaiPhieu: Label
+  -btnDong: Button
+  --
+  +HienThiPhieuTraPhong(phieuTra: Object): void
+  +btnDong_Click(): void
+}
+
+%% ================= TẦNG NGHIỆP VỤ (BUS) =================
+class KhachHangBUS {
+  -maKhachHang: String
+  -hoTen: String
+  -sdt: String
+  -cccd: String
+  --
+  +TimKiemKhachHangTraPhong(tuKhoa: String, maNhanVien: String): List~KhachHang~
+}
+
+class HopDongThueBUS {
+  -maHopDong: String
+  -maKhachHang: String
+  -trangThai: String
+  -ngayBatDau: Date
+  -ngayKetThuc: Date
+  --
+  +LayHopDongHienHanh(maKhachHang: String, maNhanVien: String): HopDongThue
+  +KiemTraDuDieuKienDangKyTraPhong(hopDong: HopDongThue): Boolean
+}
+
+class PhieuDatCocBUS {
+  -maPhieuDatCoc: String
+  -maKhachHang: String
+  -trangThaiCoc: String
+  -ngayDatCoc: Date
+  -tienCoc: Decimal
+  --
+  +LayPhieuDatCocHienHanh(maKhachHang: String, maNhanVien: String): PhieuDatCoc
+  +KiemTraDuDieuKienDangKyTraPhong(phieuCoc: PhieuDatCoc): Boolean
+}
+
+class PhieuTraPhongBUS {
+  -maPhieuTra: String
+  -maHopDong: String
+  -maPhieuDatCoc: String
+  -ngayDangKyTra: Date
+  -ngayDuKienTra: Date
+  -trangThai: String
+  --
+  +LayHoSoLuuTruHienHanh(maKhachHang: String, maNhanVien: String): Object
+  +KiemTraNgayDuKienTra(ngayDuKienTra: Date): Boolean
+  +KiemTraChonDungMotHoSo(maHopDong: String, maPhieuDatCoc: String): Boolean
+  +KiemTraTonTaiPhieuTraChuaHuy(maHopDong: String, maPhieuDatCoc: String): Boolean
+  +DangKyLichTraPhong(maKhachHang: String, maHopDong: String, maPhieuDatCoc: String, ngayDuKienTra: Date, maNhanVien: String): Boolean
+}
+
+%% ================= TẦNG DỮ LIỆU (DAL - THEO SCHEMA) =================
+class KhachHangDB {
+  --
+  +TimKiemKhachHang(tuKhoa: String, maNhanVien: String): List~KhachHang~
+}
+
+class HopDongThueDB {
+  --
+  +DocHopDongHienHanh(maKhachHang: String, maNhanVien: String): HopDongThue
+}
+
+class PhieuDatCocDB {
+  --
+  +DocPhieuDatCocHienHanh(maKhachHang: String, maNhanVien: String): PhieuDatCoc
+}
+
+class PhieuTraPhongDB {
+  --
+  +KiemTraTonTaiPhieuTra(maHopDong: String, maPhieuDatCoc: String): Boolean
+  +LayPhieuTraPhong(maHopDong: String, maPhieuDatCoc: String): PhieuTraPhong
+  +ThemPhieuTraPhong(phieuTra: PhieuTraPhong): Boolean
+}
+
+%% Giao dien -> Nghiep vu
+MHDangKyLichTraPhong o-- KhachHangBUS
+MHDangKyLichTraPhongModal o-- PhieuTraPhongBUS
+MHDangKyLichTraPhongModal o-- HopDongThueBUS
+MHDangKyLichTraPhongModal o-- PhieuDatCocBUS
+MHXemPhieuTraPhong o-- PhieuTraPhongBUS
+
+%% Nghiep vu -> Du lieu
+KhachHangBUS o-- KhachHangDB
+HopDongThueBUS o-- HopDongThueDB
+PhieuDatCocBUS o-- PhieuDatCocDB
+PhieuTraPhongBUS o-- PhieuTraPhongDB
+PhieuTraPhongBUS o-- HopDongThueBUS
+PhieuTraPhongBUS o-- PhieuDatCocBUS
+
+%% Ep bo cuc 3 hang: Giao dien / Nghiep vu / Du lieu
+MHDangKyLichTraPhong ~~~ MHDangKyLichTraPhongModal
+MHDangKyLichTraPhongModal ~~~ MHXemPhieuTraPhong
+KhachHangBUS ~~~ HopDongThueBUS
+HopDongThueBUS ~~~ PhieuDatCocBUS
+PhieuDatCocBUS ~~~ PhieuTraPhongBUS
+KhachHangDB ~~~ HopDongThueDB
+HopDongThueDB ~~~ PhieuDatCocDB
+PhieuDatCocDB ~~~ PhieuTraPhongDB

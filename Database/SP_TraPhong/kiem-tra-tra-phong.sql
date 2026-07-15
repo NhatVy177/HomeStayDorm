@@ -215,7 +215,7 @@ BEGIN
     BEGIN
         THROW 50010, N'Phiếu trả phòng này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.', 1;
     END
-    
+
     -- Cập nhật trạng thái phiếu
     UPDATE dbo.PhieuTraPhong
     SET TrangThai = N'Chờ đối soát',
