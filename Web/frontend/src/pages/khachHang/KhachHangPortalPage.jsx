@@ -2187,6 +2187,149 @@ export default function KhachHangPortalPage() {
                   </div>
                 </div>
               )}
+
+              {/* Thành viên hợp đồng */}
+              {selectedHd.thanhVien && selectedHd.thanhVien.length > 0 && (
+                <div className="hd-card" style={{ marginTop: 20 }}>
+                  <div className="hd-card-header">
+                    <Icon name="people" />
+                    <h3>Thành viên hợp đồng</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <div className="hd-members-grid">
+                      {selectedHd.thanhVien.map((member) => (
+                        <div className="hd-member-card" key={member.MaThanhVien}>
+                          <h4>
+                            {member.HoTen}
+                            <span className={`kh-status-chip kh-status-chip--${member.TrangThai === 'Đang ở' || member.TrangThai === 'Đủ điều kiện' ? 'success' : member.TrangThai === 'Chờ duyệt' ? 'warning' : 'neutral'}`} style={{ fontSize: 11, padding: '2px 6px' }}>
+                              {member.TrangThai}
+                            </span>
+                          </h4>
+                          <p>Giới tính: <span>{member.GioiTinh}</span></p>
+                          <p>Ngày sinh: <span>{formatDate(member.NgaySinh)}</span></p>
+                          <p>CCCD: <span>{member.CCCD}</span></p>
+                          {member.SDT && <p>SĐT: <span>{member.SDT}</span></p>}
+                          {member.Email && <p>Email: <span>{member.Email}</span></p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Dịch vụ sử dụng */}
+              {selectedHd.dichVu && selectedHd.dichVu.length > 0 && (
+                <div className="hd-card" style={{ marginTop: 20 }}>
+                  <div className="hd-card-header">
+                    <Icon name="payment" />
+                    <h3>Dịch vụ sử dụng</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <table className="hd-table">
+                      <thead>
+                        <tr>
+                          <th>Tên dịch vụ</th>
+                          <th>Đơn giá</th>
+                          <th>Đơn vị tính</th>
+                          <th>Ghi chú</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedHd.dichVu.map((dv) => (
+                          <tr key={dv.MaChiTietDVHD}>
+                            <td>{dv.TenDichVu}</td>
+                            <td>{formatMoney(dv.DonGia)}</td>
+                            <td>{dv.DonViTinh}</td>
+                            <td>{dv.GhiChu || '--'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Biên bản vi phạm */}
+              {selectedHd.viPham && selectedHd.viPham.length > 0 && (
+                <div className="hd-card" style={{ marginTop: 20 }}>
+                  <div className="hd-card-header">
+                    <Icon name="lock" />
+                    <h3>Biên bản vi phạm</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <div className="hd-violation-list">
+                      {selectedHd.viPham.map((vp) => {
+                        const isResolved = vp.TrangThai === 'Đã xử lý';
+                        return (
+                          <div className={`hd-violation-item ${isResolved ? 'is-resolved' : ''}`} key={vp.MaBBViPham}>
+                            <div className="hd-violation-info">
+                              <h4>{vp.TenDieuKhoan || 'Vi phạm quy định'}</h4>
+                              <p>Mã BB: <strong>{vp.MaBBViPham}</strong> • Ngày: <strong>{formatDate(vp.NgayViPham)}</strong></p>
+                              <p>{vp.MoTaViPham}</p>
+                            </div>
+                            <div className="hd-violation-amount">
+                              <strong>{formatMoney(vp.SoTienPhat)}</strong>
+                              <span className={`kh-status-chip kh-status-chip--${isResolved ? 'success' : 'danger'}`}>
+                                {vp.TrangThai}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quyết toán đối soát hoàn cọc */}
+              {selectedHd.hoanCoc && selectedHd.hoanCoc.length > 0 && (
+                <div className="hd-card" style={{ marginTop: 20 }}>
+                  <div className="hd-card-header">
+                    <Icon name="calendar" />
+                    <h3>Quyết toán hoàn cọc khi trả phòng</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    {selectedHd.hoanCoc.map((ds) => (
+                      <div className="hd-settlement-info" key={ds.MaDoiSoat}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #bae6fd', paddingBottom: 10 }}>
+                          <strong>Quyết toán #{ds.MaDoiSoat} (Phiếu trả: {ds.MaPhieuTra})</strong>
+                          <span className={`kh-status-chip kh-status-chip--${ds.TrangThaiDoiSoat === 'Đã quyết toán' ? 'success' : 'warning'}`}>
+                            {ds.TrangThaiDoiSoat}
+                          </span>
+                        </div>
+                        <div className="hd-settlement-grid">
+                          <div>
+                            <div className="hd-summary-row"><span>Tiền cọc ban đầu</span><strong>{formatMoney(ds.TienCocBanDau)}</strong></div>
+                            <div className="hd-summary-row"><span>Số tháng lưu trú</span><strong>{ds.SoThangLuuTru} tháng</strong></div>
+                            <div className="hd-summary-row"><span>Tỷ lệ hoàn cọc</span><strong>{ds.TyLeHoanCocHienTai}%</strong></div>
+                            <div className="hd-summary-row"><span>Tiền cọc được hoàn</span><strong>{formatMoney(ds.TienCocDuocHoan)}</strong></div>
+                          </div>
+                          <div>
+                            <div className="hd-summary-row"><span>Tiền thuê còn nợ</span><strong>{formatMoney(ds.TienThueConNo)}</strong></div>
+                            <div className="hd-summary-row"><span>Tiền dịch vụ còn nợ</span><strong>{formatMoney(ds.TienDichVuConNo)}</strong></div>
+                            <div className="hd-summary-row"><span>Chi phí hư hại phòng</span><strong>{formatMoney(ds.TongChiPhiSuaChua)}</strong></div>
+                            <div className="hd-summary-row"><span>Tiền phạt vi phạm</span><strong>{formatMoney(ds.TienPhat)}</strong></div>
+                          </div>
+                        </div>
+                        <div style={{ marginTop: 15, paddingTop: 10, borderTop: '1px solid #bae6fd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <span style={{ fontSize: 13, color: '#4b5563' }}>Tổng khấu trừ: <strong>{formatMoney(ds.TongKhauTru)}</strong></span>
+                          </div>
+                          <div>
+                            {ds.LoaiQuyetToan === 'Hoàn cọc' ? (
+                              <span>Khách nhận lại: <strong style={{ color: '#16a34a', fontSize: 18 }}>{formatMoney(ds.SoTienHoanThucTe)}</strong></span>
+                            ) : ds.LoaiQuyetToan === 'Thu thêm' ? (
+                              <span>Khách phải nộp thêm: <strong style={{ color: '#dc2626', fontSize: 18 }}>{formatMoney(ds.SoTienKhachPhaiTT)}</strong></span>
+                            ) : (
+                              <strong style={{ color: '#4b5563' }}>Không phát sinh hoàn/nộp</strong>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
