@@ -2131,7 +2131,7 @@ export default function KhachHangPortalPage() {
               </div>
 
               {selectedHd.taiSan && selectedHd.taiSan.length > 0 && (
-                <div className="hd-card" style={{ marginTop: 20 }}>
+                <div className="hd-card">
                   <div className="hd-card-header">
                     <Icon name="room" />
                     <h3>Danh sách tài sản bàn giao</h3>
@@ -2160,7 +2160,7 @@ export default function KhachHangPortalPage() {
               )}
 
               {selectedHd.quyDinh && selectedHd.quyDinh.length > 0 && (
-                <div className="hd-card" style={{ marginTop: 20 }}>
+                <div className="hd-card">
                   <div className="hd-card-header">
                     <Icon name="profile" />
                     <h3>Nội quy &amp; Điều khoản vi phạm</h3>
@@ -2179,7 +2179,7 @@ export default function KhachHangPortalPage() {
 
               {/* Thành viên hợp đồng */}
               {selectedHd.thanhVien && selectedHd.thanhVien.length > 0 && (
-                <div className="hd-card" style={{ marginTop: 20 }}>
+                <div className="hd-card">
                   <div className="hd-card-header">
                     <Icon name="people" />
                     <h3>Thành viên hợp đồng</h3>
@@ -2208,7 +2208,7 @@ export default function KhachHangPortalPage() {
 
               {/* Dịch vụ sử dụng */}
               {selectedHd.dichVu && selectedHd.dichVu.length > 0 && (
-                <div className="hd-card" style={{ marginTop: 20 }}>
+                <div className="hd-card">
                   <div className="hd-card-header">
                     <Icon name="payment" />
                     <h3>Dịch vụ sử dụng</h3>
@@ -2240,7 +2240,7 @@ export default function KhachHangPortalPage() {
 
               {/* Biên bản vi phạm */}
               {selectedHd.viPham && selectedHd.viPham.length > 0 && (
-                <div className="hd-card" style={{ marginTop: 20 }}>
+                <div className="hd-card">
                   <div className="hd-card-header">
                     <Icon name="lock" />
                     <h3>Biên bản vi phạm</h3>
@@ -2272,7 +2272,7 @@ export default function KhachHangPortalPage() {
 
               {/* Quyết toán đối soát hoàn cọc */}
               {selectedHd.hoanCoc && selectedHd.hoanCoc.length > 0 && (
-                <div className="hd-card" style={{ marginTop: 20 }}>
+                <div className="hd-card">
                   <div className="hd-card-header">
                     <Icon name="calendar" />
                     <h3>Quyết toán hoàn cọc khi trả phòng</h3>
@@ -2322,7 +2322,7 @@ export default function KhachHangPortalPage() {
 
               {/* Quy định hoàn cọc */}
               {selectedHd.quyDinhHoanCoc && selectedHd.quyDinhHoanCoc.length > 0 && (
-                <div className="hd-card" style={{ marginTop: 20 }}>
+                <div className="hd-card">
                   <div className="hd-card-header">
                     <Icon name="calendar" />
                     <h3>Quy định hoàn cọc</h3>
@@ -2352,7 +2352,7 @@ export default function KhachHangPortalPage() {
 
               {/* Danh mục điều khoản & Khấu trừ vi phạm */}
               {selectedHd.dieuKhoanViPham && selectedHd.dieuKhoanViPham.length > 0 && (
-                <div className="hd-card" style={{ marginTop: 20 }}>
+                <div className="hd-card">
                   <div className="hd-card-header">
                     <Icon name="lock" />
                     <h3>Danh mục điều khoản &amp; Khấu trừ vi phạm</h3>
