@@ -598,11 +598,11 @@ export default function NhanPhongTab() {
                     )}
                     <div className="residence-form-grid">
                       <label style={{ gridColumn: 'span 2' }}>
-                        Họ tên <span style={{ color: '#dc2626', marginLeft: '4px' }}>(*)</span>
+                        <div>Họ tên <span style={{ color: '#dc2626', marginLeft: '4px' }}>(*)</span></div>
                         <input className="ktp-input" value={member.hoTen} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'hoTen', event.target.value)} />
                       </label>
                       <label>
-                        CCCD <span style={{ color: '#dc2626', marginLeft: '4px' }}>(*)</span>
+                        <div>CCCD <span style={{ color: '#dc2626', marginLeft: '4px' }}>(*)</span></div>
                         <input className="ktp-input" value={member.cccd} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'cccd', event.target.value)} />
                       </label>
                       <label>
@@ -610,7 +610,7 @@ export default function NhanPhongTab() {
                         <input className="ktp-input" type="date" value={member.ngaySinh} readOnly={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'ngaySinh', event.target.value)} />
                       </label>
                       <label>
-                        Giới tính <span style={{ color: '#dc2626', marginLeft: '4px' }}>(*)</span>
+                        <div>Giới tính <span style={{ color: '#dc2626', marginLeft: '4px' }}>(*)</span></div>
                         <select className="ktp-input" value={member.gioiTinh} disabled={isViewOnly} onChange={(event) => !isViewOnly && updateMember(index, 'gioiTinh', event.target.value)}>
                           <option>Nam</option>
                           <option>Nữ</option>
