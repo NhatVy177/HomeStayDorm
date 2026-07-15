@@ -2104,7 +2104,6 @@ export default function KhachHangPortalPage() {
                     <div className="hd-summary-row"><span>Hình thức thuê</span><strong>{selectedHd.HinhThucThue || 'N/A'}</strong></div>
                     {selectedHd.MaGiuong && <div className="hd-summary-row"><span>Mã giường</span><strong>{selectedHd.MaGiuong}</strong></div>}
                     <div className="hd-summary-row"><span>Ngày ký hợp đồng</span><strong>{formatDate(selectedHd.NgayKyHD)}</strong></div>
-                    <div className="hd-summary-row"><span>Ngày bắt đầu</span><strong>{formatDate(selectedHd.NgayBatDau)}</strong></div>
                     <div className="hd-summary-row"><span>Ngày kết thúc</span><strong>{formatDate(selectedHd.NgayKetThuc)}</strong></div>
                   </div>
                 </div>
