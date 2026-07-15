@@ -290,3 +290,94 @@ RequestError: Invalid object name 'dbo.ChiTietHopDong'.
     at Readable.push (node:internal/streams/readable:391:5)
     at nextAsync (node:internal/streams/from:194:22)
 
+2026-07-12T18:04:52.411Z
+RequestError: Invalid column name 'ThongTinNhanHoanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-12T18:04:52.428Z
+RequestError: Invalid column name 'ThongTinNhanHoanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-12T18:06:15.588Z
+RequestError: Invalid column name 'ThongTinNhanHoanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-12T18:06:15.600Z
+RequestError: Invalid column name 'ThongTinNhanHoanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-12T18:08:19.131Z
+RequestError: Invalid column name 'ThongTinNhanHoanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-12T18:08:19.143Z
+RequestError: Invalid column name 'ThongTinNhanHoanCoc'.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-12T18:22:46.322Z
+RequestError: Procedure or function SP_TraPhong_KhachHang_GuiYeuCau has too many arguments specified.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
