@@ -741,6 +741,7 @@ export default function KhachHangPortalPage() {
   const [uploading, setUploading] = useState(false);
   const [profileFilter, setProfileFilter] = useState('Tất cả');
   const [datCocFilter, setDatCocFilter] = useState('Tất cả');
+  const [hopDongFilter, setHopDongFilter] = useState('Tất cả');
   const [hopDongDashboard, setHopDongDashboard] = useState(null);
   const [selectedHopDongId, setSelectedHopDongId] = useState(null);
   const [hopDongLoading, setHopDongLoading] = useState(false);
@@ -815,6 +816,15 @@ export default function KhachHangPortalPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, datCocList, datCocLoading]);
+
+  useEffect(() => {
+    if (activeTab === 'hop-dong') {
+      loadHopDongDashboard(null, true);
+    } else if (activeTab === 'tra-phong') {
+      loadHopDongDashboard(null, false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   function goTo(tab) {
     if (locks[tab]) {
@@ -1399,11 +1409,14 @@ export default function KhachHangPortalPage() {
   }
 
   // ─── Hợp đồng ────────────────────────────────────────────────────────────
-  async function loadHopDongDashboard(maHopDong = selectedHopDongId) {
+  async function loadHopDongDashboard(maHopDong = selectedHopDongId, includeAll = (activeTab === 'hop-dong')) {
     setHopDongLoading(true);
     setHopDongLoadError('');
     try {
-      const params = maHopDong ? { maHopDong } : {};
+      const params = {
+        ...(maHopDong ? { maHopDong } : {}),
+        ...(includeAll ? { all: true } : {})
+      };
       const { data } = await khachMoiApi.getHopDongDashboard(params);
       const dashboard = data?.data || data || {};
       const danhSachHopDong = Array.isArray(dashboard.danhSachHopDong)
@@ -1990,6 +2003,197 @@ export default function KhachHangPortalPage() {
     );
   }
 
+  function renderHopDongTab() {
+    if (locks['hop-dong']) return renderLocked('hop-dong');
+    if (hopDongLoading) return <div className="kp-loading"><span /><p>Đang tải dữ liệu...</p></div>;
+    if (hopDongLoadError) {
+      return (
+        <Empty
+          title="Không tải được dữ liệu hợp đồng"
+          action={(
+            <button className="kp-btn hd-btn-teal" type="button" onClick={() => loadHopDongDashboard(null, true)}>
+              <Icon name="search" />
+              Tải lại
+            </button>
+          )}
+        >
+          {hopDongLoadError}
+        </Empty>
+      );
+    }
+    if (!hopDongDashboard) { loadHopDongDashboard(null, true); return <div className="kp-loading"><span /><p>Đang tải...</p></div>; }
+
+    const danhSachHopDongAll = Array.isArray(hopDongDashboard.danhSachHopDong)
+      ? hopDongDashboard.danhSachHopDong
+      : hopDongDashboard.MaHopDong
+        ? [hopDongDashboard]
+        : [];
+
+    const countHopDongs = (status) => {
+      if (status === 'Tất cả') return danhSachHopDongAll.length;
+      if (status === 'Hiệu lực') return danhSachHopDongAll.filter((h) => h.TrangThai === 'Hiệu lực').length;
+      return danhSachHopDongAll.filter((h) => h.TrangThai === 'Đã thanh lý' || h.TrangThai === 'Hết hạn').length;
+    };
+
+    const filteredHopDong = danhSachHopDongAll.filter((h) => {
+      if (hopDongFilter === 'Hiệu lực') return h.TrangThai === 'Hiệu lực';
+      if (hopDongFilter === 'Đã thanh lý') return h.TrangThai === 'Đã thanh lý' || h.TrangThai === 'Hết hạn';
+      return true;
+    });
+
+    const currentHopDongId = selectedHopDongId || filteredHopDong[0]?.MaHopDong || hopDongDashboard.MaHopDong || null;
+    const selectedHdFromList = danhSachHopDongAll.find((item) => item.MaHopDong === currentHopDongId) || hopDongDashboard;
+    const selectedHd = selectedHdFromList.MaHopDong === currentHopDongId ? selectedHdFromList : hopDongDashboard;
+
+    return (
+      <section className="kh-hop-dong-tab">
+        {danhSachHopDongAll.length > 0 && (
+          <div className="lxp-chips-bar" style={{ marginBottom: 16 }}>
+            <StatusFilterTabs
+              items={[
+                { key: 'Tất cả', label: 'Tất cả', count: countHopDongs('Tất cả') },
+                { key: 'Hiệu lực', label: 'Hiệu lực', count: countHopDongs('Hiệu lực') },
+                { key: 'Đã thanh lý', label: 'Đã thanh lý / Hết hạn', count: countHopDongs('Đã thanh lý') }
+              ]}
+              activeKey={hopDongFilter}
+              onChange={setHopDongFilter}
+            />
+          </div>
+        )}
+
+        {filteredHopDong.length === 0 ? (
+          <Empty title="Không có hợp đồng nào">
+            Bạn không có hợp đồng nào thuộc trạng thái này.
+          </Empty>
+        ) : (
+          <div className="hd-tab-container">
+            <div className="hd-sidebar-list">
+              {filteredHopDong.map((item) => {
+                const isSelected = item.MaHopDong === selectedHd.MaHopDong;
+                return (
+                  <button
+                    className={`hd-contract-choice ${isSelected ? 'is-selected' : ''}`}
+                    key={item.MaHopDong}
+                    type="button"
+                    onClick={() => {
+                      setSelectedHopDongId(item.MaHopDong);
+                      if (item.MaHopDong !== hopDongDashboard.MaHopDong) {
+                        loadHopDongDashboard(item.MaHopDong, true);
+                      }
+                    }}
+                  >
+                    <span className="hd-contract-choice-main">
+                      <strong>{item.TenPhong || 'Phòng đang thuê'}</strong>
+                      <small>{item.MaHopDong} · {item.TenChiNhanh || 'HomestayDorm'} {item.MaGiuong ? `· Giường ${item.MaGiuong}` : ''}</small>
+                    </span>
+                    <span className="hd-contract-choice-meta">
+                      <strong>{formatMoney(item.GiaThue)}</strong>
+                      <span className={`hd-badge ${item.TrangThai === 'Hiệu lực' ? 'is-active' : 'is-inactive'}`} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
+                        {item.TrangThai}
+                      </span>
+                    </span>
+                    <Icon name={isSelected ? 'check' : 'arrow-right'} />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="hd-detail-content">
+              <div className="hd-banner" style={{ backgroundImage: `url(${selectedHd.UrlImg || getDemoRoomImage(selectedHd.MaPhong, 0)})` }}>
+                <div className="hd-banner-overlay" />
+                <div className="hd-banner-content">
+                  <span className={`hd-badge ${selectedHd.TrangThai === 'Hiệu lực' ? 'is-active' : 'is-inactive'}`}>
+                    {selectedHd.TrangThai || 'Hợp đồng'}
+                  </span>
+                  <h2>{selectedHd.TenPhong || 'Phòng đang thuê'} - {selectedHd.TenLoaiPhong || 'Loại phòng'}</h2>
+                  <p>{selectedHd.TenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(selectedHd.MaPhong) || 1} • {selectedHd.MaGiuong ? `Giường ${selectedHd.MaGiuong}` : 'Nguyên phòng'}</p>
+                </div>
+              </div>
+
+              <div className="hd-grid-info">
+                <div className="hd-card">
+                  <div className="hd-card-header">
+                    <Icon name="contract" />
+                    <h3>Thông tin hợp đồng</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <div className="hd-summary-row"><span>Mã hợp đồng</span><strong>{selectedHd.MaHopDong}</strong></div>
+                    <div className="hd-summary-row"><span>Mã phiếu đặt cọc</span><strong>{selectedHd.MaPhieuCoc}</strong></div>
+                    <div className="hd-summary-row"><span>Hình thức thuê</span><strong>{selectedHd.HinhThucThue || 'N/A'}</strong></div>
+                    {selectedHd.MaGiuong && <div className="hd-summary-row"><span>Mã giường</span><strong>{selectedHd.MaGiuong}</strong></div>}
+                    <div className="hd-summary-row"><span>Ngày ký hợp đồng</span><strong>{formatDate(selectedHd.NgayKyHD)}</strong></div>
+                    <div className="hd-summary-row"><span>Ngày bắt đầu</span><strong>{formatDate(selectedHd.NgayBatDau)}</strong></div>
+                    <div className="hd-summary-row"><span>Ngày kết thúc</span><strong>{formatDate(selectedHd.NgayKetThuc)}</strong></div>
+                  </div>
+                </div>
+
+                <div className="hd-card">
+                  <div className="hd-card-header">
+                    <Icon name="payment" />
+                    <h3>Chi tiết tài chính</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <div className="hd-summary-row"><span>Giá thuê hằng tháng</span><strong>{formatMoney(selectedHd.GiaThue)}</strong></div>
+                    <div className="hd-summary-row"><span>Kỳ thanh toán</span><strong>Mỗi {selectedHd.KyThanhToan} tháng</strong></div>
+                    <div className="hd-summary-row"><span>Số tiền cọc</span><strong>{formatMoney(selectedHd.SoTienCoc)}</strong></div>
+                    {selectedHd.DiaChi && <div className="hd-summary-row"><span>Địa chỉ chi nhánh</span><strong>{selectedHd.DiaChi}</strong></div>}
+                  </div>
+                </div>
+              </div>
+
+              {selectedHd.taiSan && selectedHd.taiSan.length > 0 && (
+                <div className="hd-card" style={{ marginTop: 20 }}>
+                  <div className="hd-card-header">
+                    <Icon name="room" />
+                    <h3>Danh sách tài sản bàn giao</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <table className="hd-table">
+                      <thead>
+                        <tr>
+                          <th>Tên tài sản</th>
+                          <th style={{ textAlign: 'center' }}>Số lượng</th>
+                          <th style={{ textAlign: 'right' }}>Chi phí đền bù/Sửa chữa</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedHd.taiSan.map((ts) => (
+                          <tr key={ts.MaTaiSan}>
+                            <td>{ts.TenTaiSan}</td>
+                            <td style={{ textAlign: 'center' }}>{ts.SoLuong}</td>
+                            <td style={{ textAlign: 'right' }}>{formatMoney(ts.DonGia)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {selectedHd.quyDinh && selectedHd.quyDinh.length > 0 && (
+                <div className="hd-card" style={{ marginTop: 20 }}>
+                  <div className="hd-card-header">
+                    <Icon name="profile" />
+                    <h3>Nội quy &amp; Điều khoản vi phạm</h3>
+                  </div>
+                  <div className="hd-card-body">
+                    <ul className="hd-rules-list" style={{ paddingLeft: 20, margin: 0 }}>
+                      {selectedHd.quyDinh.map((qd) => (
+                        <li key={qd.MaQuyDinh} style={{ marginBottom: 12 }}>
+                          <strong>{qd.TieuDeNoiQuy}</strong>: {qd.NoiDung}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
+
   function renderHopDong() {
     if (locks['tra-phong']) return renderLocked('tra-phong');
     if (hopDongLoading) return <div className="kp-loading"><span /><p>Đang tải dữ liệu...</p></div>;
@@ -2010,7 +2214,14 @@ export default function KhachHangPortalPage() {
     }
     if (!hopDongDashboard) { loadHopDongDashboard(); return <div className="kp-loading"><span /><p>Đang tải...</p></div>; }
     
-    if (!hopDongDashboard.MaHopDong) {
+    const danhSachHopDongAll = Array.isArray(hopDongDashboard.danhSachHopDong)
+      ? hopDongDashboard.danhSachHopDong
+      : hopDongDashboard.MaHopDong
+        ? [hopDongDashboard]
+        : [];
+    const danhSachHopDong = danhSachHopDongAll.filter((h) => h.TrangThai === 'Hiệu lực' || h.yeuCauTraPhong);
+
+    if (danhSachHopDong.length === 0) {
       if (!datCocList) { return <div className="kp-loading"><span /><p>Đang tải dữ liệu...</p></div>; }
       const phieu = datCocList.find((p) => (
         !p.coHopDong
@@ -2027,16 +2238,9 @@ export default function KhachHangPortalPage() {
       );
     }
 
-    const danhSachHopDong = Array.isArray(hopDongDashboard.danhSachHopDong)
-      ? hopDongDashboard.danhSachHopDong
-      : hopDongDashboard.MaHopDong
-        ? [hopDongDashboard]
-        : [];
-    const currentHopDongId = selectedHopDongId || hopDongDashboard.MaHopDong || danhSachHopDong[0]?.MaHopDong || null;
-    const selectedHopDongFromList = danhSachHopDong.find((item) => item.MaHopDong === currentHopDongId) || hopDongDashboard;
-    const hd = hopDongDashboard.MaHopDong === currentHopDongId
-      ? hopDongDashboard
-      : selectedHopDongFromList;
+    const currentHopDongId = selectedHopDongId || danhSachHopDong[0]?.MaHopDong || null;
+    const selectedHopDongFromList = danhSachHopDong.find((item) => item.MaHopDong === currentHopDongId) || danhSachHopDong[0];
+    const hd = selectedHopDongFromList;
     const showContractPicker = !hd.yeuCauTraPhong?.doiSoat && danhSachHopDong.length > 1;
     const taiSan = hd.taiSan || [];
     const quyDinh = hd.quyDinh || [];
@@ -3046,7 +3250,7 @@ export default function KhachHangPortalPage() {
     if (activeTab === 'ho-so') return renderProfiles();
     if (activeTab === 'lich-xem') return renderSchedules();
     if (activeTab === 'dat-coc') return renderDatCoc();
-    if (activeTab === 'hop-dong') return renderSimpleUnlocked('hop-dong', 'Chi tiết hợp đồng', 'contract');
+    if (activeTab === 'hop-dong') return renderHopDongTab();
     if (activeTab === 'tra-phong') return renderHopDong();
     if (activeTab === 'phong-giuong') return renderSimpleUnlocked('phong-giuong', 'Phòng/Giường của tôi', 'room');
     if (activeTab === 'hoa-don') return renderSimpleUnlocked('hoa-don', 'Hóa đơn', 'invoice');

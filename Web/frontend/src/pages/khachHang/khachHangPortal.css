@@ -4142,3 +4142,51 @@
     width: 100%;
   }
 }
+
+/* ─── HỢP ĐỒNG TAB ─── */
+.hd-tab-container {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.hd-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hd-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hd-grid-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.hd-badge.is-inactive {
+  background: rgba(156, 163, 175, 0.3);
+  border-color: rgba(156, 163, 175, 0.5);
+  color: #e5e7eb;
+}
+
+@media (max-width: 900px) {
+  .hd-tab-container {
+    grid-template-columns: 1fr;
+  }
+  .hd-sidebar-list {
+    max-height: 250px;
+  }
+  .hd-grid-info {
+    grid-template-columns: 1fr;
+  }
+}

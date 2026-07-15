@@ -942,9 +942,12 @@ export async function getHopDongDashboard(user, options = {}) {
   const maHopDongChon = String(options.maHopDong || options.MaHopDong || '').trim() || null;
   const pool = await getPool();
 
+  const includePast = options.all === 'true' || options.all === true;
+
   const hopDongResult = await pool.request()
     .input('MaKhachHang', sql.VarChar(6), khachHangId)
     .input('MaHopDongChon', sql.VarChar(6), maHopDongChon)
+    .input('IncludePast', sql.Bit, includePast ? 1 : 0)
     .query(`
       SELECT
         hd.MaHopDong,
@@ -1053,7 +1056,8 @@ export async function getHopDongDashboard(user, options = {}) {
       ) AS ds
       WHERE hd.MaKhachHang = @MaKhachHang
         AND (
-          hd.TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
+          @IncludePast = 1
+          OR hd.TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
           OR ptp.MaPhieuTra IS NOT NULL
         )
       ORDER BY
