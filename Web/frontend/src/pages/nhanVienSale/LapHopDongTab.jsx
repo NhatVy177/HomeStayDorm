@@ -1454,18 +1454,9 @@ export default function LapHopDongTab() {
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <button 
-                  className="lhd-btn lhd-btn-secondary"
-                  style={{ width: '100%', padding: '12px' }} 
-                  onClick={handleReset}
-                >
-                  <Icon name="list" /> Quay lại trang quản lý
-                </button>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => { setShowSuccessModal(false); setShowChiTiet(true); }} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="description" /> Xem hợp đồng</button>
-                  <button onClick={handleReset} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="list" /> Danh sách phiếu</button>
-                </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button onClick={handleReset} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="arrow_back" /> Quay lại</button>
+                <button onClick={() => { setShowSuccessModal(false); setShowChiTiet(true); }} className="lhd-btn lhd-btn-primary" style={{ flex: 1, padding: '10px' }}><Icon name="description" /> Xem hợp đồng</button>
               </div>
             </div>
           </div>
