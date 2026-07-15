@@ -2141,7 +2141,7 @@ export default function KhachHangPortalPage() {
                         <tr>
                           <th>Tên tài sản</th>
                           <th style={{ textAlign: 'center' }}>Số lượng</th>
-                          <th style={{ textAlign: 'right' }}>Chi phí đền bù/Sửa chữa</th>
+                          <th style={{ textAlign: 'right' }}>Chi phí đền bù/Sửa chữa (/ 1 món)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2149,7 +2149,7 @@ export default function KhachHangPortalPage() {
                           <tr key={ts.MaTaiSan}>
                             <td>{ts.TenTaiSan}</td>
                             <td style={{ textAlign: 'center' }}>{ts.SoLuong}</td>
-                            <td style={{ textAlign: 'right' }}>{formatSettlementMoney(ts.DonGia)}</td>
+                            <td style={{ textAlign: 'right' }}>{formatSettlementMoney(ts.DonGia)}<span style={{ color: '#888', fontSize: '12px', marginLeft: '4px' }}>/ 1 món</span></td>
                           </tr>
                         ))}
                       </tbody>
