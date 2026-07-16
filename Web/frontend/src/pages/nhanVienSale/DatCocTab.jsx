@@ -591,10 +591,6 @@ export default function DatCocTab() {
                 style={{ width: '100%', backgroundColor: '#fff' }}
               />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6f797a', paddingBottom: '9px' }}>
-              <Icon name="pending_actions" style={{ fontSize: '16px' }} />
-              <span>Yêu cầu trong ngày <strong style={{ color: '#191c1d' }}>{new Date().toLocaleDateString('vi-VN')}</strong></span>
-            </div>
             {search && (
               <button
                 type="button"
@@ -866,7 +862,7 @@ export default function DatCocTab() {
             <div style={{ background: '#2f6765', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '12px 12px 0 0' }}>
               <div>
                 <h3 style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 700 }}>Gửi yêu cầu đặt cọc</h3>
-                <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '13px' }}>Mã hồ sơ: <strong style={{ color: '#fff' }}>{selectedItem.maDangKy}</strong> · {selectedItem.hoTen}</p>
+                <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '13px' }}>Mã phiếu đăng ký: <strong style={{ color: '#fff' }}>{selectedItem.maDangKy}</strong></p>
               </div>
               <button onClick={closeSendModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff', display: 'flex', padding: '4px' }}><Icon name="close" /></button>
             </div>
@@ -903,7 +899,6 @@ export default function DatCocTab() {
                         </label>
                         <label style={{ fontSize: '12px', color: '#6f797a', fontWeight: 600 }}>Giới tính
                           <select className="ktp-input" style={{ width: '100%', marginTop: '4px' }} value={infoForm.gioiTinh} onChange={(e) => setInfoForm((f) => ({ ...f, gioiTinh: e.target.value }))}>
-                            <option value="">— Không đổi —</option>
                             <option value="Nam">Nam</option>
                             <option value="Nữ">Nữ</option>
                           </select>
@@ -982,12 +977,12 @@ export default function DatCocTab() {
             </div>
             <div className="ktp-modal-footer" style={{ justifyContent: 'space-between' }}>
               {showRejectPanel ? (
-                <>
+                <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
                   <button className="ktp-btn-cancel" onClick={() => { setShowRejectPanel(false); setLyDoTuChoi(''); }} disabled={rejecting}>Quay lại</button>
                   <button className="ktp-btn-submit" onClick={handleTuChoiHoSo} disabled={rejecting || !lyDoTuChoi.trim()} style={{ backgroundColor: '#b91c1c' }}>
-                    {rejecting ? 'Đang từ chối...' : 'Xác nhận từ chối'}
+                    {rejecting ? 'Đang xử lý...' : 'Từ chối'}
                   </button>
-                </>
+                </div>
               ) : editingInfo ? (
                 <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
                   <button className="ktp-btn-cancel" onClick={() => setEditingInfo(false)} disabled={savingInfo}>Hủy</button>
@@ -1071,7 +1066,6 @@ export default function DatCocTab() {
                       <div style={{ background: '#f4f7f7', border: '1px solid #e1e6e6', borderRadius: '12px', padding: '12px 14px', display: 'grid', gap: '7px', fontSize: '13px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Ngân hàng</span><b>Vietcombank (VCB)</b></div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Số tài khoản</span><b>1012345678</b></div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Nội dung</span><b style={{ color: '#2f6765' }}>DATCOC_{selectedPhieu.maPhieuDatCoc}</b></div>
                       </div>
                     )}
                     {ctPhuongThuc === 'Tiền mặt' && (

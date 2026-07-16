@@ -187,7 +187,7 @@ export default function LapPhieuCocTab() {
   const soNguoiCan = Number(selected?.soNguoiDuKienO || 0);
   const sucChua = Number(selected?.sucChuaToiDa || 0);
 
-  const { hinhThuc: hinhThucTuSuy, lyDo: lyDoHinhThuc } = suyHinhThuc(selected);
+  const { hinhThuc: hinhThucTuSuy } = suyHinhThuc(selected);
   const khoaHinhThuc = !!hinhThucTuSuy;
 
   //   Ghép giường  -> số giường chọn = số người dự kiến ở
@@ -323,7 +323,7 @@ export default function LapPhieuCocTab() {
                 <div className="ktp-section ktp-info-box-outline">
                   <h4 className="ktp-section-title"><Icon name="description" /> 2. Thông tin hồ sơ</h4>
                   <div>
-                    <div className="ktp-info-row"><span className="ktp-info-label">Mã hồ sơ:</span> <span className="ktp-info-value">{selected.maDangKy}</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Mã phiếu đăng ký:</span> <span className="ktp-info-value">{selected.maDangKy}</span></div>
                     <div className="ktp-info-row"><span className="ktp-info-label">Số người:</span> <span className="ktp-info-value">{selected.soNguoiDuKienO} ({selected.soNam ?? 0} nam, {selected.soNu ?? 0} nữ){khacGioi ? ' · khác giới' : ''}</span></div>
                     <div className="ktp-info-row"><span className="ktp-info-label">Ngày đăng ký:</span> <span className="ktp-info-value">{formatNgay(selected.ngayDangKy)}</span></div>
                   </div>
@@ -355,7 +355,6 @@ export default function LapPhieuCocTab() {
                     <span style={{ fontWeight: 700, color: '#191c1d' }}>
                       {hinhThucTuSuy === 'Ghep' ? 'Ghép giường' : 'Nguyên phòng'}
                     </span>
-                    <span style={{ fontSize: 12, color: '#6f797a', marginLeft: 'auto', textAlign: 'right' }}>{lyDoHinhThuc}</span>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', gap: 16 }}>
