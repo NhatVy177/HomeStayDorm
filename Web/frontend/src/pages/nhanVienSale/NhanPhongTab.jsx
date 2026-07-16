@@ -388,23 +388,23 @@ export default function NhanPhongTab() {
 
 
 
-      <section className="residence-filter">
-        <div className="ktp-filter-group">
+      <section className="residence-filter" style={{ display: 'block', maxWidth: '480px' }}>
+        <div className="ktp-filter-group" style={{ margin: 0 }}>
           <label className="ktp-filter-label">Tìm kiếm phiếu cọc</label>
           <div className="ktp-input-icon-wrap">
             <span className="ktp-input-icon"><Icon name="search" /></span>
             <input
               className="ktp-input ktp-input-with-icon"
               value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
+              onChange={(event) => {
+                const val = event.target.value;
+                setSearchText(val);
+                loadData(val);
+              }}
               placeholder="Nhập mã phiếu, tên khách hàng, SĐT"
             />
           </div>
         </div>
-        <button className="ktp-btn-submit residence-search-btn" type="button" onClick={() => loadData(searchText)}>
-          <Icon name="search" />
-          Tìm kiếm
-        </button>
       </section>
 
       {/* Bộ lọc trạng thái dạng chip (giống DatCocTab) */}

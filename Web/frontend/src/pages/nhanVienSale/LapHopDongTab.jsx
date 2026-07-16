@@ -688,14 +688,18 @@ export default function LapHopDongTab() {
         </div>
       )}
 
-      <form onSubmit={handleSearch} className="lhd-card" style={{ display: 'grid', gridTemplateColumns: '1fr 160px auto', gap: '12px', alignItems: 'flex-end', marginBottom: '20px', padding: '16px 20px' }}>
+      <div className="lhd-card" style={{ display: 'grid', gridTemplateColumns: '1fr 160px', gap: '12px', alignItems: 'flex-end', marginBottom: '20px', padding: '16px 20px' }}>
         <div className="lhd-form-group">
           <label className="lhd-label">Tìm kiếm</label>
           <input 
             className="lhd-input" 
             placeholder="Tra cứu theo mã phiếu, tên khách hàng, số điện thoại..." 
             value={searchText} 
-            onChange={e => setSearchText(e.target.value)} 
+            onChange={e => {
+              const val = e.target.value;
+              setSearchText(val);
+              loadPhieuCocs(val, ngayTaoFilter);
+            }} 
           />
         </div>
         <div className="lhd-form-group">
@@ -704,17 +708,14 @@ export default function LapHopDongTab() {
             type="date" 
             className="lhd-input" 
             value={ngayTaoFilter} 
-            onChange={e => setNgayTaoFilter(e.target.value)} 
+            onChange={e => {
+              const val = e.target.value;
+              setNgayTaoFilter(val);
+              loadPhieuCocs(searchText, val);
+            }} 
           />
         </div>
-        <button 
-          type="submit"
-          className="lhd-btn lhd-btn-primary"
-          style={{ height: '40px' }}
-        >
-          {loading ? 'Đang tải...' : 'Áp dụng'}
-        </button>
-      </form>
+      </div>
 
       <div className="lhd-table-wrapper">
         <table className="lhd-table">

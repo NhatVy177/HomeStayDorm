@@ -287,24 +287,24 @@ export default function ThuNhanPhongTab() {
 
 
 
-      <form className="tnp-filter-card" onSubmit={handleSearch}>
-        <label className="tnp-search-field">
+      <div className="tnp-filter-card" style={{ display: 'grid', gridTemplateColumns: '1fr', maxWidth: '480px', marginBottom: '20px' }}>
+        <label className="tnp-search-field" style={{ margin: 0 }}>
           <span>Tìm kiếm</span>
           <div>
             <Icon name="search" />
             <input
               type="text"
               value={tuKhoa}
-              onChange={e => setTuKhoa(e.target.value)}
+              onChange={e => {
+                const val = e.target.value;
+                setTuKhoa(val);
+                loadContracts({ tuKhoa: val });
+              }}
               placeholder="Tìm mã hợp đồng, tên khách hàng, SĐT..."
             />
           </div>
         </label>
-        <button type="submit" className="tnp-filter-submit">
-          <Icon name="search" />
-          Tìm kiếm
-        </button>
-      </form>
+      </div>
 
       {/* Bộ lọc trạng thái dạng chip (giống DatCocTab) */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
