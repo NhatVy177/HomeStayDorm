@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { datCocApi } from '../datCoc/datCoc.api.js';
 import ResultModal from '../../components/common/ResultModal.jsx';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
 export function Icon({ name, className = '' }) {
   const shapes = {
@@ -80,6 +81,35 @@ const formatGio = (v) => {
   return isNaN(d.getTime()) ? '—' : d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
 };
 
+// Danh sách gồm phiếu "chờ chốt" (luôn hiện, không giới hạn ngày lập) CỘNG phiếu
+// "đã chốt"/"đã hủy" LẬP TRONG HÔM NAY (SP_DanhSachChoTinhTienCoc lọc theo ThoiDiemDatCoc),
+// để kế toán xem lại được ngay phiếu vừa xử lý, giống cách Sale chỉ thấy yêu cầu trong ngày.
+const STATUS_CONFIG = {
+  'Chờ chốt': { chip: 'Chờ chốt', badge: { bg: '#fff4e5', fg: '#b45309' } },
+  'Đã chốt':  { chip: 'Đã chốt',  badge: { bg: '#e6f6ec', fg: '#15803d' } },
+  'Đã hủy':   { chip: 'Đã hủy',   badge: { bg: '#fdecec', fg: '#b91c1c' } },
+};
+const STATUS_ORDER = ['Chờ chốt', 'Đã chốt', 'Đã hủy'];
+
+// "Sắp hết hạn" chỉ áp dụng cho phiếu CÒN chờ chốt (quá hạn 24h thì SP_NhaChoCocHetHan tự hủy).
+const StatusBadge = ({ trangThaiPhieu, hanChot }) => {
+  const cfg = STATUS_CONFIG[trangThaiPhieu] || STATUS_CONFIG['Chờ chốt'];
+  let label = cfg.chip;
+  let s = cfg.badge;
+  if (trangThaiPhieu === 'Chờ chốt' && hanChot) {
+    const conLaiGio = (new Date(hanChot).getTime() - Date.now()) / 3600000;
+    if (conLaiGio <= 3) {
+      label = 'Sắp hết hạn';
+      s = { bg: '#fdecec', fg: '#b91c1c' };
+    }
+  }
+  return (
+    <span style={{ background: s.bg, color: s.fg, padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+      {label}
+    </span>
+  );
+};
+
 const PAGE_SIZE = 10;
 const pageBtnStyle = (active, disabled) => ({
   minWidth: '34px', height: '34px', padding: '0 10px', borderRadius: '8px',
@@ -115,6 +145,7 @@ export default function LapPhieuDatCocTab() {
   const [result, setResult] = useState(null);
 
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
 
   const loadDanhSach = useCallback(async () => {
@@ -132,7 +163,8 @@ export default function LapPhieuDatCocTab() {
 
   useEffect(() => { loadDanhSach(); }, [loadDanhSach]);
 
-  const filteredList = useMemo(() => {
+  // Lọc theo tìm kiếm (chưa áp chip) — dùng để đếm chip
+  const baseFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return list;
     return list.filter((it) => (it.hoTen || '').toLowerCase().includes(q)
@@ -141,7 +173,21 @@ export default function LapPhieuDatCocTab() {
       || (it.maPhieuDatCoc || '').toLowerCase().includes(q));
   }, [list, search]);
 
-  useEffect(() => { setPage(1); }, [search]);
+  const counts = useMemo(() => {
+    const c = { all: baseFiltered.length };
+    STATUS_ORDER.forEach((s) => { c[s] = 0; });
+    baseFiltered.forEach((it) => { if (c[it.trangThaiPhieu] != null) c[it.trangThaiPhieu] += 1; });
+    return c;
+  }, [baseFiltered]);
+
+  const filteredList = useMemo(
+    () => (statusFilter === 'all' ? baseFiltered : baseFiltered.filter((it) => it.trangThaiPhieu === statusFilter)),
+    [baseFiltered, statusFilter]
+  );
+
+  const chonChip = (key) => setStatusFilter(key);
+
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
   const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
   const pageSafe = Math.min(page, totalPages);
   const pagedList = useMemo(
@@ -163,6 +209,7 @@ export default function LapPhieuDatCocTab() {
     setLyDoHuy('');
   };
 
+  const readOnly = !!(selected && selected.trangThaiPhieu !== 'Chờ chốt');
   const huy = quyetDinh === 'huy';
   const guiDuoc = !huy || lyDoHuy.trim().length > 0;
 
@@ -197,6 +244,14 @@ export default function LapPhieuDatCocTab() {
           )}
         </div>
 
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          items={[{ key: 'all', label: 'Tất cả' }, ...STATUS_ORDER.map((s) => ({ key: s, label: STATUS_CONFIG[s].chip }))]}
+          activeKey={statusFilter}
+          counts={counts}
+          onChange={chonChip}
+        />
+
         <table className="ktp-table">
           <thead>
             <tr>
@@ -206,16 +261,17 @@ export default function LapPhieuDatCocTab() {
               <th>Hình thức</th>
               <th>Tiền cọc</th>
               <th>Hạn chốt</th>
+              <th className="text-center">Trạng thái</th>
               <th className="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Đang tải...</td></tr>
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Đang tải...</td></tr>
             ) : loadError ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#b3261e' }}>{loadError}</td></tr>
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#b3261e' }}>{loadError}</td></tr>
             ) : filteredList.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Không có phiếu nào chờ chốt</td></tr>
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Không có phiếu nào</td></tr>
             ) : pagedList.map((item) => (
               <tr key={item.maPhieuDatCoc}>
                 <td style={{ fontWeight: '600', color: '#2f6765' }}>{item.maPhieuDatCoc}</td>
@@ -224,8 +280,15 @@ export default function LapPhieuDatCocTab() {
                 <td>{item.hinhThucThue}</td>
                 <td className="ktp-text-primary" style={{ fontWeight: 600 }}>{formatTien(item.soTienCoc)}đ</td>
                 <td>{formatGio(item.hanChot)}</td>
+                <td className="text-center"><StatusBadge trangThaiPhieu={item.trangThaiPhieu} hanChot={item.hanChot} /></td>
                 <td className="text-center">
-                  <button className="ktp-btn-action-fill" onClick={() => openDoiSoat(item)}>Đối soát</button>
+                  {item.trangThaiPhieu === 'Chờ chốt' ? (
+                    <button className="ktp-btn-action-fill" onClick={() => openDoiSoat(item)}>Đối soát</button>
+                  ) : (
+                    <button className="ktp-btn-action" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#2f6765', padding: '6px 12px', fontSize: '13px' }} onClick={() => openDoiSoat(item)}>
+                      Xem chi tiết
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -309,7 +372,16 @@ export default function LapPhieuDatCocTab() {
                 </div>
               </div>
 
-              {/* QUYẾT ĐỊNH */}
+              {/* QUYẾT ĐỊNH — chỉ hiện khi phiếu còn chờ chốt; phiếu đã chốt/đã hủy chỉ xem lại */}
+              {readOnly ? (
+                <div className="ktp-section ktp-info-box-outline" style={{ gridColumn: '1 / -1' }}>
+                  <h4 className="ktp-section-title"><Icon name="fact_check" /> 5. Trạng thái</h4>
+                  <div className="ktp-info-row">
+                    <span className="ktp-info-label">Kết quả:</span>
+                    <span className="ktp-info-value"><StatusBadge trangThaiPhieu={selected.trangThaiPhieu} hanChot={selected.hanChot} /></span>
+                  </div>
+                </div>
+              ) : (
               <div className="ktp-section ktp-info-box-outline" style={{ gridColumn: '1 / -1' }}>
                 <h4 className="ktp-section-title"><Icon name="fact_check" /> 5. Quyết định</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -356,12 +428,15 @@ export default function LapPhieuDatCocTab() {
                   </div>
                 )}
               </div>
+              )}
             </div>
             <div className="ktp-modal-footer">
               <button className="ktp-btn-cancel" onClick={() => setSelected(null)} disabled={submitting}>Đóng</button>
-              <button className="ktp-btn-submit" onClick={handleChot} disabled={submitting || !guiDuoc}>
-                {submitting ? 'Đang xử lý...' : (huy ? 'Hủy phiếu' : 'Chốt phiếu')}
-              </button>
+              {!readOnly && (
+                <button className="ktp-btn-submit" onClick={handleChot} disabled={submitting || !guiDuoc}>
+                  {submitting ? 'Đang xử lý...' : (huy ? 'Hủy phiếu' : 'Chốt phiếu')}
+                </button>
+              )}
             </div>
           </div>
         </div>
