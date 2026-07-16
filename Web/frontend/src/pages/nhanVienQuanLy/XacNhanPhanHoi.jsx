@@ -260,9 +260,13 @@ export default function XacNhanPhanHoi() {
     try {
       const res = await xacNhanPhanHoiApi.getDanhSachChoXuLy();
       const rawDs = res.data.danhSach || [];
-      // Lọc bỏ những phiếu không có phản hồi (ví dụ khách đồng ý luôn thì không vào luồng này)
-     const validDs = rawDs.filter(r => r.trangThaiDoiSoat === 'Chờ phản hồi');
-     //const validDs = rawDs;
+      // Lọc bỏ những phiếu khách "Đồng ý" (không có phản hồi) đi thẳng qua trạng thái khác.
+      // Đồng thời phân biệt với ghi chú lưu thông tin tài khoản ngân hàng (có chữ "Chủ tài khoản:").
+      const validDs = rawDs.filter(r => {
+        if (r.trangThaiDoiSoat === 'Chờ phản hồi') return true;
+        if (r.ghiChuPhanHoiKhach && !r.ghiChuPhanHoiKhach.includes('Chủ tài khoản:')) return true;
+        return false;
+      });
       setDs(validDs);
     } catch (err) {
       showToast(err?.response?.data?.message || 'Lỗi tải danh sách.', 'error');
