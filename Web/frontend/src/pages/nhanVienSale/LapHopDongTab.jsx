@@ -1124,14 +1124,7 @@ export default function LapHopDongTab() {
                   <span style={{ opacity: 0.85 }}>Sức chứa tối đa:</span>
                   <span style={{ fontWeight: '700' }}>{sucChua} người</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginTop: '8px', alignItems: 'center' }}>
-                  <span style={{ opacity: 0.85 }}>Giới tính cho phép:</span>
-                  <span style={{ backgroundColor: 'var(--lhd-white)', color: 'var(--lhd-primary)', padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>{selectedPhieu?.gioiTinhChoPhep}</span>
-                </div>
-                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px', opacity: 0.85, lineHeight: '1.5', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                  <Icon name="info" style={{ fontSize: '14px', flexShrink: 0, marginTop: '1px' }} />
-                  Giới tính các thành viên phải tuân thủ giới tính cho phép của phòng.
-                </div>
+
               </div>
             </div>
           </div>
@@ -1461,18 +1454,9 @@ export default function LapHopDongTab() {
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <button 
-                  className="lhd-btn lhd-btn-secondary"
-                  style={{ width: '100%', padding: '12px' }} 
-                  onClick={handleReset}
-                >
-                  <Icon name="list" /> Quay lại trang quản lý
-                </button>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => { setShowSuccessModal(false); setShowChiTiet(true); }} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="description" /> Xem hợp đồng</button>
-                  <button onClick={handleReset} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="list" /> Danh sách phiếu</button>
-                </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button onClick={handleReset} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="arrow_back" /> Quay lại</button>
+                <button onClick={() => { setShowSuccessModal(false); setShowChiTiet(true); }} className="lhd-btn lhd-btn-primary" style={{ flex: 1, padding: '10px' }}><Icon name="description" /> Xem hợp đồng</button>
               </div>
             </div>
           </div>

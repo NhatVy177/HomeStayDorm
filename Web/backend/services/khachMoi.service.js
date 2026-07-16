@@ -950,152 +950,16 @@ export async function getHopDongDashboard(user, options = {}) {
   const maHopDongChon = String(options.maHopDong || options.MaHopDong || '').trim() || null;
   const pool = await getPool();
 
-  const hopDongResult = await pool.request()
-    .input('MaKhachHang', sql.VarChar(6), khachHangId)
-    .input('MaHopDongChon', sql.VarChar(6), maHopDongChon)
-    .query(`
-      SELECT
-        hd.MaHopDong,
-        hd.NgayKyHD,
-        hd.NgayBatDau,
-        hd.NgayKetThuc,
-        hd.SoGiuongThue,
-        hd.GiaThue,
-        hd.KyThanhToan,
-        hd.TrangThai,
-        hd.MaPhieuCoc,
-        hd.MaKhachHang,
-        pdc.HinhThucThue AS HinhThucThue,
+  // Gọi Stored Procedure để lấy chi tiết hợp đồng
+  const result = await executeProcedure('dbo.SP_KhachMoi_ChiTietHopDong', [
+    { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
+    { name: 'MaHopDong', type: sql.VarChar(6), value: maHopDongChon }
+  ]);
 
-        pdc.SoTienCoc,
-        p.MaPhong,
-        p.TenPhong,
-        ct.MaGiuong,
-        lp.TenLoaiPhong,
-        cn.TenChiNhanh,
-        cn.DiaChi,
-        ha.UrlImg,
-        ptp.MaPhieuTra,
-        ptp.NgayDangKyTra,
-        ptp.NgayDuKienTra,
-        ptp.NgayTraThucTe,
-        ptp.TrangThai AS TrangThaiTraPhong,
-        ds.MaDoiSoat AS MaDoiSoatTraPhong,
-        ds.NgayLap AS NgayLapDoiSoatTraPhong,
-        ds.TienCocBanDau AS TienCocBanDauTraPhong,
-        ds.SoThangLuuTru AS SoThangLuuTruTraPhong,
-        ds.TyLeHoanCocHienTai AS TyLeHoanCocHienTaiTraPhong,
-        ds.TienCocDuocHoan AS TienCocDuocHoanTraPhong,
-        ds.TienThueConNo AS TienThueConNoTraPhong,
-        ds.TienDichVuConNo AS TienDichVuConNoTraPhong,
-        ds.TongChiPhiSuaChua AS TongChiPhiSuaChuaTraPhong,
-        ds.TienPhat AS TienPhatTraPhong,
-        ds.TongKhauTru AS TongKhauTruTraPhong,
-        ds.SoTienHoanThucTe AS SoTienHoanThucTeTraPhong,
-        ds.SoTienKhachPhaiTT AS SoTienKhachPhaiTTTraPhong,
-        ds.PhuongThucThanhToan AS PhuongThucThanhToanTraPhong,
-        ds.ChungTuThanhToan AS ChungTuThanhToanTraPhong,
-        ds.NgayThanhToan AS NgayThanhToanTraPhong,
-        ds.ThongTinNhanHoanCoc AS ThongTinNhanHoanCocTraPhong,
-        ds.GhiChuPhanHoiKhach AS GhiChuPhanHoiKhachTraPhong,
-        ds.LoaiQuyetToan AS LoaiQuyetToanTraPhong,
-        ds.TrangThai AS TrangThaiDoiSoatTraPhong
-      FROM dbo.HopDongThue AS hd
-      INNER JOIN dbo.PhieuDatCoc AS pdc
-        ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-      OUTER APPLY (
-        SELECT TOP 1 ctdc.MaPhong, ctdc.MaGiuong
-        FROM dbo.ChiTietDatCoc AS ctdc
-        WHERE ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-        ORDER BY ctdc.MaChiTietDC
-      ) AS ct
-      LEFT JOIN dbo.Phong AS p
-        ON p.MaPhong = ct.MaPhong
-      LEFT JOIN dbo.LoaiPhong AS lp
-        ON lp.MaLoaiPhong = p.MaLoaiPhong
-      LEFT JOIN dbo.ChiNhanh AS cn
-        ON cn.MaChiNhanh = p.MaChiNhanh
-      OUTER APPLY (
-        SELECT TOP 1 hap.UrlImg
-        FROM dbo.HinhAnhPhong AS hap
-        WHERE hap.MaPhong = p.MaPhong
-        ORDER BY hap.STTAnh
-      ) AS ha
-      OUTER APPLY (
-        SELECT TOP 1
-          p.MaPhieuTra,
-          p.NgayDangKyTra,
-          p.NgayDuKienTra,
-          p.NgayTraThucTe,
-          p.TrangThai
-        FROM dbo.PhieuTraPhong AS p
-        WHERE p.MaHopDong = hd.MaHopDong
-          AND p.TrangThai NOT IN (N'Hủy', N'Hoàn tất')
-        ORDER BY p.NgayDangKyTra DESC, p.MaPhieuTra DESC
-      ) AS ptp
-      OUTER APPLY (
-        SELECT TOP 1
-          d.MaDoiSoat,
-          d.NgayLap,
-          d.TienCocBanDau,
-          d.SoThangLuuTru,
-          d.TyLeHoanCocHienTai,
-          d.TienCocDuocHoan,
-          d.TienThueConNo,
-          d.TienDichVuConNo,
-          d.TongChiPhiSuaChua,
-          d.TienPhat,
-          d.TongKhauTru,
-          d.SoTienHoanThucTe,
-          d.SoTienKhachPhaiTT,
-          d.PhuongThucThanhToan,
-          d.ChungTuThanhToan,
-          d.NgayThanhToan,
-          d.ThongTinNhanHoanCoc,
-          d.GhiChuPhanHoiKhach,
-          d.LoaiQuyetToan,
-          d.TrangThai
-        FROM dbo.DoiSoat AS d
-        WHERE d.MaPhieuTra = ptp.MaPhieuTra
-        ORDER BY d.NgayLap DESC, d.MaDoiSoat DESC
-      ) AS ds
-      WHERE hd.MaKhachHang = @MaKhachHang
-        AND (
-          hd.TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
-          OR ptp.MaPhieuTra IS NOT NULL
-        )
-      ORDER BY
-        CASE WHEN @MaHopDongChon IS NOT NULL AND hd.MaHopDong = @MaHopDongChon THEN 0 ELSE 1 END,
-        CASE WHEN hd.TrangThai = N'Hiệu lực' THEN 0 ELSE 1 END,
-        hd.NgayKyHD DESC,
-        hd.MaHopDong DESC;
-    `);
-
-  const hopDong = hopDongResult.recordset?.[0] || null;
+  const hopDong = result.recordsets[0]?.[0] || null;
   if (!hopDong) {
     return { data: null };
   }
-
-  const [taiSanResult, quyDinhResult] = await Promise.all([
-    pool.request()
-      .input('MaPhong', sql.VarChar(4), hopDong.MaPhong || null)
-      .query(`
-        SELECT MaTaiSan, TenTaiSan, SoLuong, DonGia
-        FROM dbo.TaiSan
-        WHERE MaPhong = @MaPhong
-        ORDER BY MaTaiSan;
-      `),
-    pool.request()
-      .query(`
-        SELECT MaQuyDinh, TieuDeNoiQuy, NoiDung
-        FROM dbo.QuiDinh
-        WHERE TrangThai = N'Hiệu lực'
-        ORDER BY MaQuyDinh;
-      `)
-  ]);
-
-  hopDong.taiSan = taiSanResult.recordset || [];
-  hopDong.quyDinh = quyDinhResult.recordset || [];
 
   let chiTietKhauTru = {
     hoaDonConNo: [],
@@ -1132,55 +996,48 @@ export async function getHopDongDashboard(user, options = {}) {
             hdt.MaHopDong AS maHopDong,
             hdt.GiaThue AS giaThueHopDong,
             hdt.KyThanhToan AS kyThanhToanHopDong
-          FROM dbo.HoaDon hd
-          INNER JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = hd.MaHopDong
+          FROM dbo.HoaDon AS hd
+          INNER JOIN dbo.HopDongThue AS hdt ON hdt.MaHopDong = hd.MaHopDong
           OUTER APPLY (
-            SELECT SUM(ISNULL(cthd.ThanhTien, 0)) AS tienDichVuConNo
-            FROM dbo.ChiTietHoaDon cthd
-            WHERE cthd.MaHoaDon = hd.MaHoaDon
-          ) dvNo
-          WHERE @MaHopDong IS NOT NULL
-            AND hdt.MaHopDong = @MaHopDong
-            AND hd.TrangThai IN (N'Chưa TT', N'Nợ')
-          ORDER BY hd.NgayHanTT ASC, hd.NgayLap ASC, hd.MaHoaDon ASC;
+            SELECT SUM(ct.ThanhTien) AS tienDichVuConNo
+            FROM dbo.ChiTietHoaDon AS ct
+            WHERE ct.MaHoaDon = hd.MaHoaDon
+              AND ct.GhiChu <> N'Tiền phòng'
+          ) AS dvNo
+          WHERE hd.TrangThai = N'Chưa thanh toán'
+            AND hdt.MaHopDong = @MaHopDong;
         `),
       pool.request()
         .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
         .query(`
           SELECT
+            ct.MaChiTietHD AS maChiTietHD,
+            ct.NoiDung AS noiDung,
+            ct.SoLuong AS soLuong,
+            ct.DonGia AS donGia,
+            ct.ThanhTien AS thanhTien,
+            ct.GhiChu AS ghiChu,
             hd.MaHoaDon AS maHoaDon,
-            cthd.MaChiTietHD AS maChiTietHD,
-            N'Dịch vụ' AS loaiKhoanNo,
-            dv.TenDichVu AS tenDichVu,
-            cthd.SoLuong AS soLuong,
-            cthd.DonViTinh AS donViTinh,
-            cthd.DonGia AS donGia,
-            ISNULL(cthd.ThanhTien, 0) AS thanhTien,
-            cthd.MaPhieuGhi AS maPhieuGhi
-          FROM dbo.HoaDon hd
-          INNER JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = hd.MaHopDong
-          INNER JOIN dbo.ChiTietHoaDon cthd ON cthd.MaHoaDon = hd.MaHoaDon
-          LEFT JOIN dbo.DichVuHopDong dvhd ON dvhd.MaChiTietDVHD = cthd.MaChiTietDVHD
-          LEFT JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
-          WHERE @MaHopDong IS NOT NULL
-            AND hdt.MaHopDong = @MaHopDong
-            AND hd.TrangThai IN (N'Chưa TT', N'Nợ')
-          ORDER BY hd.MaHoaDon ASC, cthd.MaChiTietHD ASC;
+            hd.TrangThai AS trangThaiHoaDon
+          FROM dbo.ChiTietHoaDon AS ct
+          INNER JOIN dbo.HoaDon AS hd ON hd.MaHoaDon = ct.MaHoaDon
+          WHERE hd.TrangThai = N'Chưa thanh toán'
+            AND hd.MaHopDong = @MaHopDong;
         `),
       pool.request()
-        .input('MaPhieuTra', sql.VarChar(6), hopDong.MaPhieuTra)
+        .input('MaPhieuTra', sql.VarChar(6), hopDong.MaPhieuTra || null)
         .query(`
           SELECT
             bbkt.MaBienBanKT AS maBienBanKT,
+            bbkt.MaPhieuTra AS maPhieuTra,
             bbkt.NgayKiemTra AS ngayKiemTra,
             bbkt.TinhTrangPhong AS tinhTrangPhong,
             bbkt.TongChiPhiSuaChua AS tongChiPhiSuaChua
           FROM dbo.BienBanKiemTraPhong bbkt
-          WHERE bbkt.MaPhieuTra = @MaPhieuTra
-          ORDER BY bbkt.NgayKiemTra ASC, bbkt.MaBienBanKT ASC;
+          WHERE bbkt.MaPhieuTra = @MaPhieuTra;
         `),
       pool.request()
-        .input('MaPhieuTra', sql.VarChar(6), hopDong.MaPhieuTra)
+        .input('MaPhieuTra', sql.VarChar(6), hopDong.MaPhieuTra || null)
         .query(`
           SELECT
             bbkt.MaBienBanKT AS maBienBanKT,
@@ -1288,10 +1145,19 @@ export async function getHopDongDashboard(user, options = {}) {
     taiKhoanThanhToan
   });
 
-  const danhSachHopDong = (hopDongResult.recordset || []).map((row) => normalizeHopDongDashboardItem(row));
+  const danhSachHopDongRaw = result.recordsets[1] || [];
+  const danhSachHopDong = danhSachHopDongRaw.map((row) => normalizeHopDongDashboardItem(row));
   const hopDongDaChon = normalizeHopDongDashboardItem(hopDong, chiTietKhauTru);
-  hopDongDaChon.taiSan = taiSanResult.recordset || [];
-  hopDongDaChon.quyDinh = quyDinhResult.recordset || [];
+
+  hopDongDaChon.taiSan = result.recordsets[2] || [];
+  hopDongDaChon.quyDinh = result.recordsets[3] || [];
+  hopDongDaChon.thanhVien = result.recordsets[4] || [];
+  hopDongDaChon.dichVu = result.recordsets[5] || [];
+  hopDongDaChon.viPham = result.recordsets[6] || [];
+  hopDongDaChon.hoanCoc = result.recordsets[7] || [];
+  hopDongDaChon.quyDinhHoanCoc = result.recordsets[8] || [];
+  hopDongDaChon.dieuKhoanViPham = result.recordsets[9] || [];
+
   hopDongDaChon.danhSachHopDong = danhSachHopDong.map((item) => (
     item.MaHopDong === hopDongDaChon.MaHopDong
       ? { ...item, yeuCauTraPhong: hopDongDaChon.yeuCauTraPhong }

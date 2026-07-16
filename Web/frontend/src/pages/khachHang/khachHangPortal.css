@@ -4201,3 +4201,173 @@
     width: 100%;
   }
 }
+
+/* ─── HỢP ĐỒNG TAB ─── */
+.kh-hop-dong-tab {
+  width: 100%;
+}
+
+.hd-tab-container {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.hd-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hd-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hd-grid-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.hd-badge.is-inactive {
+  background: rgba(156, 163, 175, 0.3);
+  border-color: rgba(156, 163, 175, 0.5);
+  color: #e5e7eb;
+}
+
+/* Thành viên hợp đồng */
+.hd-members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.hd-member-card {
+  background: #f8fafc;
+  border: 1px solid var(--kp-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hd-member-card h4 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--kp-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hd-member-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--kp-muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+.hd-member-card p span {
+  font-weight: 500;
+  color: var(--kp-text);
+}
+
+/* Biên bản vi phạm */
+.hd-violation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.hd-violation-item {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 10px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.hd-violation-item.is-resolved {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.hd-violation-info h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #c53030;
+}
+
+.hd-violation-item.is-resolved .hd-violation-info h4 {
+  color: #15803d;
+}
+
+.hd-violation-info p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--kp-muted);
+}
+
+.hd-violation-amount {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hd-violation-amount strong {
+  font-size: 16px;
+  color: #c53030;
+}
+
+.hd-violation-item.is-resolved .hd-violation-amount strong {
+  color: #15803d;
+}
+
+/* Đối soát hoàn cọc */
+.hd-settlement-info {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 12px;
+}
+
+.hd-settlement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .hd-tab-container {
+    grid-template-columns: 1fr;
+  }
+  .hd-sidebar-list {
+    max-height: 250px;
+  }
+  .hd-grid-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .hd-settlement-grid {
+    grid-template-columns: 1fr;
+  }
+}
