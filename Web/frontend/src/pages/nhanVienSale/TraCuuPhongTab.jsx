@@ -102,15 +102,6 @@ export default function TraCuuPhongTab() {
 
   return (
     <div className="ktp-container">
-      
-      <div style={{ backgroundColor: '#eef6f6', border: '1px solid #cce3e3', borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-        <div style={{ backgroundColor: '#2f6765', color: '#fff', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icon name="info" style={{ fontSize: '18px' }} />
-        </div>
-        <div style={{ fontSize: '13px', color: '#3f494a', lineHeight: '1.5', fontWeight: '500' }}>
-          Chọn tiêu chí để kiểm tra tình trạng phòng/giường phù hợp với nhu cầu thuê. Hệ thống sẽ tự động cập nhật số lượng trống theo thời gian thực.
-        </div>
-      </div>
 
       <div style={filterCardStyle}>
         <div style={filterHeaderStyle}>

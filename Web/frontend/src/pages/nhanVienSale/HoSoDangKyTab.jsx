@@ -69,6 +69,12 @@ const ALLOWED_RENT_AREAS = [
 ];
 
 const ROOM_TYPE_OPTIONS = ['Phòng 2 người', 'Phòng 4 người', 'Phòng 6 người', 'Phòng VIP 2 người'];
+const ROOM_TYPE_CAPACITY = {
+  'Phòng 2 người': 2,
+  'Phòng 4 người': 4,
+  'Phòng 6 người': 6,
+  'Phòng VIP 2 người': 2
+};
 
 const EMPTY_CREATE_FORM = {
   hoTen: '',
@@ -180,6 +186,17 @@ function getCreateGenderCounts(form) {
     soNam: Math.max(0, Number(form.soNam || 0)),
     soNu: Math.max(0, Number(form.soNu || 0))
   };
+}
+
+function splitRoomTypes(value) {
+  return String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function getRoomTypeCapacity(roomType) {
+  if (!roomType) return null;
+  if (ROOM_TYPE_CAPACITY[roomType]) return ROOM_TYPE_CAPACITY[roomType];
+  const capacity = String(roomType).match(/(\d+)\s*người/i)?.[1];
+  return capacity ? Number(capacity) : null;
 }
 
 function areaBelongsToBranch(area, branchId) {
@@ -556,7 +573,13 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
     }
     if (!createForm.khuVuc.trim()) errors.khuVuc = 'Vui lòng nhập khu vực mong muốn.';
     else if (getAreaError(createForm.khuVuc)) errors.khuVuc = getAreaError(createForm.khuVuc);
-    if (!createForm.loaiPhong) errors.loaiPhong = 'Vui lòng chọn ít nhất một loại phòng.';
+    const roomTypes = splitRoomTypes(createForm.loaiPhong);
+    const roomTypeCapacity = getRoomTypeCapacity(roomTypes[0]);
+    if (roomTypes.length === 0) errors.loaiPhong = 'Vui lòng chọn một loại phòng.';
+    else if (roomTypes.length > 1) errors.loaiPhong = 'Phiếu đăng ký chỉ được chọn một loại phòng.';
+    else if (roomTypeCapacity && soNguoi > roomTypeCapacity) {
+      errors.soNguoi = `Số người ở dự kiến không được vượt quá ${roomTypeCapacity} người của loại phòng ${roomTypes[0]}.`;
+    }
     if (!mucGia || mucGia <= 0) errors.mucGia = 'Vui lòng nhập mức giá mong muốn hợp lệ.';
     if (!createForm.ngayVao) errors.ngayVao = 'Vui lòng chọn ngày dự kiến vào ở.';
     else if (getMoveInDateError(createForm.ngayVao)) errors.ngayVao = getMoveInDateError(createForm.ngayVao);
@@ -746,10 +769,10 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
       {selectedReg && (
         <div className="ktp-modal-overlay" onClick={() => { setSelectedReg(null); setRoomResults(null); setShowAreaConfirmModal(false); }}>
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ width: '800px', maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="ktp-modal-header" style={{ alignItems: 'flex-start', borderBottom: '1px solid #bec8c9', backgroundColor: '#f4f6f6' }}>
+            <div className="ktp-modal-header" style={{ alignItems: 'flex-start', borderBottom: 'none', backgroundColor: '#2f6765', color: '#ffffff' }}>
               <div>
-                <h3 style={{ margin: '0 0 4px 0', color: '#191c1d' }}>Phiếu đăng ký {selectedReg.maDangKy}</h3>
-                <p className="ktp-modal-header-sub">Ngày gửi: <span>{selectedReg.ngayDangKy ? new Date(selectedReg.ngayDangKy).toLocaleDateString('en-GB') : ''}</span></p>
+                <h3 style={{ margin: '0 0 4px 0', color: '#ffffff' }}>Phiếu đăng ký {selectedReg.maDangKy}</h3>
+                <p className="ktp-modal-header-sub" style={{ color: 'rgba(255,255,255,0.82)' }}>Ngày gửi: <span style={{ color: '#ffffff' }}>{selectedReg.ngayDangKy ? new Date(selectedReg.ngayDangKy).toLocaleDateString('en-GB') : ''}</span></p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div
@@ -761,7 +784,7 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
                 >
                   {selectedDisplayStatus}
                 </div>
-                <button className="ktp-modal-close" onClick={() => { setSelectedReg(null); setRoomResults(null); setShowAreaConfirmModal(false); }}><Icon name="close" /></button>
+                <button className="ktp-modal-close" style={{ color: '#ffffff' }} onClick={() => { setSelectedReg(null); setRoomResults(null); setShowAreaConfirmModal(false); }}><Icon name="close" /></button>
               </div>
             </div>
 
@@ -909,12 +932,12 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
       {showAreaConfirmModal && selectedReg && selectedIsPending && (
         <div className="ktp-modal-overlay" style={{ zIndex: 1200 }} onClick={() => setShowAreaConfirmModal(false)}>
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ width: '460px', maxWidth: '90vw' }}>
-            <div className="ktp-modal-header" style={{ alignItems: 'center', borderBottom: '1px solid #ffcdd2', backgroundColor: '#ffebee' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#b71c1c' }}>
+            <div className="ktp-modal-header" style={{ alignItems: 'center', borderBottom: 'none', backgroundColor: '#2f6765', color: '#ffffff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ffffff' }}>
                 <Icon name="warning" />
-                <h3 style={{ fontSize: '16px', margin: 0, color: '#b71c1c' }}>Xác nhận đã tư vấn lại khu vực</h3>
+                <h3 style={{ fontSize: '16px', margin: 0, color: '#ffffff' }}>Xác nhận đã tư vấn lại khu vực</h3>
               </div>
-              <button className="ktp-modal-close" onClick={() => setShowAreaConfirmModal(false)}><Icon name="close" /></button>
+              <button className="ktp-modal-close" style={{ color: '#ffffff' }} onClick={() => setShowAreaConfirmModal(false)}><Icon name="close" /></button>
             </div>
             <div className="ktp-modal-body" style={{ padding: '22px 24px', flex: 'none', display: 'block' }}>
               <p style={{ margin: '0 0 12px', color: '#3f494a', fontSize: '14px', lineHeight: 1.55 }}>
@@ -940,9 +963,9 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
       {showTuVanModal && (
         <div className="ktp-modal-overlay" onClick={() => setShowTuVanModal(false)}>
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ width: '500px', maxWidth: '90vw' }}>
-            <div className="ktp-modal-header" style={{ alignItems: 'center', borderBottom: '1px solid #bec8c9', backgroundColor: '#f4f6f6' }}>
-              <h3 style={{ fontSize: '16px', margin: 0, color: '#191c1d' }}>Tiếp nhận để tư vấn lại</h3>
-              <button className="ktp-modal-close" onClick={() => setShowTuVanModal(false)}><Icon name="close" /></button>
+            <div className="ktp-modal-header" style={{ alignItems: 'center', borderBottom: 'none', backgroundColor: '#2f6765', color: '#ffffff' }}>
+              <h3 style={{ fontSize: '16px', margin: 0, color: '#ffffff' }}>Tiếp nhận để tư vấn lại</h3>
+              <button className="ktp-modal-close" style={{ color: '#ffffff' }} onClick={() => setShowTuVanModal(false)}><Icon name="close" /></button>
             </div>
             <div className="ktp-modal-body" style={{ padding: '24px', flex: 'none', display: 'block' }}>
               <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#3f494a' }}>Vui lòng nhập ghi chú sale để liên hệ tư vấn lại với khách hàng (Ví dụ: Chưa có phòng phù hợp, cần liên hệ khách tư vấn đổi loại phòng/khu vực/mức giá.)</p>
@@ -966,9 +989,9 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
       {showRejectModal && (
         <div className="ktp-modal-overlay" onClick={() => setShowRejectModal(false)}>
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()} style={{ width: '400px', maxWidth: '90vw' }}>
-            <div className="ktp-modal-header" style={{ alignItems: 'center', borderBottom: '1px solid #bec8c9', backgroundColor: '#f4f6f6' }}>
-              <h3 style={{ fontSize: '16px', margin: 0, color: '#191c1d' }}>Xác nhận từ chối phiếu?</h3>
-              <button className="ktp-modal-close" onClick={() => setShowRejectModal(false)}><Icon name="close" /></button>
+            <div className="ktp-modal-header" style={{ alignItems: 'center', borderBottom: 'none', backgroundColor: '#2f6765', color: '#ffffff' }}>
+              <h3 style={{ fontSize: '16px', margin: 0, color: '#ffffff' }}>Xác nhận từ chối phiếu?</h3>
+              <button className="ktp-modal-close" style={{ color: '#ffffff' }} onClick={() => setShowRejectModal(false)}><Icon name="close" /></button>
             </div>
             <div className="ktp-modal-body" style={{ padding: '24px', flex: 'none', display: 'block' }}>
               <p style={{ margin: '0 0 12px 0', fontWeight: '600', fontSize: '14px', color: '#3f494a' }}>Lý do từ chối <span style={{ color: '#d32f2f' }}>*</span></p>
@@ -1147,6 +1170,7 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
                       className={`ktp-input ${createErrors.soNguoi ? 'is-invalid' : ''}`}
                       type="number"
                       min="1"
+                      max={getRoomTypeCapacity(createForm.loaiPhong) || undefined}
                       value={createForm.soNguoi}
                       onChange={e => {
                         const soNguoi = e.target.value;
@@ -1181,29 +1205,21 @@ export default function HoSoDangKyTab({ onNavigate, onSchedulingChange }) {
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label className="ktp-filter-label">Loại phòng *</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
-                      {ROOM_TYPE_OPTIONS.map((option) => {
-                        const isChecked = createForm.loaiPhong ? createForm.loaiPhong.split(', ').includes(option) : false;
-                        return (
-                          <label key={option} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => {
-                                let currentArr = createForm.loaiPhong ? createForm.loaiPhong.split(', ').filter(Boolean) : [];
-                                if (e.target.checked) {
-                                  currentArr.push(option);
-                                } else {
-                                  currentArr = currentArr.filter(v => v !== option);
-                                }
-                                setCreateForm({...createForm, loaiPhong: currentArr.join(', ')});
-                              }}
-                            />
-                            {option}
-                          </label>
-                        );
-                      })}
-                    </div>
+                    <select
+                      className={`ktp-input ${createErrors.loaiPhong ? 'is-invalid' : ''}`}
+                      value={createForm.loaiPhong}
+                      onChange={(e) => setCreateForm({...createForm, loaiPhong: e.target.value})}
+                    >
+                      <option value="">Chọn một loại phòng</option>
+                      {ROOM_TYPE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    {getRoomTypeCapacity(createForm.loaiPhong) && (
+                      <span style={{ display: 'block', marginTop: '4px', color: '#6f797a', fontSize: '12px' }}>
+                        Tối đa {getRoomTypeCapacity(createForm.loaiPhong)} người.
+                      </span>
+                    )}
                     {createErrors.loaiPhong && <span className="ktp-text-error" style={{ fontSize: '12px' }}>{createErrors.loaiPhong}</span>}
                   </div>
                   <div>

@@ -150,19 +150,6 @@ BEGIN
             SELECT 1
             FROM dbo.PhieuDangKy AS pdkLock WITH (UPDLOCK, HOLDLOCK)
             WHERE pdkLock.MaKhachHang = @KhachHangId
-              AND (
-                  NOT EXISTS (
-                      SELECT 1
-                      FROM dbo.LichXemPhong AS lxpAny
-                      WHERE lxpAny.MaDangKy = pdkLock.MaDangKy
-                  )
-                  OR EXISTS (
-                      SELECT 1
-                      FROM dbo.LichXemPhong AS lxpActive
-                      WHERE lxpActive.MaDangKy = pdkLock.MaDangKy
-                        AND lxpActive.TrangThai <> N'Đã hủy'
-                  )
-              )
               AND pdkLock.TrangThai <> N'Từ chối'
               AND NOT EXISTS (
                   SELECT 1
@@ -555,17 +542,6 @@ BEGIN
             SELECT 1
             FROM dbo.PhieuDangKy AS pdkLock WITH (UPDLOCK, HOLDLOCK)
             WHERE pdkLock.MaKhachHang = @MaKhachHang
-              AND (
-                  NOT EXISTS (
-                      SELECT 1 FROM dbo.LichXemPhong AS lxpAny
-                      WHERE lxpAny.MaDangKy = pdkLock.MaDangKy
-                  )
-                  OR EXISTS (
-                      SELECT 1 FROM dbo.LichXemPhong AS lxpActive
-                      WHERE lxpActive.MaDangKy = pdkLock.MaDangKy
-                        AND lxpActive.TrangThai <> N'Đã hủy'
-                  )
-              )
               AND pdkLock.TrangThai <> N'Từ chối'
               AND NOT EXISTS (
                   SELECT 1
@@ -1161,12 +1137,12 @@ BEGIN
         CASE
             WHEN br.TinhTrang = N'Trống'
              AND br.soGiuongTrong >= br.SucChuaToiDa
-             AND br.GioiTinhChoPhep = N'Không phân biệt'
+             AND br.GioiTinhChoPhep IN (N'Không phân biệt', N'Khác', N'Hỗn hợp')
                 THEN 1 ELSE 0
         END AS LaTrongNguyenPhong,
         CASE WHEN br.GioiTinhChoPhep = N'Nam' THEN br.soGiuongTrong ELSE 0 END AS SoGiuongNam,
         CASE WHEN br.GioiTinhChoPhep = N'Nữ' THEN br.soGiuongTrong ELSE 0 END AS SoGiuongNu,
-        CASE WHEN br.GioiTinhChoPhep = N'Không phân biệt' THEN br.soGiuongTrong ELSE 0 END AS SoGiuongKhongPhanBiet
+        CASE WHEN br.GioiTinhChoPhep IN (N'Không phân biệt', N'Khác', N'Hỗn hợp') THEN br.soGiuongTrong ELSE 0 END AS SoGiuongKhongPhanBiet
     FROM #BaseRooms AS br
     WHERE br.TinhTrang IN (N'Trống', N'Còn chỗ')
       AND br.soGiuongTrong > 0
@@ -1194,24 +1170,20 @@ BEGIN
     HAVING
         (
             @LaNhomHonHop = 0
-            AND SUM(CASE
+            AND MAX(CASE
                 WHEN @GioiTinh = N'Nam'
-                    THEN puv.SoGiuongNam + puv.SoGiuongKhongPhanBiet
+                     AND (puv.SoGiuongNam + puv.SoGiuongKhongPhanBiet) >= @SoNguoiCanXep THEN 1
                 WHEN @GioiTinh = N'Nữ'
-                    THEN puv.SoGiuongNu + puv.SoGiuongKhongPhanBiet
-                ELSE puv.SoGiuongNam + puv.SoGiuongNu + puv.SoGiuongKhongPhanBiet
-            END) >= @SoNguoiCanXep
+                     AND (puv.SoGiuongNu + puv.SoGiuongKhongPhanBiet) >= @SoNguoiCanXep THEN 1
+                WHEN @GioiTinh IS NULL
+                     AND (puv.SoGiuongNam + puv.SoGiuongNu + puv.SoGiuongKhongPhanBiet) >= @SoNguoiCanXep THEN 1
+                ELSE 0
+            END) = 1
         )
         OR
         (
             @LaNhomHonHop = 1
-            AND (
-                MAX(CASE WHEN puv.LaTrongNguyenPhong = 1 AND puv.SoGiuongKhongPhanBiet >= @SoNguoiCanXep THEN 1 ELSE 0 END) = 1
-                OR (
-                    SUM(puv.SoGiuongNam) >= @SoNam
-                    AND SUM(puv.SoGiuongNu) >= @SoNu
-                )
-            )
+            AND MAX(CASE WHEN puv.LaTrongNguyenPhong = 1 AND puv.SoGiuongKhongPhanBiet >= @SoNguoiCanXep THEN 1 ELSE 0 END) = 1
         );
 
     ;WITH PhongTraVe AS (
@@ -1234,21 +1206,16 @@ BEGIN
             (
                 @LaNhomHonHop = 0
                 AND (
-                    puv.SoGiuongKhongPhanBiet > 0
-                    OR (@GioiTinh = N'Nam' AND puv.SoGiuongNam > 0)
-                    OR (@GioiTinh = N'Nữ' AND puv.SoGiuongNu > 0)
-                    OR (@GioiTinh IS NULL AND puv.SoGiuongNam + puv.SoGiuongNu + puv.SoGiuongKhongPhanBiet > 0)
+                    (@GioiTinh = N'Nam' AND (puv.SoGiuongNam + puv.SoGiuongKhongPhanBiet) >= @SoNguoiCanXep)
+                    OR (@GioiTinh = N'Nữ' AND (puv.SoGiuongNu + puv.SoGiuongKhongPhanBiet) >= @SoNguoiCanXep)
+                    OR (@GioiTinh IS NULL AND (puv.SoGiuongNam + puv.SoGiuongNu + puv.SoGiuongKhongPhanBiet) >= @SoNguoiCanXep)
                 )
             )
             OR
             (
                 @LaNhomHonHop = 1
-                AND (
-                    (puv.LaTrongNguyenPhong = 1 AND puv.SoGiuongKhongPhanBiet > 0)
-                    OR (@SoNam > 0 AND puv.SoGiuongNam > 0)
-                    OR (@SoNu > 0 AND puv.SoGiuongNu > 0)
-                    OR (puv.LaTrongNguyenPhong = 0 AND puv.SoGiuongKhongPhanBiet > 0)
-                )
+                AND puv.LaTrongNguyenPhong = 1
+                AND puv.SoGiuongKhongPhanBiet >= @SoNguoiCanXep
             )
     )
     INSERT INTO #KetQua (
