@@ -4,9 +4,13 @@ export const adminApi = {
   getBranches: (params) => httpClient.get('/admin/branches', { params }),
   createBranch: (data) => httpClient.post('/admin/branches', data),
   updateBranch: (id, data) => httpClient.put(`/admin/branches/${id}`, data),
+  deleteBranch: (id) => httpClient.delete(`/admin/branches/${id}`),
   getRoomTypes: (params) => httpClient.get('/admin/room-types', { params }),
   getRooms: (params) => httpClient.get('/admin/rooms', { params }),
   createRoomBeds: (data) => httpClient.post('/admin/rooms', data),
+  updateRoom: (id, data) => httpClient.put(`/admin/rooms/${id}`, data),
+  deleteRoom: (id) => httpClient.delete(`/admin/rooms/${id}`),
+  updateRoomStatus: (id, trangThai) => httpClient.patch(`/admin/rooms/${id}/status`, { trangThai }),
   // Giai Ä‘oáº¡n 1: NhĂ¢n viĂªn
   getEmployees: (params) => httpClient.get('/admin/employees', { params }),
   getNextEmployeeId: () => httpClient.get('/admin/employees/next-id'),
@@ -21,6 +25,11 @@ export const adminApi = {
   createService: (data) => httpClient.post('/admin/services', data),
   updateService: (id, data) => httpClient.put(`/admin/services/${id}`, data),
   deleteService: (id) => httpClient.delete(`/admin/services/${id}`),
+
+  getRefundRules: (params) => httpClient.get('/admin/refund-rules', { params }),
+  createRefundRule: (data) => httpClient.post('/admin/refund-rules', data),
+  updateRefundRule: (id, data) => httpClient.put(`/admin/refund-rules/${id}`, data),
+  deleteRefundRule: (id) => httpClient.delete(`/admin/refund-rules/${id}`),
 
   getRules: (params) => httpClient.get('/admin/rules', { params }),
   createRule: (data) => httpClient.post('/admin/rules', data),
@@ -51,7 +60,7 @@ export const adminApi = {
   // Sao lÆ°u dá»¯ liá»‡u
   getBackups: (params) => httpClient.get('/admin/backups', { params }),
   createBackup: (data) => httpClient.post('/admin/backups/manual', data),
-  restoreBackup: (id) => httpClient.post(`/admin/backups/${id}/restore`),
+  restoreBackup: (id, data) => httpClient.post(`/admin/backups/${id}/restore`, data),
 
   // Nhật ký hệ thống
   getLogs: (params) => httpClient.get('/admin/logs', { params })

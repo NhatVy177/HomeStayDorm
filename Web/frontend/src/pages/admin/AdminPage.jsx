@@ -72,6 +72,20 @@ function createEmptyEmployeeForm() {
   };
 }
 
+function createEmployeeEditForm(employee = {}) {
+  return {
+    hoTen: employee.hoTen || '',
+    ngaySinh: employee.ngaySinh ? new Date(employee.ngaySinh).toISOString().slice(0, 10) : '',
+    gioiTinh: employee.gioiTinh || 'Nam',
+    soDienThoai: employee.soDienThoai || '',
+    email: employee.email || '',
+    diaChi: employee.diaChi || '',
+    chucVu: employee.chucVu || 'Sale',
+    maChiNhanh: employee.maChiNhanh || '',
+    ngayVaoLam: employee.ngayVaoLam ? new Date(employee.ngayVaoLam).toISOString().slice(0, 10) : ''
+  };
+}
+
 function createEmptyBranchForm() {
   return {
     tenChiNhanh: '',
@@ -79,6 +93,16 @@ function createEmptyBranchForm() {
     soDienThoai: '',
     email: '',
     trangThai: 'Hoạt động'
+  };
+}
+
+function createBranchEditForm(branch = {}) {
+  return {
+    tenChiNhanh: branch.tenChiNhanh || '',
+    diaChi: branch.diaChi || '',
+    soDienThoai: branch.soDienThoai || '',
+    email: branch.email || '',
+    trangThai: branch.trangThai || 'Hoạt động'
   };
 }
 
@@ -93,6 +117,19 @@ const createEmptyRoomBedForm = () => ({
     tenAnhPhong: '',
     soGiuong: 1
   });
+
+function createRoomEditForm(room = {}) {
+  return {
+    tenPhong: room.tenPhong || '',
+    gioiTinhChoPhep: room.gioiTinhChoPhep || 'Không phân biệt',
+    maChiNhanh: room.maChiNhanh || '',
+    maLoaiPhong: room.maLoaiPhong || '',
+    tinhTrang: room.tinhTrang || room.trangThai || 'Trống',
+    urlImg: room.urlImg || '',
+    anhPhong: null,
+    tenAnhPhong: ''
+  };
+}
 
 function firstName(name = '') {
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
@@ -234,7 +271,7 @@ function StatusPill({ children }) {
   return <span className={`admin-status ${tone}`}>{children}</span>;
 }
 
-function BackupDetailModal({ backup, onClose }) {
+function BackupDetailModal({ backup, onClose, onRestore }) {
   if (!backup) return null;
 
   const fields = [
@@ -276,13 +313,73 @@ function BackupDetailModal({ backup, onClose }) {
 
         <footer className="admin-modal-actions">
           <button className="admin-btn secondary" type="button" onClick={onClose}>Đóng</button>
+          <button className="admin-btn danger" type="button" disabled={backup.trangThai !== 'Thành công'} onClick={() => onRestore(backup)}>
+            <Icon name="restore" />
+            Tạo lệnh phục hồi
+          </button>
         </footer>
       </section>
     </div>
   );
 }
 
-function EmployeeDetailModal({ employee, isBusy, onClose, onToggleLock }) {
+function RestoreCommandModal({ backup, command, error, isSubmitting, onClose, onConfirm }) {
+  if (!backup) return null;
+
+  const hasCommand = Boolean(command);
+
+  return (
+    <div className="admin-modal-backdrop" role="presentation" style={{ zIndex: 1300 }} onMouseDown={isSubmitting ? undefined : onClose}>
+      <section className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="restore-command-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="admin-modal-head">
+          <div className="admin-modal-title">
+            <span className="admin-modal-avatar" style={{ background: hasCommand ? 'rgba(0, 102, 109, 0.1)' : 'rgba(164, 60, 18, 0.12)', color: hasCommand ? 'var(--admin-primary)' : 'var(--admin-secondary-dark)' }}>
+              <Icon name={hasCommand ? 'check_circle' : 'restore'} />
+            </span>
+            <div>
+              <span className="admin-eyebrow">{hasCommand ? 'Lệnh phục hồi' : 'Xác nhận thao tác'}</span>
+              <h3 id="restore-command-title">{hasCommand ? 'Đã tạo lệnh phục hồi' : 'Tạo lệnh phục hồi dữ liệu'}</h3>
+            </div>
+          </div>
+          <button className="admin-icon-btn" type="button" onClick={onClose} disabled={isSubmitting} aria-label="Đóng">
+            <Icon name="close" />
+          </button>
+        </header>
+
+        <div className="admin-restore-body">
+          {error && <div className="admin-form-error">{error}</div>}
+          {hasCommand ? (
+            <>
+              <p>Lệnh phục hồi từ bản sao <strong>{formatBackupCode(backup)}</strong> đã được tạo. Kiểm tra kỹ trước khi chạy trong SQL Server.</p>
+              <pre className="admin-restore-command">{command}</pre>
+            </>
+          ) : (
+            <>
+              <p>Bạn muốn tạo lệnh phục hồi từ bản sao <strong>{formatBackupCode(backup)}</strong>?</p>
+              <div className="admin-form-note">
+                Lệnh này chỉ tạo script phục hồi, không tự ghi đè dữ liệu hiện tại.
+              </div>
+            </>
+          )}
+        </div>
+
+        <footer className="admin-modal-actions">
+          <button className="admin-btn secondary" type="button" onClick={onClose} disabled={isSubmitting}>
+            {hasCommand ? 'Đóng' : 'Hủy'}
+          </button>
+          {!hasCommand && (
+            <button className="admin-btn danger" type="button" onClick={onConfirm} disabled={isSubmitting}>
+              <Icon name="restore" />
+              {isSubmitting ? 'Đang tạo...' : 'Tạo lệnh phục hồi'}
+            </button>
+          )}
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function EmployeeDetailModal({ employee, isBusy, onClose, onToggleLock, onEdit }) {
   if (!employee) return null;
   const isLocked = employee.trangThaiTaiKhoan === 'Vô hiệu hóa';
 
@@ -328,9 +425,13 @@ function EmployeeDetailModal({ employee, isBusy, onClose, onToggleLock }) {
 
         <footer className="admin-modal-actions">
           <button className="admin-btn secondary" type="button" onClick={onClose}>Đóng</button>
+          <button className="admin-btn secondary" type="button" onClick={() => onEdit(employee)}>
+            <Icon name="mode_edit" />
+            Cập nhật
+          </button>
           {employee.tenDangNhap && (
             <button className={`admin-btn ${isLocked ? 'primary' : 'danger'}`} type="button" disabled={isBusy} onClick={() => onToggleLock(employee)}>
-              <Icon name={isLocked ? 'check_circle' : 'cancel'} />
+              <Icon name={isLocked ? 'lock_open' : 'lock'} />
               {isBusy ? 'Đang xử lý...' : isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
             </button>
           )}
@@ -441,6 +542,92 @@ function CreateEmployeeModal({ form, branches, error, isSubmitting, onChange, on
             <button className="admin-btn primary" type="submit" disabled={isSubmitting}>
               <Icon name="person_add" />
               {isSubmitting ? 'Đang tạo...' : 'Tạo tài khoản'}
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function UpdateEmployeeModal({ employee, form, branches, error, isSubmitting, onChange, onClose, onSubmit }) {
+  if (!employee) return null;
+  const maxBirthDate = getLatestBirthDateValue();
+
+  return (
+    <div className="admin-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="admin-modal admin-modal-wide" role="dialog" aria-modal="true" aria-labelledby="update-employee-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="admin-modal-head">
+          <div>
+            <span className="admin-eyebrow">Tài khoản nhân viên</span>
+            <h3 id="update-employee-title">Cập nhật {employee.maNhanVien}</h3>
+          </div>
+          <button className="admin-icon-btn" type="button" onClick={onClose} aria-label="Đóng">
+            <Icon name="close" />
+          </button>
+        </header>
+
+        <form className="admin-modal-form" onSubmit={onSubmit}>
+          {error && <div className="admin-form-error">{error}</div>}
+          <div className="admin-form-grid">
+            <label>
+              <RequiredLabel>Họ tên</RequiredLabel>
+              <input value={form.hoTen} onChange={(event) => onChange('hoTen', event.target.value)} required />
+            </label>
+            <label>
+              <RequiredLabel>Ngày sinh</RequiredLabel>
+              <input value={form.ngaySinh} onChange={(event) => onChange('ngaySinh', event.target.value)} required type="date" max={maxBirthDate} />
+            </label>
+            <label>
+              <RequiredLabel>Giới tính</RequiredLabel>
+              <select value={form.gioiTinh} onChange={(event) => onChange('gioiTinh', event.target.value)} required>
+                <option>Nam</option>
+                <option>Nữ</option>
+              </select>
+            </label>
+            <label>
+              <RequiredLabel>Số điện thoại</RequiredLabel>
+              <input value={form.soDienThoai} onChange={(event) => onChange('soDienThoai', sanitizePhoneNumber(event.target.value))} required inputMode="numeric" maxLength={10} />
+            </label>
+            <label>
+              <RequiredLabel>Email</RequiredLabel>
+              <input value={form.email} onChange={(event) => onChange('email', event.target.value)} required type="email" />
+            </label>
+            <label>
+              <RequiredLabel>Chức vụ</RequiredLabel>
+              <select value={form.chucVu} onChange={(event) => onChange('chucVu', event.target.value)} required>
+                <option>Sale</option>
+                <option>Quản lý</option>
+                <option>Kế toán</option>
+                <option>Admin</option>
+              </select>
+            </label>
+            <label>
+              <RequiredLabel>Chi nhánh</RequiredLabel>
+              <select value={form.maChiNhanh} onChange={(event) => onChange('maChiNhanh', event.target.value)} required={form.chucVu !== 'Admin'}>
+                <option value="">Hệ thống</option>
+                {branches.map((branch) => (
+                  <option value={branch.maChiNhanh} key={branch.maChiNhanh}>
+                    {branch.tenChiNhanh} ({branch.maChiNhanh})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <RequiredLabel>Ngày vào làm</RequiredLabel>
+              <input value={form.ngayVaoLam} onChange={(event) => onChange('ngayVaoLam', event.target.value)} required type="date" />
+            </label>
+            <label className="admin-form-full">
+              <RequiredLabel>Địa chỉ</RequiredLabel>
+              <input value={form.diaChi} onChange={(event) => onChange('diaChi', event.target.value)} required />
+            </label>
+          </div>
+
+          <footer className="admin-modal-actions">
+            <button className="admin-btn secondary" type="button" onClick={onClose}>Hủy</button>
+            <button className="admin-btn primary" type="submit" disabled={isSubmitting}>
+              <Icon name="save" />
+              {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </footer>
         </form>
@@ -680,6 +867,10 @@ function EmployeesView() {
   const [createForm, setCreateForm] = useState(createEmptyEmployeeForm);
   const [createError, setCreateError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [editForm, setEditForm] = useState(createEmployeeEditForm);
+  const [editError, setEditError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const fetchEmployees = async (nextFilters = filters) => {
     try {
@@ -736,6 +927,19 @@ function EmployeesView() {
 
   const handleCreateChange = (field, value) => {
     setCreateForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const openEditModal = async (employee) => {
+    setEditingEmployee(employee);
+    setEditForm(createEmployeeEditForm(employee));
+    setEditError('');
+    if (branches.length === 0) {
+      await fetchBranches();
+    }
   };
 
   const openCreateModal = async () => {
@@ -796,6 +1000,44 @@ function EmployeesView() {
       setCreateError(error.response?.data?.message || 'Không thể tạo tài khoản nhân viên.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEditSubmit = async (event) => {
+    event.preventDefault();
+    setEditError('');
+
+    if (!isValidPhoneNumber(editForm.soDienThoai)) {
+      setEditError('Số điện thoại phải có đúng 10 số và bắt đầu bằng 0.');
+      return;
+    }
+
+    if (!isPastDate(editForm.ngaySinh)) {
+      setEditError('Ngày sinh phải nhỏ hơn ngày hiện tại.');
+      return;
+    }
+
+    setIsEditing(true);
+    try {
+      const payload = {
+        ...editForm,
+        soDienThoai: editForm.soDienThoai,
+        maChiNhanh: editForm.chucVu === 'Admin' ? null : editForm.maChiNhanh
+      };
+
+      await adminApi.updateEmployee(editingEmployee.maNhanVien, payload);
+      if (editForm.chucVu !== editingEmployee.chucVu) {
+        await adminApi.assignRole(editingEmployee.maNhanVien, { chucVu: editForm.chucVu });
+      }
+
+      const { data } = await adminApi.getEmployee(editingEmployee.maNhanVien);
+      setSelectedEmployee(data);
+      setEditingEmployee(null);
+      await fetchEmployees();
+    } catch (error) {
+      setEditError(error.response?.data?.message || 'Không thể cập nhật nhân viên.');
+    } finally {
+      setIsEditing(false);
     }
   };
 
@@ -875,7 +1117,11 @@ function EmployeesView() {
                   <td>{row.chucVu}</td>
                   <td>{row.maChiNhanh || 'Hệ thống'}</td>
                   <td><StatusPill>{row.trangThaiTaiKhoan || 'Chưa có TK'}</StatusPill></td>
-                  <td><button className="admin-link-btn" type="button" onClick={() => openDetail(row)}>Chi tiết</button></td>
+                  <td style={{ textAlign: 'center' }}>
+                    <button className="admin-icon-btn" type="button" title="Xem chi tiết" aria-label="Xem chi tiết nhân viên" onClick={() => openDetail(row)}>
+                      <Icon name="visibility" />
+                    </button>
+                  </td>
                 </tr>
               )) : (
                 <tr>
@@ -892,6 +1138,7 @@ function EmployeesView() {
         isBusy={isDetailBusy}
         onClose={() => setSelectedEmployee(null)}
         onToggleLock={handleToggleLock}
+        onEdit={openEditModal}
       />
 
       {showCreateModal && (
@@ -906,6 +1153,22 @@ function EmployeesView() {
             setCreateError('');
           }}
           onSubmit={handleCreateSubmit}
+        />
+      )}
+
+      {editingEmployee && (
+        <UpdateEmployeeModal
+          employee={editingEmployee}
+          form={editForm}
+          branches={branches}
+          error={editError}
+          isSubmitting={isEditing}
+          onChange={handleEditChange}
+          onClose={() => {
+            setEditingEmployee(null);
+            setEditError('');
+          }}
+          onSubmit={handleEditSubmit}
         />
       )}
     </section>
@@ -974,7 +1237,7 @@ function CreateBranchModal({ form, error, isSubmitting, onChange, onClose, onSub
   );
 }
 
-function BranchDetailModal({ branch, isBusy, onClose, onToggleStatus }) {
+function BranchDetailModal({ branch, isBusy, onClose, onToggleStatus, onEdit, onDelete }) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   if (!branch) return null;
@@ -1022,6 +1285,14 @@ function BranchDetailModal({ branch, isBusy, onClose, onToggleStatus }) {
 
         <footer className="admin-modal-actions">
           <button className="admin-btn secondary" type="button" onClick={onClose}>Đóng</button>
+          <button className="admin-btn secondary" type="button" onClick={() => onEdit(branch)}>
+            <Icon name="mode_edit" />
+            Cập nhật
+          </button>
+          <button className="admin-btn danger" type="button" disabled={isBusy} onClick={() => onDelete(branch)}>
+            <Icon name="delete" />
+            Xóa
+          </button>
           <button className={`admin-btn ${isInactive ? 'primary' : 'danger'}`} type="button" disabled={isBusy} onClick={handleToggleClick}>
             <Icon name={isInactive ? 'check_circle' : 'cancel'} />
             {isBusy ? 'Đang xử lý...' : isInactive ? 'Mở hoạt động lại' : 'Ngừng hoạt động'}
@@ -1058,6 +1329,63 @@ function BranchDetailModal({ branch, isBusy, onClose, onToggleStatus }) {
           </section>
         </div>
       )}
+    </div>
+  );
+}
+
+function UpdateBranchModal({ branch, form, error, isSubmitting, onChange, onClose, onSubmit }) {
+  if (!branch) return null;
+
+  return (
+    <div className="admin-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="admin-modal admin-modal-wide" role="dialog" aria-modal="true" aria-labelledby="update-branch-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="admin-modal-head">
+          <div>
+            <span className="admin-eyebrow">Chi nhánh</span>
+            <h3 id="update-branch-title">Cập nhật {branch.maChiNhanh}</h3>
+          </div>
+          <button className="admin-icon-btn" type="button" onClick={onClose} aria-label="Đóng">
+            <Icon name="close" />
+          </button>
+        </header>
+
+        <form className="admin-modal-form" onSubmit={onSubmit}>
+          {error && <div className="admin-form-error">{error}</div>}
+          <div className="admin-form-grid">
+            <label>
+              <RequiredLabel>Tên chi nhánh</RequiredLabel>
+              <input value={form.tenChiNhanh} onChange={(event) => onChange('tenChiNhanh', event.target.value)} required />
+            </label>
+            <label>
+              <RequiredLabel>Trạng thái</RequiredLabel>
+              <select value={form.trangThai} onChange={(event) => onChange('trangThai', event.target.value)} required>
+                <option>Hoạt động</option>
+                <option>Ngừng hoạt động</option>
+              </select>
+            </label>
+            <label>
+              <RequiredLabel>Số điện thoại</RequiredLabel>
+              <input value={form.soDienThoai} onChange={(event) => onChange('soDienThoai', sanitizePhoneNumber(event.target.value))} required inputMode="numeric" maxLength={10} />
+            </label>
+            <label>
+              <RequiredLabel>Email</RequiredLabel>
+              <input value={form.email} onChange={(event) => onChange('email', event.target.value)} required type="email" />
+            </label>
+            <label className="admin-form-full">
+              <RequiredLabel>Địa chỉ</RequiredLabel>
+              <input value={form.diaChi} onChange={(event) => onChange('diaChi', event.target.value)} required />
+            </label>
+          </div>
+
+          <footer className="admin-modal-actions">
+            <button className="admin-btn secondary" type="button" onClick={onClose}>Hủy</button>
+            <button className="admin-btn primary" type="submit" disabled={isSubmitting}>
+              <Icon name="save" />
+              {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
+            </button>
+          </footer>
+        </form>
+      </section>
     </div>
   );
 }
@@ -1150,6 +1478,91 @@ function CreateRoomBedModal({ form, branches, roomTypes, error, isSubmitting, on
             <button className="admin-btn primary" type="submit" disabled={isSubmitting}>
               <Icon name="bed" />
               {isSubmitting ? 'Đang tạo...' : 'Tạo phòng/giường'}
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function UpdateRoomModal({ room, form, branches, roomTypes, error, isSubmitting, onChange, onImageChange, onClose, onSubmit }) {
+  if (!room) return null;
+
+  return (
+    <div className="admin-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="admin-modal admin-modal-wide" role="dialog" aria-modal="true" aria-labelledby="update-room-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="admin-modal-head">
+          <div>
+            <span className="admin-eyebrow">Phòng</span>
+            <h3 id="update-room-title">Cập nhật {room.maPhong}</h3>
+          </div>
+          <button className="admin-icon-btn" type="button" onClick={onClose} aria-label="Đóng">
+            <Icon name="close" />
+          </button>
+        </header>
+
+        <form className="admin-modal-form" onSubmit={onSubmit}>
+          {error && <div className="admin-form-error">{error}</div>}
+          <div className="admin-form-grid">
+            <label>
+              <RequiredLabel>Tên phòng</RequiredLabel>
+              <input value={form.tenPhong} onChange={(event) => onChange('tenPhong', event.target.value)} required />
+            </label>
+            <label>
+              <RequiredLabel>Chi nhánh</RequiredLabel>
+              <select value={form.maChiNhanh} onChange={(event) => onChange('maChiNhanh', event.target.value)} required>
+                {branches.map((branch) => (
+                  <option value={branch.maChiNhanh} key={branch.maChiNhanh}>{branch.tenChiNhanh} ({branch.maChiNhanh})</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <RequiredLabel>Loại phòng</RequiredLabel>
+              <select value={form.maLoaiPhong} onChange={(event) => onChange('maLoaiPhong', event.target.value)} required>
+                {roomTypes.map((roomType) => (
+                  <option value={roomType.maLoaiPhong} key={roomType.maLoaiPhong}>{roomType.tenLoaiPhong}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <RequiredLabel>Giới tính cho phép</RequiredLabel>
+              <select value={form.gioiTinhChoPhep} onChange={(event) => onChange('gioiTinhChoPhep', event.target.value)} required>
+                <option>Không phân biệt</option>
+                <option>Nam</option>
+                <option>Nữ</option>
+              </select>
+            </label>
+            <label>
+              <RequiredLabel>Tình trạng</RequiredLabel>
+              <select value={form.tinhTrang} onChange={(event) => onChange('tinhTrang', event.target.value)} required>
+                <option>Trống</option>
+                <option>Bảo trì</option>
+                <option>Đang thuê</option>
+                <option>Đã đặt cọc</option>
+              </select>
+            </label>
+            <label>
+              <span>URL ảnh hiện tại</span>
+              <input value={form.urlImg} onChange={(event) => onChange('urlImg', event.target.value)} placeholder="/uploads/phong/..." />
+            </label>
+            <label className="admin-form-full">
+              <span>Thay ảnh phòng</span>
+              <input type="file" accept="image/*" onChange={(event) => onImageChange(event.target.files?.[0])} />
+              {form.tenAnhPhong && <small>Đã chọn: {form.tenAnhPhong}</small>}
+            </label>
+            {form.anhPhong?.base64 && (
+              <div className="admin-form-full admin-upload-preview">
+                <img src={form.anhPhong.base64} alt="Xem trước ảnh phòng" />
+              </div>
+            )}
+          </div>
+
+          <footer className="admin-modal-actions">
+            <button className="admin-btn secondary" type="button" onClick={onClose}>Hủy</button>
+            <button className="admin-btn primary" type="submit" disabled={isSubmitting}>
+              <Icon name="save" />
+              {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </footer>
         </form>
@@ -1384,7 +1797,7 @@ function RoomDetailModal({ room, branch, roomType, onClose }) {
                       <td>Giường số {bed.soGiuong}</td>
                       <td><StatusPill>{bed.tinhTrang}</StatusPill></td>
                       <td style={{ textAlign: 'center' }}>
-                        <button className="admin-icon-btn" title="Chỉnh sửa" onClick={() => { setEditItem(bed); setShowBedModal(true); }}><Icon name="edit" /></button>
+                        <button className="admin-icon-btn" title="Chỉnh sửa" onClick={() => { setEditItem(bed); setShowBedModal(true); }}><Icon name="mode_edit" /></button>
                         <button className="admin-icon-btn danger" title="Xóa" onClick={() => handleDeleteBed(bed.maGiuong)}><Icon name="delete" /></button>
                       </td>
                     </tr>
@@ -1420,7 +1833,7 @@ function RoomDetailModal({ room, branch, roomType, onClose }) {
                       <td>{asset.loaiTaiSan}</td>
                       <td>{asset.soLuong}</td>
                       <td style={{ textAlign: 'center' }}>
-                        <button className="admin-icon-btn" title="Chỉnh sửa" onClick={() => { setEditItem(asset); setShowAssetModal(true); }}><Icon name="edit" /></button>
+                        <button className="admin-icon-btn" title="Chỉnh sửa" onClick={() => { setEditItem(asset); setShowAssetModal(true); }}><Icon name="mode_edit" /></button>
                         <button className="admin-icon-btn danger" title="Xóa" onClick={() => handleDeleteAsset(asset.maTaiSan)}><Icon name="delete" /></button>
                       </td>
                     </tr>
@@ -1456,6 +1869,14 @@ function PropertyView() {
   const [roomToConfirm, setRoomToConfirm] = useState(null);
   const [isRoomActionBusy, setIsRoomActionBusy] = useState(false);
   const [selectedRoomDetail, setSelectedRoomDetail] = useState(null);
+  const [editingBranch, setEditingBranch] = useState(null);
+  const [branchEditForm, setBranchEditForm] = useState(createBranchEditForm);
+  const [branchEditError, setBranchEditError] = useState('');
+  const [isBranchEditing, setIsBranchEditing] = useState(false);
+  const [editingRoom, setEditingRoom] = useState(null);
+  const [roomEditForm, setRoomEditForm] = useState(createRoomEditForm);
+  const [roomEditError, setRoomEditError] = useState('');
+  const [isRoomEditing, setIsRoomEditing] = useState(false);
 
   const propertyRows = useMemo(() => {
     const roomsByBranch = rooms.reduce((map, room) => {
@@ -1518,6 +1939,10 @@ function PropertyView() {
     setBranchForm((current) => ({ ...current, [field]: value }));
   };
 
+  const handleBranchEditChange = (field, value) => {
+    setBranchEditForm((current) => ({ ...current, [field]: value }));
+  };
+
   const handleRoomChange = (field, value) => {
     setRoomForm((current) => {
       if (field === 'maLoaiPhong') {
@@ -1531,6 +1956,10 @@ function PropertyView() {
 
       return { ...current, [field]: value };
     });
+  };
+
+  const handleRoomEditChange = (field, value) => {
+    setRoomEditForm((current) => ({ ...current, [field]: value }));
   };
 
   const handleRoomImageChange = async (file) => {
@@ -1568,6 +1997,41 @@ function PropertyView() {
     }
   };
 
+  const handleRoomEditImageChange = async (file) => {
+    setRoomEditError('');
+
+    if (!file) {
+      setRoomEditForm((current) => ({ ...current, anhPhong: null, tenAnhPhong: '' }));
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setRoomEditError('Vui lòng chọn đúng file ảnh.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setRoomEditError('Ảnh phòng tối đa 5MB.');
+      return;
+    }
+
+    try {
+      const base64 = await readImageFileAsBase64(file);
+      setRoomEditForm((current) => ({
+        ...current,
+        anhPhong: {
+          base64,
+          mimeType: file.type,
+          fileName: file.name
+        },
+        tenAnhPhong: file.name
+      }));
+    } catch (error) {
+      console.error('Failed to read room image:', error);
+      setRoomEditError('Không đọc được file ảnh đã chọn.');
+    }
+  };
+
   const openBranchModal = () => {
     setBranchForm(createEmptyBranchForm());
     setBranchError('');
@@ -1584,6 +2048,18 @@ function PropertyView() {
     });
     setRoomError('');
     setShowRoomModal(true);
+  };
+
+  const openBranchEditModal = (branch) => {
+    setEditingBranch(branch);
+    setBranchEditForm(createBranchEditForm(branch));
+    setBranchEditError('');
+  };
+
+  const openRoomEditModal = (room) => {
+    setEditingRoom(room);
+    setRoomEditForm(createRoomEditForm(room));
+    setRoomEditError('');
   };
 
   const handleBranchSubmit = async (event) => {
@@ -1622,19 +2098,25 @@ function PropertyView() {
     }
   };
 
-  const confirmToggleRoomStatus = () => {
+  const confirmToggleRoomStatus = async () => {
     if (!roomToConfirm) return;
     setIsRoomActionBusy(true);
     const isMaintenance = roomToConfirm.trangThai === ROOM_STATUS_MAINTENANCE;
     const newStatus = isMaintenance ? ROOM_STATUS_EMPTY : ROOM_STATUS_MAINTENANCE;
-    setRoomLocked(roomToConfirm.maPhong, !isMaintenance);
-    setRooms((current) => current.map((room) => (
-      room.maPhong === roomToConfirm.maPhong
-        ? { ...room, trangThai: newStatus, tinhTrang: newStatus }
-        : room
-    )));
-    setRoomToConfirm(null);
-    setIsRoomActionBusy(false);
+    try {
+      await adminApi.updateRoomStatus(roomToConfirm.maPhong, newStatus);
+      setRoomLocked(roomToConfirm.maPhong, !isMaintenance);
+      setRooms((current) => current.map((room) => (
+        room.maPhong === roomToConfirm.maPhong
+          ? { ...room, trangThai: newStatus, tinhTrang: newStatus }
+          : room
+      )));
+      setRoomToConfirm(null);
+    } catch (error) {
+      alert(error.response?.data?.message || 'Không thể cập nhật trạng thái phòng.');
+    } finally {
+      setIsRoomActionBusy(false);
+    }
   };
 
   const handleRoomSubmit = async (event) => {
@@ -1653,6 +2135,73 @@ function PropertyView() {
       setRoomError(error.response?.data?.message || 'Không thể tạo phòng/giường.');
     } finally {
       setIsRoomSubmitting(false);
+    }
+  };
+
+  const handleBranchEditSubmit = async (event) => {
+    event.preventDefault();
+    setBranchEditError('');
+
+    if (!isValidPhoneNumber(branchEditForm.soDienThoai)) {
+      setBranchEditError('Số điện thoại phải có đúng 10 số và bắt đầu bằng 0.');
+      return;
+    }
+
+    setIsBranchEditing(true);
+    try {
+      const { data } = await adminApi.updateBranch(editingBranch.maChiNhanh, branchEditForm);
+      setEditingBranch(null);
+      setSelectedBranch(data || { ...editingBranch, ...branchEditForm });
+      await fetchPropertyData();
+    } catch (error) {
+      setBranchEditError(error.response?.data?.message || 'Không thể cập nhật chi nhánh.');
+    } finally {
+      setIsBranchEditing(false);
+    }
+  };
+
+  const handleDeleteBranch = async (branch) => {
+    if (!confirm(`Xác nhận xóa chi nhánh ${branch.maChiNhanh}?`)) return;
+
+    setIsBranchDetailBusy(true);
+    try {
+      await adminApi.deleteBranch(branch.maChiNhanh);
+      setSelectedBranch(null);
+      await fetchPropertyData();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Không thể xóa chi nhánh.');
+    } finally {
+      setIsBranchDetailBusy(false);
+    }
+  };
+
+  const handleRoomEditSubmit = async (event) => {
+    event.preventDefault();
+    setRoomEditError('');
+    setIsRoomEditing(true);
+    try {
+      await adminApi.updateRoom(editingRoom.maPhong, roomEditForm);
+      setEditingRoom(null);
+      await fetchPropertyData();
+    } catch (error) {
+      setRoomEditError(error.response?.data?.message || 'Không thể cập nhật phòng.');
+    } finally {
+      setIsRoomEditing(false);
+    }
+  };
+
+  const handleDeleteRoom = async (room) => {
+    if (!confirm(`Xác nhận xóa phòng ${room.maPhong}?`)) return;
+
+    setIsRoomActionBusy(true);
+    try {
+      await adminApi.deleteRoom(room.maPhong);
+      setSelectedRoomDetail((current) => (current?.maPhong === room.maPhong ? null : current));
+      await fetchPropertyData();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Không thể xóa phòng.');
+    } finally {
+      setIsRoomActionBusy(false);
     }
   };
 
@@ -1685,7 +2234,9 @@ function PropertyView() {
                 <strong>{row.rooms}<small>phòng</small></strong>
                 <strong>{row.beds}<small>giường</small></strong>
               </div>
-              <button className="admin-link-btn" type="button" onClick={(e) => { e.stopPropagation(); setSelectedBranch(row.originalBranch); }}>Chi tiết</button>
+              <button className="admin-icon-btn" type="button" title="Xem chi tiết" aria-label="Xem chi tiết chi nhánh" onClick={(e) => { e.stopPropagation(); setSelectedBranch(row.originalBranch); }}>
+                <Icon name="visibility" />
+              </button>
             </article>
           )) : (
             <div className="admin-empty-state">Chưa có chi nhánh nào</div>
@@ -1744,6 +2295,15 @@ function PropertyView() {
                       >
                         <Icon name="visibility" />
                       </button>
+                      <button
+                        className="admin-icon-btn"
+                        type="button"
+                        disabled={isBranchInactive}
+                        title={isBranchInactive ? 'Chi nhánh đang ngừng hoạt động' : 'Cập nhật phòng'}
+                        onClick={() => openRoomEditModal(room)}
+                      >
+                        <Icon name="mode_edit" />
+                      </button>
                       <button 
                         className={`admin-icon-btn ${!isRoomLocked ? 'danger' : ''}`}
                         type="button" 
@@ -1752,6 +2312,15 @@ function PropertyView() {
                         onClick={() => setRoomToConfirm(room)}
                       >
                         <Icon name={isRoomLocked ? 'lock_open' : 'lock'} />
+                      </button>
+                      <button
+                        className="admin-icon-btn danger"
+                        type="button"
+                        disabled={isBranchInactive || isRoomActionBusy}
+                        title={isBranchInactive ? 'Chi nhánh đang ngừng hoạt động' : 'Xóa phòng'}
+                        onClick={() => handleDeleteRoom(room)}
+                      >
+                        <Icon name="delete" />
                       </button>
                     </td>
                   </tr>
@@ -1773,6 +2342,8 @@ function PropertyView() {
         isBusy={isBranchDetailBusy}
         onClose={() => setSelectedBranch(null)}
         onToggleStatus={handleToggleBranchStatus}
+        onEdit={openBranchEditModal}
+        onDelete={handleDeleteBranch}
       />
 
       {showBranchModal && (
@@ -1803,6 +2374,39 @@ function PropertyView() {
             setRoomError('');
           }}
           onSubmit={handleRoomSubmit}
+        />
+      )}
+
+      {editingBranch && (
+        <UpdateBranchModal
+          branch={editingBranch}
+          form={branchEditForm}
+          error={branchEditError}
+          isSubmitting={isBranchEditing}
+          onChange={handleBranchEditChange}
+          onClose={() => {
+            setEditingBranch(null);
+            setBranchEditError('');
+          }}
+          onSubmit={handleBranchEditSubmit}
+        />
+      )}
+
+      {editingRoom && (
+        <UpdateRoomModal
+          room={editingRoom}
+          form={roomEditForm}
+          branches={branches.filter((branch) => branch.trangThai === 'Hoạt động' || branch.maChiNhanh === editingRoom.maChiNhanh)}
+          roomTypes={roomTypes}
+          error={roomEditError}
+          isSubmitting={isRoomEditing}
+          onChange={handleRoomEditChange}
+          onImageChange={handleRoomEditImageChange}
+          onClose={() => {
+            setEditingRoom(null);
+            setRoomEditError('');
+          }}
+          onSubmit={handleRoomEditSubmit}
         />
       )}
 
@@ -1893,6 +2497,54 @@ function ServiceModal({ item, onClose, onRefresh }) {
             <label>
               <RequiredLabel>Đơn giá</RequiredLabel>
               <input type="number" name="donGia" defaultValue={item?.donGia} required />
+            </label>
+          </div>
+          <footer className="admin-modal-actions">
+            <button className="admin-btn secondary" type="button" onClick={onClose}>Hủy</button>
+            <button className="admin-btn primary" type="submit">Lưu</button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function RefundRuleModal({ item, onClose, onRefresh }) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    try {
+      if (item) {
+        await adminApi.updateRefundRule(item.maQuyDinhHoanCoc, data);
+      } else {
+        await adminApi.createRefundRule(data);
+      }
+      onRefresh();
+      onClose();
+    } catch (err) {
+      alert(err.response?.data?.message || err.message);
+    }
+  };
+
+  return (
+    <div className="admin-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="admin-modal" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
+        <header className="admin-modal-head">
+          <div>
+            <span className="admin-eyebrow">Quy định hoàn cọc</span>
+            <h3>{item ? 'Cập nhật quy định' : 'Thêm quy định mới'}</h3>
+          </div>
+          <button className="admin-icon-btn" onClick={onClose} type="button" aria-label="Đóng"><Icon name="close" /></button>
+        </header>
+        <form className="admin-modal-form" onSubmit={handleSubmit}>
+          <div className="admin-form-grid">
+            <label className="admin-form-full">
+              <RequiredLabel>Tên quy định</RequiredLabel>
+              <input name="tenQuyDinh" defaultValue={item?.tenQuyDinh} required />
+            </label>
+            <label>
+              <RequiredLabel>Tỷ lệ hoàn cọc (%)</RequiredLabel>
+              <input type="number" name="tyLeHoanCoc" defaultValue={item?.tyLeHoanCoc} required min="0" max="100" step="0.01" />
             </label>
           </div>
           <footer className="admin-modal-actions">
@@ -2030,10 +2682,12 @@ function ViolationModal({ item, onClose, onRefresh }) {
 function ServicesView() {
   const [activeTab, setActiveTab] = useState('services');
   const [services, setServices] = useState([]);
+  const [refundRules, setRefundRules] = useState([]);
   const [rules, setRules] = useState([]);
   const [violations, setViolations] = useState([]);
   
   const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showRefundRuleModal, setShowRefundRuleModal] = useState(false);
   const [showRuleModal, setShowRuleModal] = useState(false);
   const [showViolationModal, setShowViolationModal] = useState(false);
 
@@ -2043,6 +2697,15 @@ function ServicesView() {
     try {
       const res = await adminApi.getServices();
       setServices(res.data.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchRefundRules = async () => {
+    try {
+      const res = await adminApi.getRefundRules();
+      setRefundRules(res.data.data);
     } catch (error) {
       console.error(error);
     }
@@ -2068,6 +2731,7 @@ function ServicesView() {
 
   useEffect(() => {
     if (activeTab === 'services') fetchServices();
+    if (activeTab === 'refundRules') fetchRefundRules();
     if (activeTab === 'rules') fetchRules();
     if (activeTab === 'violations') fetchViolations();
   }, [activeTab]);
@@ -2081,8 +2745,17 @@ function ServicesView() {
     }
   };
 
+  const handleDeleteRefundRule = async (id) => {
+    if (confirm('Xác nhận xóa quy định hoàn cọc này?')) {
+      try {
+        await adminApi.deleteRefundRule(id);
+        fetchRefundRules();
+      } catch (err) { alert(err.response?.data?.message || err.message); }
+    }
+  };
+
   const handleDeleteRule = async (id) => {
-    if (confirm('Xác nhận xóa nội quy này?')) {
+    if (confirm('Xác nhận vô hiệu hóa nội quy này?')) {
       try {
         await adminApi.deleteRule(id);
         fetchRules();
@@ -2091,7 +2764,7 @@ function ServicesView() {
   };
 
   const handleDeleteViolation = async (id) => {
-    if (confirm('Xác nhận xóa điều khoản vi phạm này?')) {
+    if (confirm('Xác nhận vô hiệu hóa điều khoản vi phạm này?')) {
       try {
         await adminApi.deleteViolation(id);
         fetchViolations();
@@ -2108,6 +2781,7 @@ function ServicesView() {
             <h3>Dịch vụ, nội quy và điều khoản vi phạm</h3>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
               <button className={`admin-btn ${activeTab === 'services' ? 'primary' : ''}`} onClick={() => setActiveTab('services')}>Dịch vụ</button>
+              <button className={`admin-btn ${activeTab === 'refundRules' ? 'primary' : ''}`} onClick={() => setActiveTab('refundRules')}>Hoàn cọc</button>
               <button className={`admin-btn ${activeTab === 'rules' ? 'primary' : ''}`} onClick={() => setActiveTab('rules')}>Nội quy</button>
               <button className={`admin-btn ${activeTab === 'violations' ? 'primary' : ''}`} onClick={() => setActiveTab('violations')}>Điều khoản vi phạm</button>
             </div>
@@ -2115,6 +2789,7 @@ function ServicesView() {
           <button className="admin-btn primary" type="button" onClick={() => {
             setEditItem(null);
             if (activeTab === 'services') setShowServiceModal(true);
+            if (activeTab === 'refundRules') setShowRefundRuleModal(true);
             if (activeTab === 'rules') setShowRuleModal(true);
             if (activeTab === 'violations') setShowViolationModal(true);
           }}>
@@ -2141,6 +2816,31 @@ function ServicesView() {
           </div>
         )}
 
+        {activeTab === 'refundRules' && (
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead><tr><th>Mã</th><th>Tên quy định</th><th>Tỷ lệ hoàn cọc</th><th>Số lần áp dụng</th><th>Thao tác</th></tr></thead>
+              <tbody>
+                {refundRules.map(rule => (
+                  <tr key={rule.maQuyDinhHoanCoc}>
+                    <td>{rule.maQuyDinhHoanCoc}</td>
+                    <td>{rule.tenQuyDinh}</td>
+                    <td><strong>{Number(rule.tyLeHoanCoc || 0)}%</strong></td>
+                    <td>{rule.soLanApDung || 0}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button className="admin-icon-btn" title="Chỉnh sửa" onClick={() => { setEditItem(rule); setShowRefundRuleModal(true); }}><Icon name="mode_edit" /></button>
+                        <button className="admin-icon-btn danger" title="Xóa" onClick={() => handleDeleteRefundRule(rule.maQuyDinhHoanCoc)}><Icon name="delete" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {refundRules.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>Chưa có quy định hoàn cọc</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {activeTab === 'rules' && (
           <div className="admin-table-container">
             <table className="admin-table">
@@ -2157,7 +2857,7 @@ function ServicesView() {
                     <td>
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <button className="admin-icon-btn" title="Chỉnh sửa" onClick={() => { setEditItem(rule); setShowRuleModal(true); }}><Icon name="mode_edit" /></button>
-                        <button className="admin-icon-btn danger" title="Xóa" onClick={() => handleDeleteRule(rule.maQuyDinh)}><Icon name="delete" /></button>
+                        <button className="admin-icon-btn danger" title="Vô hiệu hóa" onClick={() => handleDeleteRule(rule.maQuyDinh)}><Icon name="delete" /></button>
                       </div>
                     </td>
                   </tr>
@@ -2180,7 +2880,7 @@ function ServicesView() {
                     <td>{v.mucPhat ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v.mucPhat) : ''}</td>
                     <td>
                       <button className="admin-icon-btn" onClick={() => { setEditItem(v); setShowViolationModal(true); }}><Icon name="mode_edit" /></button>
-                      <button className="admin-icon-btn danger" onClick={() => handleDeleteViolation(v.maDieuKhoan)}><Icon name="delete" /></button>
+                      <button className="admin-icon-btn danger" title="Vô hiệu hóa" onClick={() => handleDeleteViolation(v.maDieuKhoan)}><Icon name="delete" /></button>
                     </td>
                   </tr>
                 ))}
@@ -2191,6 +2891,7 @@ function ServicesView() {
       </div>
 
       {showServiceModal && <ServiceModal item={editItem} onClose={() => setShowServiceModal(false)} onRefresh={fetchServices} />}
+      {showRefundRuleModal && <RefundRuleModal item={editItem} onClose={() => setShowRefundRuleModal(false)} onRefresh={fetchRefundRules} />}
       {showRuleModal && <RuleModal item={editItem} onClose={() => setShowRuleModal(false)} onRefresh={fetchRules} />}
       {showViolationModal && <ViolationModal item={editItem} onClose={() => setShowViolationModal(false)} onRefresh={fetchViolations} />}
     </section>
@@ -2199,11 +2900,9 @@ function ServicesView() {
 
 function SettingsView() {
   const [form, setForm] = useState({
-    thoiHanCoc: '',
-    donViCoc: 'Giờ',
     chuKyFull: 'Hàng tuần',
-    thuMucLuuTru: 'C:\\SQLBackups',
-    maThamSoCoc: ''
+    chuKyIncremental: 'Hàng ngày',
+    thuMucLuuTru: 'C:\\SQLBackups'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -2212,13 +2911,10 @@ function SettingsView() {
       try {
         const res = await adminApi.getSettings();
         const data = res.data;
-        const thoiHanParam = data.parameters?.find(p => p.nhomThamSo === 'Quy định đặt cọc') || data.parameters?.[0];
         
         setForm({
-          maThamSoCoc: thoiHanParam?.maThamSo || '',
-          thoiHanCoc: thoiHanParam?.giaTri || '',
-          donViCoc: thoiHanParam?.donViTinh || 'Giờ',
           chuKyFull: data.backup?.chuKyFull || 'Hàng tuần',
+          chuKyIncremental: data.backup?.chuKyIncremental || 'Hàng ngày',
           thuMucLuuTru: data.backup?.thuMucLuuTru || 'C:\\SQLBackups'
         });
       } catch (err) {
@@ -2258,32 +2954,23 @@ function SettingsView() {
         </div>
         <div className="admin-form-grid">
           <label>
-            <RequiredLabel>Thời hạn thanh toán cọc</RequiredLabel>
-            <input 
-              value={form.thoiHanCoc} 
-              onChange={e => handleChange('thoiHanCoc', e.target.value)} 
-              type="number"
-            />
-          </label>
-          <label>
-            <RequiredLabel>Đơn vị</RequiredLabel>
-            <select 
-              value={form.donViCoc}
-              onChange={e => handleChange('donViCoc', e.target.value)}
-            >
-              <option>Giờ</option>
-              <option>Ngày</option>
-            </select>
-          </label>
-          <label>
             <RequiredLabel>Chu kỳ sao lưu full</RequiredLabel>
             <select 
               value={form.chuKyFull}
               onChange={e => handleChange('chuKyFull', e.target.value)}
             >
-              <option>Hàng ngày</option>
               <option>Hàng tuần</option>
               <option>Hàng tháng</option>
+            </select>
+          </label>
+          <label>
+            <RequiredLabel>Chu kỳ sao lưu incremental</RequiredLabel>
+            <select
+              value={form.chuKyIncremental}
+              onChange={e => handleChange('chuKyIncremental', e.target.value)}
+            >
+              <option>Hàng ngày</option>
+              <option>Hàng tuần</option>
             </select>
           </label>
           <label>
@@ -2328,8 +3015,13 @@ function BackupView() {
   const [backups, setBackups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [backupType, setBackupType] = useState('Full');
   const [error, setError] = useState('');
   const [selectedBackup, setSelectedBackup] = useState(null);
+  const [restoreTarget, setRestoreTarget] = useState(null);
+  const [restoreCommand, setRestoreCommand] = useState('');
+  const [restoreError, setRestoreError] = useState('');
 
   const fetchBackups = async () => {
     setError('');
@@ -2348,7 +3040,7 @@ function BackupView() {
     setIsBackingUp(true);
     setError('');
     try {
-      await adminApi.createBackup({ loaiSaoLuu: 'Full' });
+      await adminApi.createBackup({ loaiSaoLuu: backupType });
       await fetchBackups();
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Không thể sao lưu dữ liệu lúc này.');
@@ -2356,6 +3048,35 @@ function BackupView() {
     } finally {
       setIsBackingUp(false);
     }
+  };
+
+  const handleRestoreBackup = async (backup) => {
+    if (!backup) return;
+    setRestoreTarget(backup);
+    setRestoreCommand('');
+    setRestoreError('');
+  };
+
+  const confirmCreateRestoreCommand = async () => {
+    if (!restoreTarget) return;
+    setIsRestoring(true);
+    setError('');
+    setRestoreError('');
+    try {
+      const { data } = await adminApi.restoreBackup(restoreTarget.maSaoLuu, { chiTaoLenh: true });
+      setRestoreCommand(data?.lenhPhucHoi || 'Đã tạo lệnh phục hồi dữ liệu.');
+    } catch (requestError) {
+      setRestoreError(requestError.response?.data?.message || 'Không thể tạo lệnh phục hồi dữ liệu.');
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const closeRestoreModal = () => {
+    if (isRestoring) return;
+    setRestoreTarget(null);
+    setRestoreCommand('');
+    setRestoreError('');
   };
 
   useEffect(() => {
@@ -2370,9 +3091,15 @@ function BackupView() {
             <span className="admin-eyebrow">Sao lưu dữ liệu</span>
             <h3>Lịch sử sao lưu gần đây</h3>
           </div>
-          <button className="admin-btn primary" type="button" onClick={handleCreateBackup} disabled={isBackingUp}>
-            <Icon name="save" /> {isBackingUp ? 'Đang sao lưu...' : 'Sao lưu ngay'}
-          </button>
+          <div className="admin-button-group">
+            <select className="admin-action-select" value={backupType} onChange={(event) => setBackupType(event.target.value)} disabled={isBackingUp} aria-label="Loại sao lưu">
+              <option value="Full">Sao lưu toàn bộ</option>
+              <option value="Incremental">Sao lưu thay đổi</option>
+            </select>
+            <button className="admin-btn primary" type="button" onClick={handleCreateBackup} disabled={isBackingUp}>
+              <Icon name="save" /> {isBackingUp ? 'Đang sao lưu...' : 'Sao lưu ngay'}
+            </button>
+          </div>
         </div>
         {error && <div className="admin-error-banner">{error}</div>}
         <div className="admin-table-wrap">
@@ -2421,7 +3148,15 @@ function BackupView() {
           </table>
         </div>
       </div>
-      <BackupDetailModal backup={selectedBackup} onClose={() => setSelectedBackup(null)} />
+      <BackupDetailModal backup={selectedBackup} onClose={() => setSelectedBackup(null)} onRestore={isRestoring ? () => {} : handleRestoreBackup} />
+      <RestoreCommandModal
+        backup={restoreTarget}
+        command={restoreCommand}
+        error={restoreError}
+        isSubmitting={isRestoring}
+        onClose={closeRestoreModal}
+        onConfirm={confirmCreateRestoreCommand}
+      />
     </section>
   );
 }
@@ -2464,6 +3199,8 @@ function LogsView() {
               <tr>
                 <th>Thời gian</th>
                 <th>Người thao tác</th>
+                <th>Vai trò</th>
+                <th>Chức năng</th>
                 <th>Hành động</th>
                 <th>Đối tượng</th>
               </tr>
@@ -2471,7 +3208,7 @@ function LogsView() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '28px', color: 'var(--admin-subtle)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '28px', color: 'var(--admin-subtle)' }}>
                     Đang tải nhật ký hệ thống...
                   </td>
                 </tr>
@@ -2479,12 +3216,14 @@ function LogsView() {
                 <tr key={row.maNhatKy}>
                   <td><strong>{formatLogTime(row.thoiGian)}</strong></td>
                   <td>{row.maNguoiDung || row.hoTenNguoiDung || 'Hệ thống'}</td>
+                  <td>{row.vaiTro || '-'}</td>
+                  <td>{row.chucNang || '-'}</td>
                   <td>{row.hanhDong}</td>
                   <td>{formatLogObject(row)}</td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '28px', color: 'var(--admin-subtle)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '28px', color: 'var(--admin-subtle)' }}>
                     Chưa có nhật ký nào.
                   </td>
                 </tr>

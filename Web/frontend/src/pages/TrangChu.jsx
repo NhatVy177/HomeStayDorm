@@ -534,7 +534,7 @@ function HeroSection({ onOpenAuth }) {
 // ────────────────────────────────────────────────────────────
 // Room Card — dữ liệu từ DB
 // ────────────────────────────────────────────────────────────
-function RoomCard({ room, onOpenAuth }) {
+function RoomCard({ room, onViewDetail }) {
   const img = room.UrlImg || ROOM_IMAGES[room.MaLoaiPhong] || ROOM_IMAGES.LP0001;
   const amenities = ROOM_AMENITIES[room.MaLoaiPhong] || ['Wifi', 'Điều hòa'];
   const gia = room.GiaThueTheoGiuong
@@ -560,7 +560,7 @@ function RoomCard({ room, onOpenAuth }) {
             {amenities.map(a => <span key={a} className="tc-tag">{a}</span>)}
           </div>
           <div className="tc-room-footer">
-            <button className="tc-room-cta" type="button" onClick={() => onOpenAuth('register')}>
+            <button className="tc-room-cta" type="button" onClick={() => onViewDetail(room)}>
               Xem chi tiết <span className="tc-arrow-circle">→</span>
             </button>
           </div>
@@ -708,6 +708,10 @@ export default function TrangChu() {
   const openAuth = useCallback((mode) => setAuthModal(mode), []);
   const closeAuth = useCallback(() => setAuthModal(null), []);
   const switchMode = useCallback((mode) => setAuthModal(mode), []);
+  const viewRoomDetail = useCallback((room) => {
+    if (!room?.MaPhong) return;
+    navigate(`/kham-pha-phong?phong=${encodeURIComponent(room.MaPhong)}`);
+  }, [navigate]);
 
   useEffect(() => {
     httpClient.get('/trang-chu/phong-noi-bat')
@@ -739,7 +743,7 @@ export default function TrangChu() {
               </div>
             ) : rooms.length > 0 ? (
               <div className="tc-rooms-grid">
-                {rooms.map(room => <RoomCard key={room.MaPhong} room={room} onOpenAuth={openAuth} />)}
+                {rooms.map(room => <RoomCard key={room.MaPhong} room={room} onViewDetail={viewRoomDetail} />)}
               </div>
             ) : (
               <div className="tc-rooms-empty">Hiện chưa có phòng nào để hiển thị.</div>

@@ -45,6 +45,13 @@ const filterOptions = {
   ]
 };
 
+const ROOM_TYPE_CAPACITY = {
+  'Phòng 2 người': 2,
+  'Phòng 4 người': 4,
+  'Phòng 6 người': 6,
+  'Phòng VIP 2 người': 2
+};
+
 const branchContacts = [
   {
     name: 'Chi nhánh Quận 1',
@@ -143,6 +150,33 @@ function validateContactAndArea(form) {
   if (!/^\d{10}$/.test(form.soDienThoai || '')) return 'Số điện thoại phải có đúng 10 chữ số.';
   if (!/^\d{12}$/.test(form.cccd || '')) return 'CCCD phải có đúng 12 chữ số.';
   if (!resolveAllowedArea(form.khuVucMongMuon)) return 'Khu vực mong muốn không hợp lệ.';
+  const roomTypeError = getRoomTypeRequirementError(form);
+  if (roomTypeError) return roomTypeError;
+  return '';
+}
+
+function splitRoomTypes(value) {
+  return String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function getRoomTypeCapacity(roomType) {
+  if (!roomType) return null;
+  if (ROOM_TYPE_CAPACITY[roomType]) return ROOM_TYPE_CAPACITY[roomType];
+  const capacity = String(roomType).match(/(\d+)\s*người/i)?.[1];
+  return capacity ? Number(capacity) : null;
+}
+
+function getRoomTypeRequirementError(form = {}) {
+  const roomTypes = splitRoomTypes(form.loaiPhongYeuCau);
+  if (roomTypes.length === 0) return 'Vui lòng chọn một loại phòng mong muốn.';
+  if (roomTypes.length > 1) return 'Phiếu đăng ký chỉ được chọn một loại phòng mong muốn.';
+
+  const soNguoiO = Number(form.soNguoiO || 0);
+  const capacity = getRoomTypeCapacity(roomTypes[0]);
+  if (capacity && soNguoiO > capacity) {
+    return `Số người ở dự kiến không được vượt quá ${capacity} người của loại phòng ${roomTypes[0]}.`;
+  }
+
   return '';
 }
 
@@ -461,7 +495,7 @@ function getNavLocks(state = {}) {
     'lich-xem': false,
     'dat-coc': !hasDeposit,
     'hop-dong': !hasContract,
-    'tra-phong': false,
+    'tra-phong': !(hasDeposit || hasContract),
     'tai-khoan': false,
     hasProfile,
     hasSchedule: Number(state.soLichXem || 0) > 0,
@@ -602,11 +636,6 @@ function ChiTietPhongView({ phong, onBack, onRent }) {
             <div className="kh-detail-stats">
               <div>
                 <Icon name="people" />
-                <span>Hình thức thuê</span>
-                <strong>{phong.hinhThucThue}</strong>
-              </div>
-              <div>
-                <Icon name="people" />
                 <span>Tối đa</span>
                 <strong>{phong.sucChua} Người</strong>
               </div>
@@ -617,11 +646,6 @@ function ChiTietPhongView({ phong, onBack, onRent }) {
                   <strong>Tầng {phong.tang}</strong>
                 </div>
               )}
-              <div>
-                <Icon name="people" />
-                <span>Giới tính</span>
-                <strong>{phong.gioiTinhChoPhep}</strong>
-              </div>
             </div>
             {phong.moTa && <p className="kh-detail-mota">{phong.moTa}</p>}
           </div>
@@ -677,9 +701,6 @@ function ChiTietPhongView({ phong, onBack, onRent }) {
             <button className="kp-btn kp-btn-primary kp-full kh-detail-cta kh-detail-register" type="button" onClick={() => onRent(phong)}>
               Đăng ký thuê ngay
             </button>
-            <a className="kp-btn kp-full kh-detail-cta kh-detail-contact" href="tel:19006789">
-              <Icon name="support" />Liên hệ tư vấn
-            </a>
             <div className="kh-detail-note">
               <Icon name="info" />
               <span>Có thể dọn vào ngày sau khi ký hợp đồng và đóng cọc.</span>
@@ -936,6 +957,20 @@ export default function KhachHangPortalPage() {
     };
   }
 
+  function getProfileSortValue(profile = {}) {
+    const rawDate = firstFilled(profile.ngayDangKy, profile.NgayDangKy, profile.createdAt, profile.CreatedAt);
+    const timestamp = Date.parse(rawDate);
+    if (Number.isFinite(timestamp)) return timestamp;
+
+    const idNumber = String(firstFilled(profile.maDangKy, profile.MaDangKy)).match(/\d+/)?.[0];
+    return Number(idNumber) || 0;
+  }
+
+  function getLatestProfileForRentDefaults() {
+    const profiles = Array.isArray(overview?.hoSo) ? overview.hoSo : [];
+    return [...profiles].sort((a, b) => getProfileSortValue(b) - getProfileSortValue(a))[0] || null;
+  }
+
   function canOpenRentForm() {
     if (!registrationLocked) return true;
     setRegistrationNoticeOpen(true);
@@ -948,6 +983,11 @@ export default function KhachHangPortalPage() {
     const selected = room ? [room] : selectedRooms;
     if (!selected.length) {
       setToast('Chọn ít nhất một phòng trước khi gửi nhu cầu thuê.');
+      return;
+    }
+    const selectedRoomTypes = [...new Set(selected.map((item) => item.loaiPhong).filter(Boolean))];
+    if (selectedRoomTypes.length > 1) {
+      setToast('Phiếu đăng ký chỉ được chọn một loại phòng mong muốn. Vui lòng chọn các phòng cùng loại.');
       return;
     }
     const firstRoom = selected[0];
@@ -982,11 +1022,26 @@ export default function KhachHangPortalPage() {
     setRentModal(true);
   }
 
-  function openGeneralRentForm() {
+  async function openGeneralRentForm() {
     if (!canOpenRentForm()) return;
 
     setSelectedRooms([]);
-    setRentForm(getRentDefaultsFromUser());
+    const latestProfile = getLatestProfileForRentDefaults();
+    const latestProfileId = firstFilled(latestProfile?.maDangKy, latestProfile?.MaDangKy);
+
+    if (!latestProfileId) {
+      setRentForm(latestProfile ? buildEditFormFromProfile(latestProfile) : getRentDefaultsFromUser());
+      setRentModal(true);
+      return;
+    }
+
+    try {
+      const { data } = await khachMoiApi.getHoSoDetail(latestProfileId);
+      const detail = unwrapApiPayload(data);
+      setRentForm(buildEditFormFromProfile({ ...latestProfile, ...detail }));
+    } catch {
+      setRentForm(buildEditFormFromProfile(latestProfile));
+    }
     setRentModal(true);
   }
 
@@ -1011,7 +1066,7 @@ export default function KhachHangPortalPage() {
 
     setSubmitting(true);
     try {
-      await khachMoiApi.createHoSo({
+      const { data } = await khachMoiApi.createHoSo({
         ...rentForm,
         khuVucMongMuon: resolveAllowedArea(rentForm.khuVucMongMuon),
         phongQuanTam: selectedRooms.map((room) => room.tenPhong).join(', '),
@@ -1021,11 +1076,19 @@ export default function KhachHangPortalPage() {
         soNu: rentForm.soNu || 0,
         ghiChu: rentForm.ghiChu || ''
       });
+      const maDangKy = data?.maDangKy || data?.MaDangKy;
       setRentModal(false);
       setSelectedRooms([]);
       await loadPortal(filters);
       setActiveTab('ho-so');
-      setToast('Đã gửi hồ sơ nhu cầu thuê.');
+      setResultModal({
+        type: 'success',
+        title: 'Gửi thông tin đăng ký thuê thành công',
+        message: maDangKy
+          ? `Hồ sơ ${maDangKy} đã được tạo. Nhân viên Sale sẽ tiếp nhận và liên hệ sắp lịch xem phòng.`
+          : 'Hồ sơ của bạn đã được tạo. Nhân viên Sale sẽ tiếp nhận và liên hệ sắp lịch xem phòng.',
+        confirmText: 'Xem hồ sơ'
+      });
     } catch (requestError) {
       setToast(requestError.response?.data?.message || requestError.message || 'Không thể gửi hồ sơ lúc này.');
     } finally {
@@ -1097,6 +1160,18 @@ export default function KhachHangPortalPage() {
     }
   }
 
+  async function openScheduledRoomDetail(room) {
+    const maPhong = room?.maPhong || room?.MaPhong;
+    if (!maPhong) {
+      setToast('Không tìm thấy mã phòng để xem chi tiết.');
+      return;
+    }
+
+    setScheduleDetailModal(null);
+    setActiveTab('kham-pha');
+    await openRoomDetail({ ...room, maPhong });
+  }
+
   async function submitEditModal(event) {
     event.preventDefault();
 
@@ -1155,7 +1230,6 @@ export default function KhachHangPortalPage() {
               </label>
               <div className="kh-filter-controls">
                 <SelectField label="Khu vực" value={filters.khuVuc} options={filterOptions.khuVuc} onChange={(value) => setFilters({ ...filters, khuVuc: value })} />
-                <SelectField label="Hình thức thuê" value={filters.hinhThucThue} options={filterOptions.hinhThucThue} onChange={(value) => setFilters({ ...filters, hinhThucThue: value })} />
                 <SelectField label="Loại phòng" value={filters.loaiPhong} options={filterOptions.loaiPhong} onChange={(value) => setFilters({ ...filters, loaiPhong: value })} />
                 <SelectField label="Mức giá" value={filters.mucGiaToiDa} options={filterOptions.mucGiaToiDa} onChange={(value) => setFilters({ ...filters, mucGiaToiDa: value })} />
                 <button className="kp-btn kp-btn-primary kh-filter-submit" type="submit"><Icon name="search" />Tìm</button>
@@ -1175,7 +1249,10 @@ export default function KhachHangPortalPage() {
                       <div><h3>{room.tenPhong}</h3><strong>{formatMoney(room.giaThue)}</strong></div>
                       <p className="kh-room-location"><Icon name="explore" />{getArea(room)}</p>
                       <p>{room.moTa || 'Chưa có mô tả chi tiết.'}</p>
-                      <div className="kh-pills"><span>{room.loaiPhong}</span><span>{room.hinhThucThue}</span></div>
+                      <div className="kh-pills">
+                        {room.loaiPhong && <span>{room.loaiPhong}</span>}
+                        {room.hinhThucThue && <span>{room.hinhThucThue}</span>}
+                      </div>
                       <div className="kh-room-actions">
                         <button className="kp-btn kp-btn-soft kp-full" type="button" onClick={() => openRoomDetail(room)}>Xem chi tiết</button>
                       </div>
@@ -1206,17 +1283,6 @@ export default function KhachHangPortalPage() {
                   <Icon name="profile" />Đăng ký nhu cầu thuê
                 </button>
               </div>
-            </article>
-
-            <article className="kh-support-card">
-              <div>
-                <h3>Cần tư vấn thêm?</h3>
-                <p>Chuyên viên HomestayDorm sẽ giúp bạn chọn phòng phù hợp nhất với nhu cầu.</p>
-                <button className="kp-btn kp-btn-light kp-full" type="button" onClick={() => setSupportModal(true)}>
-                  <Icon name="support" />Liên hệ ngay
-                </button>
-              </div>
-              <Icon name="support" className="kh-support-watermark" />
             </article>
           </aside>
         </div>
@@ -3368,7 +3434,7 @@ export default function KhachHangPortalPage() {
               <section className="kh-register-section">
                 <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
                 <div className="kh-register-grid kh-balanced-grid">
-                  <label><span>Số lượng người ở*</span><input type="number" min="1" value={rentForm.soNguoiO} onChange={(event) => setRentForm({ ...rentForm, soNguoiO: event.target.value })} required /></label>
+                  <label><span>Số lượng người ở*</span><input type="number" min="1" max={getRoomTypeCapacity(rentForm.loaiPhongYeuCau) || undefined} value={rentForm.soNguoiO} onChange={(event) => setRentForm({ ...rentForm, soNguoiO: event.target.value })} required /></label>
                   <label><span>Giới tính thuê*</span><select value={rentForm.gioiTinhThue} onChange={(event) => setRentForm({ ...rentForm, gioiTinhThue: event.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></label>
                   {rentForm.gioiTinhThue === 'Khác' && (
                     <div className="is-half" style={{ display: 'flex', gap: '16px' }}>
@@ -3396,33 +3462,22 @@ export default function KhachHangPortalPage() {
                     </datalist>
                     {getAreaError(rentForm.khuVucMongMuon) && <small className="kh-field-error">{getAreaError(rentForm.khuVucMongMuon)}</small>}
                   </label>
-                  <div className="is-half kh-room-type-field" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start' }}>
-                    <span className="kh-register-field-title">Loại phòng mong muốn*</span>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      {filterOptions.loaiPhong.filter(Boolean).map((option) => {
-                        const isChecked = rentForm.loaiPhongYeuCau ? rentForm.loaiPhongYeuCau.split(', ').includes(option) : false;
-                        return (
-                          <label key={option} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal', fontSize: '14px', color: '#191c1d', padding: 0, background: 'none', border: 'none' }}>
-                            <input
-                              type="checkbox"
-                              style={{ width: '16px', height: '16px', margin: 0 }}
-                              checked={isChecked}
-                              onChange={(e) => {
-                                let currentArr = rentForm.loaiPhongYeuCau ? rentForm.loaiPhongYeuCau.split(', ').filter(Boolean) : [];
-                                if (e.target.checked) {
-                                  currentArr.push(option);
-                                } else {
-                                  currentArr = currentArr.filter(v => v !== option);
-                                }
-                                setRentForm({ ...rentForm, loaiPhongYeuCau: currentArr.join(', ') });
-                              }}
-                            />
-                            {option}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <label className="is-half kh-room-type-field">
+                    <span>Loại phòng mong muốn*</span>
+                    <select
+                      value={rentForm.loaiPhongYeuCau}
+                      onChange={(event) => setRentForm({ ...rentForm, loaiPhongYeuCau: event.target.value })}
+                      required
+                    >
+                      <option value="">Chọn một loại phòng</option>
+                      {filterOptions.loaiPhong.filter(Boolean).map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    {getRoomTypeCapacity(rentForm.loaiPhongYeuCau) && (
+                      <small className="kh-field-hint">Tối đa {getRoomTypeCapacity(rentForm.loaiPhongYeuCau)} người.</small>
+                    )}
+                  </label>
                   <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={rentForm.mucGiaToiDa} onChange={(event) => setRentForm({ ...rentForm, mucGiaToiDa: event.target.value })} placeholder="VD: 3.000.000" required /></label>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={rentForm.ngayDuKienVaoO} onChange={(event) => setRentForm({ ...rentForm, ngayDuKienVaoO: event.target.value })} required /></label>
                   <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={rentForm.thoiHanThue} onChange={(event) => setRentForm({ ...rentForm, thoiHanThue: event.target.value })} placeholder="Ví dụ: 6" required /></label>
@@ -3601,9 +3656,13 @@ export default function KhachHangPortalPage() {
 
       {editModal && (
         <div className="kp-modal-backdrop" onMouseDown={() => setEditModal(null)}>
-          <form className="kp-modal kh-rent-modal" onMouseDown={(e) => e.stopPropagation()} onSubmit={submitEditModal}>
-            <div className="kp-modal-head">
-              <div><span className="kp-eyebrow">Cập nhật hồ sơ</span><h2>Hồ sơ #{editModal.maDangKy}</h2></div>
+          <form className="kp-modal kh-rent-modal kh-register-modal kh-edit-profile-modal" onMouseDown={(e) => e.stopPropagation()} onSubmit={submitEditModal}>
+            <div className="kp-modal-head kh-register-head">
+              <div>
+                <span className="kp-eyebrow">Cập nhật hồ sơ</span>
+                <h2>Hồ sơ #{editModal.maDangKy}</h2>
+                <p>Điều chỉnh thông tin cá nhân và nhu cầu thuê trước khi nhân viên Sale xử lý tiếp.</p>
+              </div>
               <button type="button" onClick={() => setEditModal(null)}>×</button>
             </div>
             <div className="kh-register-scroll">
@@ -3660,7 +3719,7 @@ export default function KhachHangPortalPage() {
               <section className="kh-register-section">
                 <h3><Icon name="home" />Nhu cầu thuê phòng</h3>
                 <div className="kh-register-grid kh-balanced-grid">
-                  <label><span>Số lượng người ở*</span><input type="number" min="1" value={editForm.soNguoiO} onChange={(e) => setEditForm({ ...editForm, soNguoiO: e.target.value })} required /></label>
+                  <label><span>Số lượng người ở*</span><input type="number" min="1" max={getRoomTypeCapacity(editForm.loaiPhongYeuCau) || undefined} value={editForm.soNguoiO} onChange={(e) => setEditForm({ ...editForm, soNguoiO: e.target.value })} required /></label>
                   <label><span>Giới tính thuê*</span><select value={editForm.gioiTinhThue} onChange={(e) => setEditForm({ ...editForm, gioiTinhThue: e.target.value })} required><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></label>
                   {editForm.gioiTinhThue === 'Khác' && (
                     <div className="is-half" style={{ display: 'flex', gap: '16px' }}>
@@ -3688,33 +3747,22 @@ export default function KhachHangPortalPage() {
                     </datalist>
                     {getAreaError(editForm.khuVucMongMuon) && <small className="kh-field-error">{getAreaError(editForm.khuVucMongMuon)}</small>}
                   </label>
-                  <div className="is-half kh-room-type-field" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start' }}>
-                    <span className="kh-register-field-title">Loại phòng mong muốn*</span>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      {filterOptions.loaiPhong.filter(Boolean).map((option) => {
-                        const isChecked = editForm.loaiPhongYeuCau ? editForm.loaiPhongYeuCau.split(', ').includes(option) : false;
-                        return (
-                          <label key={option} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal', fontSize: '14px', color: '#191c1d', padding: 0, background: 'none', border: 'none' }}>
-                            <input
-                              type="checkbox"
-                              style={{ width: '16px', height: '16px', margin: 0 }}
-                              checked={isChecked}
-                              onChange={(e) => {
-                                let currentArr = editForm.loaiPhongYeuCau ? editForm.loaiPhongYeuCau.split(', ').filter(Boolean) : [];
-                                if (e.target.checked) {
-                                  currentArr.push(option);
-                                } else {
-                                  currentArr = currentArr.filter(v => v !== option);
-                                }
-                                setEditForm({ ...editForm, loaiPhongYeuCau: currentArr.join(', ') });
-                              }}
-                            />
-                            {option}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <label className="is-half kh-room-type-field">
+                    <span>Loại phòng mong muốn*</span>
+                    <select
+                      value={editForm.loaiPhongYeuCau}
+                      onChange={(event) => setEditForm({ ...editForm, loaiPhongYeuCau: event.target.value })}
+                      required
+                    >
+                      <option value="">Chọn một loại phòng</option>
+                      {filterOptions.loaiPhong.filter(Boolean).map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    {getRoomTypeCapacity(editForm.loaiPhongYeuCau) && (
+                      <small className="kh-field-hint">Tối đa {getRoomTypeCapacity(editForm.loaiPhongYeuCau)} người.</small>
+                    )}
+                  </label>
                   <label><span>Mức giá tối đa (đ/tháng)*</span><input type="number" min="0" value={editForm.mucGiaToiDa} onChange={(e) => setEditForm({ ...editForm, mucGiaToiDa: e.target.value })} placeholder="VD: 3.000.000" required /></label>
                   <label className="is-half"><span>Thời gian dự kiến dọn vào*</span><input type="date" value={editForm.ngayDuKienVaoO} onChange={(e) => setEditForm({ ...editForm, ngayDuKienVaoO: e.target.value })} required /></label>
                   <label className="is-half"><span>Thời hạn thuê (tháng)*</span><input type="number" min="1" value={editForm.thoiHanThue} onChange={(e) => setEditForm({ ...editForm, thoiHanThue: e.target.value })} placeholder="Ví dụ: 6" required /></label>
@@ -3722,7 +3770,7 @@ export default function KhachHangPortalPage() {
                 </div>
               </section>
             </div>
-            <div className="kp-modal-actions">
+            <div className="kp-modal-actions kh-register-actions">
               <button className="kp-btn kp-btn-soft" type="button" onClick={() => setEditModal(null)}>Đóng</button>
               <button className="kp-btn kp-btn-primary" type="submit" disabled={editSaving}>{editSaving ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
             </div>

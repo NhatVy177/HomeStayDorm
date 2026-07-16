@@ -1,4 +1,5 @@
 import * as service from '../services/auth.service.js';
+import { ghiNhatKy } from '../services/audit.service.js';
 
 function getToken(req) {
   const authorization = req.headers.authorization || '';
@@ -15,8 +16,20 @@ export async function dangKy(req, res, next) {
 
 export async function dangNhap(req, res, next) {
   try {
-    res.json(await service.dangNhap(req.body));
+    const result = await service.dangNhap(req.body);
+    res.json(result);
   } catch (err) {
+    await ghiNhatKy({
+      chucNang: 'Xác thực',
+      hanhDong: 'Đăng nhập thất bại',
+      doiTuong: 'TaiKhoan',
+      maDoiTuong: req.body?.tenDangNhap,
+      noiDung: {
+        tenDangNhap: req.body?.tenDangNhap,
+        ketQua: 'Thất bại',
+        lyDo: err.message
+      }
+    });
     next(err);
   }
 }

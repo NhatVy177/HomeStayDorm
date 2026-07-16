@@ -60,7 +60,11 @@ function normalizeText(value) {
 }
 
 function getAvailableSlots(room) {
-  return Math.max(0, Number(room.soGiuongTrong ?? room.sucChua ?? 0));
+  return Math.max(0, Number(room.soGiuongTrong ?? room.soGiuongDuKienXep ?? room.sucChua ?? 0));
+}
+
+function getRoomCapacity(room) {
+  return Math.max(0, Number(room.sucChua ?? room.SucChuaToiDa ?? room.capacity ?? 0));
 }
 
 function isWholeRoomOption(room) {
@@ -80,55 +84,68 @@ function formatGenderSlotText(male, female) {
   return parts.join(' và ');
 }
 
+function roomAllowsMixedGender(room) {
+  return ['không phân biệt', 'khác', 'hỗn hợp'].includes(normalizeText(room.gioiTinhChoPhep));
+}
+
+function roomAllowsSingleGender(room, gender) {
+  const roomGender = normalizeText(room.gioiTinhChoPhep);
+  return roomGender === gender || roomAllowsMixedGender(room);
+}
+
+function isRoomSuitableForProfile(room, profile) {
+  const total = Math.max(1, Number(profile?.soNguoiO || profile?.soNguoiDuKienO || 1));
+  const male = Math.max(0, Number(profile?.soNam || 0));
+  const female = Math.max(0, Number(profile?.soNu || 0));
+  const availableSlots = getAvailableSlots(room);
+  const capacity = getRoomCapacity(room);
+
+  if (male > 0 && female > 0) {
+    return roomAllowsMixedGender(room)
+      && capacity >= total
+      && availableSlots >= capacity;
+  }
+
+  if (male > 0) {
+    return roomAllowsSingleGender(room, 'nam') && availableSlots >= total;
+  }
+
+  if (female > 0) {
+    return roomAllowsSingleGender(room, 'nữ') && availableSlots >= total;
+  }
+
+  return availableSlots >= total;
+}
+
 function evaluateRoomSelection(selectedRooms, profile) {
   const total = Math.max(1, Number(profile?.soNguoiO || profile?.soNguoiDuKienO || 1));
   const male = Math.max(0, Number(profile?.soNam || 0));
   const female = Math.max(0, Number(profile?.soNu || 0));
 
-  const wholeCapacity = selectedRooms
-    .filter((room) => isWholeRoomOption(room) && normalizeText(room.gioiTinhChoPhep) === 'không phân biệt')
-    .reduce((sum, room) => sum + Number(room.sucChua || getAvailableSlots(room)), 0);
-
-  if (wholeCapacity >= total) {
+  if (selectedRooms.length === 0) {
     return {
-      valid: true,
-      mode: 'Nguyên phòng',
-      message: `Đã chọn đủ ${wholeCapacity} chỗ nguyên phòng cho ${total} người.`
+      valid: false,
+      mode: '',
+      message: 'Vui lòng chọn ít nhất một phòng để lập lịch xem.'
     };
   }
 
-  const sharedRooms = selectedRooms.filter((room) => !isWholeRoomOption(room));
-  const maleSlots = sharedRooms
-    .filter((room) => normalizeText(room.gioiTinhChoPhep) === 'nam')
-    .reduce((sum, room) => sum + getAvailableSlots(room), 0);
-  const femaleSlots = sharedRooms
-    .filter((room) => normalizeText(room.gioiTinhChoPhep) === 'nữ')
-    .reduce((sum, room) => sum + getAvailableSlots(room), 0);
-  const neutralSlots = sharedRooms
-    .filter((room) => normalizeText(room.gioiTinhChoPhep) === 'không phân biệt')
-    .reduce((sum, room) => sum + getAvailableSlots(room), 0);
-
-  if (male > 0 || female > 0) {
-    const missingMale = Math.max(0, male - maleSlots);
-    const missingFemale = Math.max(0, female - femaleSlots);
-    const valid = missingMale + missingFemale <= neutralSlots;
-    const genderSlotText = formatGenderSlotText(male, female);
+  const invalidRooms = selectedRooms.filter((room) => !isRoomSuitableForProfile(room, profile));
+  if (invalidRooms.length > 0) {
+    const genderSlotText = male > 0 && female > 0 ? formatGenderSlotText(male, female) : `${total} người`;
     return {
-      valid,
-      mode: valid ? 'Ghép giường' : '',
-      message: valid
-        ? `Đã đủ chỗ ghép cho ${genderSlotText}.`
-        : `Cần chọn đủ chỗ cho ${genderSlotText}.`
+      valid: false,
+      mode: '',
+      message: `Mỗi phòng được chọn phải tự đủ điều kiện cho ${genderSlotText}.`
     };
   }
 
-  const availableSlots = maleSlots + femaleSlots + neutralSlots;
   return {
-    valid: availableSlots >= total,
-    mode: availableSlots >= total ? 'Ghép giường' : '',
-    message: availableSlots >= total
-      ? `Đã chọn đủ ${availableSlots} chỗ ghép cho ${total} người.`
-      : `Cần chọn thêm ${total - availableSlots} chỗ phù hợp.`
+    valid: true,
+    mode: male > 0 && female > 0 ? 'Nguyên phòng' : 'Phòng phù hợp',
+    message: male > 0 && female > 0
+      ? `Đã chọn ${selectedRooms.length} phòng trống nguyên phòng phù hợp cho nhóm ${formatGenderSlotText(male, female)}.`
+      : `Đã chọn ${selectedRooms.length} phòng phù hợp, mỗi phòng đủ ${total} chỗ.`
   };
 }
 

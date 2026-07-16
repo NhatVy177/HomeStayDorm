@@ -667,44 +667,64 @@
   padding: 0;
 }
 
+.kh-edit-profile-modal {
+  max-width: 760px;
+}
+
 .kh-rent-modal .kp-modal-head {
-  margin-bottom: 14px;
+  align-items: center;
+  background: var(--kp-primary, #00666d);
+  color: #ffffff;
+  margin: -20px -22px 18px;
+  padding: 18px 22px;
 }
 
 .kh-register-modal .kh-register-head {
   align-items: flex-start;
-  border-bottom: 1px solid var(--kp-border);
+  background: var(--kp-primary, #00666d);
+  border-bottom: none;
+  color: #ffffff;
   margin: 0;
   padding: 24px 22px 20px;
 }
 
 .kh-rent-modal .kp-modal-head h2 {
+  color: #ffffff;
   font-size: 22px;
   line-height: 1.15;
 }
 
 .kh-register-modal .kh-register-head h2 {
+  color: #ffffff;
   font-size: 22px;
   margin: 0 0 6px;
 }
 
 .kh-register-modal .kh-register-head p {
-  color: var(--kp-muted);
+  color: rgba(255, 255, 255, 0.84);
   font-size: 13px;
   line-height: 1.45;
   margin: 0;
 }
 
 .kh-rent-modal .kp-modal-head button {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
   font-size: 22px;
   height: 34px;
   width: 34px;
 }
 
 .kh-register-modal .kh-register-head button {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
   height: 32px;
   width: 32px;
+}
+
+.kh-rent-modal .kp-modal-head button:hover,
+.kh-register-modal .kh-register-head button:hover {
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .kh-register-scroll {
@@ -830,6 +850,17 @@
   width: 18px !important;
 }
 
+.kh-register-modal .kh-room-type-field > div {
+  background: #f8faf9;
+  border: 1px solid var(--kp-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.kh-register-modal .kh-room-type-field label {
+  min-height: 24px;
+}
+
 .kh-register-modal .kh-register-grid textarea {
   min-height: 72px;
   resize: vertical;
@@ -853,6 +884,14 @@
 
 .kh-field-error {
   color: #b42318;
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.kh-field-hint {
+  color: #5f6f70;
   display: block;
   font-size: 11px;
   font-weight: 650;
@@ -1129,9 +1168,9 @@
 }
 
 .kh-schedule-detail-modal .kp-modal-head {
-  border-bottom: 1px solid var(--kp-border);
-  margin: -2px 0 16px;
-  padding-bottom: 16px;
+  border-bottom: none;
+  margin: -22px -22px 18px;
+  padding: 18px 22px;
 }
 
 .kh-schedule-head-actions {
@@ -1667,7 +1706,7 @@
 .kh-detail-stats {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .kh-detail-stats > div {
@@ -1792,8 +1831,6 @@
   flex-direction: column;
   gap: 14px;
   padding: 20px;
-  position: sticky;
-  top: 96px;
 }
 
 .kh-detail-price-top {
@@ -2187,6 +2224,11 @@
 
 .kh-btn-primary .kp-line-icon {
   color: currentColor;
+}
+
+.kh-profile-filter-bar {
+  justify-content: flex-start;
+  margin-bottom: 18px;
 }
 
 /* ────────────────────────────────────────────────────────────────
