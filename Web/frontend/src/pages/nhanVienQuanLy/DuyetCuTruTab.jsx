@@ -397,7 +397,153 @@ export default function DuyetCuTruTab() {
 
       {selected && (
         <div className="ktp-modal-overlay" onClick={() => setSelected(null)}>
-          <div className="ktp-modal residence-modal" onClick={(event) => event.stopPropagation()}>
+          <style>{`
+            /* Compact modal styles for DuyetCuTruTab */
+            .duyet-cutru-modal {
+              max-width: 820px !important;
+              width: min(820px, calc(100vw - 24px)) !important;
+              max-height: 96vh !important;
+              margin: 2vh auto !important;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden !important;
+            }
+            .duyet-cutru-modal .ktp-modal-header-primary {
+              padding: 12px 20px !important;
+              flex-shrink: 0 !important;
+            }
+            .duyet-cutru-modal .ktp-modal-header-primary h3 {
+              font-size: 16px !important;
+              margin: 0 !important;
+            }
+            .duyet-cutru-modal .ktp-modal-header-sub {
+              font-size: 12px !important;
+              margin-top: 2px !important;
+            }
+            .duyet-cutru-modal .ktp-modal-body {
+              padding: 16px 20px !important;
+              gap: 10px !important;
+              overflow-y: auto !important;
+              flex: 1 !important;
+            }
+            .duyet-cutru-modal .residence-summary {
+              padding: 8px 12px !important;
+              gap: 8px !important;
+              margin-bottom: 0 !important;
+            }
+            .duyet-cutru-modal .residence-summary span {
+              font-size: 11px !important;
+              margin-bottom: 2px !important;
+            }
+            .duyet-cutru-modal .residence-summary strong {
+              font-size: 13px !important;
+            }
+            .duyet-cutru-modal .residence-condition-panel {
+              padding: 10px 12px !important;
+              margin-bottom: 8px !important;
+            }
+            .duyet-cutru-modal .residence-condition-panel h4 {
+              font-size: 14px !important;
+            }
+            .duyet-cutru-modal .residence-condition-panel p {
+              font-size: 12px !important;
+              margin: 2px 0 8px !important;
+            }
+            .duyet-cutru-modal .residence-condition-grid {
+              gap: 8px !important;
+            }
+            .duyet-cutru-modal .residence-condition-card {
+              padding: 8px 10px !important;
+              gap: 8px !important;
+            }
+            .duyet-cutru-modal .residence-condition-card .material-icons {
+              flex: 0 0 28px !important;
+              height: 28px !important;
+              width: 28px !important;
+              font-size: 16px !important;
+              border-radius: 6px !important;
+            }
+            .duyet-cutru-modal .residence-condition-card strong {
+              font-size: 12px !important;
+              margin-bottom: 1px !important;
+            }
+            .duyet-cutru-modal .residence-condition-card span {
+              font-size: 11px !important;
+            }
+            .duyet-cutru-modal .residence-member-head {
+              margin: 6px 0 4px !important;
+            }
+            .duyet-cutru-modal .residence-member-head h4 {
+              font-size: 14px !important;
+            }
+            .duyet-cutru-modal .residence-review-list {
+              gap: 8px !important;
+            }
+            .duyet-cutru-modal .residence-review-card {
+              padding: 8px 12px !important;
+              gap: 8px !important;
+              grid-template-columns: 1fr 140px !important;
+            }
+            .duyet-cutru-modal .residence-review-avatar {
+              flex: 0 0 32px !important;
+              height: 32px !important;
+              width: 32px !important;
+              font-size: 12px !important;
+              border-radius: 8px !important;
+            }
+            .duyet-cutru-modal .residence-review-card strong {
+              font-size: 13px !important;
+            }
+            .duyet-cutru-modal .residence-review-meta {
+              gap: 4px 10px !important;
+              margin-top: 3px !important;
+            }
+            .duyet-cutru-modal .residence-review-meta span {
+              font-size: 11px !important;
+            }
+            .duyet-cutru-modal .residence-review-card .ktp-input {
+              height: 32px !important;
+              padding: 4px 8px !important;
+              font-size: 12px !important;
+            }
+            .duyet-cutru-modal .residence-review-reason {
+              grid-column: span 2 !important;
+              margin-top: 4px !important;
+            }
+            .duyet-cutru-modal .residence-decision-panel {
+              padding: 8px 12px !important;
+              margin-top: 6px !important;
+              margin-bottom: 6px !important;
+            }
+            .duyet-cutru-modal .residence-decision-copy strong {
+              font-size: 13px !important;
+            }
+            .duyet-cutru-modal .residence-decision-copy span {
+              font-size: 11px !important;
+            }
+            .duyet-cutru-modal .residence-decision-grid button {
+              padding: 6px 16px !important;
+              font-size: 12px !important;
+            }
+            .duyet-cutru-modal .residence-note {
+              margin-top: 8px !important;
+              font-size: 11px !important;
+              gap: 4px !important;
+            }
+            .duyet-cutru-modal .residence-note textarea {
+              font-size: 12px !important;
+              padding: 6px 10px !important;
+            }
+            .duyet-cutru-modal .ktp-modal-footer {
+              padding: 10px 20px !important;
+              flex-shrink: 0 !important;
+            }
+            .duyet-cutru-modal .ktp-modal-footer button {
+              padding: 8px 18px !important;
+              font-size: 12px !important;
+            }
+          `}</style>
+          <div className="ktp-modal residence-modal duyet-cutru-modal" onClick={(event) => event.stopPropagation()}>
             <div className="ktp-modal-header-primary">
               <div>
                 <h3>Duyệt hồ sơ {selected.maHoSoCuTru}</h3>
