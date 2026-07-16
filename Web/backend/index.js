@@ -25,6 +25,7 @@ import trangChuRoutes from './routes/trangChu.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import doiSoatRoutes from './routes/doiSoat.routes.js';
 import { startHoaDonQuaHanScheduler } from './services/hoaDonQuaHan.service.js';
+import { startDatCocHetHanScheduler } from './services/datCocHetHan.service.js';
 import hopDongRoutes from './routes/hopDong.routes.js';
 
 // Load bien moi truong trong file .env
@@ -92,6 +93,7 @@ async function start() {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log(`Connected to SQL Server database: ${process.env.DB_NAME || 'not configured'}`);
     startHoaDonQuaHanScheduler();
+    startDatCocHetHanScheduler();
   });
 
   server.on('error', (error) => {
