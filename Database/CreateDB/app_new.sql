@@ -150,17 +150,20 @@ CREATE TABLE LichXemPhong (
 CREATE TABLE ChiTietXemPhong (
     MaDangKy    VARCHAR(6)      NOT NULL,
     MaPhong     VARCHAR(4)      NOT NULL,
-    STTLich     INT             NOT NULL
-	PRIMARY KEY (MaDangKy, MaPhong, STTLich)
+    STTLich     INT             NOT NULL,
+    KhachChon   TINYINT         NOT NULL CONSTRAINT DF_CTXP_KhachChon DEFAULT 0,
+	PRIMARY KEY (MaDangKy, MaPhong, STTLich),
+    CONSTRAINT CHK_CTXP_KhachChon CHECK (KhachChon IN (0, 1, 2))
 );
 
+-- 12. PHIẾU ĐẶT CỌC
 -- 12. PHIẾU ĐẶT CỌC
 CREATE TABLE PhieuDatCoc (
     MaPhieuDatCoc           VARCHAR(6)      PRIMARY KEY,
     ThoiDiemDatCoc          DATETIME        NOT NULL,
     ThoiHanThanhToan        DATETIME        NOT NULL,
     SoTienCoc               DECIMAL(15,2),
-    PhuongThucThanhToan     NVARCHAR(20),    
+    PhuongThucThanhToan     NVARCHAR(20)     NULL,   -- NULL khi kế toán lập phiếu (DC03); khách chọn sau ở DC04
     TrangThaiThanhToan      NVARCHAR(20)     NOT NULL DEFAULT N'Chờ TT',
     ThoiGianXacNhanTT       DATETIME,
     ChungTuThanhToan        VARCHAR(500),
@@ -170,6 +173,7 @@ CREATE TABLE PhieuDatCoc (
     MaPhieuYeuCauDangKy     VARCHAR(6)      NOT NULL,
     MaKhachHang             VARCHAR(6)      NOT NULL,
     MaNhanVienKeToan        VARCHAR(6),
+    GhiChu                  NVARCHAR(MAX)   NULL,   -- DC05: lý do quản lý từ chối chứng từ (xóa khi gửi lại/duyệt)
     CONSTRAINT CHK_PDC_PhuongThuc   CHECK (PhuongThucThanhToan IN (N'Tiền mặt', N'Chuyển khoản')),
     CONSTRAINT CHK_PDC_TrangThaiTT  CHECK (TrangThaiThanhToan IN (N'Chờ TT', N'Đã TT', N'Hết hạn')),
     CONSTRAINT CHK_PDC_HinhThuc     CHECK (HinhThucThue IN (N'Nguyên phòng', N'Ghép giường')),

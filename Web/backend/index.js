@@ -7,6 +7,7 @@ import { getPool } from './database/connection.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
 import { requireAuth } from './middleware/auth.middleware.js';
+import { auditMutations } from './middleware/audit.middleware.js';
 
 import authRoutes from './routes/auth.routes.js';
 import dangKyThueRoutes from './routes/dangKyThue.routes.js';
@@ -25,6 +26,7 @@ import trangChuRoutes from './routes/trangChu.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import doiSoatRoutes from './routes/doiSoat.routes.js';
 import { startHoaDonQuaHanScheduler } from './services/hoaDonQuaHan.service.js';
+import { startDatCocHetHanScheduler } from './services/datCocHetHan.service.js';
 import hopDongRoutes from './routes/hopDong.routes.js';
 
 // Load bien moi truong trong file .env
@@ -66,21 +68,21 @@ app.use('/api/auth', authRoutes);
 app.use('/api/trang-chu', trangChuRoutes); // Public — no auth
 
 // Moi luong nghiep vu co route rieng, de nhom tach code de hon
-app.use('/api/dang-ky-thue', requireAuth, dangKyThueRoutes);
-app.use('/api/lich-xem-phong', requireAuth, lichXemPhongRoutes);
-app.use('/api/dat-coc', requireAuth, datCocRoutes);
-app.use('/api/nhan-phong', requireAuth, nhanPhongRoutes);
-app.use('/api/dang-ky-tra-phong', requireAuth, dangKyTraPhongRoutes);
-app.use('/api/kiem-tra-tra-phong', requireAuth, kiemTraTraPhongRoutes);
-app.use('/api/xac-nhan-ket-qua', requireAuth, xacNhanKetQuaRoutes);
-app.use('/api/xac-nhan-phan-hoi', requireAuth, xacNhanPhanHoiRoutes);
-app.use('/api/thanh-ly-tra-phong', requireAuth, thanhLyTraPhongRoutes);
-app.use('/api/ban-giao-ra', requireAuth, banGiaoRaRoutes);
-app.use('/api/sua-chua-bao-tri', requireAuth, suaChuaBaoTriRoutes);
-app.use('/api/khach-moi', requireAuth, khachMoiRoutes);
+app.use('/api/dang-ky-thue', requireAuth, auditMutations({ chucNang: 'Đăng ký thuê', doiTuong: 'PhieuDangKy' }), dangKyThueRoutes);
+app.use('/api/lich-xem-phong', requireAuth, auditMutations({ chucNang: 'Lịch xem phòng', doiTuong: 'LichXemPhong' }), lichXemPhongRoutes);
+app.use('/api/dat-coc', requireAuth, auditMutations({ chucNang: 'Đặt cọc và thanh toán cọc', doiTuong: 'PhieuDatCoc' }), datCocRoutes);
+app.use('/api/nhan-phong', requireAuth, auditMutations({ chucNang: 'Nhận phòng và bàn giao', doiTuong: 'NhanPhong' }), nhanPhongRoutes);
+app.use('/api/dang-ky-tra-phong', requireAuth, auditMutations({ chucNang: 'Đăng ký trả phòng', doiTuong: 'PhieuTraPhong' }), dangKyTraPhongRoutes);
+app.use('/api/kiem-tra-tra-phong', requireAuth, auditMutations({ chucNang: 'Kiểm tra trả phòng', doiTuong: 'BienBanKiemTra' }), kiemTraTraPhongRoutes);
+app.use('/api/xac-nhan-ket-qua', requireAuth, auditMutations({ chucNang: 'Xác nhận kết quả trả phòng', doiTuong: 'KetQuaDoiSoat' }), xacNhanKetQuaRoutes);
+app.use('/api/xac-nhan-phan-hoi', requireAuth, auditMutations({ chucNang: 'Xác nhận phản hồi trả phòng', doiTuong: 'PhanHoiDoiSoat' }), xacNhanPhanHoiRoutes);
+app.use('/api/thanh-ly-tra-phong', requireAuth, auditMutations({ chucNang: 'Thanh lý hợp đồng', doiTuong: 'HopDongThue' }), thanhLyTraPhongRoutes);
+app.use('/api/ban-giao-ra', requireAuth, auditMutations({ chucNang: 'Bàn giao trả phòng', doiTuong: 'BienBanBanGiao' }), banGiaoRaRoutes);
+app.use('/api/sua-chua-bao-tri', requireAuth, auditMutations({ chucNang: 'Sửa chữa bảo trì', doiTuong: 'YeuCauSuaChua' }), suaChuaBaoTriRoutes);
+app.use('/api/khach-moi', requireAuth, auditMutations({ chucNang: 'Portal khách hàng', doiTuong: 'KhachHang' }), khachMoiRoutes);
 app.use('/api/admin', requireAuth, adminRoutes);
-app.use('/api/accountant/doi-soat', requireAuth, doiSoatRoutes);
-app.use('/api/hop-dong', requireAuth, hopDongRoutes);
+app.use('/api/accountant/doi-soat', requireAuth, auditMutations({ chucNang: 'Đối soát và thanh toán', doiTuong: 'DoiSoat' }), doiSoatRoutes);
+app.use('/api/hop-dong', requireAuth, auditMutations({ chucNang: 'Hợp đồng thuê', doiTuong: 'HopDongThue' }), hopDongRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -92,6 +94,7 @@ async function start() {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log(`Connected to SQL Server database: ${process.env.DB_NAME || 'not configured'}`);
     startHoaDonQuaHanScheduler();
+    startDatCocHetHanScheduler();
   });
 
   server.on('error', (error) => {

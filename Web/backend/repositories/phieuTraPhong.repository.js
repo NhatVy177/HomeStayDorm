@@ -18,3 +18,14 @@ export async function getPhieuTraPhongById(db, maPhieuTra, maNhanVienKeToan = nu
 export async function getPhieuTraPhongByIdForUpdate(db, maPhieuTra, maNhanVienKeToan = null) {
   return getPhieuTraPhong(db, maPhieuTra, true, maNhanVienKeToan);
 }
+
+export async function ThemPhieuTraPhong(db, maKhachHang, maHopDong, maPhieuDatCoc, ngayDuKienTra) {
+  const result = await execute(db, 'SP_TraPhong_KhachHang_GuiYeuCau', [
+    { name: 'MaKhachHang', type: sql.VarChar(6), value: maKhachHang },
+    { name: 'MaHopDong', type: sql.VarChar(6), value: maHopDong || null },
+    { name: 'MaPhieuDatCoc', type: sql.VarChar(6), value: maPhieuDatCoc || null },
+    { name: 'NgayDuKienTra', type: sql.Date, value: ngayDuKienTra ? new Date(ngayDuKienTra) : null }
+  ]);
+
+  return result.recordset?.[0] || null;
+}

@@ -401,19 +401,6 @@ BEGIN
         SELECT 1
         FROM dbo.PhieuDangKy AS pdk
         WHERE pdk.MaKhachHang = @KhachHangId
-          AND (
-              NOT EXISTS (
-                  SELECT 1
-                  FROM dbo.LichXemPhong AS lxpAny
-                  WHERE lxpAny.MaDangKy = pdk.MaDangKy
-              )
-              OR EXISTS (
-                  SELECT 1
-                  FROM dbo.LichXemPhong AS lxpActive
-                  WHERE lxpActive.MaDangKy = pdk.MaDangKy
-                    AND lxpActive.TrangThai <> N'Đã hủy'
-              )
-          )
           AND pdk.TrangThai <> N'Từ chối'
           AND NOT EXISTS (
               SELECT 1

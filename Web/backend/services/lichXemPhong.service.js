@@ -1,5 +1,5 @@
-import { executeProcedure, executeQuery, getPool, sql } from '../database/connection.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
+import * as lichXemPhongRepository from '../repositories/lichXemPhong.repository.js';
 
 function handleDatabaseError(error) {
   mapDatabaseError(error, {
@@ -70,62 +70,63 @@ function normalizeText(value) {
   return String(value || '').trim().toLocaleLowerCase('vi-VN');
 }
 
-function isWholeRoomOption(row = {}) {
-  return ['nguyên căn', 'nguyên phòng'].includes(normalizeText(row.loaiThue || row.hinhThucThue));
-}
-
 function getAvailableSlots(row = {}) {
   return Math.max(0, Number(row.soGiuongTrong ?? row.soGiuongDuKienXep ?? row.sucChua ?? 0));
 }
 
+function getRoomCapacity(row = {}) {
+  return Math.max(0, Number(row.sucChua ?? row.SucChuaToiDa ?? row.capacity ?? 0));
+}
+
+function roomAllowsMixedGender(row = {}) {
+  return ['không phân biệt', 'khác', 'hỗn hợp'].includes(normalizeText(row.gioiTinhChoPhep ?? row.GioiTinhChoPhep));
+}
+
+function roomAllowsSingleGender(row = {}, gender) {
+  const roomGender = normalizeText(row.gioiTinhChoPhep ?? row.GioiTinhChoPhep);
+  return roomGender === gender || roomAllowsMixedGender(row);
+}
+
+function getProfileOccupancy(profile = {}) {
+  const total = Math.max(1, Number(
+    profile.SoNguoiDuKienO ?? profile.soNguoiDuKienO ?? profile.soNguoiO ?? profile.SoNguoiO ?? 1
+  ));
+  let male = Math.max(0, Number(profile.SoNam ?? profile.soNam ?? 0));
+  let female = Math.max(0, Number(profile.SoNu ?? profile.soNu ?? 0));
+  const gender = normalizeText(profile.GioiTinh ?? profile.gioiTinh);
+
+  if (male === 0 && female === 0) {
+    if (gender === 'nam') male = total;
+    if (gender === 'nữ') female = total;
+  }
+
+  return { total, male, female };
+}
+
+function isRoomSuitableForProfile(row = {}, profile = {}) {
+  const { total, male, female } = getProfileOccupancy(profile);
+  const availableSlots = getAvailableSlots(row);
+  const capacity = getRoomCapacity(row);
+
+  if (male > 0 && female > 0) {
+    return roomAllowsMixedGender(row)
+      && capacity >= total
+      && availableSlots >= capacity;
+  }
+
+  if (male > 0) {
+    return roomAllowsSingleGender(row, 'nam') && availableSlots >= total;
+  }
+
+  if (female > 0) {
+    return roomAllowsSingleGender(row, 'nữ') && availableSlots >= total;
+  }
+
+  return availableSlots >= total;
+}
+
 function filterRoomsByProfileCapacity(rows = [], profile = {}) {
-  const total = Math.max(1, Number(profile.SoNguoiDuKienO || profile.soNguoiO || 1));
-  const male = Math.max(0, Number(profile.SoNam || profile.soNam || 0));
-  const female = Math.max(0, Number(profile.SoNu || profile.soNu || 0));
-
-  const typeGroups = new Map();
-  rows.forEach((row) => {
-    const key = row.maLoaiPhong || row.MaLoaiPhong || row.loaiPhong || row.TenLoaiPhong || 'unknown';
-    if (!typeGroups.has(key)) typeGroups.set(key, []);
-    typeGroups.get(key).push(row);
-  });
-
-  const validTypes = new Set();
-  typeGroups.forEach((items, key) => {
-    const wholeCapacity = items
-      .filter((row) => isWholeRoomOption(row) && normalizeText(row.gioiTinhChoPhep) === 'không phân biệt')
-      .reduce((sum, row) => sum + Number(row.sucChua || getAvailableSlots(row)), 0);
-
-    if (wholeCapacity >= total) {
-      validTypes.add(key);
-      return;
-    }
-
-    const sharedItems = items.filter((row) => !isWholeRoomOption(row));
-    const maleSlots = sharedItems
-      .filter((row) => normalizeText(row.gioiTinhChoPhep) === 'nam')
-      .reduce((sum, row) => sum + getAvailableSlots(row), 0);
-    const femaleSlots = sharedItems
-      .filter((row) => normalizeText(row.gioiTinhChoPhep) === 'nữ')
-      .reduce((sum, row) => sum + getAvailableSlots(row), 0);
-    const neutralSlots = sharedItems
-      .filter((row) => normalizeText(row.gioiTinhChoPhep) === 'không phân biệt')
-      .reduce((sum, row) => sum + getAvailableSlots(row), 0);
-
-    if (male > 0 || female > 0) {
-      const missingMale = Math.max(0, male - maleSlots);
-      const missingFemale = Math.max(0, female - femaleSlots);
-      if (missingMale + missingFemale <= neutralSlots) validTypes.add(key);
-      return;
-    }
-
-    if (maleSlots + femaleSlots + neutralSlots >= total) validTypes.add(key);
-  });
-
-  return rows.filter((row) => {
-    const key = row.maLoaiPhong || row.MaLoaiPhong || row.loaiPhong || row.TenLoaiPhong || 'unknown';
-    return validTypes.has(key);
-  });
+  return rows.filter((row) => isRoomSuitableForProfile(row, profile));
 }
 
 function isSaleUser(user = {}) {
@@ -189,28 +190,6 @@ function assertCanAccessSchedule(row, user = {}) {
   }
 }
 
-async function rejectRegistrationIfAllSchedulesCancelled(maDangKy) {
-  await executeQuery(`
-    UPDATE dbo.PhieuDangKy
-    SET TrangThai = N'Từ chối'
-    WHERE MaDangKy = @MaDangKy
-      AND TrangThai <> N'Từ chối'
-      AND EXISTS (
-        SELECT 1
-        FROM dbo.LichXemPhong AS lxpAny
-        WHERE lxpAny.MaDangKy = @MaDangKy
-      )
-      AND NOT EXISTS (
-        SELECT 1
-        FROM dbo.LichXemPhong AS lxpActive
-        WHERE lxpActive.MaDangKy = @MaDangKy
-          AND lxpActive.TrangThai <> N'Đã hủy'
-      );
-  `, [
-    { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy }
-  ]);
-}
-
 export async function createLichXemPhong(data = {}, user = null) {
   requireSaleUser(user);
   const maDangKy = String(data.maDangKy || data.hoSoDangKyId || '').trim();
@@ -222,109 +201,19 @@ export async function createLichXemPhong(data = {}, user = null) {
     throw createServiceError('Vui lòng chọn hồ sơ, phòng và thời gian xem.');
   }
 
-  const pool = await getPool();
-  const transaction = new sql.Transaction(pool);
-
   try {
-    await transaction.begin();
-
-    const hoSoRequest = new sql.Request(transaction);
-    hoSoRequest.input('MaDangKy', sql.VarChar(6), maDangKy);
-    const hoSo = await hoSoRequest.query(`
-      SELECT
-        pdk.MaDangKy,
-        pdk.MaKhachHang,
-        pdk.MaNhanVienSale,
-        pdk.TrangThai
-      FROM dbo.PhieuDangKy AS pdk WITH (UPDLOCK, HOLDLOCK)
-      WHERE pdk.MaDangKy = @MaDangKy
-    `);
-
-    if (!hoSo.recordset.length) {
-      throw createServiceError('Không tìm thấy hồ sơ đăng ký.', 404);
-    }
-
-    const profile = hoSo.recordset[0];
-    if (normalizeStatus(profile.TrangThai) !== normalizeStatus('Đã tiếp nhận')) {
-      throw createServiceError('Chỉ được lập lịch cho hồ sơ đã tiếp nhận.');
-    }
-    if (profile.MaNhanVienSale && profile.MaNhanVienSale !== user?.maNguoiDung) {
-      throw createServiceError('Hồ sơ đang do nhân viên Sale khác xử lý.', 403);
-    }
-
-    const sttRequest = new sql.Request(transaction);
-    sttRequest.input('MaDangKy', sql.VarChar(6), maDangKy);
-    const sttResult = await sttRequest.query(`
-      SELECT ISNULL(MAX(STTLich), 0) + 1 AS sttLich
-      FROM dbo.LichXemPhong WITH (UPDLOCK, HOLDLOCK)
-      WHERE MaDangKy = @MaDangKy
-    `);
-    const sttLich = Number(sttResult.recordset[0]?.sttLich || 1);
-
-    const lichRequest = new sql.Request(transaction);
-    lichRequest.input('MaDangKy', sql.VarChar(6), maDangKy);
-    lichRequest.input('STTLich', sql.Int, sttLich);
-    lichRequest.input('ThoiGianHen', sql.DateTime, thoiGianHen);
-    lichRequest.input('GhiChu', sql.NVarChar(500), data.ghiChu || null);
-    await lichRequest.query(`
-      INSERT INTO dbo.LichXemPhong (MaDangKy, STTLich, ThoiGianHen, TrangThai, GhiChu)
-      VALUES (@MaDangKy, @STTLich, @ThoiGianHen, N'Chờ xem', @GhiChu)
-    `);
-
-    for (const maPhong of phongIds) {
-      const roomRequest = new sql.Request(transaction);
-      roomRequest.input('MaPhong', sql.VarChar(4), maPhong);
-      const room = await roomRequest.query(`
-        SELECT MaPhong, MaChiNhanh, TinhTrang
-        FROM dbo.Phong
-        WHERE MaPhong = @MaPhong
-      `);
-
-      if (!room.recordset.length) {
-        throw createServiceError(`Không tìm thấy phòng ${maPhong}.`);
-      }
-
-      const roomRecord = room.recordset[0];
-      if (user?.maChiNhanh && roomRecord.MaChiNhanh !== user.maChiNhanh) {
-        throw createServiceError(`Phòng ${maPhong} không thuộc chi nhánh của nhân viên Sale.`, 403);
-      }
-      if (normalizeStatus(roomRecord.TinhTrang) === normalizeStatus('Đầy')) {
-        throw createServiceError(`Phòng ${maPhong} đã đầy, vui lòng chọn phòng khác.`);
-      }
-
-      const detailRequest = new sql.Request(transaction);
-      detailRequest.input('MaDangKy', sql.VarChar(6), maDangKy);
-      detailRequest.input('MaPhong', sql.VarChar(4), maPhong);
-      detailRequest.input('STTLich', sql.Int, sttLich);
-      await detailRequest.query(`
-        INSERT INTO dbo.ChiTietXemPhong (MaDangKy, MaPhong, STTLich)
-        VALUES (@MaDangKy, @MaPhong, @STTLich)
-      `);
-    }
-
-    if (nhanVienSaleId) {
-      const saleRequest = new sql.Request(transaction);
-      saleRequest.input('MaDangKy', sql.VarChar(6), maDangKy);
-      saleRequest.input('NhanVienSaleId', sql.VarChar(6), nhanVienSaleId);
-      await saleRequest.query(`
-        UPDATE dbo.PhieuDangKy
-        SET MaNhanVienSale = COALESCE(MaNhanVienSale, @NhanVienSaleId)
-        WHERE MaDangKy = @MaDangKy
-      `);
-    }
-
-    await transaction.commit();
+    const sttLich = await lichXemPhongRepository.taoLichXemPhong({
+      maDangKy,
+      thoiGianHen,
+      phongIds,
+      nhanVienSaleId,
+      ghiChu: data.ghiChu || null,
+      user
+    });
 
     const result = await getLichXemPhong({ maDangKy, sttLich }, user);
     return result[0] || { id: `${maDangKy}-${sttLich}`, maDangKy, sttLich };
   } catch (error) {
-    if (transaction._aborted !== true) {
-      try {
-        await transaction.rollback();
-      } catch {
-        // ignore rollback failure so the original error is surfaced
-      }
-    }
     handleDatabaseError(error);
   }
 }
@@ -342,60 +231,13 @@ export async function getLichXemPhong(filter = {}, user = null) {
     ? user.maChiNhanh
     : (filter.maChiNhanh ? String(filter.maChiNhanh).trim() : null);
 
-  const result = await executeQuery(`
-    SELECT
-      CONCAT(lxp.MaDangKy, '-', lxp.STTLich) AS id,
-      lxp.MaDangKy AS maDangKy,
-      lxp.STTLich AS sttLich,
-      lxp.ThoiGianHen AS thoiGianHen,
-      lxp.TrangThai AS trangThai,
-      lxp.GhiChu AS ghiChu,
-      pdk.MaKhachHang AS maKhachHang,
-      nd.HoTen AS hoTenKhach,
-      nd.SDT AS sdtKhach,
-      nd.Email AS emailKhach,
-      pdk.MaNhanVienSale AS maNhanVienSale,
-      saleNd.HoTen AS tenNhanVienSale,
-      saleNd.SDT AS sdtNhanVienSale,
-      STRING_AGG(CONCAT(CONVERT(NVARCHAR(10), p.MaPhong), N' - ', p.TenPhong), N', ') AS danhSachPhong,
-      STRING_AGG(CONVERT(NVARCHAR(10), p.MaPhong), N',') AS maPhong,
-      MIN(p.MaChiNhanh) AS maChiNhanh
-    FROM dbo.LichXemPhong AS lxp
-    INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
-    INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = pdk.MaKhachHang
-    LEFT JOIN dbo.NguoiDung AS saleNd ON saleNd.MaNguoiDung = pdk.MaNhanVienSale
-    LEFT JOIN dbo.ChiTietXemPhong AS ctxp
-      ON ctxp.MaDangKy = lxp.MaDangKy AND ctxp.STTLich = lxp.STTLich
-    LEFT JOIN dbo.Phong AS p ON p.MaPhong = ctxp.MaPhong
-    WHERE (@MaDangKy IS NULL OR lxp.MaDangKy = @MaDangKy)
-      AND (@STTLich IS NULL OR lxp.STTLich = @STTLich)
-      AND (@MaKhachHang IS NULL OR pdk.MaKhachHang = @MaKhachHang)
-      AND (
-        @NhanVienSaleId IS NULL
-        OR pdk.MaNhanVienSale = @NhanVienSaleId
-        OR EXISTS (
-          SELECT 1
-          FROM dbo.ChiTietXemPhong AS ctxpScope
-          INNER JOIN dbo.Phong AS pScope ON pScope.MaPhong = ctxpScope.MaPhong
-          WHERE ctxpScope.MaDangKy = lxp.MaDangKy
-            AND ctxpScope.STTLich = lxp.STTLich
-            AND pScope.MaChiNhanh = @MaChiNhanh
-        )
-      )
-    GROUP BY
-      lxp.MaDangKy, lxp.STTLich, lxp.ThoiGianHen, lxp.TrangThai, lxp.GhiChu,
-      pdk.MaKhachHang, nd.HoTen, nd.SDT, nd.Email,
-      pdk.MaNhanVienSale, saleNd.HoTen, saleNd.SDT
-    ORDER BY lxp.ThoiGianHen DESC, lxp.MaDangKy DESC, lxp.STTLich DESC
-  `, [
-    { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy },
-    { name: 'STTLich', type: sql.Int, value: sttLich },
-    { name: 'MaKhachHang', type: sql.VarChar(6), value: maKhachHang },
-    { name: 'NhanVienSaleId', type: sql.VarChar(6), value: nhanVienSaleId },
-    { name: 'MaChiNhanh', type: sql.VarChar(6), value: maChiNhanh }
-  ]);
-
-  return result.recordset;
+  return lichXemPhongRepository.layDanhSachLichXemPhong({
+    maDangKy,
+    sttLich,
+    maKhachHang,
+    nhanVienSaleId,
+    maChiNhanh
+  });
 }
 
 export async function yeuCauDieuChinhLich(id, data = {}, user = null) {
@@ -410,16 +252,11 @@ export async function yeuCauDieuChinhLich(id, data = {}, user = null) {
       lyDo ? `Lý do đổi: ${lyDo}` : null
     ].filter(Boolean).join('. ');
 
-    await executeQuery(`
-      UPDATE dbo.LichXemPhong
-      SET TrangThai = N'Yêu cầu đổi lịch',
-          GhiChu = COALESCE(@LyDo, GhiChu)
-      WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich
-    `, [
-      { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy },
-      { name: 'STTLich', type: sql.Int, value: sttLich },
-      { name: 'LyDo', type: sql.NVarChar(500), value: ghiChu || lyDo }
-    ]);
+    await lichXemPhongRepository.ghiNhanYeuCauDieuChinhLich({
+      maDangKy,
+      sttLich,
+      lyDo: ghiChu || lyDo
+    });
 
     const result = await getLichXemPhong({ maDangKy, sttLich }, user);
     return result[0] || null;
@@ -441,35 +278,24 @@ export async function capNhatLichXemPhong(id, data = {}, user = null) {
     }
 
     if (['huy', 'hủy', 'cancel'].includes(thaoTac)) {
-      await executeQuery(`
-        UPDATE dbo.LichXemPhong
-        SET TrangThai = N'Đã hủy',
-            GhiChu = COALESCE(@GhiChuXuLy, GhiChu)
-        WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich
-      `, [
-        { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy },
-        { name: 'STTLich', type: sql.Int, value: sttLich },
-        { name: 'GhiChuXuLy', type: sql.NVarChar(500), value: data.ghiChuXuLy || null }
-      ]);
-      await rejectRegistrationIfAllSchedulesCancelled(maDangKy);
+      await lichXemPhongRepository.huyLichXemPhong({
+        maDangKy,
+        sttLich,
+        ghiChuXuLy: data.ghiChuXuLy || null
+      });
+      await lichXemPhongRepository.tuChoiHoSoNeuTatCaLichBiHuy(maDangKy);
     } else {
       if (!data.thoiGianXem) {
         throw createServiceError('Vui lòng chọn thời gian xem phòng mới.');
       }
       const thoiGianHen = validateAppointmentTime(data.thoiGianXem);
 
-      await executeQuery(`
-        UPDATE dbo.LichXemPhong
-        SET ThoiGianHen = @ThoiGianHen,
-            TrangThai = N'Chờ xem',
-            GhiChu = NULLIF(@GhiChuXuLy, N'')
-        WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich
-      `, [
-        { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy },
-        { name: 'STTLich', type: sql.Int, value: sttLich },
-        { name: 'ThoiGianHen', type: sql.DateTime, value: thoiGianHen },
-        { name: 'GhiChuXuLy', type: sql.NVarChar(500), value: data.ghiChuXuLy || null }
-      ]);
+      await lichXemPhongRepository.capNhatThoiGianLichXemPhong({
+        maDangKy,
+        sttLich,
+        thoiGianHen,
+        ghiChuXuLy: data.ghiChuXuLy || null
+      });
     }
 
     const result = await getLichXemPhong({ maDangKy, sttLich }, user);
@@ -487,17 +313,10 @@ export async function getPhongPhuHop(maDangKy, user = null) {
   }
 
   try {
-    const profile = await executeQuery(`
-      SELECT MucGiaToiDa, SoNguoiDuKienO, SoNam, SoNu, MaNhanVienSale, TrangThai
-      FROM dbo.PhieuDangKy
-      WHERE MaDangKy = @HoSoId
-    `, [
-      { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId }
-    ]);
-    if (!profile.recordset.length) {
+    const profileRecord = await lichXemPhongRepository.layHoSoDangKyChoPhongPhuHop(hoSoId);
+    if (!profileRecord) {
       throw createServiceError('Không tìm thấy hồ sơ đăng ký.', 404);
     }
-    const profileRecord = profile.recordset[0] || {};
     if (normalizeStatus(profileRecord.TrangThai) !== normalizeStatus('Đã tiếp nhận')) {
       throw createServiceError('Chỉ được kiểm tra phòng cho hồ sơ đã tiếp nhận.');
     }
@@ -506,12 +325,12 @@ export async function getPhongPhuHop(maDangKy, user = null) {
     }
     const mucGiaToiDa = normalizeMoneyVnd(profileRecord.MucGiaToiDa);
 
-    const result = await executeProcedure('dbo.SP_DanhSachPhongGiuongKhaDung', [
-      { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: mucGiaToiDa },
-      { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId }
-    ]);
+    const roomRows = await lichXemPhongRepository.layPhongGiuongKhaDungChoHoSo({
+      hoSoId,
+      mucGiaToiDa
+    });
 
-    const rows = filterRoomsByProfileCapacity(result.recordset || [], profileRecord)
+    const rows = filterRoomsByProfileCapacity(roomRows, profileRecord)
       .filter((row) => !user?.maChiNhanh || row.maChiNhanh === user.maChiNhanh || row.MaChiNhanh === user.maChiNhanh);
     const khongCoChiNhanhPhuHop = rows.some((row) => Boolean(row.khongCoChiNhanhPhuHop));
     const rooms = rows

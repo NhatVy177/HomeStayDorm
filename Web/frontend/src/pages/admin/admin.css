@@ -262,6 +262,37 @@
   gap: 10px;
 }
 
+.admin-action-select {
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--admin-muted) 50%) right 16px center / 6px 6px no-repeat,
+    linear-gradient(135deg, var(--admin-muted) 50%, transparent 50%) right 11px center / 6px 6px no-repeat,
+    var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: 8px;
+  color: var(--admin-text);
+  min-height: 40px;
+  min-width: 174px;
+  outline: none;
+  padding: 9px 34px 9px 12px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.admin-action-select:focus {
+  background:
+    linear-gradient(45deg, transparent 50%, var(--admin-primary) 50%) right 16px center / 6px 6px no-repeat,
+    linear-gradient(135deg, var(--admin-primary) 50%, transparent 50%) right 11px center / 6px 6px no-repeat,
+    #fff;
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 109, 0.08);
+}
+
+.admin-action-select:disabled {
+  color: var(--admin-subtle);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
 .admin-btn,
 .admin-icon-btn,
 .admin-link-btn {
@@ -1078,6 +1109,36 @@
   font-weight: 700;
   line-height: 1.5;
   padding: 12px;
+}
+
+.admin-restore-body {
+  color: var(--admin-text);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.admin-restore-body p {
+  color: var(--admin-subtle);
+  font-weight: 650;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.admin-restore-command {
+  background: #111827;
+  border: 1px solid rgba(17, 24, 39, 0.18);
+  border-radius: 8px;
+  color: #f9fafb;
+  font-family: "Consolas", "SFMono-Regular", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .admin-upload-preview {

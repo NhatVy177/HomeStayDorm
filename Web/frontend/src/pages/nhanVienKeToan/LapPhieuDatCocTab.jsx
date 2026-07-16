@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuth } from '../../auth/AuthContext.jsx';
 import { datCocApi } from '../datCoc/datCoc.api.js';
 import ResultModal from '../../components/common/ResultModal.jsx';
-import SoNguoiBadge from '../../components/common/SoNguoiBadge.jsx';
 import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
 export function Icon({ name, className = '' }) {
@@ -61,7 +59,7 @@ export function Icon({ name, className = '' }) {
     error_outline: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></>,
     hourglass_empty: <><path d="M6 2h12M6 22h12M6 2v6l6 6-6 6v6M18 2v6l-6 6 6 6v6" /></>,
     edit_note: <><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></>,
-
+    edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></>,
   };
 
   return (
@@ -72,26 +70,42 @@ export function Icon({ name, className = '' }) {
 }
 
 const formatTien = (v) => (v == null || v === '' || isNaN(Number(v)) ? '' : Number(v).toLocaleString('vi-VN'));
-const moTaPhong = (item) => item.tenPhong || item.maPhong || '—';
 const formatNgay = (v) => {
   if (!v) return '—';
   const d = new Date(v);
   return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('vi-VN');
 };
-
-// Cấu hình trạng thái xử lý phía kế toán
-const STATUS_CONFIG = {
-  'Chờ lập': { chip: 'Chờ lập', badgeLabel: 'Chờ lập', badge: { bg: '#fff4e5', fg: '#b45309' }, action: 'lap' },
-  'Đã lập':  { chip: 'Đã lập',  badgeLabel: 'Đã lập',  badge: { bg: '#e6f6ec', fg: '#15803d' }, action: 'chi-tiet' },
+const formatGio = (v) => {
+  if (!v) return '—';
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? '—' : d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
 };
-const STATUS_ORDER = ['Chờ lập', 'Đã lập'];
 
-const StatusBadge = ({ trangThai }) => {
-  const cfg = STATUS_CONFIG[trangThai];
-  const s = cfg ? cfg.badge : { bg: '#eef2f3', fg: '#3f494a' };
+// Danh sách gồm phiếu "chờ chốt" (luôn hiện, không giới hạn ngày lập) CỘNG phiếu
+// "đã chốt"/"đã hủy" LẬP TRONG HÔM NAY (SP_DanhSachChoTinhTienCoc lọc theo ThoiDiemDatCoc),
+// để kế toán xem lại được ngay phiếu vừa xử lý, giống cách Sale chỉ thấy yêu cầu trong ngày.
+const STATUS_CONFIG = {
+  'Chờ chốt': { chip: 'Chờ chốt', badge: { bg: '#fff4e5', fg: '#b45309' } },
+  'Đã chốt':  { chip: 'Đã chốt',  badge: { bg: '#e6f6ec', fg: '#15803d' } },
+  'Đã hủy':   { chip: 'Đã hủy',   badge: { bg: '#fdecec', fg: '#b91c1c' } },
+};
+const STATUS_ORDER = ['Chờ chốt', 'Đã chốt', 'Đã hủy'];
+
+// "Sắp hết hạn" chỉ áp dụng cho phiếu CÒN chờ chốt (quá hạn 24h thì SP_NhaChoCocHetHan tự hủy).
+const StatusBadge = ({ trangThaiPhieu, hanChot }) => {
+  const cfg = STATUS_CONFIG[trangThaiPhieu] || STATUS_CONFIG['Chờ chốt'];
+  let label = cfg.chip;
+  let s = cfg.badge;
+  if (trangThaiPhieu === 'Chờ chốt' && hanChot) {
+    const conLaiGio = (new Date(hanChot).getTime() - Date.now()) / 3600000;
+    if (conLaiGio <= 3) {
+      label = 'Sắp hết hạn';
+      s = { bg: '#fdecec', fg: '#b91c1c' };
+    }
+  }
   return (
     <span style={{ background: s.bg, color: s.fg, padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-      {cfg ? cfg.badgeLabel : trangThai}
+      {label}
     </span>
   );
 };
@@ -106,43 +120,42 @@ const pageBtnStyle = (active, disabled) => ({
   fontSize: '13px', fontWeight: 600
 });
 
-// DC03 - Lập phiếu đặt cọc (tác nhân: Nhân viên kế toán).
-// GUI: HienThi() = loadDanhSach() -> getDanhSachChoLapPhieu() -> SP_DanhSachChoLapPhieuDatCoc.
-// GUI: btnLapPhieu_Click() -> createPhieuDatCoc() -> SP_LapPhieuDatCoc.
+// DC03 - Tính tiền & chốt phiếu đặt cọc (tác nhân: Nhân viên kế toán).
+//
+// Kế toán KHÔNG còn chọn phòng / hình thức thuê / giường nữa — Sale đã làm ở DC02B,
+// vì đó là những thứ phải trao đổi trực tiếp với khách.
+//
+// Việc của kế toán ở đây: ĐỐI SOÁT BẢNG TÍNH rồi CHỐT phiếu.
+//   - Số tiền do trigger TRG_ChiTietDatCoc_TinhGiaThue_Va_SoTienCoc tính sẵn trong DB
+//     (đơn giá x số giường x 2 tháng); kế toán không gõ số.
+//   - Chốt xong phiếu mới tới tay khách và đồng hồ 24h thanh toán mới bắt đầu chạy.
+//   - Không chốt được thì hủy phiếu (kèm lý do) -> nhả giường, Sale lập lại.
+//
+// GUI: HienThi()      -> getDanhSachChoTinhTien() -> SP_DanhSachChoTinhTienCoc
+// GUI: btnChot_Click()-> chotPhieuDatCoc()        -> SP_ChotPhieuDatCoc
 export default function LapPhieuDatCocTab() {
-  const { user } = useAuth();
-
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
 
-  // hồ sơ đang lập phiếu + dữ liệu form
-  const [selected, setSelected] = useState(null);
-  // Kế toán KHÔNG chọn phương thức nữa (khách chọn ở DC04) — đã bỏ state phuongThuc.
-  const [hinhThuc, setHinhThuc] = useState('Ghep');       // 'Ghep' | 'Nguyen' (chỉ áp dụng nhóm cùng giới)
-  const [giuongTrong, setGiuongTrong] = useState([]);
-  const [chonGiuong, setChonGiuong] = useState([]);
-  const [loadingGiuong, setLoadingGiuong] = useState(false);
+  const [selected, setSelected] = useState(null);      // phiếu đang đối soát
+  const [quyetDinh, setQuyetDinh] = useState('chot');  // 'chot' | 'huy'
+  const [lyDoHuy, setLyDoHuy] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
-  // Lọc / tìm kiếm / sắp xếp / phân trang + modal xem chi tiết (phiếu đã lập)
-  const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
-  const [tuNgay, setTuNgay] = useState('');
-  const [denNgay, setDenNgay] = useState('');
-  const [sortDir, setSortDir] = useState('desc');
-  const [detailItem, setDetailItem] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
 
   const loadDanhSach = useCallback(async () => {
     setLoading(true);
     setLoadError('');
     try {
-      const { data } = await datCocApi.getDanhSachChoLapPhieu();
+      const { data } = await datCocApi.getDanhSachChoTinhTien();
       setList(data || []);
     } catch (err) {
-      setLoadError(err.response?.data?.message || 'Không tải được danh sách chờ lập phiếu');
+      setLoadError(err.response?.data?.message || 'Không tải được danh sách phiếu chờ chốt');
     } finally {
       setLoading(false);
     }
@@ -150,46 +163,31 @@ export default function LapPhieuDatCocTab() {
 
   useEffect(() => { loadDanhSach(); }, [loadDanhSach]);
 
-  // Lọc theo tìm kiếm + khoảng ngày (chưa áp chip) — để đếm chip
+  // Lọc theo tìm kiếm (chưa áp chip) — dùng để đếm chip
   const baseFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const tuMs = tuNgay ? new Date(tuNgay).setHours(0, 0, 0, 0) : null;
-    const denMs = denNgay ? new Date(denNgay).setHours(23, 59, 59, 999) : null;
-    return list.filter((it) => {
-      const okSearch = !q
-        || (it.hoTen || '').toLowerCase().includes(q)
-        || String(it.soDienThoai || '').toLowerCase().includes(q)
-        || (it.maDangKy || '').toLowerCase().includes(q)
-        || (it.maPhieuDatCoc || '').toLowerCase().includes(q);
-      const t = it.ngayDangKy ? new Date(it.ngayDangKy).getTime() : null;
-      const okTu = tuMs == null || (t != null && t >= tuMs);
-      const okDen = denMs == null || (t != null && t <= denMs);
-      return okSearch && okTu && okDen;
-    });
-  }, [list, search, tuNgay, denNgay]);
+    if (!q) return list;
+    return list.filter((it) => (it.hoTen || '').toLowerCase().includes(q)
+      || String(it.soDienThoai || '').toLowerCase().includes(q)
+      || (it.maDangKy || '').toLowerCase().includes(q)
+      || (it.maPhieuDatCoc || '').toLowerCase().includes(q));
+  }, [list, search]);
 
   const counts = useMemo(() => {
     const c = { all: baseFiltered.length };
     STATUS_ORDER.forEach((s) => { c[s] = 0; });
-    baseFiltered.forEach((it) => { if (c[it.trangThai] != null) c[it.trangThai] += 1; });
+    baseFiltered.forEach((it) => { if (c[it.trangThaiPhieu] != null) c[it.trangThaiPhieu] += 1; });
     return c;
   }, [baseFiltered]);
 
-  const filteredList = useMemo(() => {
-    const arr = statusFilter === 'all' ? baseFiltered : baseFiltered.filter((it) => it.trangThai === statusFilter);
-    return [...arr].sort((a, b) => {
-      const da = a.ngayDangKy ? new Date(a.ngayDangKy).getTime() : 0;
-      const db = b.ngayDangKy ? new Date(b.ngayDangKy).getTime() : 0;
-      return sortDir === 'asc' ? da - db : db - da;
-    });
-  }, [baseFiltered, statusFilter, sortDir]);
+  const filteredList = useMemo(
+    () => (statusFilter === 'all' ? baseFiltered : baseFiltered.filter((it) => it.trangThaiPhieu === statusFilter)),
+    [baseFiltered, statusFilter]
+  );
 
-  const coLoc = !!(search || tuNgay || denNgay);
-  const xoaLoc = () => { setSearch(''); setTuNgay(''); setDenNgay(''); };
-  const defaultSortFor = (key) => (key === 'Chờ lập' ? 'asc' : 'desc');
-  const chonChip = (key) => { setStatusFilter(key); setSortDir(defaultSortFor(key)); };
+  const chonChip = (key) => setStatusFilter(key);
 
-  useEffect(() => { setPage(1); }, [statusFilter, search, tuNgay, denNgay, sortDir]);
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
   const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
   const pageSafe = Math.min(page, totalPages);
   const pagedList = useMemo(
@@ -205,99 +203,47 @@ export default function LapPhieuDatCocTab() {
     return arr;
   }, [pageSafe, totalPages]);
 
-  const openCreate = async (item) => {
+  const openDoiSoat = (item) => {
     setSelected(item);
-    setChonGiuong([]);
-    const khac = item.khacGioi === 1 || item.khacGioi === true;
-    setHinhThuc(khac ? 'Nguyen' : 'Ghep');   // khác giới → buộc nguyên phòng
-    setGiuongTrong([]);
-    if (item.maPhong) {
-      setLoadingGiuong(true);
-      try {
-        const { data } = await datCocApi.getGiuongTrong(item.maPhong);
-        setGiuongTrong(data || []);
-      } catch {
-        setGiuongTrong([]);
-      } finally {
-        setLoadingGiuong(false);
-      }
-    }
+    setQuyetDinh('chot');
+    setLyDoHuy('');
   };
 
-  const toggleGiuong = (maGiuong) => {
-    setChonGiuong((prev) => prev.includes(maGiuong)
-      ? prev.filter((g) => g !== maGiuong)
-      : [...prev, maGiuong]);
-  };
+  const readOnly = !!(selected && selected.trangThaiPhieu !== 'Chờ chốt');
+  const huy = quyetDinh === 'huy';
+  const guiDuoc = !huy || lyDoHuy.trim().length > 0;
 
-  const handleLapPhieu = async () => {
-    if (!selected) return;
-    const khac = selected.khacGioi === 1 || selected.khacGioi === true;
-    const ghep = !khac && hinhThuc === 'Ghep';
-    if (ghep && chonGiuong.length !== selected.soNguoiDuKienO) {
-      setResult({ type: 'error', title: 'Chọn giường chưa đúng.',
-        message: `Cần chọn đúng ${selected.soNguoiDuKienO} giường (bằng số người dự kiến ở).` });
-      return;
-    }
+  const handleChot = async () => {
+    if (!selected || !guiDuoc) return;
     setSubmitting(true);
     try {
-      await datCocApi.create({
-        maDangKy: selected.maDangKy,
-        maNhanVienKeToan: user?.maNguoiDung,
-        // Không gửi phương thức: khách sẽ chọn ở DC04 (cột PhuongThucThanhToan cho phép NULL).
-        danhSachGiuong: ghep ? chonGiuong : []   // [] = thuê nguyên phòng
+      await datCocApi.chotPhieuDatCoc(selected.maPhieuDatCoc, {
+        chot: !huy,
+        lyDo: huy ? lyDoHuy.trim() : null
       });
       setSelected(null);
       await loadDanhSach();
-      setResult({
-        type: 'success',
-        title: 'Lập phiếu thành công!',
-        message: 'Đã tạo phiếu đặt cọc (hạn thanh toán 24h). Tiền cọc = 2 tháng tiền thuê.'
-      });
-    } catch (err) {
-      setResult({ type: 'error', title: 'Lập phiếu thất bại.', message: err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.' });
+      setResult({ type: 'success', title: huy ? 'Đã hủy phiếu đặt cọc.' : 'Đã chốt phiếu đặt cọc.' });
+    } catch {
+      setResult({ type: 'error', title: huy ? 'Hủy phiếu thất bại.' : 'Chốt phiếu thất bại.' });
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Giá trị suy diễn cho form (an toàn khi selected = null)
-  const khacGioi = selected ? (selected.khacGioi === 1 || selected.khacGioi === true) : false;
-  const isGhep = !khacGioi && hinhThuc === 'Ghep';
-  const donGiaThue = isGhep ? Number(selected?.giaThueTheoGiuong || 0) : Number(selected?.giaThueNguyenPhong || 0);
-  const soGiuongHienTai = isGhep ? chonGiuong.length : 1;
-  const soTienCocTinh = donGiaThue * soGiuongHienTai * 2;
-
   return (
     <div className="ktp-container">
       <section className="ktp-table-section">
-        {/* Thanh tìm kiếm + lọc ngày + sắp xếp */}
         <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
           <div style={{ flex: '2 1 240px' }}>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên khách hàng, SĐT, mã hồ sơ/phiếu cọc..." className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
           </div>
-          <div style={{ flex: '1 1 140px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Từ ngày</label>
-            <input type="date" value={tuNgay} onChange={(e) => setTuNgay(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
-          </div>
-          <div style={{ flex: '1 1 140px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Đến ngày</label>
-            <input type="date" value={denNgay} onChange={(e) => setDenNgay(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
-          </div>
-          <div style={{ flex: '1 1 170px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Sắp xếp</label>
-            <select value={sortDir} onChange={(e) => setSortDir(e.target.value)} className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }}>
-              <option value="desc">Ngày đăng ký: mới nhất</option>
-              <option value="asc">Ngày đăng ký: cũ nhất</option>
-            </select>
-          </div>
-          {coLoc && (
-            <button type="button" onClick={xoaLoc} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          {search && (
+            <button type="button" onClick={() => setSearch('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
           )}
         </div>
 
-        {/* Segmented control: lọc theo trạng thái + số đếm */}
         <StatusFilterTabs
           className="status-pill-tabs-offset"
           items={[{ key: 'all', label: 'Tất cả' }, ...STATUS_ORDER.map((s) => ({ key: s, label: STATUS_CONFIG[s].chip }))]}
@@ -309,12 +255,12 @@ export default function LapPhieuDatCocTab() {
         <table className="ktp-table">
           <thead>
             <tr>
-              <th>Mã hồ sơ</th>
+              <th>Mã phiếu</th>
               <th>Khách hàng</th>
-              <th>SĐT</th>
               <th>Phòng</th>
-              <th>Số người</th>
-              <th>Giá thuê/giường</th>
+              <th>Hình thức</th>
+              <th>Tiền cọc</th>
+              <th>Hạn chốt</th>
               <th className="text-center">Trạng thái</th>
               <th className="text-center">Hành động</th>
             </tr>
@@ -325,43 +271,35 @@ export default function LapPhieuDatCocTab() {
             ) : loadError ? (
               <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#b3261e' }}>{loadError}</td></tr>
             ) : filteredList.length === 0 ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Không có hồ sơ nào ở nhóm này</td></tr>
-            ) : pagedList.map((item) => {
-              const action = STATUS_CONFIG[item.trangThai]?.action;
-              return (
-                <tr key={item.maDangKy}>
-                  <td style={{ fontWeight: '600', color: '#2f6765' }}>{item.maDangKy}</td>
-                  <td>{item.hoTen}</td>
-                  <td>{item.soDienThoai}</td>
-                  <td>{moTaPhong(item)}</td>
-                  <td>
-                    <SoNguoiBadge
-                      soNguoi={item.soNguoiDuKienO}
-                      soNam={item.soNam}
-                      soNu={item.soNu}
-                      khacGioi={item.khacGioi === 1 || item.khacGioi === true}
-                    />
-                  </td>
-                  <td className="ktp-text-primary" style={{ fontWeight: 600 }}>{item.giaThueTheoGiuong != null ? `${formatTien(item.giaThueTheoGiuong)}đ` : '—'}</td>
-                  <td className="text-center"><StatusBadge trangThai={item.trangThai} /></td>
-                  <td className="text-center">
-                    {action === 'lap' ? (
-                      <button className="ktp-btn-action-fill" onClick={() => openCreate(item)}>Lập phiếu</button>
-                    ) : (
-                      <button className="ktp-btn-action" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#2f6765', padding: '6px 12px', fontSize: '13px' }} onClick={() => setDetailItem(item)}>Xem chi tiết</button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#6f797a' }}>Không có phiếu nào</td></tr>
+            ) : pagedList.map((item) => (
+              <tr key={item.maPhieuDatCoc}>
+                <td style={{ fontWeight: '600', color: '#2f6765' }}>{item.maPhieuDatCoc}</td>
+                <td>{item.hoTen}</td>
+                <td>{item.tenPhong || '—'}</td>
+                <td>{item.hinhThucThue}</td>
+                <td className="ktp-text-primary" style={{ fontWeight: 600 }}>{formatTien(item.soTienCoc)}đ</td>
+                <td>{formatGio(item.hanChot)}</td>
+                <td className="text-center"><StatusBadge trangThaiPhieu={item.trangThaiPhieu} hanChot={item.hanChot} /></td>
+                <td className="text-center">
+                  {item.trangThaiPhieu === 'Chờ chốt' ? (
+                    <button className="ktp-btn-action-fill" onClick={() => openDoiSoat(item)}>Đối soát</button>
+                  ) : (
+                    <button className="ktp-btn-action" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#2f6765', padding: '6px 12px', fontSize: '13px' }} onClick={() => openDoiSoat(item)}>
+                      Xem chi tiết
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '13px', color: '#6f797a', marginRight: 'auto' }}>
             {filteredList.length === 0
-              ? 'Không có hồ sơ'
-              : `Hiển thị ${(pageSafe - 1) * PAGE_SIZE + 1}–${Math.min(pageSafe * PAGE_SIZE, filteredList.length)} / ${filteredList.length} hồ sơ`}
+              ? 'Không có phiếu'
+              : `Hiển thị ${(pageSafe - 1) * PAGE_SIZE + 1}–${Math.min(pageSafe * PAGE_SIZE, filteredList.length)} / ${filteredList.length} phiếu`}
           </span>
           {totalPages > 1 && (
             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
@@ -375,162 +313,130 @@ export default function LapPhieuDatCocTab() {
         </div>
       </section>
 
-      {/* Modal Lập phiếu đặt cọc */}
+      {/* Modal đối soát & chốt */}
       {selected && (
         <div className="ktp-modal-overlay" onClick={() => !submitting && setSelected(null)}>
           <div className="ktp-modal" onClick={(e) => e.stopPropagation()}>
             <div className="ktp-modal-header" style={{ alignItems: 'center', backgroundColor: '#3b8280', color: '#ffffff', borderBottom: 'none' }}>
-              <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff' }}>Lập phiếu đặt cọc</h3>
+              <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff' }}>Tính tiền & chốt phiếu đặt cọc</h3>
               <button className="ktp-modal-close" onClick={() => setSelected(null)} style={{ color: '#ffffff' }}><Icon name="close" /></button>
             </div>
             <div className="ktp-modal-body">
               <div className="ktp-grid-2">
                 <div className="ktp-section ktp-info-box-outline">
-                  <h4 className="ktp-section-title"><Icon name="person" /> 1. Thông tin khách hàng</h4>
+                  <h4 className="ktp-section-title"><Icon name="person" /> 1. Khách hàng</h4>
                   <div>
                     <div className="ktp-info-row"><span className="ktp-info-label">Họ tên:</span> <span className="ktp-info-value">{selected.hoTen}</span></div>
                     <div className="ktp-info-row"><span className="ktp-info-label">SĐT:</span> <span className="ktp-info-value">{selected.soDienThoai || '—'}</span></div>
-                    <div className="ktp-info-row"><span className="ktp-info-label">Mã khách hàng:</span> <span className="ktp-info-value">{selected.maKhachHang || '—'}</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Số người:</span> <span className="ktp-info-value">{selected.soNguoiDuKienO}</span></div>
                   </div>
                 </div>
                 <div className="ktp-section ktp-info-box-outline">
-                  <h4 className="ktp-section-title"><Icon name="description" /> 2. Thông tin hồ sơ</h4>
+                  <h4 className="ktp-section-title"><Icon name="description" /> 2. Phiếu Sale đã lập</h4>
                   <div>
-                    <div className="ktp-info-row"><span className="ktp-info-label">Mã hồ sơ:</span> <span className="ktp-info-value">{selected.maDangKy}</span></div>
-                    <div className="ktp-info-row"><span className="ktp-info-label">Số người:</span> <span className="ktp-info-value">{selected.soNguoiDuKienO} ({selected.soNam ?? 0} nam, {selected.soNu ?? 0} nữ){khacGioi ? ' · khác giới' : ''}</span></div>
-                    <div className="ktp-info-row"><span className="ktp-info-label">Trạng thái:</span> <span className="ktp-info-value ktp-text-success">Xác nhận cọc</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Mã phiếu:</span> <span className="ktp-info-value">{selected.maPhieuDatCoc}</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Người lập:</span> <span className="ktp-info-value">{selected.nhanVienSaleLap || '—'}</span></div>
+                    <div className="ktp-info-row"><span className="ktp-info-label">Thời điểm:</span> <span className="ktp-info-value">{formatGio(selected.thoiDiemDatCoc)}</span></div>
                   </div>
                 </div>
               </div>
+
+              {/* Phòng/giường CHỈ ĐỌC — Sale chốt với khách, Quản lý đã duyệt */}
               <div className="ktp-section ktp-info-box-outline">
                 <h4 className="ktp-section-title"><Icon name="apartment" /> 3. Phòng & hình thức thuê</h4>
-                <div className="ktp-grid-3" style={{ marginBottom: 12 }}>
-                  <div><p className="ktp-mini-label">Phòng</p><p className="ktp-mini-value">{moTaPhong(selected)} ({selected.gioiTinhChoPhep})</p></div>
-                  <div><p className="ktp-mini-label">Sức chứa</p><p className="ktp-mini-value">{selected.sucChuaToiDa}</p></div>
-                  <div><p className="ktp-mini-label">Còn trống</p><p className="ktp-mini-value">{selected.soChoTrong}</p></div>
-                </div>
-
-                {khacGioi ? (
-                  <div className="ktp-warning-box"><Icon name="warning" /><span>Nhóm có cả nam và nữ → bắt buộc thuê <strong>nguyên phòng</strong> (phòng phải trống hoàn toàn).</span></div>
-                ) : (
-                  <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
-                    <label><input type="radio" name="hinhThuc" checked={hinhThuc === 'Ghep'} onChange={() => setHinhThuc('Ghep')} /> Ghép giường</label>
-                    <label><input type="radio" name="hinhThuc" checked={hinhThuc === 'Nguyen'} onChange={() => setHinhThuc('Nguyen')} /> Nguyên phòng</label>
-                  </div>
-                )}
-
-                {isGhep && (
-                  <div>
-                    <p className="ktp-mini-label">Chọn giường — cần đúng {selected.soNguoiDuKienO} giường (phòng dành cho {selected.gioiTinhChoPhep})</p>
-                    {loadingGiuong ? (
-                      <p style={{ color: '#6f797a' }}>Đang tải giường trống...</p>
-                    ) : giuongTrong.length === 0 ? (
-                      <p style={{ color: '#b3261e' }}>Phòng không còn giường trống.</p>
-                    ) : (
-                      <div className="kp-bed-grid">
-                        {giuongTrong.map((g) => {
-                          const isSelected = chonGiuong.includes(g.maGiuong);
-                          const isFull = chonGiuong.length >= selected.soNguoiDuKienO;
-                          const isDisabled = !isSelected && isFull;
-                          return (
-                            <label key={g.maGiuong} className={`kp-bed-card ${isSelected ? 'is-selected' : ''} ${isDisabled ? 'is-disabled' : ''}`}>
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                disabled={isDisabled}
-                                onChange={() => {
-                                  if (!isDisabled) toggleGiuong(g.maGiuong);
-                                }}
-                                className="kp-bed-input-hidden"
-                              />
-                              <div className="kp-bed-card-inner">
-                                <span className="kp-bed-icon"><Icon name="bed" /></span>
-                                <span className="kp-bed-label">{g.maGiuong}</span>
-                              </div>
-                              <span className="kp-bed-check"><Icon name="check" /></span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <p style={{ fontSize: 12, marginTop: 6, fontWeight: chonGiuong.length === selected.soNguoiDuKienO ? '600' : 'normal', color: chonGiuong.length === selected.soNguoiDuKienO ? '#2f6765' : '#a43c12' }}>
-                      Đã chọn {chonGiuong.length}/{selected.soNguoiDuKienO} giường {chonGiuong.length === selected.soNguoiDuKienO ? '· Đã đủ giường' : ''}
-                    </p>
-                  </div>
-                )}
+                <div className="ktp-info-row"><span className="ktp-info-label">Phòng:</span> <span className="ktp-info-value">{selected.tenPhong || '—'}{selected.tenLoaiPhong ? ` · ${selected.tenLoaiPhong}` : ''}</span></div>
+                <div className="ktp-info-row"><span className="ktp-info-label">Giường:</span> <span className="ktp-info-value">{selected.danhSachGiuong || 'Trọn phòng'}</span></div>
+                <div className="ktp-info-row"><span className="ktp-info-label">Hình thức thuê:</span> <span className="ktp-info-value">{selected.hinhThucThue}</span></div>
               </div>
+
+              {/* BẢNG TÍNH — việc chính của kế toán */}
               <div className="ktp-section ktp-section-primary">
-                <h4 className="ktp-section-title"><Icon name="calculate" /> 4. Điều khoản & Cọc</h4>
-                <div className="ktp-grid-2">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div className="ktp-flex-between"><span style={{ color: '#6f797a' }}>Hình thức:</span><strong>{khacGioi ? 'Nguyên phòng (khác giới)' : (isGhep ? 'Ghép giường' : 'Nguyên phòng')}</strong></div>
-                    <div className="ktp-flex-between"><span style={{ color: '#6f797a' }}>Đơn giá thuê:</span><strong>{formatTien(donGiaThue)}đ{isGhep ? '/giường' : ''}</strong></div>
-                    <div className="ktp-flex-between"><span style={{ color: '#6f797a' }}>Tiền cọc (2 tháng):</span><strong className="ktp-text-primary" style={{ fontSize: '18px' }}>{formatTien(soTienCocTinh)}đ</strong></div>
-                    <div className="ktp-warning-box"><Icon name="warning" /><span>Tiền cọc tự tính = đơn giá × số giường × 2, không chỉnh tay.</span></div>
+                <h4 className="ktp-section-title"><Icon name="calculate" /> 4. Bảng tính tiền cọc</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="ktp-flex-between">
+                    <span style={{ color: '#6f797a' }}>
+                      Đơn giá {selected.hinhThucThue === 'Ghép giường' ? 'mỗi giường' : 'nguyên phòng'}
+                    </span>
+                    <strong>{formatTien(selected.donGia)}đ/tháng</strong>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div>
-                      <label className="ktp-mini-label" style={{ marginBottom: '8px', display: 'block' }}>Phương thức thanh toán</label>
-                      <div className="ktp-warning-box">
-                        <Icon name="warning" />
-                        <span>Khách hàng sẽ tự chọn phương thức thanh toán (tiền mặt / chuyển khoản) sau khi phiếu được lập.</span>
-                      </div>
+                  <div className="ktp-flex-between">
+                    <span style={{ color: '#6f797a' }}>
+                      {selected.hinhThucThue === 'Ghép giường' ? `Số giường × ${selected.soDong}` : 'Trọn phòng × 1'}
+                    </span>
+                    <strong>{formatTien(selected.tienThueThang)}đ/tháng</strong>
+                  </div>
+                  <div className="ktp-flex-between" style={{ paddingTop: '10px', borderTop: '1px dashed #cdd5d6' }}>
+                    <span style={{ color: '#6f797a' }}>Tiền cọc <span style={{ fontSize: 12 }}>({selected.soThangCoc} tháng)</span></span>
+                    <strong className="ktp-text-primary" style={{ fontSize: '20px' }}>{formatTien(selected.soTienCoc)}đ</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* QUYẾT ĐỊNH — chỉ hiện khi phiếu còn chờ chốt; phiếu đã chốt/đã hủy chỉ xem lại */}
+              {readOnly ? (
+                <div className="ktp-section ktp-info-box-outline" style={{ gridColumn: '1 / -1' }}>
+                  <h4 className="ktp-section-title"><Icon name="fact_check" /> 5. Trạng thái</h4>
+                  <div className="ktp-info-row">
+                    <span className="ktp-info-label">Kết quả:</span>
+                    <span className="ktp-info-value"><StatusBadge trangThaiPhieu={selected.trangThaiPhieu} hanChot={selected.hanChot} /></span>
+                  </div>
+                </div>
+              ) : (
+              <div className="ktp-section ktp-info-box-outline" style={{ gridColumn: '1 / -1' }}>
+                <h4 className="ktp-section-title"><Icon name="fact_check" /> 5. Quyết định</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <label
+                    onClick={() => setQuyetDinh('chot')}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
+                      border: quyetDinh === 'chot' ? '2px solid #00666d' : '1px solid #d7dcdc',
+                      background: quyetDinh === 'chot' ? '#eaf4f3' : '#fff' }}
+                  >
+                    {/* boxSizing tường minh: không có nó, 20px + border cho ra kích thước
+                        khác nhau tùy ngữ cảnh CSS -> mỗi màn hình ra một kiểu radio. */}
+                    <div style={{ width: '20px', height: '20px', boxSizing: 'border-box', borderRadius: '50%',
+                      border: quyetDinh === 'chot' ? '2px solid #00666d' : '2px solid #bec8c9',
+                      flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {quyetDinh === 'chot' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00666d' }}></div>}
                     </div>
+                    <span style={{ fontWeight: 600, color: '#191c1d' }}>Chốt phiếu</span>
+                  </label>
+                  <label
+                    onClick={() => setQuyetDinh('huy')}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
+                      border: quyetDinh === 'huy' ? '2px solid #00666d' : '1px solid #d7dcdc',
+                      background: quyetDinh === 'huy' ? '#eaf4f3' : '#fff' }}
+                  >
+                    <div style={{ width: '20px', height: '20px', boxSizing: 'border-box', borderRadius: '50%',
+                      border: quyetDinh === 'huy' ? '2px solid #00666d' : '2px solid #bec8c9',
+                      flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {quyetDinh === 'huy' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00666d' }}></div>}
+                    </div>
+                    <span style={{ fontWeight: 600, color: '#191c1d' }}>Hủy phiếu</span>
+                  </label>
+                </div>
+
+                {huy && (
+                  <div style={{ marginTop: 14 }}>
+                    <label className="ktp-mini-label" style={{ display: 'block', marginBottom: 8 }}>Lý do hủy</label>
+                    <textarea
+                      className="ktp-input"
+                      rows={3}
+                      value={lyDoHuy}
+                      onChange={(e) => setLyDoHuy(e.target.value)}
+                      style={{ width: '100%', resize: 'vertical' }}
+                    />
                   </div>
-                </div>
+                )}
               </div>
-              <div style={{ borderTop: '2px dashed #bec8c9', paddingTop: '16px' }}>
-                <div className="ktp-summary-box ktp-grid-3">
-                  <div><p className="ktp-mini-label">Mã phiếu</p><p style={{ fontSize: '14px', fontStyle: 'italic', color: '#6f797a', margin: 0 }}>Tự động sinh sau khi lập</p></div>
-                  <div><p className="ktp-mini-label">Hạn thanh toán</p><p className="ktp-text-error" style={{ fontSize: '14px', fontWeight: '700', margin: 0 }}>24h kể từ khi lập</p></div>
-                  <div><p className="ktp-mini-label">Trạng thái sau lập</p><p style={{ fontSize: '14px', fontWeight: '700', color: '#a43c12', textTransform: 'uppercase', margin: 0 }}>Chờ TT</p></div>
-                </div>
-                <p style={{ textAlign: 'center', fontSize: '11px', color: '#6f797a', marginTop: '12px' }}>
-                  Thông báo sẽ được gửi tự động đến: <strong>Khách hàng</strong> & <strong>Nhân viên Sale</strong>
-                </p>
-              </div>
+              )}
             </div>
             <div className="ktp-modal-footer">
-              <button className="ktp-btn-cancel" onClick={() => setSelected(null)} disabled={submitting}>Hủy</button>
-              <button className="ktp-btn-submit" onClick={handleLapPhieu} disabled={submitting}>{submitting ? 'Đang lập...' : 'Lập phiếu đặt cọc'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal xem chi tiết phiếu đã lập (read-only) */}
-      {detailItem && (
-        <div className="ktp-modal-overlay" onClick={() => setDetailItem(null)}>
-          <div className="ktp-modal" style={{ maxWidth: '480px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-            <div className="ktp-modal-header">
-              <h3 style={{ margin: 0, color: '#191c1d', fontSize: '16px' }}>Chi tiết phiếu đặt cọc</h3>
-              <button className="ktp-btn-close" onClick={() => setDetailItem(null)}><Icon name="close" /></button>
-            </div>
-            <div className="ktp-modal-body" style={{ padding: '0 24px 24px 24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <span style={{ fontWeight: 700, color: '#2f6765', fontSize: '18px' }}>{detailItem.maPhieuDatCoc || detailItem.maDangKy}</span>
-                <StatusBadge trangThai={detailItem.trangThai} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {[
-                  ['Mã hồ sơ', detailItem.maDangKy],
-                  ['Khách hàng', detailItem.hoTen],
-                  ['Số điện thoại', detailItem.soDienThoai || '—'],
-                  ['Phòng', moTaPhong(detailItem)],
-                  ['Hình thức thuê', detailItem.hinhThucThuePhieu || '—'],
-                  ['Số tiền cọc', detailItem.soTienCocPhieu != null ? `${formatTien(detailItem.soTienCocPhieu)}đ` : '—'],
-                  ['Trạng thái thanh toán', detailItem.trangThaiThanhToan || '—'],
-                  ['Ngày lập phiếu', formatNgay(detailItem.thoiDiemDatCoc)]
-                ].map(([k, v]) => (
-                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f0f2f2' }}>
-                    <span style={{ color: '#6f797a', fontSize: '14px' }}>{k}</span>
-                    <span style={{ color: '#191c1d', fontSize: '14px', fontWeight: 600, textAlign: 'right' }}>{v}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-                <button className="ktp-btn-cancel" onClick={() => setDetailItem(null)} style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '8px 24px' }}>Đóng</button>
-              </div>
+              <button className="ktp-btn-cancel" onClick={() => setSelected(null)} disabled={submitting}>Đóng</button>
+              {!readOnly && (
+                <button className="ktp-btn-submit" onClick={handleChot} disabled={submitting || !guiDuoc}>
+                  {submitting ? 'Đang xử lý...' : (huy ? 'Hủy phiếu' : 'Chốt phiếu')}
+                </button>
+              )}
             </div>
           </div>
         </div>

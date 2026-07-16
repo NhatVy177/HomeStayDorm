@@ -848,7 +848,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--lxp-outline-var);
+  background: var(--lxp-primary);
+  border-bottom: none;
+  color: #ffffff;
 }
 
 .lxp-modal-head h3 {
@@ -856,10 +858,11 @@
   font-size: 18px;
   font-weight: 700;
   margin: 0;
+  color: #ffffff;
 }
 
 .lxp-modal-close {
-  background: var(--lxp-surface-low);
+  background: rgba(255, 255, 255, 0.14);
   border: none;
   width: 32px;
   height: 32px;
@@ -869,12 +872,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--lxp-on-surface-var);
+  color: #ffffff;
   line-height: 1;
   transition: background 0.15s;
 }
 
-.lxp-modal-close:hover { background: var(--lxp-surface-high); }
+.lxp-modal-close:hover { background: rgba(255, 255, 255, 0.24); }
 
 .lxp-modal-body {
   padding: 20px 24px 24px;

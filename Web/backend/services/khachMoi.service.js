@@ -1,6 +1,7 @@
 import { executeProcedure, executeQuery, getPool, sql } from '../database/connection.js';
 import { getDanhSachPhongKhamPha } from './phongKhamPha.service.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
+import * as phieuTraPhongRepository from '../repositories/phieuTraPhong.repository.js';
 
 function requireCustomer(user) {
   if (!user || user.vaiTro !== 'KhachHang') {
@@ -617,18 +618,23 @@ export async function getDatCoc(user) {
 
         pdc.ChungTuThanhToan       AS minhChungThanhToan,
         pdc.ThoiGianXacNhanTT      AS thoiGianXacNhanTT,
+        pdc.GhiChu                 AS lyDoTuChoi,   -- DC05: có giá trị = chứng từ đang bị từ chối
         khUser.HoTen               AS tenKhachHang,
         khUser.SDT                 AS sdtKhachHang,
         -- Trạng thái hiển thị cho frontend
         CASE
           WHEN pdc.TrangThaiThanhToan = N'Hết hạn' OR pdc.TrangThaiCoc = N'Đã hủy'
             THEN N'Hết hạn'
-          WHEN pdc.TrangThaiThanhToan = N'Chờ TT'
-            THEN N'Chờ thanh toán'
           WHEN pdc.TrangThaiThanhToan = N'Đã TT' AND pdc.ThoiGianXacNhanTT IS NOT NULL
             THEN N'Hoàn tất'
+          -- DC05 từ chối: giữ nguyên chứng từ cũ + GhiChu chứa lý do. Phải đứng TRƯỚC nhánh
+          -- 'Chờ xác nhận', nếu không phiếu bị từ chối sẽ bị hiểu nhầm là đang chờ duyệt.
+          WHEN pdc.ChungTuThanhToan IS NOT NULL AND pdc.GhiChu IS NOT NULL
+            THEN N'Bị từ chối'
           WHEN pdc.ChungTuThanhToan IS NOT NULL
             THEN N'Chờ xác nhận'
+          WHEN pdc.TrangThaiThanhToan = N'Chờ TT'
+            THEN N'Chờ thanh toán'
           ELSE pdc.TrangThaiThanhToan
         END                        AS trangThai,
         -- Thông tin phòng (từ ChiTietDatCoc)
@@ -929,8 +935,10 @@ export async function uploadMinhChungKhachHang(user, maPhieuCoc, data = {}) {
     .input('MaPhieuCoc', sql.VarChar(6), maPhieuCoc)
     .input('MinhChung', sql.NVarChar(sql.MAX), minhChung)
     .query(`
+      -- Gửi chứng từ mới -> xóa lý do từ chối cũ (DC05) để phiếu quay lại hàng đợi duyệt.
       UPDATE dbo.PhieuDatCoc
-      SET ChungTuThanhToan = @MinhChung
+      SET ChungTuThanhToan = @MinhChung,
+          GhiChu           = NULL
       WHERE MaPhieuDatCoc = @MaPhieuCoc;
     `);
 
@@ -1162,14 +1170,16 @@ export async function getHopDongDashboard(user, options = {}) {
 export async function guiYeuCauTraPhong(user, data = {}) {
   const khachHangId = requireCustomer(user);
   try {
-    const result = await executeProcedure('dbo.SP_TraPhong_KhachHang_GuiYeuCau', [
-      { name: 'MaKhachHang', type: sql.VarChar(6), value: khachHangId },
-      { name: 'MaHopDong', type: sql.VarChar(6), value: data.maHopDong || null },
-      { name: 'MaPhieuDatCoc', type: sql.VarChar(6), value: data.maPhieuDatCoc || data.maPhieuCoc || null },
-      { name: 'NgayDuKienTra', type: sql.Date, value: data.ngayDuKienTra ? new Date(data.ngayDuKienTra) : null }
-    ]);
+    const pool = await getPool();
+    const result = await phieuTraPhongRepository.ThemPhieuTraPhong(
+      pool,
+      khachHangId,
+      data.maHopDong || null,
+      data.maPhieuDatCoc || data.maPhieuCoc || null,
+      data.ngayDuKienTra || null
+    );
 
-    return result.recordset?.[0] || null;
+    return result || null;
   } catch (error) {
     handleDatabaseError(error);
   }
