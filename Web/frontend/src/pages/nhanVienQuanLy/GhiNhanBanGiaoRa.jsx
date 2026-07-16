@@ -17,7 +17,7 @@ export default function GhiNhanBanGiaoRa() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('Chờ bàn giao');
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState({ msg: '', type: 'info' });
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -31,8 +31,8 @@ export default function GhiNhanBanGiaoRa() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(''), 3000);
+    if (!toast.msg) return;
+    const timer = setTimeout(() => setToast({ msg: '', type: 'info' }), 3000);
     return () => clearTimeout(timer);
   }, [toast]);
 
@@ -42,7 +42,7 @@ export default function GhiNhanBanGiaoRa() {
       const res = await banGiaoRaApi.getDanhSachBanGiaoRa('Tất cả');
       setDsBanGiaoRa(res.data.danhSach || []);
     } catch (err) {
-      setToast(err?.response?.data?.message || 'Lỗi tải danh sách bàn giao ra');
+      setToast({ msg: err?.response?.data?.message || 'Lỗi tải danh sách bàn giao ra', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export default function GhiNhanBanGiaoRa() {
       }));
       setDsTaiSan(dsWithInput);
     } catch (err) {
-      setToast(err?.response?.data?.message || 'Không thể tải chi tiết phiếu');
+      setToast({ msg: err?.response?.data?.message || 'Không thể tải chi tiết phiếu', type: 'error' });
       setModalOpen(false);
     } finally {
       setLoadingDetail(false);
@@ -115,7 +115,8 @@ export default function GhiNhanBanGiaoRa() {
 
       await banGiaoRaApi.ghiNhanBanGiaoRa(payload);
       loadDanhSach();
-      setIsSubmitted(true);
+      setToast({ msg: 'Ghi nhận bàn giao ra thành công.', type: 'success' });
+      setModalOpen(false);
     } catch (err) {
       console.error(err);
       setErrorMsg(err.response?.data?.message || 'Lỗi khi ghi nhận bàn giao ra.');
@@ -442,31 +443,17 @@ export default function GhiNhanBanGiaoRa() {
         </div>
       )}
 
-      {/* Success Modal */}
-      {isSubmitted && (
-        <div className="ktp-modal-overlay" style={{ zIndex: 1100 }} onClick={() => { setIsSubmitted(false); setModalOpen(false); }}>
-          <div className="ktp-modal" style={{ maxWidth: '400px', width: '90%', padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#e6f4ea', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#137333" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-            <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#191c1d', margin: '0 0 8px 0' }}>Thành công!</h3>
-            <p style={{ fontSize: '15px', color: '#3f494a', margin: '0 0 24px 0' }}>
-              Ghi nhận bàn giao ra thành công.
-            </p>
-            <button
-              onClick={() => { setIsSubmitted(false); setModalOpen(false); }}
-              style={{ backgroundColor: '#004c52', color: '#ffffff', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', border: 'none', width: '100%', fontSize: '15px' }}
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Toast Notification */}
-      <div className={`tp-toast ${toast ? 'show' : ''}`}>{toast}</div>
+      <div className={`tp-toast ${toast.msg ? 'show' : ''}`} style={{ 
+        backgroundColor: toast.type === 'error' ? '#ba1a1a' : '#1a6e60',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        {toast.type === 'success' && <Icon name="check_circle" style={{ fontSize: '18px' }} />}
+        {toast.type === 'error' && <Icon name="error_outline" style={{ fontSize: '18px' }} />}
+        {toast.msg}
+      </div>
     </div>
   );
 }

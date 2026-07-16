@@ -8,7 +8,7 @@ const thanhLyTraPhongController = {
       res.status(200).json({ danhSach });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Lỗi server', error: err.message });
+      res.status(err.statusCode || 500).json({ message: err.message || 'Lỗi server' });
     }
   },
 
@@ -23,7 +23,7 @@ const thanhLyTraPhongController = {
       res.status(200).json({ chiTiet });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Lỗi server', error: err.message });
+      res.status(err.statusCode || 500).json({ message: err.message || 'Lỗi server' });
     }
   },
 
@@ -39,7 +39,7 @@ const thanhLyTraPhongController = {
       });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: err.message || 'Lỗi server' });
+      res.status(err.statusCode || 500).json({ message: err.message || 'Lỗi server' });
     }
   }
 };

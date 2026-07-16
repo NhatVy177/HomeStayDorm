@@ -386,16 +386,6 @@ export default function ThanhLyTraPhong() {
                             <InfoRow label="Mã đối soát">{chiTiet.maDoiSoat}</InfoRow>
                             <InfoRow label={ketQua.label}><span style={{ color: ketQua.color, fontWeight: 800 }}>{ketQua.value}</span></InfoRow>
                             <InfoRow label="Trạng thái đối soát"><StatusBadge tone={chiTiet.trangThaiDoiSoat === 'Chờ hoàn cọc' ? 'success' : 'info'}>{chiTiet.trangThaiDoiSoat}</StatusBadge></InfoRow>
-                            {ketQua.label === 'Số tiền thu thêm' && (
-                              <InfoRow label="Chứng từ đối soát">
-                                <ChungTuLink value={chiTiet.chungTuThanhToan} emptyText="Chưa có chứng từ thu thêm" />
-                              </InfoRow>
-                            )}
-                            {ketQua.label === 'Số tiền được hoàn' && (
-                              <InfoRow label="Chứng từ đối soát">
-                                <ChungTuLink value={chiTiet.chungTuThanhToan} emptyText="Chờ nhân viên kế toán hoàn cọc" />
-                              </InfoRow>
-                            )}
                           </>
                         );
                       })()}

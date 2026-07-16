@@ -299,11 +299,11 @@ export default function XacNhanPhanHoi() {
     setSubmitting(true);
     try {
       await xacNhanPhanHoiApi.xuLyPhanHoi({ maDoiSoat: selected.maDoiSoat, hanhDong });
-      setSuccessMsg(
-        hanhDong === 'XacNhanDieuChinh'
-          ? 'Đã chuyển phiếu đối soát để nhân viên kế toán điều chỉnh lại.'
-          : 'Đã ghi nhận giữ nguyên kết quả đối soát.'
-      );
+      const msg = hanhDong === 'XacNhanDieuChinh'
+        ? 'Đã chuyển phiếu đối soát để nhân viên kế toán điều chỉnh lại.'
+        : 'Đã ghi nhận giữ nguyên kết quả đối soát.';
+      showToast(msg, 'success');
+      setModalOpen(false);
       await load();
     } catch (err) {
       const msg = err?.response?.data?.message || 'Không xử lý được phản hồi. Vui lòng thử lại.';
@@ -496,9 +496,7 @@ export default function XacNhanPhanHoi() {
                         ) : (
                           <>
                             <InfoRow label="Mã phiếu đặt cọc"><strong>{chiTiet.maPhieuDatCoc}</strong></InfoRow>
-                            <InfoRow label="Ngày đặt cọc">{fmtDate(chiTiet.thoiDiemDatCoc)}</InfoRow>
                             <InfoRow label="Số tiền cọc">{fmtMoney(chiTiet.tienCocBanDau)}</InfoRow>
-                            <InfoRow label="Trạng thái thanh toán">{chiTiet.trangThaiThanhToan || chiTiet.trangThaiThanhToanPDC || '—'}</InfoRow>
                             <InfoRow label="Phòng/giường đã giữ chỗ">{formatRoom(dsPhong)}</InfoRow>
                             <InfoRow label="Ngày yêu cầu hủy cọc">{fmtDate(chiTiet.ngayTraThucTe)}</InfoRow>
                           </>
@@ -566,26 +564,14 @@ export default function XacNhanPhanHoi() {
         </div>
       )}
 
-      {successMsg && (
-        <div className="ktp-modal-overlay" style={{ zIndex: 1400 }} onClick={() => { setSuccessMsg(''); setModalOpen(false); }}>
-          <div className="ktp-modal" style={{ maxWidth: 400, width: '90%', padding: 32, borderRadius: 12, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#e6f4ea', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
-              <Icon name="check" style={{ fontSize: 32, color: '#137333' }} />
-            </div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#191c1d', margin: '0 0 10px 0' }}>Xử lý thành công!</h3>
-            <p style={{ fontSize: 14, color: '#3f494a', margin: '0 0 24px 0', lineHeight: 1.6 }}>{successMsg}</p>
-            <button
-              onClick={() => { setSuccessMsg(''); setModalOpen(false); }}
-              className="ktp-btn-submit"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className={`tp-toast ${toast.msg ? 'show' : ''}`} style={{ backgroundColor: toast.type === 'error' ? '#ba1a1a' : undefined }}>
+      <div className={`tp-toast ${toast.msg ? 'show' : ''}`} style={{ 
+        backgroundColor: toast.type === 'error' ? '#ba1a1a' : '#1a6e60',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        {toast.type === 'success' && <Icon name="check_circle" style={{ fontSize: '18px' }} />}
+        {toast.type === 'error' && <Icon name="error_outline" style={{ fontSize: '18px' }} />}
         {toast.msg}
       </div>
     </div>
