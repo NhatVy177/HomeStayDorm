@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { banGiaoPhongApi } from './banGiaoPhong.api.js';
+import '../nhanPhong/cuTru.css';
 
 function getErrorMessage(error, fallback) {
   return error?.response?.data?.message || error?.message || fallback;
@@ -392,17 +393,21 @@ export default function BanGiaoPhongTab() {
       )}
 
       {!hopDong && (
-        <div style={{ backgroundColor: '#f4f7f7', padding: '16px 24px', borderRadius: '12px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', border: '1px solid #e0ebed' }}>
-          <div style={{ flex: '1 1 300px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#00666d', marginBottom: '8px' }}>Tìm kiếm nhanh</label>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Nhập mã hợp đồng, tên khách hàng, số điện thoại hoặc tên phòng..."
-              className="ktp-input"
-              style={{ width: '100%', backgroundColor: '#fff', border: '1px solid #bec8c9', borderRadius: '8px', padding: '10px 12px' }}
-            />
+        <div
+          className="residence-filter"
+          style={{ display: 'grid', gridTemplateColumns: '1fr', marginBottom: '20px' }}
+        >
+          <div className="ktp-filter-group" style={{ margin: 0 }}>
+            <label className="ktp-filter-label">Tìm kiếm</label>
+            <div className="ktp-input-icon-wrap">
+              <span className="ktp-input-icon"><Icon name="search" /></span>
+              <input
+                className="ktp-input ktp-input-with-icon"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Nhập mã hợp đồng, tên khách hàng, số điện thoại hoặc tên phòng..."
+              />
+            </div>
           </div>
         </div>
       )}
