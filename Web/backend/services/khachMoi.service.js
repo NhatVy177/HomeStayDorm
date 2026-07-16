@@ -1,6 +1,7 @@
 import { executeProcedure, executeQuery, getPool, sql } from '../database/connection.js';
 import { getDanhSachPhongKhamPha } from './phongKhamPha.service.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
+import * as phieuTraPhongRepository from '../repositories/phieuTraPhong.repository.js';
 
 function requireCustomer(user) {
   if (!user || user.vaiTro !== 'KhachHang') {
@@ -1303,14 +1304,16 @@ export async function getHopDongDashboard(user, options = {}) {
 export async function guiYeuCauTraPhong(user, data = {}) {
   const khachHangId = requireCustomer(user);
   try {
-    const result = await executeProcedure('dbo.SP_TraPhong_KhachHang_GuiYeuCau', [
-      { name: 'MaKhachHang', type: sql.VarChar(6), value: khachHangId },
-      { name: 'MaHopDong', type: sql.VarChar(6), value: data.maHopDong || null },
-      { name: 'MaPhieuDatCoc', type: sql.VarChar(6), value: data.maPhieuDatCoc || data.maPhieuCoc || null },
-      { name: 'NgayDuKienTra', type: sql.Date, value: data.ngayDuKienTra ? new Date(data.ngayDuKienTra) : null }
-    ]);
+    const pool = await getPool();
+    const result = await phieuTraPhongRepository.ThemPhieuTraPhong(
+      pool,
+      khachHangId,
+      data.maHopDong || null,
+      data.maPhieuDatCoc || data.maPhieuCoc || null,
+      data.ngayDuKienTra || null
+    );
 
-    return result.recordset?.[0] || null;
+    return result || null;
   } catch (error) {
     handleDatabaseError(error);
   }

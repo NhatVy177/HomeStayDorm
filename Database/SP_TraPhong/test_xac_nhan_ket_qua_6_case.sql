@@ -15,12 +15,17 @@ GO
   Mat khau tat ca tai khoan test: 123
 
   Ma tran case:
-    kh9201 / KH9201: Co hop dong, thu them      -> DS9201 / HD9201 / TP9201
-    kh9202 / KH9202: Co hop dong, khong phat sinh -> DS9202 / HD9202 / TP9202
+    kh9201 / KH9201: Co hop dong, thu them (co HO9201 + ChiTietHoaDon) -> DS9201 / HD9201 / TP9201
+    kh9202 / KH9202: Co hop dong, khong phat sinh (co HO9202 + ChiTietHoaDon) -> DS9202 / HD9202 / TP9202
     kh9203 / KH9203: Co hop dong, hoan coc      -> DS9203 / HD9203 / TP9203
     kh9204 / KH9204: Chi co dat coc, hoan coc toan bo -> DS9204 / DC9204 / TP9204
     kh9205 / KH9205: Chi co dat coc, hoan coc mot phan -> DS9205 / DC9205 / TP9205
     kh9206 / KH9206: Chi co dat coc, hoan coc mot phan -> DS9206 / DC9206 / TP9206
+
+  Luu y nghiep vu:
+    - Case co HopDong va co tien thue/dich vu con no phai co HoaDon + ChiTietHoaDon ro rang.
+    - Case chi co DatCoc (KH9204-KH9206) chua ky HopDong nen khong tao HoaDon/ChiTietHoaDon.
+      Day la case hoan coc theo quy dinh, khong phai day mot khoan no khong ro sang khach.
 
   Tat ca DoiSoat ban dau o trang thai N'Cho xac nhan' de test:
     - Khach bam Dong y
@@ -254,7 +259,7 @@ BEGIN TRY
     )
     VALUES
         ('DC9201', '2026-06-02 09:00:00', '2026-06-03 09:00:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:20:00', '/uploads/chung-tu-coc/DC9201.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9201', 'KH9201', 'NV0004'),
-        ('DC9202', '2026-06-02 09:10:00', '2026-06-03 09:10:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:30:00', '/uploads/chung-tu-coc/DC9202.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9202', 'KH9202', 'NV0004'),
+        ('DC9202', '2026-06-02 09:10:00', '2026-06-03 09:10:00', 2400000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:30:00', '/uploads/chung-tu-coc/DC9202.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9202', 'KH9202', 'NV0004'),
         ('DC9203', '2026-06-02 09:20:00', '2026-06-03 09:20:00', 2200000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:40:00', '/uploads/chung-tu-coc/DC9203.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Đã lập HĐ', 'DK9203', 'KH9203', 'NV0004'),
         ('DC9204', '2026-06-02 09:30:00', '2026-06-03 09:30:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 09:50:00', '/uploads/chung-tu-coc/DC9204.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Hiệu lực',  'DK9204', 'KH9204', 'NV0004'),
         ('DC9205', '2026-06-02 09:40:00', '2026-06-03 09:40:00', 1800000, N'Chuyển khoản', N'Đã TT', '2026-06-02 10:00:00', '/uploads/chung-tu-coc/DC9205.pdf', '2026-06-10 09:00:00', N'Ghép giường', N'Hiệu lực',  'DK9205', 'KH9205', 'NV0004'),
@@ -278,32 +283,42 @@ BEGIN TRY
         ('HD9202', '2026-06-05', '2026-06-10', '2026-12-10', 1, 2200000, N'Hàng tháng', N'Hiệu lực', 'DC9202', 'KH9202', 'NV0003'),
         ('HD9203', '2026-06-05', '2026-06-10', '2026-12-10', 1, 2200000, N'Hàng tháng', N'Hiệu lực', 'DC9203', 'KH9203', 'NV0003');
 
-    -- Du lieu hoa don con no cho KH9202/HD9202 de man doi soat hien chi tiet dich vu that.
+    -- Du lieu hoa don con no de man doi soat hien ro HoaDon + ChiTietHoaDon.
+    -- Tien thue con no lay theo GiaThue hop dong; ChiTietHoaDon chi luu tien dich vu.
     INSERT INTO dbo.DichVuHopDong (MaChiTietDVHD, MaDichVu, MaHopDong, GhiChu)
     VALUES
-        ('V2001', 'DV0001', 'HD9202', N'Dịch vụ điện test đối soát KH9202.'),
-        ('V2002', 'DV0002', 'HD9202', N'Dịch vụ nước test đối soát KH9202.'),
-        ('V2003', 'DV0003', 'HD9202', N'Dịch vụ wifi test đối soát KH9202.'),
-        ('V2004', 'DV0004', 'HD9202', N'Dịch vụ gửi xe test đối soát KH9202.'),
-        ('V2005', 'DV0005', 'HD9202', N'Dịch vụ vệ sinh test đối soát KH9202.');
+        ('V9101', 'DV0001', 'HD9201', N'Dịch vụ điện test đối soát KH9201.'),
+        ('V9102', 'DV0002', 'HD9201', N'Dịch vụ nước test đối soát KH9201.'),
+        ('V9103', 'DV0003', 'HD9201', N'Dịch vụ wifi test đối soát KH9201.'),
+        ('V9104', 'DV0005', 'HD9201', N'Dịch vụ vệ sinh test đối soát KH9201.'),
+        ('V9201', 'DV0001', 'HD9202', N'Dịch vụ điện test đối soát KH9202.'),
+        ('V9202', 'DV0002', 'HD9202', N'Dịch vụ nước test đối soát KH9202.'),
+        ('V9203', 'DV0003', 'HD9202', N'Dịch vụ wifi test đối soát KH9202.'),
+        ('V9204', 'DV0004', 'HD9202', N'Dịch vụ gửi xe test đối soát KH9202.'),
+        ('V9205', 'DV0005', 'HD9202', N'Dịch vụ vệ sinh test đối soát KH9202.');
 
     INSERT INTO dbo.HoaDon (
         MaHoaDon, KyThanhToan, NgayLap, NgayHanTT, TongTien,
         TrangThai, NgayThanhToan, PhuongThucThanhToan, MaHopDong, MaNhanVienKeToan
     )
     VALUES
-        ('HO9202', '2026-07', '2026-07-05', '2026-07-12', NULL, N'Nợ', NULL, NULL, 'HD9202', 'NV0004');
+        ('HO9201', '2026-07', '2026-07-05', '2026-07-12', 2450000, N'Nợ', NULL, NULL, 'HD9201', 'NV0004'),
+        ('HO9202', '2026-07', '2026-07-05', '2026-07-12', 2400000, N'Nợ', NULL, NULL, 'HD9202', 'NV0004');
 
     INSERT INTO dbo.ChiTietHoaDon (
         MaChiTietHD, SoLuong, DonViTinh, DonGia, ThanhTien,
         MaHoaDon, MaChiTietDVHD, MaPhieuGhi
     )
     VALUES
-        ('C9201', 1, 'kWh', 2273.00, NULL, 'HO9202', 'V2001', NULL),
-        ('C9202', 1, 'm3', 10227.00, NULL, 'HO9202', 'V2002', NULL),
-        ('C9203', 1, 'tháng', 56818.00, NULL, 'HO9202', 'V2003', NULL),
-        ('C9204', 1, 'tháng', 85227.00, NULL, 'HO9202', 'V2004', NULL),
-        ('C9205', 1, 'tháng', 45455.00, NULL, 'HO9202', 'V2005', NULL);
+        ('C9101', 20, 'kWh', 2500.00, 50000.00, 'HO9201', 'V9101', NULL),
+        ('C9102', 5, 'm3', 10000.00, 50000.00, 'HO9201', 'V9102', NULL),
+        ('C9103', 1, 'tháng', 100000.00, 100000.00, 'HO9201', 'V9103', NULL),
+        ('C9104', 1, 'tháng', 50000.00, 50000.00, 'HO9201', 'V9104', NULL),
+        ('C9201', 10, 'kWh', 4000.00, 40000.00, 'HO9202', 'V9201', NULL),
+        ('C9202', 2, 'm3', 18000.00, 36000.00, 'HO9202', 'V9202', NULL),
+        ('C9203', 1, 'tháng', 50000.00, 50000.00, 'HO9202', 'V9203', NULL),
+        ('C9204', 1, 'tháng', 44000.00, 44000.00, 'HO9202', 'V9204', NULL),
+        ('C9205', 1, 'tháng', 30000.00, 30000.00, 'HO9202', 'V9205', NULL);
 
     INSERT INTO dbo.PhieuTraPhong (
         MaPhieuTra, NgayDangKyTra, NgayDuKienTra, NgayTraThucTe,
@@ -327,11 +342,11 @@ BEGIN TRY
     )
     VALUES
         -- Co hop dong: thu them.
-        ('DS9201', '2026-07-05', 2200000, 1.0, 100.00, 2200000, 900000, 250000, 1500000, 200000, 2850000, 0, 650000, NULL, NULL, NULL, NULL, NULL, N'Thu thêm', N'Chờ xác nhận', 'NV0004', 'TP9201', 'QH0004'),
+        ('DS9201', '2026-07-05', 2200000, 1.0, 100.00, 2200000, 2200000, 250000, 400000, 0, 2850000, 0, 650000, NULL, NULL, NULL, NULL, NULL, N'Thu thêm', N'Chờ xác nhận', 'NV0004', 'TP9201', 'QH0004'),
         -- Co hop dong: khong phat sinh.
-        ('DS9202', '2026-07-05', 2200000, 1.0, 100.00, 2200000, 800000, 200000, 1200000, 0, 2200000, 0, 0, NULL, NULL, NULL, NULL, NULL, N'Không phát sinh', N'Chờ xác nhận', 'NV0004', 'TP9202', 'QH0004'),
+        ('DS9202', '2026-07-05', 2400000, 1.0, 100.00, 2400000, 2200000, 200000, 0, 0, 2400000, 0, 0, NULL, NULL, NULL, NULL, NULL, N'Không phát sinh', N'Chờ xác nhận', 'NV0004', 'TP9202', 'QH0004'),
         -- Co hop dong: hoan coc.
-        ('DS9203', '2026-07-05', 2200000, 1.0, 100.00, 2200000, 200000, 100000, 200000, 0, 500000, 1700000, 0, NULL, NULL, NULL, NULL, NULL, N'Hoàn cọc', N'Chờ xác nhận', 'NV0004', 'TP9203', 'QH0004'),
+        ('DS9203', '2026-07-05', 2200000, 1.0, 100.00, 2200000, 0, 0, 500000, 0, 500000, 1700000, 0, NULL, NULL, NULL, NULL, NULL, N'Hoàn cọc', N'Chờ xác nhận', 'NV0004', 'TP9203', 'QH0004'),
 
         -- Chi co dat coc: hoan coc toan bo.
         ('DS9204', '2026-07-05', 1800000, 0.0, 100.00, 1800000, 0, 0, 0, 0, 0, 1800000, 0, NULL, NULL, NULL, NULL, NULL, N'Hoàn cọc', N'Chờ xác nhận', 'NV0004', 'TP9204', 'QH0004'),
@@ -372,4 +387,94 @@ JOIN dbo.PhieuTraPhong pt ON pt.MaHopDong = hd.MaHopDong OR pt.MaPhieuDatCoc = p
 JOIN dbo.DoiSoat ds ON ds.MaPhieuTra = pt.MaPhieuTra
 WHERE tk.TenDangNhap IN ('kh9201', 'kh9202', 'kh9203', 'kh9204', 'kh9205', 'kh9206')
 ORDER BY tk.TenDangNhap;
+GO
+
+PRINT N'--- Kiem tra nguon tien thue/dich vu trong doi soat so voi HoaDon/ChiTietHoaDon ---';
+GO
+
+SELECT
+    tk.TenDangNhap AS taiKhoan,
+    ds.MaDoiSoat AS maDoiSoat,
+    ds.LoaiQuyetToan AS loaiQuyetToan,
+    ds.TienThueConNo AS tienThueConNoTrongDoiSoat,
+    ISNULL(SUM(CASE WHEN hdNo.MaHoaDon IS NULL THEN 0 ELSE hdt.GiaThue END), 0) AS tienThueTheoHoaDonConNo,
+    ds.TienDichVuConNo AS tienDichVuConNoTrongDoiSoat,
+    ISNULL(SUM(ISNULL(dvNo.tienDichVuConNo, 0)), 0) AS tienDichVuTheoChiTietHoaDon,
+    ds.TongKhauTru AS tongKhauTru,
+    ds.SoTienHoanThucTe AS soTienHoanThucTe,
+    ds.SoTienKhachPhaiTT AS soTienKhachPhaiTT,
+    CASE
+        WHEN hdt.MaHopDong IS NULL THEN N'Khong co HoaDon vi khach chi co PhieuDatCoc, chua ky HopDong.'
+        WHEN ds.TienThueConNo = ISNULL(SUM(CASE WHEN hdNo.MaHoaDon IS NULL THEN 0 ELSE hdt.GiaThue END), 0)
+         AND ds.TienDichVuConNo = ISNULL(SUM(ISNULL(dvNo.tienDichVuConNo, 0)), 0)
+            THEN N'OK - DoiSoat khop HoaDon/ChiTietHoaDon.'
+        ELSE N'CAN KIEM TRA - DoiSoat chua khop HoaDon/ChiTietHoaDon.'
+    END AS ghiChuKiemTra
+FROM dbo.DoiSoat ds
+JOIN dbo.PhieuTraPhong pt ON pt.MaPhieuTra = ds.MaPhieuTra
+LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = pt.MaHopDong
+LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(pt.MaPhieuDatCoc, hdt.MaPhieuCoc)
+JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hdt.MaKhachHang, pdc.MaKhachHang)
+JOIN dbo.TaiKhoan tk ON tk.MaNguoiDung = kh.MaKhachHang
+LEFT JOIN dbo.HoaDon hdNo
+    ON hdNo.MaHopDong = hdt.MaHopDong
+   AND hdNo.TrangThai IN (N'Chưa TT', N'Nợ')
+OUTER APPLY (
+    SELECT SUM(ISNULL(cthd.ThanhTien, 0)) AS tienDichVuConNo
+    FROM dbo.ChiTietHoaDon cthd
+    WHERE cthd.MaHoaDon = hdNo.MaHoaDon
+) dvNo
+WHERE tk.TenDangNhap IN ('kh9201', 'kh9202', 'kh9203', 'kh9204', 'kh9205', 'kh9206')
+GROUP BY
+    tk.TenDangNhap,
+    ds.MaDoiSoat,
+    ds.LoaiQuyetToan,
+    ds.TienThueConNo,
+    ds.TienDichVuConNo,
+    ds.TongKhauTru,
+    ds.SoTienHoanThucTe,
+    ds.SoTienKhachPhaiTT,
+    hdt.MaHopDong
+ORDER BY tk.TenDangNhap;
+GO
+
+PRINT N'--- Chi tiet HoaDon/ChiTietHoaDon de doi chieu truoc khi khach xac nhan ---';
+GO
+
+SELECT
+    tk.TenDangNhap AS taiKhoan,
+    ds.MaDoiSoat AS maDoiSoat,
+    CASE WHEN hdt.MaHopDong IS NULL THEN 'DAT_COC_CHUA_KY_HD' ELSE 'HOP_DONG_THUE' END AS loaiHoSo,
+    hdt.MaHopDong AS maHopDong,
+    pdc.MaPhieuDatCoc AS maPhieuDatCoc,
+    hdNo.MaHoaDon AS maHoaDon,
+    hdNo.KyThanhToan AS kyThanhToan,
+    hdNo.TrangThai AS trangThaiHoaDon,
+    hdNo.TongTien AS tongTienHoaDon,
+    hdt.GiaThue AS tienThueTrongHoaDon,
+    cthd.MaChiTietHD AS maChiTietHoaDon,
+    dv.TenDichVu AS tenDichVu,
+    cthd.SoLuong AS soLuong,
+    cthd.DonViTinh AS donViTinh,
+    cthd.DonGia AS donGia,
+    cthd.ThanhTien AS thanhTienDichVu,
+    CASE
+        WHEN hdt.MaHopDong IS NULL THEN N'Khong co HoaDon/ChiTietHoaDon vi day la case chi co dat coc.'
+        WHEN hdNo.MaHoaDon IS NULL THEN N'Khong co hoa don con no.'
+        ELSE N'Dong dich vu trong ChiTietHoaDon; tien thue lay tu HopDongThue.GiaThue.'
+    END AS ghiChuHoaDon
+FROM dbo.DoiSoat ds
+JOIN dbo.PhieuTraPhong pt ON pt.MaPhieuTra = ds.MaPhieuTra
+LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = pt.MaHopDong
+LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(pt.MaPhieuDatCoc, hdt.MaPhieuCoc)
+JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hdt.MaKhachHang, pdc.MaKhachHang)
+JOIN dbo.TaiKhoan tk ON tk.MaNguoiDung = kh.MaKhachHang
+LEFT JOIN dbo.HoaDon hdNo
+    ON hdNo.MaHopDong = hdt.MaHopDong
+   AND hdNo.TrangThai IN (N'Chưa TT', N'Nợ')
+LEFT JOIN dbo.ChiTietHoaDon cthd ON cthd.MaHoaDon = hdNo.MaHoaDon
+LEFT JOIN dbo.DichVuHopDong dvhd ON dvhd.MaChiTietDVHD = cthd.MaChiTietDVHD
+LEFT JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
+WHERE tk.TenDangNhap IN ('kh9201', 'kh9202', 'kh9203', 'kh9204', 'kh9205', 'kh9206')
+ORDER BY tk.TenDangNhap, hdNo.MaHoaDon, cthd.MaChiTietHD;
 GO

@@ -2720,7 +2720,7 @@
   border-radius: 12px;
   box-shadow: 0 4px 18px rgba(0, 32, 34, 0.05);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 14px 14px 13px;
   position: relative;
 }
@@ -2744,6 +2744,23 @@
   position: relative;
   text-align: center;
   z-index: 1;
+}
+
+.hd-process-step.is-selectable {
+  cursor: pointer;
+}
+
+.hd-process-step.is-selectable:hover .hd-process-circle,
+.hd-process-step.is-selectable:focus-visible .hd-process-circle {
+  background: #eef9f8;
+  box-shadow: 0 0 0 2px rgba(0, 102, 109, 0.22);
+  color: var(--kp-primary);
+}
+
+.hd-process-step.is-selectable:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid rgba(0, 102, 109, 0.28);
+  outline-offset: 4px;
 }
 
 .hd-process-circle {
@@ -3295,6 +3312,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.hd-settlement-money.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .hd-settlement-money section {
   border: 1px solid var(--kp-border);
   border-radius: 8px;
@@ -3619,14 +3640,16 @@
 }
 
 .hd-refund-account-grid {
+  align-items: start;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .hd-refund-account-grid label {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .hd-refund-account-grid span {
@@ -3639,10 +3662,13 @@
   background: #fff;
   border: 1px solid var(--kp-border);
   border-radius: 8px;
+  box-sizing: border-box;
   color: var(--kp-text);
   font-size: 14px;
   min-height: 46px;
+  min-width: 0;
   padding: 10px 12px;
+  width: 100%;
 }
 
 .hd-refund-account-grid input:focus {
@@ -3660,7 +3686,7 @@
   border-top: 1px solid var(--kp-border);
   display: flex;
   gap: 12px;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: 4px;
   padding-top: 18px;
 }
@@ -3669,13 +3695,6 @@
   flex: 0 1 auto;
   min-width: 280px;
   width: auto;
-}
-
-.hd-payment-actions .hd-payment-back {
-  flex: 0 0 auto;
-  min-width: 120px;
-  padding-left: 14px;
-  padding-right: 14px;
 }
 
 .hd-payment-review-link {
@@ -4074,8 +4093,7 @@
     flex-direction: column-reverse;
   }
 
-  .hd-payment-actions .hd-payment-submit,
-  .hd-payment-actions .hd-payment-back {
+  .hd-payment-actions .hd-payment-submit {
     min-width: 0;
     width: 100%;
   }
