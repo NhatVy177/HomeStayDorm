@@ -104,6 +104,8 @@ BEGIN
         ds.TongChiPhiSuaChua AS tongChiPhiSuaChua,
         ds.TienPhat AS tienPhat,
         ds.TongKhauTru AS tongKhauTru,
+        ds.PhuongThucThanhToan AS phuongThucThanhToan,
+        ds.ChungTuThanhToan AS chungTuThanhToan,
         CASE WHEN pt.MaHopDong IS NOT NULL THEN 1 ELSE 0 END AS hasHopDong
     FROM dbo.PhieuTraPhong pt
     INNER JOIN dbo.DoiSoat ds ON pt.MaPhieuTra = ds.MaPhieuTra

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { xacNhanPhanHoiApi } from './xacnhanphanhoi.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import '../nhanVienSale/dangKyTraPhongTab.css';
 import '../nhanVienKeToan/nhanVienKeToanPortal.css';
 
@@ -260,7 +261,8 @@ export default function XacNhanPhanHoi() {
       const res = await xacNhanPhanHoiApi.getDanhSachChoXuLy();
       const rawDs = res.data.danhSach || [];
       // Lọc bỏ những phiếu không có phản hồi (ví dụ khách đồng ý luôn thì không vào luồng này)
-      const validDs = rawDs.filter(r => r.trangThaiDoiSoat === 'Chờ phản hồi' || r.ghiChuPhanHoiKhach);
+     const validDs = rawDs.filter(r => r.trangThaiDoiSoat === 'Chờ phản hồi');
+     //const validDs = rawDs;
       setDs(validDs);
     } catch (err) {
       showToast(err?.response?.data?.message || 'Lỗi tải danh sách.', 'error');
@@ -297,11 +299,11 @@ export default function XacNhanPhanHoi() {
     setSubmitting(true);
     try {
       await xacNhanPhanHoiApi.xuLyPhanHoi({ maDoiSoat: selected.maDoiSoat, hanhDong });
-      setSuccessMsg(
-        hanhDong === 'XacNhanDieuChinh'
-          ? 'Đã chuyển phiếu đối soát để nhân viên kế toán điều chỉnh lại.'
-          : 'Đã ghi nhận giữ nguyên kết quả đối soát.'
-      );
+      const msg = hanhDong === 'XacNhanDieuChinh'
+        ? 'Đã chuyển phiếu đối soát để nhân viên kế toán điều chỉnh lại.'
+        : 'Đã ghi nhận giữ nguyên kết quả đối soát.';
+      showToast(msg, 'success');
+      setModalOpen(false);
       await load();
     } catch (err) {
       const msg = err?.response?.data?.message || 'Không xử lý được phản hồi. Vui lòng thử lại.';
@@ -378,38 +380,33 @@ export default function XacNhanPhanHoi() {
           <div className="tp-search-col" style={{ flex: 1 }}>
             <div className="tp-search-label">TÌM KIẾM</div>
             <div className="tp-search-wrap">
-              <input className="ktp-input tp-search-input-no-icon" type="text" placeholder="Tìm theo tên khách, mã đối soát, mã phiếu trả..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} spellCheck={false} />
+              <Icon name="search" className="tp-search-icon" />
+              <input className="ktp-input tp-search-input" type="text" placeholder="Tìm theo tên khách, mã đối soát" value={searchQ} onChange={(e) => setSearchQ(e.target.value)} spellCheck={false} />
             </div>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 24 }}>
-          {[
-            { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
-            { id: 'Chờ phản hồi', label: 'Chờ phản hồi', count: countChoPhanHoi },
-            { id: 'Đã phản hồi', label: 'Đã phản hồi', count: countDaPhanHoi },
-          ].map((st) => (
-            <button key={st.id} onClick={() => setFilterStatus(st.id)} type="button" style={{
-              padding: '6px 16px',
-              borderRadius: 20,
-              border: filterStatus === st.id ? 'none' : '1px solid #e1e3e4',
-              backgroundColor: filterStatus === st.id ? '#2f6765' : '#f8f9fa',
-              color: filterStatus === st.id ? '#fff' : '#3f494a',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}>
-              {st.label}
-              <span style={{ backgroundColor: filterStatus === st.id ? '#fff' : '#e1e3e4', color: filterStatus === st.id ? '#2f6765' : '#3f494a', padding: '2px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600 }}>{st.count}</span>
-            </button>
-          ))}
         </div>
       </div>
 
       <section className="tp-list-panel">
+        <div className="tp-list-head">
+          <div>
+            <h3>Danh sách phiếu đối soát phản hồi từ khách hàng</h3>
+          </div>
+        </div>
+
+        <div className="tp-list-status-row">
+          <StatusFilterTabs
+            className="tp-search-status-tabs"
+            items={[
+              { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
+              { id: 'Chờ phản hồi', label: 'Chờ phản hồi', count: countChoPhanHoi },
+              { id: 'Đã phản hồi', label: 'Đã phản hồi', count: countDaPhanHoi },
+            ].map((st) => ({ key: st.id, label: st.label, count: st.count }))}
+            activeKey={filterStatus}
+            onChange={setFilterStatus}
+          />
+        </div>
+
         {loading ? (
           <div style={{ padding: 32, textAlign: 'center', color: '#6f797a' }}>Đang tải...</div>
         ) : (
@@ -499,9 +496,7 @@ export default function XacNhanPhanHoi() {
                         ) : (
                           <>
                             <InfoRow label="Mã phiếu đặt cọc"><strong>{chiTiet.maPhieuDatCoc}</strong></InfoRow>
-                            <InfoRow label="Ngày đặt cọc">{fmtDate(chiTiet.thoiDiemDatCoc)}</InfoRow>
                             <InfoRow label="Số tiền cọc">{fmtMoney(chiTiet.tienCocBanDau)}</InfoRow>
-                            <InfoRow label="Trạng thái thanh toán">{chiTiet.trangThaiThanhToan || chiTiet.trangThaiThanhToanPDC || '—'}</InfoRow>
                             <InfoRow label="Phòng/giường đã giữ chỗ">{formatRoom(dsPhong)}</InfoRow>
                             <InfoRow label="Ngày yêu cầu hủy cọc">{fmtDate(chiTiet.ngayTraThucTe)}</InfoRow>
                           </>
@@ -569,26 +564,14 @@ export default function XacNhanPhanHoi() {
         </div>
       )}
 
-      {successMsg && (
-        <div className="ktp-modal-overlay" style={{ zIndex: 1400 }} onClick={() => { setSuccessMsg(''); setModalOpen(false); }}>
-          <div className="ktp-modal" style={{ maxWidth: 400, width: '90%', padding: 32, borderRadius: 12, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#e6f4ea', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
-              <Icon name="check" style={{ fontSize: 32, color: '#137333' }} />
-            </div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#191c1d', margin: '0 0 10px 0' }}>Xử lý thành công!</h3>
-            <p style={{ fontSize: 14, color: '#3f494a', margin: '0 0 24px 0', lineHeight: 1.6 }}>{successMsg}</p>
-            <button
-              onClick={() => { setSuccessMsg(''); setModalOpen(false); }}
-              className="ktp-btn-submit"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className={`tp-toast ${toast.msg ? 'show' : ''}`} style={{ backgroundColor: toast.type === 'error' ? '#ba1a1a' : undefined }}>
+      <div className={`tp-toast ${toast.msg ? 'show' : ''}`} style={{ 
+        backgroundColor: toast.type === 'error' ? '#ba1a1a' : '#1a6e60',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        {toast.type === 'success' && <Icon name="check_circle" style={{ fontSize: '18px' }} />}
+        {toast.type === 'error' && <Icon name="error_outline" style={{ fontSize: '18px' }} />}
         {toast.msg}
       </div>
     </div>

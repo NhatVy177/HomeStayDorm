@@ -8,7 +8,7 @@ const xacNhanPhanHoiController = {
       res.status(200).json({ danhSach });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Lỗi server', error: err.message });
+      res.status(err.statusCode || 500).json({ message: err.message || 'Lỗi server' });
     }
   },
 
@@ -23,7 +23,7 @@ const xacNhanPhanHoiController = {
       res.status(200).json({ chiTiet, danhSachPhong, chiTietKhauTru });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Lỗi server', error: err.message });
+      res.status(err.statusCode || 500).json({ message: err.message || 'Lỗi server' });
     }
   },
 
@@ -40,7 +40,7 @@ const xacNhanPhanHoiController = {
       res.status(200).json({ message: 'Xử lý phản hồi thành công.', data: result });
     } catch (err) {
       console.error(err);
-      const status = [50801, 50802, 50800].includes(err.number) ? 400 : 500;
+      const status = err.statusCode || ([50801, 50802, 50800].includes(err.number) ? 400 : 500);
       res.status(status).json({ message: err.message || 'Lỗi server' });
     }
   }

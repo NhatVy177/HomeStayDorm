@@ -18,9 +18,9 @@ export default function XuLyTraPhongTab() {
   ];
 
   return (
-    <div className="ktp-container">
+    <div className="ktp-container" style={{ paddingTop: '12px' }}>
       {/* Sub Tabs */}
-      <div style={{ display: 'flex', gap: '24px', borderBottom: '1px solid #e1e3e4', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', gap: '24px', borderBottom: '1px solid #e1e3e4', marginBottom: '14px' }}>
         <button 
           onClick={() => setActiveSubTab('cho-lap-bien-ban')}
           style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeSubTab === 'cho-lap-bien-ban' ? '2px solid #3b8280' : '2px solid transparent', color: activeSubTab === 'cho-lap-bien-ban' ? '#3b8280' : '#6f797a', fontWeight: '600', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
