@@ -287,7 +287,7 @@ export default function ThuNhanPhongTab() {
 
 
 
-      <div className="tnp-filter-card" style={{ display: 'grid', gridTemplateColumns: '1fr', maxWidth: '480px', marginBottom: '20px' }}>
+      <div className="tnp-filter-card" style={{ display: 'grid', gridTemplateColumns: '1fr', marginBottom: '20px' }}>
         <label className="tnp-search-field" style={{ margin: 0 }}>
           <span>Tìm kiếm</span>
           <div>

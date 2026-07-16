@@ -388,7 +388,7 @@ export default function NhanPhongTab() {
 
 
 
-      <section className="residence-filter" style={{ display: 'block', maxWidth: '480px' }}>
+      <section className="residence-filter" style={{ display: 'grid', gridTemplateColumns: '1fr' }}>
         <div className="ktp-filter-group" style={{ margin: 0 }}>
           <label className="ktp-filter-label">Tìm kiếm phiếu cọc</label>
           <div className="ktp-input-icon-wrap">

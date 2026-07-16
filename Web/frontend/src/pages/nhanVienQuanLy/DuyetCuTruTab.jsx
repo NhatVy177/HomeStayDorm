@@ -301,7 +301,7 @@ export default function DuyetCuTruTab() {
 
       <div
         className="residence-filter"
-        style={{ display: 'block', maxWidth: '480px', marginBottom: '20px' }}
+        style={{ display: 'grid', gridTemplateColumns: '1fr', marginBottom: '20px' }}
       >
         <div className="ktp-filter-group" style={{ margin: 0 }}>
           <label className="ktp-filter-label">Tìm kiếm</label>
