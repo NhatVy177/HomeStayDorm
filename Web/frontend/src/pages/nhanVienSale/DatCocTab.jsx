@@ -92,13 +92,13 @@ const docSoTienVN = (so) => {
 // Nguồn cấu hình DUY NHẤT cho từng trạng thái phiếu đăng ký: nhãn chip, nhãn badge,
 // màu badge và loại nút thao tác. Thêm/sửa trạng thái chỉ cần đụng ở đây.
 const STATUS_CONFIG = {
-  'Chờ tiếp nhận':    { chip: 'Chờ gửi',    badgeLabel: 'Chờ gửi',           badge: { bg: '#fff4e5', fg: '#b45309' }, action: 'gui' },
+  'Đã tiếp nhận':     { chip: 'Chờ gửi',    badgeLabel: 'Chờ gửi',           badge: { bg: '#fff4e5', fg: '#b45309' }, action: 'gui' },
   'Chờ xác nhận cọc': { chip: 'Chờ duyệt',  badgeLabel: 'Chờ quản lý duyệt', badge: { bg: '#e8f1ff', fg: '#1d4ed8' }, action: 'chi-tiet' },
   'Xác nhận cọc':     { chip: 'Đã duyệt',   badgeLabel: 'Đã duyệt',          badge: { bg: '#e6f6ec', fg: '#15803d' }, action: 'chi-tiet' },
   'Từ chối':          { chip: 'Bị từ chối', badgeLabel: 'Bị từ chối',        badge: { bg: '#fdecec', fg: '#b91c1c' }, action: 'ly-do' },
 };
 // Thứ tự ưu tiên xử lý (việc cần làm trước lên đầu) — dùng cho chip lọc.
-const STATUS_ORDER = ['Chờ tiếp nhận', 'Chờ xác nhận cọc', 'Xác nhận cọc', 'Từ chối'];
+const STATUS_ORDER = ['Đã tiếp nhận', 'Chờ xác nhận cọc', 'Xác nhận cọc', 'Từ chối'];
 
 const StatusBadge = ({ trangThai }) => {
   const cfg = STATUS_CONFIG[trangThai];
@@ -167,7 +167,7 @@ export default function DatCocTab() {
   const [phongChot, setPhongChot] = useState('');   // maPhong đang chốt
   const [savingPhong, setSavingPhong] = useState(false);
 
-  // Tầng GUI - HienThi(): tải danh sách hồ sơ "Chờ tiếp nhận" cần gửi yêu cầu đặt cọc.
+  // Tầng GUI - HienThi(): tải danh sách hồ sơ "Đã tiếp nhận" cần gửi yêu cầu đặt cọc.
   const [yeuCauList, setYeuCauList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
