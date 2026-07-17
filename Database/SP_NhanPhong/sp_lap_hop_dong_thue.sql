@@ -263,7 +263,7 @@ BEGIN
         WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
 
         -- [2] Phiếu cọc còn hiệu lực?
-        IF @TrangThaiCoc <> N'Hiệu lực'
+        IF @TrangThaiCoc <> N'Hiệu lực' AND @TrangThaiCoc NOT LIKE N'Hi%u%'
         BEGIN
             SET @MaLoi    = -2;
             SET @ThongBao = N'Phiếu đặt cọc không còn hiệu lực (trạng thái: ' + @TrangThaiCoc + N').';
@@ -271,7 +271,7 @@ BEGIN
         END;
 
         -- [3] Đã thanh toán?
-        IF @TrangThaiThanhToan <> N'Đã TT'
+        IF @TrangThaiThanhToan <> N'Đã TT' AND @TrangThaiThanhToan NOT LIKE N'%TT%'
         BEGIN
             SET @MaLoi    = -3;
             SET @ThongBao = N'Phiếu đặt cọc chưa được thanh toán (trạng thái: ' + @TrangThaiThanhToan + N').';
@@ -618,7 +618,7 @@ BEGIN
         -- -----------------------------------------------
         -- BƯỚC KT-2: Còn hiệu lực?
         -- -----------------------------------------------
-        IF @TrangThaiCoc <> N'Hiệu lực'
+        IF @TrangThaiCoc <> N'Hiệu lực' AND @TrangThaiCoc NOT LIKE N'Hi%u%'
         BEGIN
             SET @MaLoi    = -2;
             SET @ThongBao = N'Phiếu đặt cọc không còn hiệu lực.';
@@ -629,7 +629,7 @@ BEGIN
         -- -----------------------------------------------
         -- BƯỚC KT-3: Đã thanh toán?
         -- -----------------------------------------------
-        IF @TrangThaiThanhToan <> N'Đã TT'
+        IF @TrangThaiThanhToan <> N'Đã TT' AND @TrangThaiThanhToan NOT LIKE N'%TT%'
         BEGIN
             SET @MaLoi    = -3;
             SET @ThongBao = N'Phiếu đặt cọc chưa thanh toán.';
