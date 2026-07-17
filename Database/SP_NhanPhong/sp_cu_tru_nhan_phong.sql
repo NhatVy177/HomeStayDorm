@@ -72,9 +72,9 @@ BEGIN
             CASE WHEN EXISTS (
                 SELECT 1
                 FROM dbo.HopDongThue hd2
-                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
-                WHERE cthd.MaPhong = ctdc.MaPhong
-                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
+                JOIN dbo.ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = hd2.MaPhieuCoc
+                WHERE ctdc2.MaPhong = p.MaPhong
+                  AND (hd2.TrangThai = N'Hiệu lực' OR hd2.TrangThai LIKE N'Hi%u%')
             ) THEN 1 ELSE 0 END
         AS BIT) AS CoNguoiDangO
     FROM dbo.PhieuDatCoc pdc
@@ -100,7 +100,8 @@ BEGIN
         kh.CCCD, kh.QuocTich, pdk.SoNguoiDuKienO, pdk.SoNam, pdk.SoNu,
         pdk.ThoiHanThue, pdk.KhuVucMongMuon,
         pdc.HinhThucThue, pdc.ThoiGianNhanPhong,
-        pdc.TrangThaiThanhToan, hs.TrangThaiHoSo
+        pdc.TrangThaiThanhToan, hs.TrangThaiHoSo,
+        p.MaPhong
     ORDER BY pdc.ThoiGianNhanPhong DESC, pdc.MaPhieuDatCoc DESC;
 END
 GO
@@ -275,9 +276,9 @@ BEGIN
             CASE WHEN EXISTS (
                 SELECT 1
                 FROM dbo.HopDongThue hd2
-                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
-                WHERE cthd.MaPhong = p.MaPhong
-                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
+                JOIN dbo.ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = hd2.MaPhieuCoc
+                WHERE ctdc2.MaPhong = p.MaPhong
+                  AND (hd2.TrangThai = N'Hiệu lực' OR hd2.TrangThai LIKE N'Hi%u%')
             ) THEN 1 ELSE 0 END
         AS BIT) AS CoNguoiDangO
     FROM dbo.HoSoCuTru hs
@@ -297,7 +298,8 @@ BEGIN
       )
     GROUP BY
         hs.MaHoSoCuTru, hs.MaPhieuDatCoc, nd.HoTen, nd.SDT,
-        pdc.HinhThucThue, hs.TrangThaiHoSo, hs.NgayCapNhat, hs.GhiChuSale
+        pdc.HinhThucThue, hs.TrangThaiHoSo, hs.NgayCapNhat, hs.GhiChuSale,
+        p.MaPhong
     ORDER BY hs.NgayCapNhat DESC;
 END
 GO
@@ -336,9 +338,9 @@ BEGIN
             CASE WHEN EXISTS (
                 SELECT 1
                 FROM dbo.HopDongThue hd2
-                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
-                WHERE cthd.MaPhong = p.MaPhong
-                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
+                JOIN dbo.ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = hd2.MaPhieuCoc
+                WHERE ctdc2.MaPhong = p.MaPhong
+                  AND (hd2.TrangThai = N'Hiệu lực' OR hd2.TrangThai LIKE N'Hi%u%')
             ) THEN 1 ELSE 0 END
         AS BIT) AS CoNguoiDangO
     FROM dbo.HoSoCuTru hs
@@ -353,7 +355,8 @@ BEGIN
         hs.MaHoSoCuTru, hs.MaPhieuDatCoc, nd.HoTen, nd.SDT,
         pdc.HinhThucThue, hs.TrangThaiHoSo, hs.DaDoiChieuGiayTo,
         hs.NgayCapNhat, hs.NgayGuiDuyet, hs.NgayDuyet,
-        hs.GhiChuSale, hs.GhiChuQuanLy;
+        hs.GhiChuSale, hs.GhiChuQuanLy,
+        p.MaPhong;
 
     SELECT
         MaThanhVien,
