@@ -449,7 +449,11 @@ export default function ThuNhanPhongTab() {
                         {(activeCalculation.details || []).map((item, idx) => (
                           <div key={idx} className="ktp-flex-between">
                             <span style={{ color: '#414753', fontSize: '13px' }}>
-                              {item.NoiDung} ({item.SoLuong} {item.DonViTinh})
+                              {item.NoiDung?.toLowerCase().includes('xe') ? (
+                                `${item.NoiDung} (${Math.round(Number(item.SoLuong))} xe / 1 ${item.DonViTinh})`
+                              ) : (
+                                `${item.NoiDung} (${item.SoLuong} ${item.DonViTinh})`
+                              )}
                             </span>
                             <strong style={{ fontSize: '13px' }}>{formatCurrency(item.ThanhTien)}</strong>
                           </div>
