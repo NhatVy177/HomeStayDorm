@@ -311,7 +311,10 @@ export default function LapHopDongTab() {
     // Prepare payload
     const selectedDVs = services
       .filter(dv => selectedServices[dv.maDichVu])
-      .map(dv => ({ maDichVu: dv.maDichVu, ghiChu: dv.batBuoc ? 'Bắt buộc' : 'Dịch vụ chọn thêm' }));
+      .map(dv => ({
+        maDichVu: dv.maDichVu,
+        ghiChu: isXeService(dv) ? soXeGuiXe.toString() : (dv.batBuoc ? 'Bắt buộc' : 'Dịch vụ chọn thêm')
+      }));
 
     const payload = {
       maPhieuDatCoc: selectedPhieu.maPhieuDatCoc,

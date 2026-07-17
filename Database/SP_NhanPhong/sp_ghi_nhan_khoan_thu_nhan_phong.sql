@@ -30,7 +30,13 @@ BEGIN
         hd.NgayBatDau,
         -- Tính động TongTien theo kỳ thanh toán (GiaThue * 3 nếu Hàng quý, GiaThue nếu Hàng tháng) cộng dịch vụ đi kèm
         (CASE WHEN hd.KyThanhToan = N'Hàng tháng' THEN hd.GiaThue ELSE hd.GiaThue * 3 END)
-        + ISNULL((SELECT SUM(dv.DonGia) FROM DichVuHopDong dvhd JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu WHERE dvhd.MaHopDong = hd.MaHopDong AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')), 0) AS TongTien,
+        + ISNULL((
+            SELECT SUM(dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END) 
+            FROM DichVuHopDong dvhd 
+            JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu 
+            WHERE dvhd.MaHopDong = hd.MaHopDong 
+              AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')
+        ), 0) AS TongTien,
         -- Trạng thái thanh toán
         CASE 
             WHEN h.TrangThai = N'Đã TT' THEN N'Đã thanh toán'
@@ -159,7 +165,7 @@ BEGIN
     ELSE -- Hàng quý
         SET @TienThueKyDau = @GiaThue * 3;
 
-    SELECT @TienDichVu = ISNULL(SUM(dv.DonGia), 0)
+    SELECT @TienDichVu = ISNULL(SUM(dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END), 0)
     FROM DichVuHopDong dvhd
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
     WHERE dvhd.MaHopDong = @MaHopDong
@@ -213,10 +219,10 @@ BEGIN
     SELECT 
         N'Dịch vụ' AS LoaiKhoanThu,
         dv.TenDichVu AS NoiDung,
-        1.00 AS SoLuong,
+        CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END AS SoLuong,
         CAST(dv.DonViTinh AS NVARCHAR(20)) AS DonViTinh,
         dv.DonGia,
-        dv.DonGia AS ThanhTien,
+        (dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END) AS ThanhTien,
         dvhd.MaChiTietDVHD
     FROM DichVuHopDong dvhd
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
@@ -372,7 +378,7 @@ BEGIN
         ELSE -- Hàng quý
             SET @TienThueKyDau = @GiaThue * 3;
 
-        SELECT @TienDichVu = ISNULL(SUM(dv.DonGia), 0)
+        SELECT @TienDichVu = ISNULL(SUM(dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END), 0)
         FROM DichVuHopDong dvhd
         JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
         WHERE dvhd.MaHopDong = @MaHopDong
@@ -448,7 +454,8 @@ BEGIN
 
         -- Cursor duyệt qua các dịch vụ
         DECLARE dv_cursor CURSOR LOCAL FAST_FORWARD FOR
-            SELECT dvhd.MaChiTietDVHD, dv.DonGia, dv.DonViTinh
+            SELECT dvhd.MaChiTietDVHD, dv.DonGia, dv.DonViTinh,
+                   CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END AS Qty
             FROM DichVuHopDong dvhd
             JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
             WHERE dvhd.MaHopDong = @MaHopDong
@@ -457,10 +464,11 @@ BEGIN
         DECLARE 
             @MaChiTietDVHD  VARCHAR(6),
             @DonGia         DECIMAL(15,2),
-            @DonViTinh      VARCHAR(20);
+            @DonViTinh      VARCHAR(20),
+            @Qty            DECIMAL(10,2);
 
         OPEN dv_cursor;
-        FETCH NEXT FROM dv_cursor INTO @MaChiTietDVHD, @DonGia, @DonViTinh;
+        FETCH NEXT FROM dv_cursor INTO @MaChiTietDVHD, @DonGia, @DonViTinh, @Qty;
 
         WHILE @@FETCH_STATUS = 0
         BEGIN
@@ -470,16 +478,16 @@ BEGIN
             INSERT INTO ChiTietHoaDon (MaChiTietHD, SoLuong, DonViTinh, DonGia, ThanhTien, MaHoaDon, MaChiTietDVHD, MaPhieuGhi)
             VALUES (
                 @MaChiTietHD,
-                1.00,
+                @Qty,
                 @DonViTinh,
                 @DonGia,
-                @DonGia,
+                (@DonGia * @Qty),
                 @MaHoaDon,
                 @MaChiTietDVHD,
                 NULL
             );
 
-            FETCH NEXT FROM dv_cursor INTO @MaChiTietDVHD, @DonGia, @DonViTinh;
+            FETCH NEXT FROM dv_cursor INTO @MaChiTietDVHD, @DonGia, @DonViTinh, @Qty;
         END;
 
         CLOSE dv_cursor;
