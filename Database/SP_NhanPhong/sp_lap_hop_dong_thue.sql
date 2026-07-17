@@ -101,11 +101,11 @@ BEGIN
         pdc.ThoiDiemDatCoc,
         nd.HoTen                                        AS HoTenKhachHang,
         nd.SDT,
-        -- ViTriThue: ghép phòng – giường nếu ghép giường
+        -- ViTriThue: ghép phòng – giường nếu ghép giường (gộp các giường của cùng phiếu cọc)
         CASE
-            WHEN ctdc.MaGiuong IS NOT NULL
-                THEN ctdc.MaPhong + N'-' + ctdc.MaGiuong
-            ELSE ctdc.MaPhong
+            WHEN MAX(ctdc.MaGiuong) IS NOT NULL
+                THEN MAX(ctdc.MaPhong) + N'-' + STRING_AGG(ctdc.MaGiuong, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong)
+            ELSE MAX(ctdc.MaPhong)
         END                                             AS ViTriThue,
         SUM(ctdc.GiaThue)                               AS TongGiaThue,
         pdc.ThoiGianNhanPhong,
@@ -149,8 +149,6 @@ BEGIN
         pdc.ThoiDiemDatCoc,
         nd.HoTen,
         nd.SDT,
-        ctdc.MaGiuong,
-        ctdc.MaPhong,
         pdc.ThoiGianNhanPhong,
         pdc.HinhThucThue,
         pdc.TrangThaiCoc,
