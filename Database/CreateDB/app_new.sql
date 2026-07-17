@@ -606,5 +606,3 @@ ALTER TABLE BienBanViPham
     ADD CONSTRAINT FK_BBVP_HopDong          FOREIGN KEY (MaHopDong)             REFERENCES HopDongThue(MaHopDong),
         CONSTRAINT FK_BBVP_KhachHang		FOREIGN KEY (MaKhachHang)			REFERENCES KhachHang(MaKhachHang),
         CONSTRAINT FK_BBVP_DieuKhoanViPham  FOREIGN KEY (MaDieuKhoan)			REFERENCES DieuKhoanViPham(MaDieuKhoan);
-
-

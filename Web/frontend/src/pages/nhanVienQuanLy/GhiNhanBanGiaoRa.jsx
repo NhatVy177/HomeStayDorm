@@ -259,7 +259,9 @@ export default function GhiNhanBanGiaoRa() {
           <div className="ktp-modal" style={{ maxWidth: '950px', width: '90%', padding: '0', backgroundColor: '#ffffff', borderRadius: '12px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
             <div className="ktp-modal-header" style={{ padding: '16px 24px', backgroundColor: '#3b8280', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '12px 12px 0 0', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff', fontWeight: '700' }}>Ghi nhận bàn giao ra</h3>
+                <h3 style={{ fontSize: '20px', margin: 0, color: '#ffffff', fontWeight: '700' }}>
+                  {xacNhanRoi ? 'Chi tiết ghi nhận bàn giao ra' : 'Ghi nhận bàn giao ra'}
+                </h3>
               </div>
               <button className="ktp-modal-close" onClick={() => setModalOpen(false)} style={{ color: '#ffffff', background: 'transparent', border: 'none', cursor: 'pointer' }}><Icon name="close" /></button>
             </div>
@@ -431,7 +433,7 @@ export default function GhiNhanBanGiaoRa() {
 
             <div className="ktp-modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e1e3e4', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#ffffff', borderRadius: '0 0 12px 12px', flexShrink: 0 }}>
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button onClick={() => setModalOpen(false)} style={{ backgroundColor: '#ffffff', border: '1px solid #004c52', color: '#004c52', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Đóng</button>
+                <button onClick={() => setModalOpen(false)} style={{ backgroundColor: '#ffffff', border: '1px solid #004c52', color: '#004c52', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Hủy</button>
                 {!isSubmitted && selectedPhieu?.trangThaiBanGiao === 'Chờ bàn giao' && (
                   <button className="ktp-btn-action-fill" onClick={submitXacNhan} style={{ padding: '10px 24px', opacity: (chiTiet?.hasHopDong && !xacNhanRoi) ? 0.6 : 1, cursor: (chiTiet?.hasHopDong && !xacNhanRoi) ? 'not-allowed' : 'pointer' }}>
                     Lập biên bản bàn giao ra

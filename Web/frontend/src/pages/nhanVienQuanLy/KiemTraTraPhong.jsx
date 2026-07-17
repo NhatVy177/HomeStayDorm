@@ -106,7 +106,7 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
             }
           }}
           disabled={readOnly}
-          style={{ ...inputStyle, border: `1px solid ${statusStyle.border}`, color: statusStyle.color, fontWeight: '500', cursor: 'pointer' }}
+          style={{ ...inputStyle, border: `1px solid ${statusStyle.border}`, color: statusStyle.color, fontWeight: '500', cursor: 'pointer', textAlign: 'center' }}
         >
           <option value="Bình thường">Bình thường</option>
           <option value="Hư hỏng nhẹ">Hư hỏng nhẹ</option>
@@ -143,12 +143,12 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
         </div>
       </td>
       <td style={{ padding: '12px 10px' }}>
-        <input
-          type="text"
+        <textarea
+          rows="2"
           value={note}
           onChange={e => setNote(e.target.value)}
           placeholder={isNormal ? "Không có hư hỏng" : "Mô tả..."}
-          style={inputStyle}
+          style={{ ...inputStyle, height: 'auto', resize: 'vertical', lineHeight: '1.4' }}
           disabled={isNormal}
           spellCheck={false}
         />
@@ -428,7 +428,7 @@ export default function KiemTraTraPhong() {
             <div className="ktp-modal-header" style={{ padding: '16px 24px', backgroundColor: '#3b8280', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '12px 12px 0 0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <h2 className="ktp-modal-title" style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#ffffff' }}>
-                  {modalType === 'kiem-tra-hd' ? (selectedPhieu?.trangThai === 'Chờ xử lý' ? 'Lập biên bản kiểm tra trả phòng' : 'Chi tiết biên bản kiểm tra trả phòng') : 'Xác nhận hồ sơ trả phòng'}
+                  {modalType === 'kiem-tra-hd' ? (selectedPhieu?.trangThai === 'Chờ xử lý' ? 'Lập biên bản kiểm tra trả phòng' : 'Chi tiết biên bản kiểm tra trả phòng') : (selectedPhieu?.trangThai === 'Chờ xử lý' ? 'Xác nhận hồ sơ trả phòng' : 'Chi tiết xác nhận hồ sơ trả phòng')}
                 </h2>
               </div>
               <button className="ktp-modal-close" onClick={() => setModalType(null)} style={{ color: '#ffffff', background: 'transparent', border: 'none', cursor: 'pointer' }}><Icon name="close" /></button>
@@ -613,8 +613,8 @@ export default function KiemTraTraPhong() {
                           <input type="date" value={ngayTraThucTe} onChange={(e) => setNgayTraThucTe(e.target.value)} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'} style={{ width: '250px', padding: '10px 12px', border: '1px solid #e1e3e4', borderRadius: '6px', color: '#191c1d', backgroundColor: selectedPhieu?.trangThai !== 'Chờ xử lý' ? '#f3f4f5' : '#f8f9fa', fontSize: '14px', outline: 'none', cursor: selectedPhieu?.trangThai !== 'Chờ xử lý' ? 'not-allowed' : 'text', fontFamily: 'inherit' }} />
                         </div>
                         <div style={{ marginBottom: '0' }}>
-                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Tình trạng phòng thực tế <span style={{ color: '#c5221f' }}>*</span></label>
-                          <textarea rows="3" value={tinhTrangPhong} onChange={(e) => { setTinhTrangPhong(e.target.value); setErrors(prev => ({...prev, tinhTrang: null})); }} placeholder="Nhập đánh giá tổng quan" style={{ width: '100%', padding: '12px', border: `1px solid ${errors.tinhTrang ? '#c5221f' : '#e1e3e4'}`, borderRadius: '6px', fontSize: '14px', resize: 'vertical', display: 'block' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'} spellCheck={false}></textarea>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#3f494a', marginBottom: '8px' }}>Tình trạng thực tế của phòng/giường <span style={{ color: '#c5221f' }}>*</span></label>
+                          <textarea rows="3" value={tinhTrangPhong} onChange={(e) => { setTinhTrangPhong(e.target.value); setErrors(prev => ({...prev, tinhTrang: null})); }} placeholder="Nhập đánh giá" style={{ width: '100%', padding: '12px', border: `1px solid ${errors.tinhTrang ? '#c5221f' : '#e1e3e4'}`, borderRadius: '6px', fontSize: '14px', resize: 'vertical', display: 'block' }} disabled={selectedPhieu?.trangThai !== 'Chờ xử lý'} spellCheck={false}></textarea>
                           {errors.tinhTrang && <div style={{ color: '#c5221f', fontSize: '13px', marginTop: '6px' }}>{errors.tinhTrang}</div>}
                         </div>
                       </div>
@@ -629,11 +629,11 @@ export default function KiemTraTraPhong() {
                                 <tr>
                                   <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', width: '150px' }}>Tài sản</th>
                                   <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', textAlign: 'center', width: '90px', whiteSpace: 'nowrap' }}>SL bàn giao</th>
-                                  <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', width: '150px' }}>Hiện trạng</th>
+                                  <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', textAlign: 'center', width: '150px' }}>Hiện trạng</th>
                                   <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', textAlign: 'center', width: '80px', whiteSpace: 'nowrap' }}>SL hư/mất</th>
                                   <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', textAlign: 'center', width: '70px' }}>Tỷ lệ</th>
                                   <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', width: '120px' }}>Phí tạm tính</th>
-                                  <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', minWidth: '150px' }}>Mô tả hư/mất</th>
+                                  <th style={{ padding: '12px 10px', fontSize: '13px', fontWeight: '600', color: '#3f494a', minWidth: '200px' }}>Mô tả hư/mất</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -668,7 +668,7 @@ export default function KiemTraTraPhong() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button onClick={() => setModalType(null)} style={{ backgroundColor: '#ffffff', border: '1px solid #004c52', color: '#004c52', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Đóng</button>
+                <button onClick={() => setModalType(null)} style={{ backgroundColor: '#ffffff', border: '1px solid #004c52', color: '#004c52', padding: '10px 24px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Hủy</button>
                 {!isSubmitted && modalType === 'kiem-tra-hd' && selectedPhieu?.trangThai === 'Chờ xử lý' && (
                   <button className="ktp-btn-action-fill" onClick={submitKiemTra} style={{ padding: '10px 24px' }}>Xác nhận lưu biên bản</button>
                 )}
