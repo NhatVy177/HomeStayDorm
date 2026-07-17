@@ -13,6 +13,8 @@ export function Icon({ name, className = '' }) {
     search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></>,
     notifications: <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" /><path d="M10 20a2 2 0 0 0 4 0" /></>,
     home: <><path d="M3.5 11.2 12 4l8.5 7.2" /><path d="M5.5 10.4V20h13v-9.6" /><path d="M9.5 20v-5.8h5V20" /></>,
+    badge: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /><path d="M8 17a4 4 0 0 1 8 0" /></>,
+    article: <><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="7" x2="17" y1="8" y2="8" /><line x1="7" x2="17" y1="12" y2="12" /><line x1="7" x2="13" y1="16" y2="16" /></>,
     close: <><path d="M18 6 6 18M6 6l12 12" /></>,
     person: <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
     group: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
