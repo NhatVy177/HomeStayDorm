@@ -9,6 +9,22 @@ function normalizeStatus(value) {
   return normalizeText(value);
 }
 
+export async function capNhatLichXemDenGioThanhDaXem({ maDangKy = null } = {}) {
+  const result = await executeQuery(`
+    UPDATE dbo.LichXemPhong
+    SET TrangThai = N'Đã xem'
+    WHERE (@MaDangKy IS NULL OR MaDangKy = @MaDangKy)
+      AND TrangThai IN (N'Chờ xem', N'Yêu cầu đổi lịch', N'Yêu cầu hủy')
+      AND ThoiGianHen <= GETDATE();
+
+    SELECT @@ROWCOUNT AS soLichCapNhat;
+  `, [
+    { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy || null }
+  ]);
+
+  return Number(result.recordset?.[0]?.soLichCapNhat || 0);
+}
+
 export async function tuChoiHoSoNeuTatCaLichBiHuy(maDangKy) {
   await executeQuery(`
     UPDATE dbo.PhieuDangKy
@@ -145,6 +161,8 @@ export async function taoLichXemPhong({
 }
 
 export async function layDanhSachLichXemPhong(filter = {}) {
+  await capNhatLichXemDenGioThanhDaXem({ maDangKy: filter.maDangKy || null });
+
   const result = await executeQuery(`
     SELECT
       CONCAT(lxp.MaDangKy, '-', lxp.STTLich) AS id,
@@ -162,7 +180,29 @@ export async function layDanhSachLichXemPhong(filter = {}) {
       saleNd.SDT AS sdtNhanVienSale,
       STRING_AGG(CONCAT(CONVERT(NVARCHAR(10), p.MaPhong), N' - ', p.TenPhong), N', ') AS danhSachPhong,
       STRING_AGG(CONVERT(NVARCHAR(10), p.MaPhong), N',') AS maPhong,
-      MIN(p.MaChiNhanh) AS maChiNhanh
+      MIN(p.MaChiNhanh) AS maChiNhanh,
+      CAST(CASE
+        WHEN pdk.TrangThai IN (N'Chờ xác nhận cọc', N'Xác nhận cọc')
+          OR EXISTS (
+            SELECT 1
+            FROM dbo.PhieuDatCoc AS pdc
+            WHERE pdc.MaPhieuYeuCauDangKy = lxp.MaDangKy
+              AND pdc.TrangThaiCoc <> N'Đã hủy'
+          )
+        THEN 1 ELSE 0
+      END AS BIT) AS daGuiYeuCauDatCoc,
+      CAST(CASE
+        WHEN lxp.TrangThai <> N'Đã hủy'
+          AND GETDATE() < DATEADD(MINUTE, 30, lxp.ThoiGianHen)
+          AND pdk.TrangThai NOT IN (N'Chờ xác nhận cọc', N'Xác nhận cọc')
+          AND NOT EXISTS (
+            SELECT 1
+            FROM dbo.PhieuDatCoc AS pdc
+            WHERE pdc.MaPhieuYeuCauDangKy = lxp.MaDangKy
+              AND pdc.TrangThaiCoc <> N'Đã hủy'
+          )
+        THEN 1 ELSE 0
+      END AS BIT) AS coTheHuy
     FROM dbo.LichXemPhong AS lxp
     INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
     INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = pdk.MaKhachHang
@@ -215,16 +255,31 @@ export async function ghiNhanYeuCauDieuChinhLich({ maDangKy, sttLich, lyDo } = {
 }
 
 export async function huyLichXemPhong({ maDangKy, sttLich, ghiChuXuLy } = {}) {
-  await executeQuery(`
-    UPDATE dbo.LichXemPhong
+  const result = await executeQuery(`
+    UPDATE lxp
     SET TrangThai = N'Đã hủy',
-        GhiChu = COALESCE(@GhiChuXuLy, GhiChu)
-    WHERE MaDangKy = @MaDangKy AND STTLich = @STTLich
+        GhiChu = COALESCE(@GhiChuXuLy, lxp.GhiChu)
+    FROM dbo.LichXemPhong AS lxp
+    INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
+    WHERE lxp.MaDangKy = @MaDangKy AND lxp.STTLich = @STTLich
+      AND lxp.TrangThai <> N'Đã hủy'
+      AND GETDATE() < DATEADD(MINUTE, 30, lxp.ThoiGianHen)
+      AND pdk.TrangThai NOT IN (N'Chờ xác nhận cọc', N'Xác nhận cọc')
+      AND NOT EXISTS (
+        SELECT 1
+        FROM dbo.PhieuDatCoc AS pdc
+        WHERE pdc.MaPhieuYeuCauDangKy = lxp.MaDangKy
+          AND pdc.TrangThaiCoc <> N'Đã hủy'
+      );
+
+    SELECT @@ROWCOUNT AS soLichCapNhat;
   `, [
     { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy },
     { name: 'STTLich', type: sql.Int, value: sttLich },
     { name: 'GhiChuXuLy', type: sql.NVarChar(500), value: ghiChuXuLy || null }
   ]);
+
+  return Number(result.recordset?.[0]?.soLichCapNhat || 0);
 }
 
 export async function capNhatThoiGianLichXemPhong({ maDangKy, sttLich, thoiGianHen, ghiChuXuLy } = {}) {

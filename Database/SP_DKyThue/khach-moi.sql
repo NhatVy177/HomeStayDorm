@@ -248,6 +248,14 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    UPDATE lxp
+    SET lxp.TrangThai = N'Đã xem'
+    FROM dbo.LichXemPhong AS lxp
+    INNER JOIN dbo.PhieuDangKy AS pdk ON pdk.MaDangKy = lxp.MaDangKy
+    WHERE pdk.MaKhachHang = @KhachHangId
+      AND lxp.TrangThai IN (N'Chờ xem', N'Yêu cầu đổi lịch', N'Yêu cầu hủy')
+      AND lxp.ThoiGianHen <= GETDATE();
+
     SELECT
         CONCAT(lxp.MaDangKy, '-', lxp.STTLich) AS id,
         lxp.MaDangKy AS maDangKy,
@@ -294,6 +302,13 @@ BEGIN
           AND pdk.MaKhachHang = @KhachHangId
     )
         THROW 50105, N'Không tìm thấy lịch xem phòng của bạn.', 1;
+
+    UPDATE dbo.LichXemPhong
+    SET TrangThai = N'Đã xem'
+    WHERE MaDangKy = @MaDangKy
+      AND STTLich = @STTLich
+      AND TrangThai IN (N'Chờ xem', N'Yêu cầu đổi lịch', N'Yêu cầu hủy')
+      AND ThoiGianHen <= GETDATE();
 
     SELECT
         CONCAT(lxp.MaDangKy, '-', lxp.STTLich) AS id,

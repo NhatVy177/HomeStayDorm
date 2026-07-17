@@ -1,4 +1,5 @@
 import { executeProcedure, executeQuery, sql } from '../database/connection.js';
+import { capNhatLichXemDenGioThanhDaXem } from './lichXemPhong.repository.js';
 
 export async function timLuongThueDangHoatDong(khachHangId) {
   const result = await executeQuery(`
@@ -248,16 +249,22 @@ export async function traCuuPhong(filter = {}) {
 }
 
 export async function kiemTraDieuKienThue(hoSoId) {
+  const maDangKy = String(hoSoId || '').trim();
+  await capNhatLichXemDenGioThanhDaXem({ maDangKy });
+
   const result = await executeProcedure('dbo.SP_KiemTraDieuKienThue', [
-    { name: 'HoSoId', type: sql.NVarChar(30), value: String(hoSoId || '').trim() }
+    { name: 'HoSoId', type: sql.NVarChar(30), value: maDangKy }
   ]);
 
   return result.recordset[0] || null;
 }
 
 export async function capNhatKetQuaXuLy(hoSoId, data = {}) {
+  const maDangKy = String(hoSoId || '').trim();
+  await capNhatLichXemDenGioThanhDaXem({ maDangKy });
+
   const result = await executeProcedure('dbo.SP_CapNhatKetQuaXuLyHoSo', [
-    { name: 'HoSoId', type: sql.NVarChar(30), value: String(hoSoId || '').trim() },
+    { name: 'HoSoId', type: sql.NVarChar(30), value: maDangKy },
     { name: 'TrangThai', type: sql.NVarChar(50), value: data.trangThai || null },
     { name: 'GhiChuXuLy', type: sql.NVarChar(sql.MAX), value: data.ghiChuXuLy || null },
     { name: 'NhanVienSaleId', type: sql.NVarChar(20), value: data.nhanVienSaleId || null }

@@ -268,7 +268,8 @@ export default function LichXemPhongTab() {
               {filteredSchedules.map((schedule) => {
                 const time = formatDateTime(schedule.thoiGianHen);
                 const badge = statusStyle(schedule.trangThai);
-                const isClosed = ['Đã hủy', 'Đã xem'].includes(schedule.trangThai);
+                const isRescheduleDisabled = ['Đã hủy', 'Đã xem'].includes(schedule.trangThai);
+                const isCancelDisabled = !schedule.coTheHuy;
                 return (
                   <tr key={schedule.id}>
                     <td>
@@ -296,14 +297,14 @@ export default function LichXemPhongTab() {
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
                         <button
                           className="sale-schedule-action-btn sale-schedule-action-btn-reschedule"
-                          disabled={isClosed}
+                          disabled={isRescheduleDisabled}
                           onClick={() => openReschedule(schedule)}
                         >
                           <Icon name="event_note" style={{ fontSize: '16px' }} /> Đổi lịch
                         </button>
                         <button
                           className="sale-schedule-action-btn sale-schedule-action-btn-cancel"
-                          disabled={isClosed}
+                          disabled={isCancelDisabled}
                           onClick={() => openCancel(schedule)}
                         >
                           <Icon name="cancel" style={{ fontSize: '16px' }} /> Hủy
@@ -376,7 +377,7 @@ export default function LichXemPhongTab() {
               />
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button className="ktp-btn-cancel" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setModalType(null)}>Quay lại</button>
-                <button className="ktp-btn-submit" style={{ flex: 1, justifyContent: 'center', backgroundColor: '#ba1a1a' }} disabled={saving} onClick={handleCancel}>
+                <button className="ktp-btn-submit" style={{ flex: 1, justifyContent: 'center', backgroundColor: '#ba1a1a' }} disabled={saving || !selectedSchedule.coTheHuy} onClick={handleCancel}>
                   {saving ? 'Đang hủy...' : 'Xác nhận hủy'}
                 </button>
               </div>
