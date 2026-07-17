@@ -575,7 +575,7 @@ BEGIN
             COMMIT TRANSACTION;
 
         -- Thiết lập kết quả trả về
-        IF @SoTienKhachThanhToan >= @TongTien
+        IF @SoTienKhachThanhToan >= @TienCanThanhToanToiThieu
         BEGIN
             SET @MaLoi = 0;
             SET @ThongBao = N'Ghi nhận khoản thu nhận phòng thành công. Có thể tiến hành bàn giao phòng.';
