@@ -350,16 +350,25 @@ BEGIN
 
     IF @HinhThucThue = N'Ghép giường'
     BEGIN
+        -- Chỉ kiểm tra đúng số giường thực tế thuê (TOP SoGiuongThue), bỏ qua giường dư đã giải phóng
+        DECLARE @SoGiuongThue INT;
+        SELECT @SoGiuongThue = SoGiuongThue FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
         IF EXISTS (
             SELECT 1 
-            FROM ChiTietDatCoc ctdc
-            JOIN Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
-            WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
-              AND g.TinhTrang <> N'Đã đặt cọc'
+            FROM (
+                SELECT TOP (ISNULL(@SoGiuongThue, 1)) ctdc.MaPhong, ctdc.MaGiuong
+                FROM ChiTietDatCoc ctdc
+                WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
+                  AND ctdc.MaGiuong IS NOT NULL
+                ORDER BY ctdc.MaChiTietDC
+            ) AS rentedBeds
+            JOIN Giuong g ON g.MaPhong = rentedBeds.MaPhong AND g.MaGiuong = rentedBeds.MaGiuong
+            WHERE g.TinhTrang NOT IN (N'Đã đặt cọc', N'Trống')
         )
         BEGIN
             SET @MaLoi = -6;
-            SET @ThongBao = N'Có giường thuê ghép không ở trạng thái "Đã đặt cọc".';
+            SET @ThongBao = N'Có giường thuê ghép không ở trạng thái hợp lệ ("Đã đặt cọc" hoặc "Trống").';
             RETURN;
         END;
     END;
