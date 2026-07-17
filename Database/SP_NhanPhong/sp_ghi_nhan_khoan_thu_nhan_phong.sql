@@ -334,12 +334,14 @@ BEGIN
             BEGIN TRANSACTION;
 
         -- Đọc và khóa thông tin hợp đồng để chống tranh chấp đồng thời
-        DECLARE @TrangThaiHopDong NVARCHAR(20), @GiaThue DECIMAL(15,2), @KyThanhToan NVARCHAR(20), @NgayBatDau DATE;
+        DECLARE @TrangThaiHopDong NVARCHAR(20), @GiaThue DECIMAL(15,2), @KyThanhToan NVARCHAR(20), @NgayBatDau DATE, @MaPhieuCoc VARCHAR(6), @SoGiuongThue INT;
         SELECT 
             @TrangThaiHopDong = TrangThai,
             @GiaThue = GiaThue,
             @KyThanhToan = KyThanhToan,
-            @NgayBatDau = NgayBatDau
+            @NgayBatDau = NgayBatDau,
+            @MaPhieuCoc = MaPhieuCoc,
+            @SoGiuongThue = SoGiuongThue
         FROM HopDongThue WITH (UPDLOCK, HOLDLOCK)
         WHERE MaHopDong = @MaHopDong;
 
@@ -443,10 +445,36 @@ BEGIN
             RETURN;
         END;
 
+        -- Tính toán hoàn cọc nếu có giường bị hủy để tính số tiền thực thu/trả chênh lệch
+        DECLARE @SoGiuongDatCoc INT = 0;
+        DECLARE @TienCocBanDau DECIMAL(15,2) = 0.00;
+        DECLARE @SoNguoiHuy INT = 0;
+        DECLARE @TienHoanCoc DECIMAL(15,2) = 0.00;
+
+        SELECT 
+            @SoGiuongDatCoc = COUNT(*),
+            @TienCocBanDau = MIN(pdc.SoTienCoc)
+        FROM dbo.ChiTietDatCoc ctdc
+        JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
+        WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc;
+
+        IF @SoGiuongDatCoc > 0 AND @SoGiuongDatCoc > @SoGiuongThue
+        BEGIN
+            SET @SoNguoiHuy = @SoGiuongDatCoc - @SoGiuongThue;
+            SET @TienHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * @SoNguoiHuy * 0.8;
+        END;
+
+        DECLARE @NetDifference DECIMAL(15,2) = @TongTien - @TienHoanCoc;
+        DECLARE @TienCanThanhToanToiThieu DECIMAL(15,2);
+        IF @NetDifference > 0
+            SET @TienCanThanhToanToiThieu = @NetDifference;
+        ELSE
+            SET @TienCanThanhToanToiThieu = ABS(@NetDifference);
+
         -- Xác định trạng thái hóa đơn dựa trên số tiền thực nộp
         DECLARE @TrangThaiHD NVARCHAR(20) = N'Chưa TT';
         DECLARE @NgayThanhToan DATE = NULL;
-        IF @SoTienKhachThanhToan >= @TongTien
+        IF @SoTienKhachThanhToan >= @TienCanThanhToanToiThieu
         BEGIN
             SET @TrangThaiHD = N'Đã TT';
             SET @NgayThanhToan = CAST(GETDATE() AS DATE);

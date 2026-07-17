@@ -69,7 +69,8 @@ export default function ThuNhanPhongTab() {
       setNotice(null);
       const res = await thuNhanPhongApi.tinhKhoanThuNhanPhong(maHopDong);
       setActiveCalculation(res.data);
-      setSoTienThucNop(res.data.summary?.TongCongCanThu || 0);
+      const netDiff = (res.data.summary?.TongCongCanThu || 0) - (res.data.summary?.TienHoanCoc || 0);
+      setSoTienThucNop(Math.abs(netDiff));
       setPhuongThucTT('Chuyển khoản');
       setGhiChu('');
       setModalType('tnp-create');
@@ -488,26 +489,39 @@ export default function ThuNhanPhongTab() {
                                 {formatCurrency(activeCalculation.summary?.TienHoanCoc)}
                               </strong>
                             </span>
-                            <span style={{ display: 'block', fontSize: '11px', color: '#d97706', marginTop: '4px' }}>
-                              (Công thức: {formatCurrency(activeCalculation.summary?.DonGiaHoanCoc / 0.8)} cọc gốc/người × {activeCalculation.summary?.SoNguoiHuy} người × 80%)
-                            </span>
                           </div>
                         </div>
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: '#3f494a' }}>Số tiền khách thanh toán (đ) *</label>
-                        <input 
-                          type="number" 
-                          className="ktp-input-large" 
-                          value={soTienThucNop} 
-                          onChange={e => setSoTienThucNop(e.target.value)} 
-                          style={{ color: '#191c1d', width: '100%', padding: '10px', boxSizing: 'border-box' }}
-                          required 
-                        />
-                      </div>
+                    {(() => {
+                      const netDiff = (activeCalculation.summary?.TongCongCanThu || 0) - (activeCalculation.summary?.TienHoanCoc || 0);
+                      let inputLabel = "Số tiền khách thanh toán (đ) *";
+                      if (activeCalculation.summary?.TienHoanCoc > 0) {
+                        if (netDiff > 0) {
+                          inputLabel = "Số tiền khách cần thanh toán chênh lệch (đ) *";
+                        } else if (netDiff < 0) {
+                          inputLabel = "Số tiền nhân viên cần thanh toán chênh lệch cho khách (đ) *";
+                        } else {
+                          inputLabel = "Số tiền thanh toán chênh lệch (đ) *";
+                        }
+                      }
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: '#3f494a' }}>{inputLabel}</label>
+                            <input 
+                              type="number" 
+                              className="ktp-input-large" 
+                              value={soTienThucNop} 
+                              onChange={e => setSoTienThucNop(e.target.value)} 
+                              style={{ color: '#191c1d', width: '100%', padding: '10px', boxSizing: 'border-box' }}
+                              required 
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: '#3f494a' }}>Phương thức thanh toán *</label>
                         <select 
