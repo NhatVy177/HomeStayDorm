@@ -117,9 +117,9 @@ BEGIN
         hs.NgayDuyet                                    AS NgayDuyetCuTru,
         -- CoTheLapHopDong = 1 khi đủ điều kiện cọc, thanh toán, chưa có HĐ và đã duyệt cư trú
         CASE
-            WHEN pdc.TrangThaiCoc       = N'Hiệu lực'
-             AND pdc.TrangThaiThanhToan = N'Đã TT'
-             AND hs.TrangThaiHoSo       = N'Đã duyệt cư trú'
+            WHEN (pdc.TrangThaiCoc       = N'Hiệu lực' OR pdc.TrangThaiCoc LIKE N'Hi%u%')
+             AND (pdc.TrangThaiThanhToan = N'Đã TT' OR pdc.TrangThaiThanhToan LIKE N'%TT%')
+             AND (hs.TrangThaiHoSo       = N'Đã duyệt cư trú' OR hs.TrangThaiHoSo LIKE N'%duy%t%')
              AND NOT EXISTS (
                     SELECT 1 FROM dbo.HopDongThue hdt
                     WHERE hdt.MaPhieuCoc = pdc.MaPhieuDatCoc
@@ -292,7 +292,7 @@ BEGIN
                 SELECT 1
                 FROM dbo.HoSoCuTru
                 WHERE MaPhieuDatCoc = @MaPhieuDatCoc
-                  AND TrangThaiHoSo = N'Đã duyệt cư trú'
+                  AND (TrangThaiHoSo = N'Đã duyệt cư trú' OR TrangThaiHoSo LIKE N'%duy%t%')
            )
         BEGIN
             SET @MaLoi    = -30;
@@ -659,7 +659,7 @@ BEGIN
                 SELECT 1
                 FROM dbo.HoSoCuTru
                 WHERE MaPhieuDatCoc = @MaPhieuDatCoc
-                  AND TrangThaiHoSo = N'Đã duyệt cư trú'
+                  AND (TrangThaiHoSo = N'Đã duyệt cư trú' OR TrangThaiHoSo LIKE N'%duy%t%')
            )
         BEGIN
             SET @MaLoi    = -30;
