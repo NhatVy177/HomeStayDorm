@@ -657,7 +657,13 @@ export default function ThuNhanPhongTab() {
                             >
                               <div>
                                 <span style={{ fontSize: '13px', color: '#111819', fontWeight: 600 }}>{item.NoiDung}</span>
-                                <span style={{ fontSize: '12px', color: '#6f797a', marginLeft: '6px' }}>× {item.SoLuong} {item.DonViTinh}</span>
+                                <span style={{ fontSize: '12px', color: '#6f797a', marginLeft: '6px' }}>
+                                  {item.NoiDung?.toLowerCase().includes('xe') ? (
+                                    `× ${Math.round(Number(item.SoLuong))} xe / 1 ${item.DonViTinh}`
+                                  ) : (
+                                    `× ${item.SoLuong} ${item.DonViTinh}`
+                                  )}
+                                </span>
                               </div>
                               <strong style={{ fontSize: '14px', color: '#111819' }}>{formatCurrency(item.ThanhTien)}</strong>
                             </div>
