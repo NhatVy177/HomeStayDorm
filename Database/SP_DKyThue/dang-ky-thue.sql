@@ -1275,6 +1275,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM dbo.PhieuDangKy WHERE MaDangKy = @HoSoId)
         THROW 50010, N'Không tìm thấy hồ sơ đăng ký.', 1;
 
+    UPDATE dbo.LichXemPhong
+    SET TrangThai = N'Đã xem'
+    WHERE MaDangKy = @HoSoId
+      AND TrangThai IN (N'Chờ xem', N'Yêu cầu đổi lịch', N'Yêu cầu hủy')
+      AND ThoiGianHen <= GETDATE();
+
     DECLARE @TrangThai          NVARCHAR(30);
     DECLARE @MaKhachHang        VARCHAR(6);
     DECLARE @NgayDuKienVaoO     DATE;
@@ -1339,6 +1345,12 @@ BEGIN
     -- Kiểm tra hồ sơ tồn tại
     IF NOT EXISTS (SELECT 1 FROM dbo.PhieuDangKy WHERE MaDangKy = @HoSoId)
         THROW 50010, N'Không tìm thấy hồ sơ đăng ký.', 1;
+
+    UPDATE dbo.LichXemPhong
+    SET TrangThai = N'Đã xem'
+    WHERE MaDangKy = @HoSoId
+      AND TrangThai IN (N'Chờ xem', N'Yêu cầu đổi lịch', N'Yêu cầu hủy')
+      AND ThoiGianHen <= GETDATE();
 
     -- Kiểm tra trạng thái mới hợp lệ
     IF @TrangThai NOT IN (N'Chấp nhận', N'Từ chối', N'Chờ xác nhận cọc', N'Đã tiếp nhận')

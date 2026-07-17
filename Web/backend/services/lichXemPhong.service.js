@@ -273,18 +273,30 @@ export async function capNhatLichXemPhong(id, data = {}, user = null) {
     const current = (await getLichXemPhong({ maDangKy, sttLich }, user))[0];
     assertCanAccessSchedule(current, user);
     const currentStatus = normalizeStatus(current.trangThai);
-    if (['đã hủy', 'đã xem'].includes(currentStatus)) {
+    const isCancelAction = ['huy', 'hủy', 'cancel'].includes(thaoTac);
+
+    if (currentStatus === 'đã hủy') {
       throw createServiceError('Lịch xem phòng đã kết thúc, không thể cập nhật.');
     }
 
-    if (['huy', 'hủy', 'cancel'].includes(thaoTac)) {
-      await lichXemPhongRepository.huyLichXemPhong({
+    if (isCancelAction) {
+      if (!current.coTheHuy) {
+        throw createServiceError('Chỉ được hủy lịch trong vòng 30 phút sau giờ hẹn và trước khi gửi yêu cầu đặt cọc.');
+      }
+
+      const soLichCapNhat = await lichXemPhongRepository.huyLichXemPhong({
         maDangKy,
         sttLich,
         ghiChuXuLy: data.ghiChuXuLy || null
       });
+      if (!soLichCapNhat) {
+        throw createServiceError('Lịch xem phòng không còn đủ điều kiện để hủy.');
+      }
       await lichXemPhongRepository.tuChoiHoSoNeuTatCaLichBiHuy(maDangKy);
     } else {
+      if (currentStatus === 'đã xem') {
+        throw createServiceError('Lịch xem phòng đã đến giờ xem, không thể đổi lịch.');
+      }
       if (!data.thoiGianXem) {
         throw createServiceError('Vui lòng chọn thời gian xem phòng mới.');
       }
