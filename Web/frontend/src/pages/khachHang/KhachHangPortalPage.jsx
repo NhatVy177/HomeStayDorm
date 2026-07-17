@@ -1234,10 +1234,6 @@ export default function KhachHangPortalPage() {
         <div className="kh-shell-grid">
           <div className="kh-left-content">
             <form className="kh-filter-panel" onSubmit={applyFilters}>
-              <label className="kh-keyword">
-                <Icon name="search" />
-                <input value={filters.tuKhoa} onChange={(event) => setFilters({ ...filters, tuKhoa: event.target.value })} placeholder="Tìm theo khu vực, tên tòa nhà..." />
-              </label>
               <div className="kh-filter-controls">
                 <SelectField label="Khu vực" value={filters.khuVuc} options={filterOptions.khuVuc} onChange={(value) => setFilters({ ...filters, khuVuc: value })} />
                 <SelectField label="Loại phòng" value={filters.loaiPhong} options={filterOptions.loaiPhong} onChange={(value) => setFilters({ ...filters, loaiPhong: value })} />

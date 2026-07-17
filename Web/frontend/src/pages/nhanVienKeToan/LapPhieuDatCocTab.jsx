@@ -3,7 +3,7 @@ import { datCocApi } from '../datCoc/datCoc.api.js';
 import ResultModal from '../../components/common/ResultModal.jsx';
 import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
-export function Icon({ name, className = '' }) {
+export function Icon({ name, className = '', style = {} }) {
   const shapes = {
     dashboard: <><rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" /><rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" /></>,
     payments: <><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /><path d="M6 12h.01M18 12h.01" /></>,
@@ -32,6 +32,8 @@ export function Icon({ name, className = '' }) {
     water_drop: <><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></>,
     bellhop_bell: <><path d="M10 2h4"/><path d="M12 2v3"/><path d="M19 18a7 7 0 0 0-14 0"/><path d="M2 18h20"/></>,
     filter_list: <><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></>,
+    event_note: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M8 14h8M8 18h5" /></>,
+    event_repeat: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M17 14h-5a2 2 0 0 0-2 2v1" /><path d="m14 12 3 2-3 2M7 18h5a2 2 0 0 0 2-2v-1" /><path d="m10 20-3-2 3-2" /></>,
     arrow_forward: <><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>,
     account_balance: <><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/></>,
     money_off: <><path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.5L3 3l18 18-5.3-5.3c-.6.3-1.2.5-1.8.6v2c0 .6-.4 1-1 1s-1-.4-1-1v-2h-2"/><path d="M9 7v-2c0-.6.4-1 1-1s1 .4 1 1v2h2a2 2 0 0 1 2 2v2l-6-6z"/></>,
@@ -63,7 +65,7 @@ export function Icon({ name, className = '' }) {
   };
 
   return (
-    <svg className={`kp-line-icon ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: '1em', height: '1em' }}>
+    <svg className={`kp-line-icon ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: '1em', height: '1em', ...style }}>
       {shapes[name] || shapes.home}
     </svg>
   );

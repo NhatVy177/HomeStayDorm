@@ -300,7 +300,7 @@ export default function LichXemPhongTab() {
                           disabled={isRescheduleDisabled}
                           onClick={() => openReschedule(schedule)}
                         >
-                          <Icon name="event_note" style={{ fontSize: '16px' }} /> Đổi lịch
+                          Đổi lịch
                         </button>
                         <button
                           className="sale-schedule-action-btn sale-schedule-action-btn-cancel"
