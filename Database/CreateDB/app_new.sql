@@ -345,7 +345,9 @@ CREATE TABLE ChiTietHoaDon (
     ThanhTien       DECIMAL(15,2)   ,
     MaHoaDon        VARCHAR(6)      NOT NULL,
     MaChiTietDVHD   VARCHAR(6)      NOT NULL,
-    MaPhieuGhi      VARCHAR(6)      NULL
+    MaPhieuGhi      VARCHAR(6)      NULL,
+    GhiChu          NVARCHAR(500)   NULL,
+    NoiDung         NVARCHAR(500)   NULL
 );
 
 -- 25. PHIẾU TRẢ PHÒNG
@@ -464,9 +466,10 @@ CREATE TABLE BienBanViPham (
 	MoTaViPham			NVARCHAR(MAX),
 	SoTienPhat			DECIMAL(15,2),
 	TrangThai			NVARCHAR(20),
-	MaKhachHang			VARCHAR(6),
-	MaHopDong			VARCHAR(6),
-	MaDieuKhoan			VARCHAR(6),
+  	MaKhachHang			VARCHAR(6),
+  	MaHopDong			VARCHAR(6),
+  	MaDieuKhoan			VARCHAR(6),
+  	GhiChu				NVARCHAR(500),
 	CONSTRAINT CHK_BBVP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Đã xử lý'))
 
 );

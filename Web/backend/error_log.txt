@@ -526,3 +526,649 @@ Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
+2026-07-17T17:05:12.034Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:05:12.076Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:05:12.103Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:05:22.035Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:05:22.072Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:05:22.093Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:05:34.387Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:05:34.445Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:05:34.487Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:17:28.386Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:17:28.482Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:17:28.548Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:17:46.318Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:19:20)
+
+2026-07-17T17:17:49.904Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:17:49.984Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:17:50.050Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:25:48.104Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:25:48.200Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:25:48.276Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:26:03.057Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:26:03.100Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:26:03.124Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:06.104Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:06.294Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:06.492Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:07.274Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:07.533Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:08.190Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:08.435Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:08.827Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:09.116Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:54.824Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:54.892Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:33:54.937Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:34.777Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:34.808Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:34.827Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:40.499Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 2 ("@MaHopDong"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:40.978Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 2 ("@MaHopDong"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:41.335Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 2 ("@MaHopDong"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:41.501Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 2 ("@MaHopDong"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:41.668Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 2 ("@MaHopDong"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:41.818Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 2 ("@MaHopDong"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:35:41.930Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 2 ("@MaHopDong"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:36:05.414Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:36:05.459Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:36:05.482Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:36:13.596Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:36:13.620Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T17:36:13.640Z
+RequestError: Invalid column name 'GhiChu'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
