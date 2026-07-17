@@ -27,6 +27,21 @@ const formatNgay = (v) => {
 const fileChungTuUrl = (path) =>
   `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${path}`;
 
+const DEFAULT_PAYMENT_ACCOUNT = {
+  nganHang: 'Vietcombank',
+  soTaiKhoan: '1234567890',
+  chuTaiKhoan: 'CONG TY HOMESTAY DORM'
+};
+
+function getPaymentAccount(source = {}) {
+  const account = source?.taiKhoanThanhToan || {};
+  return {
+    nganHang: account.nganHang || DEFAULT_PAYMENT_ACCOUNT.nganHang,
+    soTaiKhoan: account.soTaiKhoan || DEFAULT_PAYMENT_ACCOUNT.soTaiKhoan,
+    chuTaiKhoan: account.chuTaiKhoan || DEFAULT_PAYMENT_ACCOUNT.chuTaiKhoan
+  };
+}
+
 // dd/mm/yyyy không kèm giờ, dùng cho bản in biên nhận (— nếu rỗng).
 const ngayDMY = (v) => {
   if (!v) return '';
@@ -88,6 +103,7 @@ const STATUS_ORDER = ['Chờ tiếp nhận', 'Chờ xác nhận cọc', 'Xác nh
 const StatusBadge = ({ trangThai }) => {
   const cfg = STATUS_CONFIG[trangThai];
   const s = cfg ? cfg.badge : { bg: '#eef2f3', fg: '#3f494a' };
+
   return (
     <span style={{ background: s.bg, color: s.fg, padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
       {cfg ? cfg.badgeLabel : trangThai}
@@ -545,6 +561,8 @@ export default function DatCocTab() {
       setRejecting(false);
     }
   };
+
+  const selectedPaymentAccount = getPaymentAccount(selectedPhieu);
 
   return (
     <div className="ktp-container">
@@ -1061,11 +1079,12 @@ export default function DatCocTab() {
                     })}
                   </div>
                   {/* Khe cố định: thông tin CK (chuyển khoản) hoặc nút in (tiền mặt) */}
-                  <div style={{ minHeight: '98px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <div style={{ minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     {ctPhuongThuc === 'Chuyển khoản' && (
                       <div style={{ background: '#f4f7f7', border: '1px solid #e1e6e6', borderRadius: '12px', padding: '12px 14px', display: 'grid', gap: '7px', fontSize: '13px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Ngân hàng</span><b>Vietcombank (VCB)</b></div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6f797a' }}>Số tài khoản</span><b>1012345678</b></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}><span style={{ color: '#6f797a' }}>Ngân hàng</span><b>{selectedPaymentAccount.nganHang}</b></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}><span style={{ color: '#6f797a' }}>Số tài khoản</span><b>{selectedPaymentAccount.soTaiKhoan}</b></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}><span style={{ color: '#6f797a' }}>Chủ tài khoản</span><b style={{ textAlign: 'right' }}>{selectedPaymentAccount.chuTaiKhoan}</b></div>
                       </div>
                     )}
                     {ctPhuongThuc === 'Tiền mặt' && (

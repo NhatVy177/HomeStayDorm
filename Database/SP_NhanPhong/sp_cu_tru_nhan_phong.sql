@@ -68,15 +68,7 @@ BEGIN
         MAX(lp.SucChuaToiDa) AS SucChuaToiDa,
         COUNT(ctdc.MaChiTietDC) AS SoGiuongDaCoc,
         -- Kiểm tra phòng đang có hợp đồng có hiệu lực hay không (tức là có ngườơi đang ở)
-        CAST(
-            CASE WHEN EXISTS (
-                SELECT 1
-                FROM dbo.HopDongThue hd2
-                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
-                WHERE cthd.MaPhong = ctdc.MaPhong
-                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
-            ) THEN 1 ELSE 0 END
-        AS BIT) AS CoNguoiDangO
+        CAST(MAX(ISNULL(occupied.CoNguoiDangO, 0)) AS BIT) AS CoNguoiDangO
     FROM dbo.PhieuDatCoc pdc
     JOIN dbo.PhieuDangKy pdk ON pdk.MaDangKy = pdc.MaPhieuYeuCauDangKy
     JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
@@ -84,6 +76,14 @@ BEGIN
     JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
     JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
     JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong
+    OUTER APPLY (
+        SELECT TOP 1 1 AS CoNguoiDangO
+        FROM dbo.HopDongThue hd2
+        JOIN dbo.ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = hd2.MaPhieuCoc
+        WHERE ctdc2.MaPhong = ctdc.MaPhong
+          AND hd2.TrangThai = N'Hiệu lực'
+          AND hd2.MaPhieuCoc <> pdc.MaPhieuDatCoc
+    ) occupied
     LEFT JOIN dbo.HoSoCuTru hs ON hs.MaPhieuDatCoc = pdc.MaPhieuDatCoc
     WHERE pdc.TrangThaiCoc = N'Hiệu lực'
       AND pdc.TrangThaiThanhToan = N'Đã TT'
@@ -271,15 +271,7 @@ BEGIN
         hs.NgayCapNhat,
         hs.GhiChuSale,
         -- Kiểm tra phòng đang có hợp đồng có hiệu lực hay không
-        CAST(
-            CASE WHEN EXISTS (
-                SELECT 1
-                FROM dbo.HopDongThue hd2
-                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
-                WHERE cthd.MaPhong = p.MaPhong
-                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
-            ) THEN 1 ELSE 0 END
-        AS BIT) AS CoNguoiDangO
+        CAST(MAX(ISNULL(occupied.CoNguoiDangO, 0)) AS BIT) AS CoNguoiDangO
     FROM dbo.HoSoCuTru hs
     JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hs.MaPhieuDatCoc
     JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
@@ -287,6 +279,14 @@ BEGIN
     JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
     JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
     JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong
+    OUTER APPLY (
+        SELECT TOP 1 1 AS CoNguoiDangO
+        FROM dbo.HopDongThue hd2
+        JOIN dbo.ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = hd2.MaPhieuCoc
+        WHERE ctdc2.MaPhong = ctdc.MaPhong
+          AND hd2.TrangThai = N'Hiệu lực'
+          AND hd2.MaPhieuCoc <> pdc.MaPhieuDatCoc
+    ) occupied
     WHERE (@TrangThaiHoSo IS NULL OR @TrangThaiHoSo = N'' OR hs.TrangThaiHoSo = @TrangThaiHoSo)
       AND (
           @TuKhoaLike IS NULL
@@ -332,15 +332,7 @@ BEGIN
         hs.GhiChuSale,
         hs.GhiChuQuanLy,
         -- Kiểm tra phòng đang có hợp đồng có hiệu lực hay không
-        CAST(
-            CASE WHEN EXISTS (
-                SELECT 1
-                FROM dbo.HopDongThue hd2
-                JOIN dbo.ChiTietHopDong cthd ON cthd.MaHopDong = hd2.MaHopDong
-                WHERE cthd.MaPhong = p.MaPhong
-                  AND hd2.TrangThaiHopDong = N'Hiệu lực'
-            ) THEN 1 ELSE 0 END
-        AS BIT) AS CoNguoiDangO
+        CAST(MAX(ISNULL(occupied.CoNguoiDangO, 0)) AS BIT) AS CoNguoiDangO
     FROM dbo.HoSoCuTru hs
     JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hs.MaPhieuDatCoc
     JOIN dbo.KhachHang kh ON kh.MaKhachHang = pdc.MaKhachHang
@@ -348,6 +340,14 @@ BEGIN
     JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
     JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
     JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong
+    OUTER APPLY (
+        SELECT TOP 1 1 AS CoNguoiDangO
+        FROM dbo.HopDongThue hd2
+        JOIN dbo.ChiTietDatCoc ctdc2 ON ctdc2.MaPhieuDatCoc = hd2.MaPhieuCoc
+        WHERE ctdc2.MaPhong = ctdc.MaPhong
+          AND hd2.TrangThai = N'Hiệu lực'
+          AND hd2.MaPhieuCoc <> pdc.MaPhieuDatCoc
+    ) occupied
     WHERE hs.MaHoSoCuTru = @MaHoSoCuTru
     GROUP BY
         hs.MaHoSoCuTru, hs.MaPhieuDatCoc, nd.HoTen, nd.SDT,

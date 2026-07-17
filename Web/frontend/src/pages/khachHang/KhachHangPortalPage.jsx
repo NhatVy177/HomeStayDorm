@@ -12,6 +12,21 @@ import LichXemPhongPage from '../lichXemPhong/LichXemPhongPage.jsx';
 // Gốc backend để mở lại file chứng từ đã upload (DB lưu đường dẫn /uploads/chung-tu/..).
 const FILE_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
+const DEFAULT_PAYMENT_ACCOUNT = {
+  nganHang: 'Vietcombank',
+  soTaiKhoan: '1234567890',
+  chuTaiKhoan: 'CONG TY HOMESTAY DORM'
+};
+
+function getPaymentAccount(source = {}) {
+  const account = source?.taiKhoanThanhToan || {};
+  return {
+    nganHang: account.nganHang || DEFAULT_PAYMENT_ACCOUNT.nganHang,
+    soTaiKhoan: account.soTaiKhoan || DEFAULT_PAYMENT_ACCOUNT.soTaiKhoan,
+    chuTaiKhoan: account.chuTaiKhoan || DEFAULT_PAYMENT_ACCOUNT.chuTaiKhoan
+  };
+}
+
 const filtersInitial = { tuKhoa: '', khuVuc: '', hinhThucThue: '', loaiPhong: '', mucGiaToiDa: '' };
 const rentInitial = {
   hoTen: '',
@@ -3395,6 +3410,7 @@ export default function KhachHangPortalPage() {
       && !daCoChungTuDoiSoatCoc;
     const showDoiSoatPaymentCoc = (laHoanCocDoiSoatCoc || laThuThemDoiSoatCoc) && (!daGuiPhuongThucDoiSoatCoc || canUploadThuThemProofAgainCoc);
     const showDatCocSide = (isSent && minhChung) || isExpired;
+    const taiKhoanThanhToan = getPaymentAccount(phieu);
 
     return (
       <section className="dc-detail">
@@ -3513,9 +3529,9 @@ export default function KhachHangPortalPage() {
                 <div className="dc-section-card">
                   <h3 className="dc-section-title"><Icon name="invoice" />Thông tin chuyển khoản</h3>
                   <div className="dc-bank-info">
-                    <div><span>Ngân hàng</span><strong>Vietcombank (VCB)</strong></div>
-                    <div><span>Số tài khoản</span><strong>1012345678</strong></div>
-                    <div><span>Chủ tài khoản</span><strong>CÔNG TY TNHH HOMESTAYDORM</strong></div>
+                    <div><span>Ngân hàng</span><strong>{taiKhoanThanhToan.nganHang}</strong></div>
+                    <div><span>Số tài khoản</span><strong>{taiKhoanThanhToan.soTaiKhoan}</strong></div>
+                    <div><span>Chủ tài khoản</span><strong>{taiKhoanThanhToan.chuTaiKhoan}</strong></div>
                   </div>
                 </div>
               </>
@@ -3551,9 +3567,9 @@ export default function KhachHangPortalPage() {
               <div className="dc-section-card">
                 <h3 className="dc-section-title"><Icon name="invoice" />Thông tin chuyển khoản</h3>
                 <div className="dc-bank-info">
-                  <div><span>Ngân hàng</span><strong>Vietcombank (VCB)</strong></div>
-                  <div><span>Số tài khoản</span><strong>1012345678</strong></div>
-                  <div><span>Chủ tài khoản</span><strong>CÔNG TY TNHH HOMESTAYDORM</strong></div>
+                  <div><span>Ngân hàng</span><strong>{taiKhoanThanhToan.nganHang}</strong></div>
+                  <div><span>Số tài khoản</span><strong>{taiKhoanThanhToan.soTaiKhoan}</strong></div>
+                  <div><span>Chủ tài khoản</span><strong>{taiKhoanThanhToan.chuTaiKhoan}</strong></div>
                 </div>
               </div>
             )}
@@ -3575,7 +3591,7 @@ export default function KhachHangPortalPage() {
                   <p style={{ fontSize: 12, color: 'var(--kp-soft-text)' }}>Hệ thống sẽ ghi nhận số của bạn. Đội ngũ CSKH sẽ kiểm tra và cập nhật trạng thái trong vòng 2–4 giờ làm việc.</p>
                 </div>
                 <button className="kp-btn kp-btn-soft kp-full" type="button" style={{ marginTop: 12, fontSize: 13 }}
-                  onClick={() => { setUploadForm({ maGiaoDich: '', ngayGiaoDich: '', nganHang: 'Vietcombank', ghiChu: '', fileBase64: '', fileName: '' }); setDatCocSelected({ ...phieu, trangThai: 'Chờ thanh toán' }); }}
+                  onClick={() => { setUploadForm({ maGiaoDich: '', ngayGiaoDich: '', nganHang: taiKhoanThanhToan.nganHang, ghiChu: '', fileBase64: '', fileName: '' }); setDatCocSelected({ ...phieu, trangThai: 'Chờ thanh toán' }); }}
                 >
                   ✏️ Thay đổi chứng từ
                 </button>

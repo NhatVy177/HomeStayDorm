@@ -227,7 +227,7 @@ export async function layDanhSachLichXemPhong(filter = {}) {
       )
     GROUP BY
       lxp.MaDangKy, lxp.STTLich, lxp.ThoiGianHen, lxp.TrangThai, lxp.GhiChu,
-      pdk.MaKhachHang, nd.HoTen, nd.SDT, nd.Email,
+      pdk.MaKhachHang, pdk.TrangThai, nd.HoTen, nd.SDT, nd.Email,
       pdk.MaNhanVienSale, saleNd.HoTen, saleNd.SDT
     ORDER BY lxp.ThoiGianHen DESC, lxp.MaDangKy DESC, lxp.STTLich DESC
   `, [

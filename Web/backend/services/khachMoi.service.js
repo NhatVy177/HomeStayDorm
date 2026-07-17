@@ -3,6 +3,7 @@ import { getDanhSachPhongKhamPha } from './phongKhamPha.service.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 import * as phieuTraPhongRepository from '../repositories/phieuTraPhong.repository.js';
 import { capNhatLichXemDenGioThanhDaXem } from '../repositories/lichXemPhong.repository.js';
+import { getPaymentAccount } from '../config/payment.js';
 
 function requireCustomer(user) {
   if (!user || user.vaiTro !== 'KhachHang') {
@@ -880,10 +881,12 @@ export async function getDatCoc(user) {
   }
 
   const quyDinh = quyDinhResult.recordset || [];
+  const taiKhoanThanhToan = getPaymentAccount();
   return deposits.map((deposit) => {
     const phongDatCoc = roomsByDeposit.get(deposit.maPhieuCoc) || [];
     return {
       ...deposit,
+      taiKhoanThanhToan,
       phongDatCoc,
       taiSan: phongDatCoc.flatMap((room) => room.taiSan || []),
       quyDinh,
@@ -1119,11 +1122,7 @@ export async function getHopDongDashboard(user, options = {}) {
     };
   }
 
-  const taiKhoanThanhToan = {
-    nganHang: process.env.BANK_NAME || 'Vietcombank',
-    soTaiKhoan: process.env.BANK_ACCOUNT_NUMBER || '1234567890',
-    chuTaiKhoan: process.env.BANK_ACCOUNT_HOLDER || 'CONG TY HOMESTAY DORM'
-  };
+  const taiKhoanThanhToan = getPaymentAccount();
 
   const normalizeHopDongDashboardItem = (row, chiTietKhauTruOverride = null) => ({
     ...row,

@@ -1,6 +1,7 @@
 import { executeProcedure, getPool, sql } from '../database/connection.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 import { capNhatLichXemDenGioThanhDaXem } from '../repositories/lichXemPhong.repository.js';
+import { attachPaymentAccount } from '../config/payment.js';
 
 function handleDatabaseError(error) {
   mapDatabaseError(error, {
@@ -20,7 +21,7 @@ export async function getDanhSachChoGhiNhanChungTu(maNhanVien) {
   const result = await executeProcedure('dbo.SP_DanhSachChoGhiNhanChungTu', [
     { name: 'MaNhanVien', type: sql.VarChar(6), value: String(maNhanVien || '').trim() }
   ]);
-  return result.recordset;
+  return attachPaymentAccount(result.recordset || []);
 }
 
 export async function getDanhSachChoXacNhanThanhToan(maNhanVien) {
@@ -187,7 +188,7 @@ export async function getPhieuDatCoc(maNhanVienSale) {
   const result = await executeProcedure('dbo.SP_DanhSachDatCocSale', [
     { name: 'MaNhanVienSale', type: sql.VarChar(6), value: String(maNhanVienSale || '').trim() }
   ]);
-  return result.recordset;
+  return attachPaymentAccount(result.recordset || []);
 }
 
 export async function guiYeuCauDatCoc(data = {}) {

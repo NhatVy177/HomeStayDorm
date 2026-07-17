@@ -148,3 +148,300 @@ Error: Tên đăng nhập hoặc mật khẩu không đúng.
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async dangNhap (file:///D:/NAM3/HomeStayDorm/Web/backend/controllers/auth.controller.js:18:14)
 
+2026-07-17T14:51:13.167Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:19:20)
+
+2026-07-17T14:53:22.093Z
+Error: Số điện thoại này đã được liên kết với một tài khoản. Vui lòng đăng nhập.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangKy (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:131:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangKy (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:11:26)
+
+2026-07-17T14:55:26.394Z
+Error: CCCD đã tồn tại trong hồ sơ khách hàng khác.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at assertUniqueCustomerContact (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/khachMoi.service.js:186:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Module.createHoSo (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/khachMoi.service.js:312:3)
+    at async createHoSo (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-17T14:59:45.922Z
+RequestError: Column 'dbo.PhieuDangKy.TrangThai' is invalid in the select list because it is not contained in either an aggregate function or the GROUP BY clause.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:02:37.301Z
+Error: Procedure or function SP_TraPhong_Sale_TimKhachHang has too many arguments specified.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at Module.saleTimKhachHang (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/dangKyTraPhong.service.js:42:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async saleTimKhachHang (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/dangKyTraPhong.controller.js:11:18)
+
+2026-07-17T15:02:37.308Z
+Error: Procedure or function SP_TraPhong_Sale_TimKhachHang has too many arguments specified.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at Module.saleTimKhachHang (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/dangKyTraPhong.service.js:42:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async saleTimKhachHang (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/dangKyTraPhong.controller.js:11:18)
+
+2026-07-17T15:05:39.929Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:19:20)
+
+2026-07-17T15:05:42.898Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:05:42.905Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:05:42.924Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:05:44.058Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:06:10.240Z
+Error: Procedure or function SP_TraPhong_Sale_TimKhachHang has too many arguments specified.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at Module.saleTimKhachHang (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/dangKyTraPhong.service.js:42:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async saleTimKhachHang (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/dangKyTraPhong.controller.js:11:18)
+
+2026-07-17T15:06:10.245Z
+Error: Procedure or function SP_TraPhong_Sale_TimKhachHang has too many arguments specified.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at Module.saleTimKhachHang (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/dangKyTraPhong.service.js:42:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async saleTimKhachHang (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/dangKyTraPhong.controller.js:11:18)
+
+2026-07-17T15:30:54.241Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:30:54.250Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:30:54.258Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:31:48.474Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:35:17.071Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:35:17.077Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:35:17.083Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:35:28.885Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:35:31.523Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:35:32.288Z
+RequestError: The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter 2 ("@MaHopDong"): Data type 0xA7 has an invalid data length or metadata length.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:35:45.955Z
+RequestError: Could not find stored procedure 'dbo.SP_KhachMoi_ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:40:49.234Z
+RequestError: Invalid object name 'dbo.ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:40:49.259Z
+RequestError: Invalid object name 'dbo.ChiTietHopDong'.
+    at handleError (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
