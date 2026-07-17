@@ -89,7 +89,7 @@ BEGIN
         p.MaPhong                                   AS maPhong,
         p.TenPhong                                  AS tenPhong,
         ctdc.MaGiuong                               AS maGiuong,
-        ISNULL((hdt.GiaThue * ISNULL(hdt.SoGiuongThue, 1)), pdc.SoTienCoc) AS tienCocHD,
+        ISNULL((hdt.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc WHERE ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc)), pdc.SoTienCoc) AS tienCocHD,
         pdc.SoTienCoc                               AS tienCocPDC,
         pdc.HinhThucThue                            AS hinhThucThue,
         COALESCE(hdt.GiaThue, ctdc.GiaThue)         AS giaThue,

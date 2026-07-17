@@ -1057,7 +1057,7 @@ BEGIN
         hd.TrangThai AS trangThai,
         hd.MaPhieuCoc AS maPhieuCoc,
         hd.MaKhachHang AS maKhachHang,
-        (hd.GiaThue * ISNULL(hd.SoGiuongThue, 1)) AS soTienCoc,
+        (hd.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc)) AS soTienCoc,
         nd.HoTen AS hoTenKhachHang,
         nd.SDT AS sdtKhachHang,
         nd.Email AS emailKhachHang

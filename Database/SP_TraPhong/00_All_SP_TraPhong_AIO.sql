@@ -180,7 +180,7 @@ BEGIN
             hd.SoGiuongThue                                 AS soGiuong,
             CONVERT(VARCHAR(10), hd.NgayBatDau, 120)        AS ngayBatDau,
             CONVERT(VARCHAR(10), hd.NgayKetThuc, 120)       AS ngayKetThuc,
-            (hd.GiaThue * ISNULL(hd.SoGiuongThue, 1))       AS tienCoc,
+            (hd.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc2 WHERE ctdc2.MaPhieuDatCoc = hd.MaPhieuCoc))       AS tienCoc,
             CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120)  AS ngayDatCoc
         FROM dbo.HopDongThue AS hd
         INNER JOIN dbo.PhieuDatCoc AS pdc    ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
@@ -2004,7 +2004,7 @@ BEGIN
         hd.TrangThai AS trangThai,
         hd.MaPhieuCoc AS maPhieuCoc,
         hd.MaKhachHang AS maKhachHang,
-        (hd.GiaThue * ISNULL(hd.SoGiuongThue, 1)) AS soTienCoc,
+        (hd.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc)) AS soTienCoc,
         nd.HoTen AS hoTenKhachHang,
         nd.SDT AS sdtKhachHang,
         nd.Email AS emailKhachHang
