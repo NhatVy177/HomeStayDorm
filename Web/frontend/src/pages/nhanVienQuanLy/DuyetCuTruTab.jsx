@@ -299,47 +299,39 @@ export default function DuyetCuTruTab() {
 
 
 
-      <form
-        className="residence-filter"
-        style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '16px', alignItems: 'end', marginBottom: '20px' }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          loadData(searchText);
-        }}
-      >
-        <div className="ktp-filter-group" style={{ margin: 0 }}>
-          <label className="ktp-filter-label">Tìm kiếm</label>
-          <div className="ktp-input-icon-wrap">
-            <span className="ktp-input-icon"><Icon name="search" /></span>
-            <input
-              className="ktp-input ktp-input-with-icon"
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Nhập mã hồ sơ, mã phiếu, tên khách"
-            />
-          </div>
-        </div>
-        <button className="ktp-btn-submit" type="submit" style={{ height: '42px', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-          <Icon name="search" />
-          Tìm kiếm
-        </button>
-      </form>
-
-      {/* Bộ lọc trạng thái dạng chip */}
-      <StatusFilterTabs
-        className="status-pill-tabs-offset"
-        items={[
-          { key: 'all', label: 'Tất cả' },
-          { key: 'Chờ duyệt cư trú', label: 'Chờ duyệt' },
-          { key: 'Đã duyệt cư trú', label: 'Đã duyệt' },
-          { key: 'Từ chối cư trú', label: 'Từ chối' }
-        ]}
-        activeKey={statusFilter}
-        counts={statusCounts}
-        onChange={setStatusFilter}
-      />
-
       <section className="ktp-table-section">
+        <div style={{ padding: '20px 22px' }}>
+          <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+            <div style={{ flex: '2 1 240px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+              <input
+                type="text"
+                value={searchText}
+                onChange={(event) => { setSearchText(event.target.value); loadData(event.target.value); }}
+                placeholder="Nhập mã hồ sơ, mã phiếu, tên khách"
+                className="ktp-input"
+                style={{ width: '100%', backgroundColor: '#fff' }}
+              />
+            </div>
+            {searchText && (
+              <button type="button" onClick={() => { setSearchText(''); loadData(''); }} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+            )}
+          </div>
+
+          {/* Bộ lọc trạng thái dạng chip */}
+          <StatusFilterTabs
+            items={[
+              { key: 'all', label: 'Tất cả' },
+              { key: 'Chờ duyệt cư trú', label: 'Chờ duyệt' },
+              { key: 'Đã duyệt cư trú', label: 'Đã duyệt' },
+              { key: 'Từ chối cư trú', label: 'Từ chối' }
+            ]}
+            activeKey={statusFilter}
+            counts={statusCounts}
+            onChange={setStatusFilter}
+          />
+        </div>
+
         <div className="residence-table-head">
           <div>
             <h3>Hồ sơ cư trú cần duyệt</h3>

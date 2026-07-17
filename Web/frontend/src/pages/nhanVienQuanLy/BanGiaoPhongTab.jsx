@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { banGiaoPhongApi } from './banGiaoPhong.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
 function getErrorMessage(error, fallback) {
   return error?.response?.data?.message || error?.message || fallback;
@@ -392,23 +393,26 @@ export default function BanGiaoPhongTab() {
       )}
 
       {!hopDong && (
-        <div style={{ backgroundColor: '#f4f7f7', padding: '16px 24px', borderRadius: '12px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', border: '1px solid #e0ebed' }}>
-          <div style={{ flex: '1 1 300px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#00666d', marginBottom: '8px' }}>Tìm kiếm nhanh</label>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Nhập mã hợp đồng, tên khách hàng, số điện thoại hoặc tên phòng..."
-              className="ktp-input"
-              style={{ width: '100%', backgroundColor: '#fff', border: '1px solid #bec8c9', borderRadius: '8px', padding: '10px 12px' }}
-            />
-          </div>
-        </div>
-      )}
-
-      {!hopDong && (
         <section className="ktp-table-section handover-queue-card">
+          <div style={{ padding: '20px 20px 0 20px' }}>
+            <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+              <div style={{ flex: '2 1 240px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Mã hợp đồng, tên khách hàng, số điện thoại hoặc tên phòng..."
+                  className="ktp-input"
+                  style={{ width: '100%', backgroundColor: '#fff' }}
+                />
+              </div>
+              {searchQuery && (
+                <button type="button" onClick={() => setSearchQuery('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+              )}
+            </div>
+          </div>
+
           <div className="handover-queue-head">
             <div>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#191c1d' }}>Hợp đồng có thể bàn giao</h3>
@@ -425,51 +429,18 @@ export default function BanGiaoPhongTab() {
           </div>
 
           {/* Segmented control: lọc theo trạng thái + số đếm */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '16px 24px 8px 24px' }}>
-            {[
+          <StatusFilterTabs
+            className="status-pill-tabs-offset"
+            items={[
               { key: 'all', label: 'Tất cả' },
               { key: 'cho-thu-tien', label: 'Chờ thanh toán' },
               { key: 'da-thanh-toan', label: 'Chờ bàn giao' },
               { key: 'da-ban-giao', label: 'Đã bàn giao' }
-            ].map((tab) => {
-              const active = filterState === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setFilterState(tab.key)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 16px',
-                    borderRadius: '999px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    transition: 'all .15s',
-                    border: active ? '1px solid #00666d' : '1px solid #d7dcdc',
-                    background: active ? '#00666d' : '#fff',
-                    color: active ? '#fff' : '#3f494a'
-                  }}
-                >
-                  {tab.label}
-                  <span style={{
-                    background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3',
-                    color: active ? '#fff' : '#6f797a',
-                    borderRadius: '999px',
-                    padding: '1px 8px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    minWidth: '20px',
-                    textAlign: 'center'
-                  }}>
-                    {counts[tab.key] ?? 0}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+            ]}
+            activeKey={filterState}
+            counts={counts}
+            onChange={setFilterState}
+          />
 
           <div className="handover-table-scroll">
             <table className="ktp-table">

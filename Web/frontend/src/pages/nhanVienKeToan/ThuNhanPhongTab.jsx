@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from './LapPhieuDatCocTab';
 import { thuNhanPhongApi } from './thuNhanPhong.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
 // Cấu hình trạng thái thu tiền: chip label, badge label, màu badge (giống DatCocTab).
 const TNP_STATUS_CONFIG = {
@@ -56,11 +57,6 @@ export default function ThuNhanPhongTab() {
   useEffect(() => {
     loadContracts();
   }, []);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    loadContracts();
-  };
 
   // Open Record Payment Modal
   const handleOpenCreateModal = async (maHopDong) => {
@@ -287,58 +283,33 @@ export default function ThuNhanPhongTab() {
 
 
 
-      <form className="tnp-filter-card" onSubmit={handleSearch}>
-        <label className="tnp-search-field">
-          <span>Tìm kiếm</span>
-          <div>
-            <Icon name="search" />
+      {/* Table */}
+      <section className="ktp-table-section tnp-table-card">
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ flex: '2 1 240px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
             <input
               type="text"
               value={tuKhoa}
-              onChange={e => setTuKhoa(e.target.value)}
-              placeholder="Tìm mã hợp đồng, tên khách hàng, SĐT..."
+              onChange={(e) => { setTuKhoa(e.target.value); loadContracts({ tuKhoa: e.target.value }); }}
+              placeholder="Mã hợp đồng, tên khách hàng, SĐT..."
+              className="ktp-input"
+              style={{ width: '100%', backgroundColor: '#fff' }}
             />
           </div>
-        </label>
-        <button type="submit" className="tnp-filter-submit">
-          <Icon name="search" />
-          Tìm kiếm
-        </button>
-      </form>
+          {tuKhoa && (
+            <button type="button" onClick={() => { setTuKhoa(''); loadContracts({ tuKhoa: '' }); }} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          )}
+        </div>
 
-      {/* Bộ lọc trạng thái dạng chip (giống DatCocTab) */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        {[{ key: 'all', label: 'Tất cả' }, ...TNP_STATUS_ORDER.map((s) => ({ key: s, label: TNP_STATUS_CONFIG[s].chip }))].map((tab) => {
-          const active = trangThai === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setTrangThai(tab.key)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
-                fontSize: '13px', fontWeight: 600, transition: 'all .15s',
-                border: active ? '1px solid #2f6765' : '1px solid #d7dcdc',
-                background: active ? '#2f6765' : '#fff',
-                color: active ? '#fff' : '#3f494a'
-              }}
-            >
-              {tab.label}
-              <span style={{
-                background: active ? 'rgba(255,255,255,0.25)' : '#eef2f3',
-                color: active ? '#fff' : '#6f797a',
-                borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 700, minWidth: '20px', textAlign: 'center'
-              }}>
-                {statusCounts[tab.key] ?? 0}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          items={[{ key: 'all', label: 'Tất cả' }, ...TNP_STATUS_ORDER.map((s) => ({ key: s, label: TNP_STATUS_CONFIG[s].chip }))]}
+          activeKey={trangThai}
+          counts={statusCounts}
+          onChange={setTrangThai}
+        />
 
-      {/* Table */}
-      <section className="ktp-table-section tnp-table-card">
         <div className="tnp-table-head">
           <div>
             <h3>Danh sách hợp đồng</h3>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { kiemTraTraPhongApi } from './kiemTraTraPhong.api.js';
+import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 import '../nhanVienSale/dangKyTraPhongTab.css';
 
 
@@ -301,63 +302,37 @@ export default function KiemTraTraPhong() {
 
   return (
     <div>
-      {/* Table Section */}
-      <div className="tp-search-container">
-        <div className="tp-search-row" style={{ gap: '16px' }}>
-          <div className="tp-search-col" style={{ flex: 1 }}>
-            <div className="tp-search-label">TÌM KIẾM</div>
-            <div className="tp-search-wrap">
-              <input className="ktp-input tp-search-input-no-icon" type="text"
-                placeholder="Tra cứu theo tên, số điện thoại hoặc mã phiếu..."
-                value={searchQuery}
-                spellCheck={false}
-                onChange={e => setSearchQuery(e.target.value)} />
-            </div>
+      <section className="ktp-table-section">
+        {/* Thanh tìm kiếm */}
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ flex: '2 1 240px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tên khách hàng, SĐT hoặc mã phiếu..."
+              className="ktp-input"
+              style={{ width: '100%', backgroundColor: '#fff' }}
+              spellCheck={false}
+            />
           </div>
+          {searchQuery && (
+            <button type="button" onClick={() => setSearchQuery('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '24px' }}>
-          {[
-            { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
-            { id: 'Chờ xử lý', label: 'Chờ xử lý', count: countChoXuLy },
-            { id: 'Đã xử lý', label: 'Đã xử lý', count: countDaXuLy }
-          ].map(st => (
-            <button
-              key={st.id}
-              onClick={() => setFilterStatus(st.id)}
-              type="button"
-              style={{
-                padding: '6px 16px',
-                borderRadius: '20px',
-                border: filterStatus === st.id ? 'none' : '1px solid #e1e3e4',
-                backgroundColor: filterStatus === st.id ? '#2f6765' : '#f8f9fa',
-                color: filterStatus === st.id ? '#ffffff' : '#3f494a',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {st.label}
-              <span style={{
-                backgroundColor: filterStatus === st.id ? '#ffffff' : '#e1e3e4',
-                color: filterStatus === st.id ? '#2f6765' : '#3f494a',
-                padding: '2px 8px',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: '600'
-              }}>
-                {st.count}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <section className="tp-list-panel">
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          items={[
+            { key: 'Tất cả', label: 'Tất cả' },
+            { key: 'Chờ xử lý', label: 'Chờ xử lý' },
+            { key: 'Đã xử lý', label: 'Đã xử lý' }
+          ]}
+          activeKey={filterStatus}
+          counts={{ 'Tất cả': countTatCa, 'Chờ xử lý': countChoXuLy, 'Đã xử lý': countDaXuLy }}
+          onChange={setFilterStatus}
+        />
 
         {loading ? (
           <div style={{ padding: '20px', textAlign: 'center' }}>Đang tải...</div>

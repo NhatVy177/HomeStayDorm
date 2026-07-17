@@ -142,37 +142,37 @@ export default function GhiNhanBanGiaoRa() {
 
   return (
     <div>
-      <div className="tp-search-container">
-          <div className="tp-search-row">
-            <div className="tp-search-col" style={{ flex: 1 }}>
-              <div className="tp-search-label">TÌM KIẾM</div>
-              <div className="tp-search-wrap">
-                <input
-                  className="ktp-input tp-search-input-no-icon"
-                  type="text"
-                  placeholder="Tra cứu theo tên, mã phiếu..."
-                  value={searchQuery}
-                  spellCheck={false}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <StatusFilterTabs
-              className="tp-search-status-tabs"
-              items={[
-                { key: 'Tất cả', label: 'Tất cả', count: statusCounts['Tất cả'] },
-                { key: 'Chờ bàn giao', label: 'Chờ bàn giao', count: statusCounts['Chờ bàn giao'] },
-                { key: 'Đã bàn giao', label: 'Đã bàn giao', count: statusCounts['Đã bàn giao'] }
-              ]}
-              activeKey={filterStatus}
-              onChange={setFilterStatus}
+      <section className="ktp-table-section">
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ flex: '2 1 240px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tên khách hàng hoặc mã phiếu..."
+              className="ktp-input"
+              style={{ width: '100%', backgroundColor: '#fff' }}
+              spellCheck={false}
             />
           </div>
-      </div>
+          {searchQuery && (
+            <button type="button" onClick={() => setSearchQuery('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          )}
+        </div>
 
-      <section className="tp-list-panel">
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          items={[
+            { key: 'Tất cả', label: 'Tất cả' },
+            { key: 'Chờ bàn giao', label: 'Chờ bàn giao' },
+            { key: 'Đã bàn giao', label: 'Đã bàn giao' }
+          ]}
+          activeKey={filterStatus}
+          counts={statusCounts}
+          onChange={setFilterStatus}
+        />
+
         {loading ? (
           <div style={{ padding: '20px', textAlign: 'center' }}>Đang tải...</div>
         ) : (
