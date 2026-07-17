@@ -795,10 +795,9 @@ export default function LapHopDongTab() {
                     ) : (
                       <button 
                         className="lhd-btn lhd-btn-outline" 
-                        style={{ padding: '7px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: '160px' }}
+                        style={{ padding: '7px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '160px' }}
                         onClick={() => handleViewContract(p.maPhieuDatCoc)}
                       >
-                        <Icon name="description" style={{ fontSize: '15px' }} />
                         Xem hợp đồng
                       </button>
                     )}

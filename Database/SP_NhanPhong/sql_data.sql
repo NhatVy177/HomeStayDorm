@@ -70,6 +70,17 @@ BEGIN TRY
     DELETE FROM dbo.QuiDinhHopDong
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts);
 
+    DELETE FROM dbo.DoiSoat
+    WHERE MaPhieuTra IN (
+        SELECT MaPhieuTra FROM dbo.PhieuTraPhong
+        WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
+           OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101')
+    );
+
+    DELETE FROM dbo.PhieuTraPhong
+    WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
+       OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
+
     DELETE FROM dbo.DieuKhoanViPhamHopDong
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts);
 
