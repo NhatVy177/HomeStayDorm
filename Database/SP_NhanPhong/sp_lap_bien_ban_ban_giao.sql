@@ -78,11 +78,13 @@ BEGIN
         nd.HoTen AS hoTen,
         nd.SDT AS soDienThoai,
         kh.CCCD AS cccd,
+        -- Lấy phòng từ dòng đầu tiên của ChiTietDatCoc (mọi trường hợp đều cùng phòng)
         p.MaPhong AS maPhong,
         p.TenPhong AS tenPhong,
-        ISNULL(STRING_AGG(ctdc.MaGiuong, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong), N'Nguyên phòng') AS maGiuong,
+        -- Chỉ gộp đúng số giường thực tế thuê (SoGiuongThue), bỏ qua giường dư đã giải phóng
+        ISNULL(rentedBeds.maGiuong, N'Nguyên phòng') AS maGiuong,
         CAST(CASE WHEN hdKyDau.TrangThai = N'Đã TT' THEN 1 ELSE 0 END AS BIT) AS daDongTienDauKy,
-        ISNULL(STRING_AGG(g.TinhTrang, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong), N'Đã đặt cọc') AS tinhTrangGiuong,
+        ISNULL(rentedBeds.tinhTrangGiuong, N'Đã đặt cọc') AS tinhTrangGiuong,
         CAST(1 AS BIT) AS tinhTrangGiuongHopLe,
         CAST(CASE WHEN EXISTS (
             SELECT 1 FROM BienBanBanGiao bb
@@ -94,9 +96,28 @@ BEGIN
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
     JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-    JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-    JOIN Phong p ON p.MaPhong = ctdc.MaPhong
-    LEFT JOIN Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
+    -- Lấy 1 dòng bất kỳ để xác định phòng
+    OUTER APPLY (
+        SELECT TOP 1 ctdc1.MaPhong
+        FROM dbo.ChiTietDatCoc ctdc1
+        WHERE ctdc1.MaPhieuDatCoc = hd.MaPhieuCoc
+        ORDER BY ctdc1.MaChiTietDC
+    ) AS firstBed
+    JOIN Phong p ON p.MaPhong = firstBed.MaPhong
+    -- Gộp danh sách giường + trạng thái CHỈ của TOP (SoGiuongThue) giường thực thuê
+    OUTER APPLY (
+        SELECT 
+            NULLIF(STRING_AGG(ctdc_r.MaGiuong, ', ') WITHIN GROUP (ORDER BY ctdc_r.MaGiuong), '') AS maGiuong,
+            NULLIF(STRING_AGG(g_r.TinhTrang, ', ') WITHIN GROUP (ORDER BY ctdc_r.MaGiuong), '') AS tinhTrangGiuong
+        FROM (
+            SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+            FROM dbo.ChiTietDatCoc ctdc_inner
+            WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+              AND ctdc_inner.MaGiuong IS NOT NULL
+            ORDER BY ctdc_inner.MaChiTietDC
+        ) AS ctdc_r
+        LEFT JOIN dbo.Giuong g_r ON g_r.MaPhong = ctdc_r.MaPhong AND g_r.MaGiuong = ctdc_r.MaGiuong
+    ) AS rentedBeds
     OUTER APPLY (
         SELECT TOP 1 hdon.TrangThai
         FROM HoaDon hdon
@@ -118,36 +139,45 @@ BEGIN
                 AND bb.TrangThai = N'Đã lập'
           )
           OR (
-              NOT EXISTS (
-                  SELECT 1
-                  FROM ChiTietDatCoc ctdcCheck
-                  LEFT JOIN Giuong gCheck
-                    ON gCheck.MaPhong = ctdcCheck.MaPhong
-                   AND gCheck.MaGiuong = ctdcCheck.MaGiuong
-                  WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
-                    AND pdc.HinhThucThue = N'Ghép giường'
-                    AND (
-                        ctdcCheck.MaGiuong IS NULL
-                        OR gCheck.TinhTrang <> N'Đã đặt cọc'
-                        OR gCheck.TinhTrang IS NULL
-                    )
+              -- Ghép giường: chỉ kiểm tra đúng số giường thực tế thuê (TOP SoGiuongThue), bỏ qua giường dư đã giải phóng
+              (
+                  pdc.HinhThucThue = N'Ghép giường'
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM (
+                          SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+                          FROM dbo.ChiTietDatCoc ctdc_inner
+                          WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                          ORDER BY ctdc_inner.MaChiTietDC
+                      ) AS ctdcRented
+                      LEFT JOIN Giuong gCheck ON gCheck.MaPhong = ctdcRented.MaPhong AND gCheck.MaGiuong = ctdcRented.MaGiuong
+                      WHERE ctdcRented.MaGiuong IS NULL
+                         OR gCheck.TinhTrang IS NULL
+                         OR gCheck.TinhTrang NOT IN (N'Đã đặt cọc', N'Trống')
+                  )
               )
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM ChiTietDatCoc ctdcCheck
-                  JOIN Giuong gCheck ON gCheck.MaPhong = ctdcCheck.MaPhong
-                  WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
-                    AND pdc.HinhThucThue <> N'Ghép giường'
-                    AND gCheck.TinhTrang <> N'Đã đặt cọc'
+              OR (
+                  -- Nguyên phòng: kiểm tra phòng không bị chiếm bởi hợp đồng khác
+                  pdc.HinhThucThue <> N'Ghép giường'
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM ChiTietDatCoc ctdcCheck
+                      JOIN Giuong gCheck ON gCheck.MaPhong = ctdcCheck.MaPhong
+                      WHERE ctdcCheck.MaPhieuDatCoc = hd.MaPhieuCoc
+                        AND gCheck.TinhTrang <> N'Đã đặt cọc'
+                  )
               )
           )
       )
     GROUP BY
         hd.MaHopDong, hd.NgayBatDau, hd.NgayKetThuc, hd.GiaThue, hd.KyThanhToan,
-        nd.HoTen, nd.SDT, kh.CCCD, p.MaPhong, p.TenPhong, hdKyDau.TrangThai
+        nd.HoTen, nd.SDT, kh.CCCD, p.MaPhong, p.TenPhong, hdKyDau.TrangThai,
+        rentedBeds.maGiuong, rentedBeds.tinhTrangGiuong
     ORDER BY hd.NgayBatDau ASC, hd.MaHopDong ASC;
 END;
 GO
+
+
 
 CREATE OR ALTER PROCEDURE SP_TraCuuHopDongBanGiao
     @MaHopDong VARCHAR(6)
@@ -320,16 +350,25 @@ BEGIN
 
     IF @HinhThucThue = N'Ghép giường'
     BEGIN
+        -- Chỉ kiểm tra đúng số giường thực tế thuê (TOP SoGiuongThue), bỏ qua giường dư đã giải phóng
+        DECLARE @SoGiuongThue INT;
+        SELECT @SoGiuongThue = SoGiuongThue FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
         IF EXISTS (
             SELECT 1 
-            FROM ChiTietDatCoc ctdc
-            JOIN Giuong g ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
-            WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
-              AND g.TinhTrang <> N'Đã đặt cọc'
+            FROM (
+                SELECT TOP (ISNULL(@SoGiuongThue, 1)) ctdc.MaPhong, ctdc.MaGiuong
+                FROM ChiTietDatCoc ctdc
+                WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
+                  AND ctdc.MaGiuong IS NOT NULL
+                ORDER BY ctdc.MaChiTietDC
+            ) AS rentedBeds
+            JOIN Giuong g ON g.MaPhong = rentedBeds.MaPhong AND g.MaGiuong = rentedBeds.MaGiuong
+            WHERE g.TinhTrang NOT IN (N'Đã đặt cọc', N'Trống')
         )
         BEGIN
             SET @MaLoi = -6;
-            SET @ThongBao = N'Có giường thuê ghép không ở trạng thái "Đã đặt cọc".';
+            SET @ThongBao = N'Có giường thuê ghép không ở trạng thái hợp lệ ("Đã đặt cọc" hoặc "Trống").';
             RETURN;
         END;
     END;
@@ -452,11 +491,11 @@ BEGIN
     END;
     ELSE -- Ghép giường
     BEGIN
-        -- Tài sản cá nhân: nhân bản theo giường
+        -- Tài sản cá nhân: nhân bản theo giường THỰC TẾ thuê (TOP SoGiuongThue), bỏ qua giường dư
         SELECT 
-            ctdc.MaPhong,
+            ctdc_r.MaPhong,
             p.TenPhong,
-            ctdc.MaGiuong,
+            ctdc_r.MaGiuong,
             ts.MaTaiSan,
             ts.TenTaiSan,
             1 AS SoLuongHeThong, -- Mỗi giường nhận định mức 1
@@ -464,10 +503,16 @@ BEGIN
             1 AS SoLuongThucTeMacDinh,
             CAST(NULL AS NVARCHAR(255)) AS GhiChuMacDinh
         FROM HopDongThue hd
-        JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-        JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-        JOIN Phong p ON p.MaPhong = ctdc.MaPhong
-        JOIN TaiSan ts ON ts.MaPhong = ctdc.MaPhong
+        CROSS APPLY (
+            SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+            FROM dbo.ChiTietDatCoc ctdc_inner
+            JOIN dbo.PhieuDatCoc pdc_inner ON pdc_inner.MaPhieuDatCoc = ctdc_inner.MaPhieuDatCoc
+            WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+              AND ctdc_inner.MaGiuong IS NOT NULL
+            ORDER BY ctdc_inner.MaChiTietDC
+        ) AS ctdc_r
+        JOIN Phong p ON p.MaPhong = ctdc_r.MaPhong
+        JOIN TaiSan ts ON ts.MaPhong = ctdc_r.MaPhong
         WHERE hd.MaHopDong = @MaHopDong
           AND (
                ts.TenTaiSan LIKE N'%Giường%' 
@@ -481,9 +526,9 @@ BEGIN
 
         UNION ALL
 
-        -- Tài sản chung: hiển thị 1 lần cho cả phòng
+        -- Tài sản chung: hiển thị 1 lần cho cả phòng (không phụ thuộc số giường)
         SELECT DISTINCT
-            ctdc.MaPhong,
+            firstBed.MaPhong,
             p.TenPhong,
             CAST(NULL AS VARCHAR(3)) AS MaGiuong,
             ts.MaTaiSan,
@@ -493,10 +538,14 @@ BEGIN
             ts.SoLuong AS SoLuongThucTeMacDinh,
             CAST(NULL AS NVARCHAR(255)) AS GhiChuMacDinh
         FROM HopDongThue hd
-        JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-        JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-        JOIN Phong p ON p.MaPhong = ctdc.MaPhong
-        JOIN TaiSan ts ON ts.MaPhong = ctdc.MaPhong
+        CROSS APPLY (
+            SELECT TOP 1 ctdc_inner.MaPhong
+            FROM dbo.ChiTietDatCoc ctdc_inner
+            WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+            ORDER BY ctdc_inner.MaChiTietDC
+        ) AS firstBed
+        JOIN Phong p ON p.MaPhong = firstBed.MaPhong
+        JOIN TaiSan ts ON ts.MaPhong = firstBed.MaPhong
         WHERE hd.MaHopDong = @MaHopDong
           AND NOT (
                ts.TenTaiSan LIKE N'%Giường%' 
@@ -511,6 +560,7 @@ BEGIN
     END;
 END;
 GO
+
 
 -- ------------------------------------------------------------
 -- SP04 – SP_LuuNhapBienBanBanGiao
@@ -817,16 +867,25 @@ BEGIN
 
         IF @HinhThucThue = N'Ghép giường'
         BEGIN
+            -- Chỉ kiểm tra đúng số giường thực tế thuê (TOP SoGiuongThue), bỏ qua giường dư đã giải phóng
+            DECLARE @SoGiuongThue INT;
+            SELECT @SoGiuongThue = SoGiuongThue FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
             IF EXISTS (
                 SELECT 1 
-                FROM ChiTietDatCoc ctdc
-                JOIN Giuong g WITH (UPDLOCK, HOLDLOCK) ON g.MaPhong = ctdc.MaPhong AND g.MaGiuong = ctdc.MaGiuong
-                WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
-                  AND g.TinhTrang <> N'Đã đặt cọc'
+                FROM (
+                    SELECT TOP (ISNULL(@SoGiuongThue, 1)) ctdc.MaPhong, ctdc.MaGiuong
+                    FROM ChiTietDatCoc ctdc
+                    WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
+                      AND ctdc.MaGiuong IS NOT NULL
+                    ORDER BY ctdc.MaChiTietDC
+                ) AS rentedBeds
+                JOIN Giuong g WITH (UPDLOCK, HOLDLOCK) ON g.MaPhong = rentedBeds.MaPhong AND g.MaGiuong = rentedBeds.MaGiuong
+                WHERE g.TinhTrang NOT IN (N'Đã đặt cọc', N'Trống')
             )
             BEGIN
                 SET @MaLoi = -6;
-                SET @ThongBao = N'Có giường thuê ghép không ở trạng thái "Đã đặt cọc".';
+                SET @ThongBao = N'Có giường thuê ghép không ở trạng thái hợp lệ ("Đã đặt cọc" hoặc "Trống").';
                 IF @TranCounter > 0
                     ROLLBACK TRANSACTION SP_LapBG_Save;
                 ELSE
@@ -885,14 +944,19 @@ BEGIN
         END;
 
         -- 4.2. Còn tài sản bắt buộc chưa nhập số lượng thực tế
+        -- (Chỉ kiểm tra tài sản thuộc phòng của hợp đồng, không cần kiểm tra từng giường riêng lẻ)
         IF EXISTS (
             SELECT 1 
-            FROM ChiTietDatCoc ctdc
-            JOIN TaiSan ts ON ts.MaPhong = ctdc.MaPhong
-            WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
+            FROM TaiSan ts
+            WHERE ts.MaPhong IN (
+                SELECT TOP 1 ctdc.MaPhong
+                FROM ChiTietDatCoc ctdc
+                WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
+                ORDER BY ctdc.MaChiTietDC
+            )
               AND NOT EXISTS (
                   SELECT 1 FROM @DanhSachTaiSan tvp 
-                  WHERE tvp.MaPhong = ctdc.MaPhong AND tvp.MaTaiSan = ts.MaTaiSan
+                  WHERE tvp.MaTaiSan = ts.MaTaiSan
               )
         )
         BEGIN
@@ -1069,11 +1133,17 @@ BEGIN
         -- [Bước 8] Cập nhật trạng thái giường sang N'Đang thuê'
         IF @HinhThucThue = N'Ghép giường'
         BEGIN
+            -- Chỉ update đúng số giường thực tế thuê (TOP SoGiuongThue)
             UPDATE g
             SET TinhTrang = N'Đang thuê'
             FROM Giuong g
-            JOIN ChiTietDatCoc ctdc ON ctdc.MaPhong = g.MaPhong AND ctdc.MaGiuong = g.MaGiuong
-            WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc;
+            JOIN (
+                SELECT TOP (ISNULL(@SoGiuongThue, 1)) ctdc.MaPhong, ctdc.MaGiuong
+                FROM ChiTietDatCoc ctdc
+                WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc
+                  AND ctdc.MaGiuong IS NOT NULL
+                ORDER BY ctdc.MaChiTietDC
+            ) AS rentedBeds ON rentedBeds.MaPhong = g.MaPhong AND rentedBeds.MaGiuong = g.MaGiuong;
         END;
         ELSE -- Nguyên phòng
         BEGIN

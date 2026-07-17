@@ -1,6 +1,8 @@
 USE HOMEDORM4;
 GO
 
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
 SET DATEFORMAT ymd;
 GO
 
@@ -36,7 +38,7 @@ BEGIN TRY
     SELECT DISTINCT MaHopDong
     FROM dbo.HopDongThue
     WHERE MaHopDong IN ('HD9098', 'HD9099', 'HD9100')
-       OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
+       OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101', 'DC9102');
 
     DELETE FROM dbo.ChiTietBanGiao
     WHERE MaBienBan IN (
@@ -61,7 +63,7 @@ BEGIN TRY
 
     DELETE FROM dbo.ThanhVienHopDong
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
-       OR MaThanhVien IN ('TV9098', 'TV9099', 'TV9101', 'TV9102');
+       OR MaThanhVien IN ('TV9098', 'TV9099', 'TV9101', 'TV9102', 'TV9103');
 
     DELETE FROM dbo.DichVuHopDong
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
@@ -74,59 +76,59 @@ BEGIN TRY
     WHERE MaPhieuTra IN (
         SELECT MaPhieuTra FROM dbo.PhieuTraPhong
         WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
-           OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101')
+           OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101', 'DC9102')
     );
 
     DELETE FROM dbo.PhieuTraPhong
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
-       OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
+       OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101', 'DC9102');
 
     DELETE FROM dbo.DieuKhoanViPhamHopDong
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts);
 
     DELETE FROM dbo.HopDongThue
     WHERE MaHopDong IN (SELECT MaHopDong FROM @TestContracts)
-       OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
+       OR MaPhieuCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101', 'DC9102');
 
     DELETE FROM dbo.ThanhVienHopDong
     WHERE MaHoSoCuTru IN (
             SELECT MaHoSoCuTru
             FROM dbo.HoSoCuTru
-            WHERE MaHoSoCuTru IN ('CT9098', 'CT9099', 'CT9100')
-               OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101')
+            WHERE MaHoSoCuTru IN ('CT9098', 'CT9099', 'CT9100', 'CT9102')
+               OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101', 'DC9102')
         )
-       OR MaThanhVien IN ('TV9098', 'TV9099', 'TV9101', 'TV9102');
+       OR MaThanhVien IN ('TV9098', 'TV9099', 'TV9101', 'TV9102', 'TV9103');
 
     IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NOT NULL
     BEGIN
         DELETE FROM dbo.HoSoCuTru
-        WHERE MaHoSoCuTru IN ('CT9098', 'CT9099', 'CT9100')
-           OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
+        WHERE MaHoSoCuTru IN ('CT9098', 'CT9099', 'CT9100', 'CT9102')
+           OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101', 'DC9102');
     END
 
     DELETE FROM dbo.ChiTietDatCoc
-    WHERE MaChiTietDC IN ('CD9098', 'CD9099', 'CD9100')
-       OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
+    WHERE MaChiTietDC IN ('CD9098', 'CD9099', 'CD9100', 'CD9102', 'CD9103')
+       OR MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101', 'DC9102');
 
     DELETE FROM dbo.PhieuDatCoc
-    WHERE MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101');
+    WHERE MaPhieuDatCoc IN ('DC9098', 'DC9099', 'DC9100', 'DC9101', 'DC9102');
 
     DELETE FROM dbo.PDK_LoaiPhong
-    WHERE MaDangKy IN ('DK9098', 'DK9099', 'DK9100', 'DK9101');
+    WHERE MaDangKy IN ('DK9098', 'DK9099', 'DK9100', 'DK9101', 'DK9102');
 
     DELETE FROM dbo.PhieuDangKy
-    WHERE MaDangKy IN ('DK9098', 'DK9099', 'DK9100', 'DK9101');
+    WHERE MaDangKy IN ('DK9098', 'DK9099', 'DK9100', 'DK9101', 'DK9102');
 
     DELETE FROM dbo.TaiKhoan
-    WHERE MaNguoiDung IN ('KH9098', 'KH9099', 'KH9100', 'KH9101');
+    WHERE MaNguoiDung IN ('KH9098', 'KH9099', 'KH9100', 'KH9101', 'KH9102');
 
     DELETE FROM dbo.KhachHang
-    WHERE MaKhachHang IN ('KH9098', 'KH9099', 'KH9100', 'KH9101');
+    WHERE MaKhachHang IN ('KH9098', 'KH9099', 'KH9100', 'KH9101', 'KH9102');
 
     DELETE FROM dbo.NguoiDung
-    WHERE MaNguoiDung IN ('KH9098', 'KH9099', 'KH9100', 'KH9101');
+    WHERE MaNguoiDung IN ('KH9098', 'KH9099', 'KH9100', 'KH9101', 'KH9102');
 
-    PRINT N'- Da cleanup data test HD9098/HD9099/HD9100/DC9101.';
+    PRINT N'- Da cleanup data test HD9098/HD9099/HD9100/DC9101/DC9102.';
     COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH
@@ -156,6 +158,16 @@ WHERE MaPhong = 'P202';
 UPDATE dbo.Giuong
 SET TinhTrang = N'Đã đặt cọc'
 WHERE MaPhong = 'P202' AND MaGiuong = 'G02';
+
+-- DC9102: ghep giuong P203-G03 va P203-G04, cho ghi nhan cu tru.
+UPDATE dbo.Phong
+SET TinhTrang = N'Còn chỗ',
+    GioiTinhChoPhep = N'Nam'
+WHERE MaPhong = 'P203';
+
+UPDATE dbo.Giuong
+SET TinhTrang = N'Đã đặt cọc'
+WHERE MaPhong = 'P203' AND MaGiuong IN ('G03', 'G04');
 
 -- HD9099: nguyen phong P204, da thu tien, cho ban giao.
 UPDATE dbo.Phong
@@ -198,21 +210,24 @@ VALUES
     ('KH9098', N'Nguyễn Minh Ngân', '2001-05-12', N'Nữ', '0988009098', 'kh9098@homedorm.vn', NULL, 'KhachHang'),
     ('KH9099', N'Lê Hoàng Bàn Giao', '2000-09-20', N'Nam', '0988009099', 'kh9099@homedorm.vn', NULL, 'KhachHang'),
     ('KH9100', N'Trần Mai Nguyên Căn', '2001-11-18', N'Nữ', '0988009100', 'kh9100@homedorm.vn', NULL, 'KhachHang'),
-    ('KH9101', N'Đặng Ngọc Nguyên Căn', '2002-08-14', N'Nữ', '0988009101', 'kh9101@homedorm.vn', NULL, 'KhachHang');
+    ('KH9101', N'Đặng Ngọc Nguyên Căn', '2002-08-14', N'Nữ', '0988009101', 'kh9101@homedorm.vn', NULL, 'KhachHang'),
+    ('KH9102', N'Đặng Văn Đại Diện', '2001-07-22', N'Nam', '0988009102', 'kh9102@homedorm.vn', NULL, 'KhachHang');
 
 INSERT INTO dbo.KhachHang (MaKhachHang, QuocTich, CCCD)
 VALUES
     ('KH9098', N'Việt Nam', '079200009098'),
     ('KH9099', N'Việt Nam', '079200009099'),
     ('KH9100', N'Việt Nam', '079200009100'),
-    ('KH9101', N'Việt Nam', '079200009102');
+    ('KH9101', N'Việt Nam', '079200009102'),
+    ('KH9102', N'Việt Nam', '079200009103');
 
 INSERT INTO dbo.TaiKhoan (TenDangNhap, MatKhau, TrangThai, MaNguoiDung)
 VALUES
     ('kh9098', 'A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3', N'Hoạt động', 'KH9098'),
     ('kh9099', 'A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3', N'Hoạt động', 'KH9099'),
     ('kh9100', 'A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3', N'Hoạt động', 'KH9100'),
-    ('kh9101', 'A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3', N'Hoạt động', 'KH9101');
+    ('kh9101', 'A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3', N'Hoạt động', 'KH9101'),
+    ('kh9102', 'A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3', N'Hoạt động', 'KH9102');
 
 INSERT INTO dbo.PhieuDangKy (
     MaDangKy, NgayDangKy, SoNam, SoNu, SoNguoiDuKienO,
@@ -227,14 +242,17 @@ VALUES
     ('DK9100', '2026-06-13', 0, 2, 2, N'Thủ Đức', 5000000, '2026-07-01', 6,
      N'Test nhận phòng: thuê nguyên căn/phòng, nhóm 2 nữ, chờ bàn giao.', N'Xác nhận cọc', 'KH9100', 'NV0001'),
     ('DK9101', '2026-06-14', 0, 3, 3, N'Thủ Đức', 9000000, '2026-07-02', 6,
-     N'Test ghi nhận cư trú: thuê nguyên căn, nhóm 3 nữ, chưa lập hợp đồng.', N'Xác nhận cọc', 'KH9101', 'NV0001');
+     N'Test ghi nhận cư trú: thuê nguyên căn, nhóm 3 nữ, chưa lập hợp đồng.', N'Xác nhận cọc', 'KH9101', 'NV0001'),
+    ('DK9102', '2026-06-14', 2, 0, 2, N'Thủ Đức', 5000000, '2026-07-02', 6,
+     N'Test nhận phòng nhóm: ghép 2 giường nam, chưa lập hợp đồng.', N'Xác nhận cọc', 'KH9102', 'NV0001');
 
 INSERT INTO dbo.PDK_LoaiPhong (MaDangKy, MaLoaiPhong)
 VALUES
     ('DK9098', 'LP0001'),
     ('DK9099', 'LP0002'),
     ('DK9100', 'LP0001'),
-    ('DK9101', 'LP0003');
+    ('DK9101', 'LP0003'),
+    ('DK9102', 'LP0002');
 
 INSERT INTO dbo.PhieuDatCoc (
     MaPhieuDatCoc, ThoiDiemDatCoc, ThoiHanThanhToan, SoTienCoc,
@@ -258,16 +276,22 @@ VALUES
     ('DC9101', '2026-06-16 09:00:00', '2026-06-18 09:00:00', 8400000,
      N'Chuyển khoản', N'Đã TT', '2026-06-16 10:00:00',
      '/uploads/chung-tu-coc/DC9101.pdf', '2026-07-02 09:00:00', N'Nguyên phòng', N'Hiệu lực',
-     'DK9101', 'KH9101', 'NV0004');
+     'DK9101', 'KH9101', 'NV0004'),
+    ('DC9102', '2026-06-16 09:30:00', '2026-06-18 09:30:00', 3600000,
+     N'Chuyển khoản', N'Đã TT', '2026-06-16 10:30:00',
+     '/uploads/chung-tu-coc/DC9102.pdf', '2026-07-02 09:30:00', N'Ghép giường', N'Hiệu lực',
+     'DK9102', 'KH9102', 'NV0004');
 
 INSERT INTO dbo.ChiTietDatCoc (MaChiTietDC, MaPhieuDatCoc, MaPhong, MaGiuong, GiaThue)
 VALUES
     ('CD9098', 'DC9098', 'P202', 'G02', 1400000),
     ('CD9099', 'DC9099', 'P204', NULL, 7200000),
     ('CD9100', 'DC9100', 'P301', NULL, 4400000),
-    ('CD9101', 'DC9101', 'P105', NULL, 8400000);
+    ('CD9101', 'DC9101', 'P105', NULL, 8400000),
+    ('CD9102', 'DC9102', 'P203', 'G03', 1800000),
+    ('CD9103', 'DC9102', 'P203', 'G04', 1800000);
 
-PRINT N'- Da tao phieu dang ky/coc cho DC9098, DC9099, DC9100 va DC9101.';
+PRINT N'- Da tao phieu dang ky/coc cho DC9098, DC9099, DC9100, DC9101 va DC9102.';
 GO
 
 /* ============================================================

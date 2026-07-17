@@ -127,7 +127,7 @@ export async function layHoSoCuTruDaDuyetTheoPhieuCoc(maPhieuDatCoc) {
       hs.GhiChuQuanLy
     FROM dbo.HoSoCuTru hs
     WHERE hs.MaPhieuDatCoc = @MaPhieuDatCoc
-      AND hs.TrangThaiHoSo = N'Đã duyệt cư trú';
+      AND (hs.TrangThaiHoSo = N'Đã duyệt cư trú' OR hs.TrangThaiHoSo LIKE N'%duy%t%');
 
     SELECT
       tv.MaThanhVien AS MaThanhVienCuTru,
@@ -143,9 +143,9 @@ export async function layHoSoCuTruDaDuyetTheoPhieuCoc(maPhieuDatCoc) {
     FROM dbo.ThanhVienHopDong tv
     JOIN dbo.HoSoCuTru hs ON hs.MaHoSoCuTru = tv.MaHoSoCuTru
     WHERE hs.MaPhieuDatCoc = @MaPhieuDatCoc
-      AND hs.TrangThaiHoSo = N'Đã duyệt cư trú'
+      AND (hs.TrangThaiHoSo = N'Đã duyệt cư trú' OR hs.TrangThaiHoSo LIKE N'%duy%t%')
     ORDER BY
-      CASE WHEN tv.TrangThai = N'Đủ điều kiện' THEN 0 ELSE 1 END,
+      CASE WHEN (tv.TrangThai = N'Đủ điều kiện' OR tv.TrangThai LIKE N'%di%u%') THEN 0 ELSE 1 END,
       tv.MaThanhVien;
   `);
 

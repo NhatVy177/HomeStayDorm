@@ -1,0 +1,31 @@
+2026-07-15T05:26:00.357Z
+RequestError: Procedure or function SP_TraPhong_KhachHang_GuiYeuCau has too many arguments specified.
+    at handleError (E:\pttk\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:784:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (E:\pttk\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-15T06:19:18.894Z
+Error: Tên đăng nhập đã tồn tại.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangKy (file:///E:/pttk/HomeStayDorm/Web/backend/services/auth.service.js:131:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangKy (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/auth.controller.js:10:26)
+
+2026-07-15T06:19:23.675Z
+Error: Số điện thoại này đã được liên kết với một tài khoản. Vui lòng đăng nhập.
+    at createServiceError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///E:/pttk/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangKy (file:///E:/pttk/HomeStayDorm/Web/backend/services/auth.service.js:131:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangKy (file:///E:/pttk/HomeStayDorm/Web/backend/controllers/auth.controller.js:10:26)
+

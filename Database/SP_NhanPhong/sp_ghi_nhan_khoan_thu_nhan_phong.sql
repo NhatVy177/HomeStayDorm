@@ -26,11 +26,26 @@ BEGIN
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         -- Ghép tên phòng và giường để tương thích với UI (ví dụ: "P.102 - Giường A" hoặc ghép danh sách nếu thuê nhiều giường)
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
+        (
+            SELECT STRING_AGG(p2.TenPhong + CASE WHEN ctdc2.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc2.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ')
+            FROM (
+                SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+                FROM dbo.ChiTietDatCoc ctdc_inner
+                WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                ORDER BY ctdc_inner.MaChiTietDC
+            ) AS ctdc2
+            JOIN dbo.Phong p2 ON p2.MaPhong = ctdc2.MaPhong
+        ) AS PhongGiuong,
         hd.NgayBatDau,
         -- Tính động TongTien theo kỳ thanh toán (GiaThue * 3 nếu Hàng quý, GiaThue nếu Hàng tháng) cộng dịch vụ đi kèm
         (CASE WHEN hd.KyThanhToan = N'Hàng tháng' THEN hd.GiaThue ELSE hd.GiaThue * 3 END)
-        + ISNULL((SELECT SUM(dv.DonGia) FROM DichVuHopDong dvhd JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu WHERE dvhd.MaHopDong = hd.MaHopDong AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')), 0) AS TongTien,
+        + ISNULL((
+            SELECT SUM(dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END) 
+            FROM DichVuHopDong dvhd 
+            JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu 
+            WHERE dvhd.MaHopDong = hd.MaHopDong 
+              AND dv.MaDichVu NOT IN ('DV0001', 'DV0002')
+        ), 0) AS TongTien,
         -- Trạng thái thanh toán
         CASE 
             WHEN h.TrangThai = N'Đã TT' THEN N'Đã thanh toán'
@@ -69,6 +84,8 @@ BEGIN
         hd.NgayBatDau, 
         hd.KyThanhToan,
         hd.GiaThue,
+        hd.SoGiuongThue,
+        hd.MaPhieuCoc,
         h.TongTien, 
         h.TrangThai
     ORDER BY hd.MaHopDong DESC;
@@ -159,7 +176,7 @@ BEGIN
     ELSE -- Hàng quý
         SET @TienThueKyDau = @GiaThue * 3;
 
-    SELECT @TienDichVu = ISNULL(SUM(dv.DonGia), 0)
+    SELECT @TienDichVu = ISNULL(SUM(dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END), 0)
     FROM DichVuHopDong dvhd
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
     WHERE dvhd.MaHopDong = @MaHopDong
@@ -172,27 +189,65 @@ BEGIN
         RETURN;
     END;
 
+    -- Tính toán hoàn cọc nếu có giường bị hủy
+    DECLARE @SoGiuongDatCoc INT = 0;
+    DECLARE @TienCocBanDau DECIMAL(15,2) = 0.00;
+    DECLARE @SoNguoiHuy INT = 0;
+    DECLARE @TienHoanCoc DECIMAL(15,2) = 0.00;
+    DECLARE @DonGiaHoanCoc DECIMAL(15,2) = 0.00;
+
+    DECLARE @MaPhieuCoc VARCHAR(6);
+    DECLARE @SoGiuongThue INT;
+    SELECT @MaPhieuCoc = MaPhieuCoc, @SoGiuongThue = SoGiuongThue FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
+    IF @MaPhieuCoc IS NOT NULL
+    BEGIN
+        SELECT 
+            @SoGiuongDatCoc = COUNT(*),
+            @TienCocBanDau = MIN(pdc.SoTienCoc)
+        FROM dbo.ChiTietDatCoc ctdc
+        JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
+        WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc;
+
+        IF @SoGiuongDatCoc > 0 AND @SoGiuongDatCoc > @SoGiuongThue
+        BEGIN
+            SET @SoNguoiHuy = @SoGiuongDatCoc - @SoGiuongThue;
+            SET @TienHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * @SoNguoiHuy * 0.8;
+            SET @DonGiaHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * 0.8;
+        END;
+    END;
+
     -- RESULT SET 1: Thông tin tổng quan
     SELECT 
         hd.MaHopDong,
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         nd.Email,
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
+        (
+            SELECT STRING_AGG(p2.TenPhong + CASE WHEN ctdc2.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc2.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ')
+            FROM (
+                SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+                FROM dbo.ChiTietDatCoc ctdc_inner
+                WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                ORDER BY ctdc_inner.MaChiTietDC
+            ) AS ctdc2
+            JOIN dbo.Phong p2 ON p2.MaPhong = ctdc2.MaPhong
+        ) AS PhongGiuong,
         hd.NgayBatDau,
         hd.KyThanhToan,
         hd.GiaThue,
         @TienThueKyDau AS TienThueKyDau,
         @TienDichVu AS TienDichVu,
-        (@TienThueKyDau + @TienDichVu) AS TongCongCanThu
+        (@TienThueKyDau + @TienDichVu) AS TongCongCanThu,
+        @TienHoanCoc AS TienHoanCoc,
+        @SoNguoiHuy AS SoNguoiHuy,
+        @DonGiaHoanCoc AS DonGiaHoanCoc
     FROM HopDongThue hd
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
     JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-    JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-    JOIN Phong p ON p.MaPhong = ctdc.MaPhong
     WHERE hd.MaHopDong = @MaHopDong
-    GROUP BY hd.MaHopDong, nd.HoTen, nd.SDT, nd.Email, hd.NgayBatDau, hd.KyThanhToan, hd.GiaThue;
+    GROUP BY hd.MaHopDong, nd.HoTen, nd.SDT, nd.Email, hd.NgayBatDau, hd.KyThanhToan, hd.GiaThue, hd.SoGiuongThue, hd.MaPhieuCoc;
 
     -- RESULT SET 2: Chi tiết các dòng tính tiền
     -- Dòng 1: Tiền thuê kỳ đầu
@@ -213,10 +268,10 @@ BEGIN
     SELECT 
         N'Dịch vụ' AS LoaiKhoanThu,
         dv.TenDichVu AS NoiDung,
-        1.00 AS SoLuong,
+        CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END AS SoLuong,
         CAST(dv.DonViTinh AS NVARCHAR(20)) AS DonViTinh,
         dv.DonGia,
-        dv.DonGia AS ThanhTien,
+        (dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END) AS ThanhTien,
         dvhd.MaChiTietDVHD
     FROM DichVuHopDong dvhd
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
@@ -279,12 +334,14 @@ BEGIN
             BEGIN TRANSACTION;
 
         -- Đọc và khóa thông tin hợp đồng để chống tranh chấp đồng thời
-        DECLARE @TrangThaiHopDong NVARCHAR(20), @GiaThue DECIMAL(15,2), @KyThanhToan NVARCHAR(20), @NgayBatDau DATE;
+        DECLARE @TrangThaiHopDong NVARCHAR(20), @GiaThue DECIMAL(15,2), @KyThanhToan NVARCHAR(20), @NgayBatDau DATE, @MaPhieuCoc VARCHAR(6), @SoGiuongThue INT;
         SELECT 
             @TrangThaiHopDong = TrangThai,
             @GiaThue = GiaThue,
             @KyThanhToan = KyThanhToan,
-            @NgayBatDau = NgayBatDau
+            @NgayBatDau = NgayBatDau,
+            @MaPhieuCoc = MaPhieuCoc,
+            @SoGiuongThue = SoGiuongThue
         FROM HopDongThue WITH (UPDLOCK, HOLDLOCK)
         WHERE MaHopDong = @MaHopDong;
 
@@ -372,7 +429,7 @@ BEGIN
         ELSE -- Hàng quý
             SET @TienThueKyDau = @GiaThue * 3;
 
-        SELECT @TienDichVu = ISNULL(SUM(dv.DonGia), 0)
+        SELECT @TienDichVu = ISNULL(SUM(dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END), 0)
         FROM DichVuHopDong dvhd
         JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
         WHERE dvhd.MaHopDong = @MaHopDong
@@ -388,10 +445,36 @@ BEGIN
             RETURN;
         END;
 
+        -- Tính toán hoàn cọc nếu có giường bị hủy để tính số tiền thực thu/trả chênh lệch
+        DECLARE @SoGiuongDatCoc INT = 0;
+        DECLARE @TienCocBanDau DECIMAL(15,2) = 0.00;
+        DECLARE @SoNguoiHuy INT = 0;
+        DECLARE @TienHoanCoc DECIMAL(15,2) = 0.00;
+
+        SELECT 
+            @SoGiuongDatCoc = COUNT(*),
+            @TienCocBanDau = MIN(pdc.SoTienCoc)
+        FROM dbo.ChiTietDatCoc ctdc
+        JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
+        WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc;
+
+        IF @SoGiuongDatCoc > 0 AND @SoGiuongDatCoc > @SoGiuongThue
+        BEGIN
+            SET @SoNguoiHuy = @SoGiuongDatCoc - @SoGiuongThue;
+            SET @TienHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * @SoNguoiHuy * 0.8;
+        END;
+
+        DECLARE @NetDifference DECIMAL(15,2) = @TongTien - @TienHoanCoc;
+        DECLARE @TienCanThanhToanToiThieu DECIMAL(15,2);
+        IF @NetDifference > 0
+            SET @TienCanThanhToanToiThieu = @NetDifference;
+        ELSE
+            SET @TienCanThanhToanToiThieu = ABS(@NetDifference);
+
         -- Xác định trạng thái hóa đơn dựa trên số tiền thực nộp
         DECLARE @TrangThaiHD NVARCHAR(20) = N'Chưa TT';
         DECLARE @NgayThanhToan DATE = NULL;
-        IF @SoTienKhachThanhToan >= @TongTien
+        IF @SoTienKhachThanhToan >= @TienCanThanhToanToiThieu
         BEGIN
             SET @TrangThaiHD = N'Đã TT';
             SET @NgayThanhToan = CAST(GETDATE() AS DATE);
@@ -448,7 +531,8 @@ BEGIN
 
         -- Cursor duyệt qua các dịch vụ
         DECLARE dv_cursor CURSOR LOCAL FAST_FORWARD FOR
-            SELECT dvhd.MaChiTietDVHD, dv.DonGia, dv.DonViTinh
+            SELECT dvhd.MaChiTietDVHD, dv.DonGia, dv.DonViTinh,
+                   CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END AS Qty
             FROM DichVuHopDong dvhd
             JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
             WHERE dvhd.MaHopDong = @MaHopDong
@@ -457,10 +541,11 @@ BEGIN
         DECLARE 
             @MaChiTietDVHD  VARCHAR(6),
             @DonGia         DECIMAL(15,2),
-            @DonViTinh      VARCHAR(20);
+            @DonViTinh      VARCHAR(20),
+            @Qty            DECIMAL(10,2);
 
         OPEN dv_cursor;
-        FETCH NEXT FROM dv_cursor INTO @MaChiTietDVHD, @DonGia, @DonViTinh;
+        FETCH NEXT FROM dv_cursor INTO @MaChiTietDVHD, @DonGia, @DonViTinh, @Qty;
 
         WHILE @@FETCH_STATUS = 0
         BEGIN
@@ -470,16 +555,16 @@ BEGIN
             INSERT INTO ChiTietHoaDon (MaChiTietHD, SoLuong, DonViTinh, DonGia, ThanhTien, MaHoaDon, MaChiTietDVHD, MaPhieuGhi)
             VALUES (
                 @MaChiTietHD,
-                1.00,
+                @Qty,
                 @DonViTinh,
                 @DonGia,
-                @DonGia,
+                (@DonGia * @Qty),
                 @MaHoaDon,
                 @MaChiTietDVHD,
                 NULL
             );
 
-            FETCH NEXT FROM dv_cursor INTO @MaChiTietDVHD, @DonGia, @DonViTinh;
+            FETCH NEXT FROM dv_cursor INTO @MaChiTietDVHD, @DonGia, @DonViTinh, @Qty;
         END;
 
         CLOSE dv_cursor;
@@ -490,7 +575,7 @@ BEGIN
             COMMIT TRANSACTION;
 
         -- Thiết lập kết quả trả về
-        IF @SoTienKhachThanhToan >= @TongTien
+        IF @SoTienKhachThanhToan >= @TienCanThanhToanToiThieu
         BEGIN
             SET @MaLoi = 0;
             SET @ThongBao = N'Ghi nhận khoản thu nhận phòng thành công. Có thể tiến hành bàn giao phòng.';
@@ -540,13 +625,41 @@ BEGIN
     SET @TienThueDetail = CASE WHEN @KyTTDetail = N'Hàng tháng' THEN @GiaThueDetail ELSE @GiaThueDetail * 3 END;
 
     DECLARE @TienDichVuDetail DECIMAL(15,2);
-    SELECT @TienDichVuDetail = ISNULL(SUM(dv.DonGia), 0)
+    SELECT @TienDichVuDetail = ISNULL(SUM(dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END), 0)
     FROM DichVuHopDong dvhd
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
     WHERE dvhd.MaHopDong = @MaHopDong
       AND dv.MaDichVu NOT IN ('DV0001', 'DV0002');
 
     DECLARE @TongKhoanThuDetail DECIMAL(15,2) = @TienThueDetail + @TienDichVuDetail;
+
+    -- Tính toán hoàn cọc nếu có giường bị hủy
+    DECLARE @SoGiuongDatCoc INT = 0;
+    DECLARE @TienCocBanDau DECIMAL(15,2) = 0.00;
+    DECLARE @SoNguoiHuy INT = 0;
+    DECLARE @TienHoanCoc DECIMAL(15,2) = 0.00;
+    DECLARE @DonGiaHoanCoc DECIMAL(15,2) = 0.00;
+
+    DECLARE @MaPhieuCoc VARCHAR(6);
+    DECLARE @SoGiuongThue INT;
+    SELECT @MaPhieuCoc = MaPhieuCoc, @SoGiuongThue = SoGiuongThue FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
+    IF @MaPhieuCoc IS NOT NULL
+    BEGIN
+        SELECT 
+            @SoGiuongDatCoc = COUNT(*),
+            @TienCocBanDau = MIN(pdc.SoTienCoc)
+        FROM dbo.ChiTietDatCoc ctdc
+        JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
+        WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc;
+
+        IF @SoGiuongDatCoc > 0 AND @SoGiuongDatCoc > @SoGiuongThue
+        BEGIN
+            SET @SoNguoiHuy = @SoGiuongDatCoc - @SoGiuongThue;
+            SET @TienHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * @SoNguoiHuy * 0.8;
+            SET @DonGiaHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * 0.8;
+        END;
+    END;
 
     SELECT 
         hd.MaHopDong,
@@ -557,19 +670,29 @@ BEGIN
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         nd.Email,
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
+        (
+            SELECT STRING_AGG(p2.TenPhong + CASE WHEN ctdc2.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc2.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ')
+            FROM (
+                SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+                FROM dbo.ChiTietDatCoc ctdc_inner
+                WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                ORDER BY ctdc_inner.MaChiTietDC
+            ) AS ctdc2
+            JOIN dbo.Phong p2 ON p2.MaPhong = ctdc2.MaPhong
+        ) AS PhongGiuong,
         hd.NgayBatDau,
         -- Tính động để đảm bảo khớp với chi tiết (không dùng h.TongTien vì có thể lưu sai từ trước)
         @TongKhoanThuDetail AS TongKhoanThu,
         CASE WHEN h.TrangThai = N'Đã TT' THEN @TongKhoanThuDetail ELSE 0.00 END AS DaThanhToan,
         h.PhuongThucThanhToan,
-        h.NgayThanhToan
+        h.NgayThanhToan,
+        @TienHoanCoc AS TienHoanCoc,
+        @SoNguoiHuy AS SoNguoiHuy,
+        @DonGiaHoanCoc AS DonGiaHoanCoc
     FROM HopDongThue hd
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
     JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-    JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-    JOIN Phong p ON p.MaPhong = ctdc.MaPhong
     LEFT JOIN HoaDon h ON h.MaHopDong = hd.MaHopDong AND h.KyThanhToan = CONVERT(CHAR(7), hd.NgayBatDau, 120)
     WHERE hd.MaHopDong = @MaHopDong
     GROUP BY 
@@ -578,6 +701,8 @@ BEGIN
         nd.SDT, 
         nd.Email, 
         hd.NgayBatDau, 
+        hd.SoGiuongThue,
+        hd.MaPhieuCoc,
         h.TongTien, 
         h.TrangThai, 
         h.PhuongThucThanhToan, 

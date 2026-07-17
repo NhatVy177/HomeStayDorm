@@ -221,9 +221,13 @@ export default function DuyetCuTruTab() {
       const detail = normalizeHoSo(res.data?.hoSo || base);
       const detailMembers = (res.data?.thanhVien || []).map(normalizeMember);
       setSelected({ ...base, ...detail });
-      setDecision(detail.trangThaiHoSo === 'Từ chối cư trú' ? 'Từ chối cư trú' : 'Đã duyệt cư trú');
+      
+      const listToCheck = detailMembers.length ? detailMembers : base.thanhVien;
+      const hasRejected = listToCheck.some((item) => item.trangThaiDuyet === 'Bị từ chối');
+      setDecision(hasRejected || detail.trangThaiHoSo === 'Từ chối cư trú' ? 'Từ chối cư trú' : 'Đã duyệt cư trú');
+      
       setManagerNote(detail.ghiChuQuanLy || '');
-      setMembers((detailMembers.length ? detailMembers : base.thanhVien).map((item) => ({
+      setMembers(listToCheck.map((item) => ({
         ...item,
         trangThaiDuyet: item.trangThaiDuyet === 'Bị từ chối' ? 'Bị từ chối' : 'Đủ điều kiện'
       })));
@@ -234,7 +238,16 @@ export default function DuyetCuTruTab() {
   }
 
   function updateMember(index, field, value) {
-    setMembers((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+    setMembers((prev) => {
+      const nextMembers = prev.map((item, i) => (i === index ? { ...item, [field]: value } : item));
+      if (field === 'trangThaiDuyet') {
+        const hasRejected = nextMembers.some((item) => item.trangThaiDuyet === 'Bị từ chối');
+        if (hasRejected) {
+          setDecision('Từ chối cư trú');
+        }
+      }
+      return nextMembers;
+    });
   }
 
   function getDecisionValidation() {
@@ -687,24 +700,28 @@ export default function DuyetCuTruTab() {
                   <span>Chọn kết quả cuối cùng sau khi kiểm từng thành viên và điều kiện phòng.</span>
                 </div>
                 <div className="residence-decision-grid">
-                  {['Đã duyệt cư trú', 'Từ chối cư trú'].map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      className={decision === item ? 'is-active' : ''}
-                      onClick={() => {
-                        if (selected.trangThaiHoSo === 'Chờ duyệt cư trú') {
-                          setDecision(item);
-                        }
-                      }}
-                      style={{
-                        cursor: selected.trangThaiHoSo === 'Chờ duyệt cư trú' ? 'pointer' : 'default',
-                        opacity: (selected.trangThaiHoSo !== 'Chờ duyệt cư trú' && decision !== item) ? 0.5 : 1
-                      }}
-                    >
-                      {item === 'Đã duyệt cư trú' ? 'Duyệt cư trú' : item}
-                    </button>
-                  ))}
+                  {['Đã duyệt cư trú', 'Từ chối cư trú'].map((item) => {
+                    const isDisabled = item === 'Đã duyệt cư trú' && rejectedMembers.length > 0;
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        className={decision === item ? 'is-active' : ''}
+                        disabled={isDisabled}
+                        onClick={() => {
+                          if (selected.trangThaiHoSo === 'Chờ duyệt cư trú') {
+                            setDecision(item);
+                          }
+                        }}
+                        style={{
+                          cursor: (selected.trangThaiHoSo === 'Chờ duyệt cư trú' && !isDisabled) ? 'pointer' : 'default',
+                          opacity: ((selected.trangThaiHoSo !== 'Chờ duyệt cư trú' && decision !== item) || isDisabled) ? 0.5 : 1
+                        }}
+                      >
+                        {item === 'Đã duyệt cư trú' ? 'Duyệt cư trú' : item}
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
  
