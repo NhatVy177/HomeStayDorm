@@ -21,9 +21,17 @@ export async function layChiTietPhieuCoc(maPhieuDatCoc) {
     throw createServiceError('Không tìm thấy thông tin phiếu đặt cọc.', 404);
   }
   
-  // Since SQL query joins tables, it might return multiple rows if there are multiple details.
-  // Group them by mapping the first row.
-  return new PhieuDatCocDTO(rawRows[0]);
+  const firstRow = rawRows[0];
+  const dto = new PhieuDatCocDTO(firstRow);
+  
+  if (firstRow.HinhThucThue === 'Ghép giường') {
+    const beds = rawRows.map(r => r.MaGiuong).filter(Boolean);
+    const uniqueBeds = [...new Set(beds)];
+    dto.maGiuong = uniqueBeds.join(', ');
+    dto.viTriThue = uniqueBeds.length > 0 ? `${firstRow.MaPhong}-${uniqueBeds.join(', ')}` : firstRow.MaPhong;
+  }
+  
+  return dto;
 }
 
 function mapThanhVienCuTru(row = {}) {

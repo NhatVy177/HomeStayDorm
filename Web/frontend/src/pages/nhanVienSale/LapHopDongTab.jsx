@@ -388,8 +388,20 @@ export default function LapHopDongTab() {
     return list;
   };
 
+  const getDisplayViTriThue = () => {
+    if (!selectedPhieu) return '';
+    if (selectedPhieu.hinhThucThue === 'Ghép giường' && selectedPhieu.maGiuong && selectedPhieu.maGiuong.includes(',')) {
+      const beds = selectedPhieu.maGiuong.split(',').map(b => b.trim());
+      const approvedBedsCount = thanhVien.length || 1;
+      const slicedBeds = beds.slice(0, approvedBedsCount);
+      return `${selectedPhieu.maPhong}-${slicedBeds.join(', ')}`;
+    }
+    return selectedPhieu.viTriThue;
+  };
+
   // Base price and cost calculation
-  const basePrice = selectedPhieu ? selectedPhieu.giaThue : 0;
+  const bedCount = selectedPhieu?.hinhThucThue === 'Ghép giường' ? (thanhVien.length || 1) : 1;
+  const basePrice = selectedPhieu ? (selectedPhieu.giaThue * bedCount) : 0;
   const isXeService = (dv) => dv.tenDichVu?.toLowerCase().includes('xe');
   const dichVuCost = services
     .filter(dv => selectedServices[dv.maDichVu])
@@ -948,7 +960,7 @@ export default function LapHopDongTab() {
       <div className="lhd-container">
         <StepIndicator current={3} />
         
-        {hinhThucThue === 'Ghép giường' ? (
+        {hinhThucThue === 'Ghép giường' && thanhVien.length <= 1 ? (
           <div className="lhd-card" style={{ marginBottom: '20px' }}>
             <h4 style={{ margin: '0 0 10px', fontSize: '16px', color: 'var(--lhd-primary)' }}>Xử lý khách đi đơn</h4>
             <p style={{ margin: 0, fontSize: '14px', color: 'var(--lhd-text-muted)', lineHeight: '1.6' }}>
@@ -1214,7 +1226,7 @@ export default function LapHopDongTab() {
           <div className="lhd-grid-form" style={{ marginTop: '20px' }}>
             <div className="lhd-form-group"><label className="lhd-label">Mã phiếu cọc</label><input className="lhd-input" value={selectedPhieu?.maPhieuDatCoc || ''} readOnly /></div>
             <div className="lhd-form-group"><label className="lhd-label">Khách hàng</label><input className="lhd-input" value={selectedPhieu?.hoTenKhachHang || ''} readOnly /></div>
-            <div className="lhd-form-group"><label className="lhd-label">Phòng/Giường</label><input className="lhd-input" value={selectedPhieu?.viTriThue || ''} readOnly /></div>
+            <div className="lhd-form-group"><label className="lhd-label">Phòng/Giường</label><input className="lhd-input" value={getDisplayViTriThue() || ''} readOnly /></div>
             <div className="lhd-form-group">
               <label className="lhd-label">Kỳ thanh toán</label>
               <select className="lhd-input" value={kyTT} onChange={e => setKyTT(e.target.value)}>
