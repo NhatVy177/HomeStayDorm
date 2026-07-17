@@ -42,7 +42,8 @@ export default function NhanVienKeToanPage() {
   }, []);
 
   const navItems = [
-    { id: 'lap-phieu', label: 'Lập phiếu đặt cọc', icon: 'calculate' },
+    // DC03 - kế toán chỉ tính tiền & chốt; việc lập phiếu (phòng/hình thức/giường) là của Sale ở DC02B.
+    { id: 'lap-phieu', label: 'Chốt phiếu đặt cọc', icon: 'calculate' },
     { id: 'thu-nhan-phong', label: 'Thu nhận phòng', icon: 'login' },
     { id: 'quyet-toan', label: 'Quyết toán trả phòng', icon: 'account_balance_wallet' }
   ];

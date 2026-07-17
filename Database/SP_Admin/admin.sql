@@ -51,6 +51,8 @@ BEGIN
         MaNhatKy      INT IDENTITY(1,1) PRIMARY KEY,
         ThoiGian      DATETIME2(0)   NOT NULL DEFAULT SYSDATETIME(),
         MaNguoiDung   VARCHAR(6)     NULL,
+        VaiTro        NVARCHAR(50)   NULL,
+        ChucNang      NVARCHAR(100)  NULL,
         HanhDong      NVARCHAR(100)  NOT NULL,
         DoiTuong      NVARCHAR(100)  NULL,
         MaDoiTuong    NVARCHAR(50)   NULL,
@@ -58,6 +60,18 @@ BEGIN
         DuLieuTruoc   NVARCHAR(MAX)  NULL,
         DuLieuSau     NVARCHAR(MAX)  NULL
     );
+END;
+GO
+
+IF COL_LENGTH('dbo.NhatKyHeThong', 'VaiTro') IS NULL
+BEGIN
+    ALTER TABLE dbo.NhatKyHeThong ADD VaiTro NVARCHAR(50) NULL;
+END;
+GO
+
+IF COL_LENGTH('dbo.NhatKyHeThong', 'ChucNang') IS NULL
+BEGIN
+    ALTER TABLE dbo.NhatKyHeThong ADD ChucNang NVARCHAR(100) NULL;
 END;
 GO
 
@@ -200,6 +214,8 @@ GO
 
 CREATE OR ALTER PROCEDURE dbo.SP_Admin_GhiNhatKy
     @AdminId     VARCHAR(6)     = NULL,
+    @VaiTro      NVARCHAR(50)   = NULL,
+    @ChucNang    NVARCHAR(100)  = NULL,
     @HanhDong    NVARCHAR(100),
     @DoiTuong    NVARCHAR(100)  = NULL,
     @MaDoiTuong  NVARCHAR(50)   = NULL,
@@ -211,12 +227,25 @@ BEGIN
     SET NOCOUNT ON;
 
     SET @AdminId = NULLIF(LTRIM(RTRIM(@AdminId)), '');
+    SET @VaiTro = NULLIF(LTRIM(RTRIM(@VaiTro)), N'');
+    SET @ChucNang = NULLIF(LTRIM(RTRIM(@ChucNang)), N'');
+
+    IF @VaiTro IS NULL AND @AdminId IS NOT NULL
+    BEGIN
+        SELECT @VaiTro = CONCAT(nd.LoaiNguoiDung, CASE WHEN nv.ChucVu IS NULL THEN N'' ELSE N' - ' + nv.ChucVu END)
+        FROM dbo.NguoiDung AS nd
+        LEFT JOIN dbo.NhanVien AS nv ON nv.MaNhanVien = nd.MaNguoiDung
+        WHERE nd.MaNguoiDung = @AdminId;
+    END;
+
+    IF @ChucNang IS NULL
+        SET @ChucNang = @DoiTuong;
 
     INSERT INTO dbo.NhatKyHeThong (
-        MaNguoiDung, HanhDong, DoiTuong, MaDoiTuong, NoiDung, DuLieuTruoc, DuLieuSau
+        MaNguoiDung, VaiTro, ChucNang, HanhDong, DoiTuong, MaDoiTuong, NoiDung, DuLieuTruoc, DuLieuSau
     )
     VALUES (
-        @AdminId, @HanhDong, @DoiTuong, @MaDoiTuong, @NoiDung, @DuLieuTruoc, @DuLieuSau
+        @AdminId, @VaiTro, @ChucNang, @HanhDong, @DoiTuong, @MaDoiTuong, @NoiDung, @DuLieuTruoc, @DuLieuSau
     );
 END;
 GO
@@ -3212,6 +3241,8 @@ BEGIN
         nk.ThoiGian AS thoiGian,
         nk.MaNguoiDung AS maNguoiDung,
         nd.HoTen AS hoTenNguoiDung,
+        nk.VaiTro AS vaiTro,
+        nk.ChucNang AS chucNang,
         nk.HanhDong AS hanhDong,
         nk.DoiTuong AS doiTuong,
         nk.MaDoiTuong AS maDoiTuong,

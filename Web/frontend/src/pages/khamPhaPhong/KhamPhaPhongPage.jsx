@@ -31,6 +31,10 @@ function getFiltersFromSearch(search) {
   };
 }
 
+function getRoomIdFromSearch(search) {
+  return new URLSearchParams(search).get('phong') || '';
+}
+
 function compactParams(filters) {
   return Object.fromEntries(
     Object.entries(filters).filter(([, value]) => value !== '' && value != null)
@@ -413,6 +417,7 @@ export default function KhamPhaPhongPage() {
   const location = useLocation();
   const { user, dangXuat } = useAuth();
   const initialFilters = useMemo(() => getFiltersFromSearch(location.search), [location.search]);
+  const roomIdFromSearch = useMemo(() => getRoomIdFromSearch(location.search), [location.search]);
   const [draftFilters, setDraftFilters] = useState(initialFilters);
   const [activeFilters, setActiveFilters] = useState(initialFilters);
   const [rooms, setRooms] = useState([]);
@@ -448,6 +453,14 @@ export default function KhamPhaPhongPage() {
       })
       .finally(() => setLoading(false));
   }, [activeFilters]);
+
+  useEffect(() => {
+    if (loading || !roomIdFromSearch) return;
+    const matchedRoom = rooms.find((room) => String(room.maPhong || '').toLowerCase() === roomIdFromSearch.toLowerCase());
+    if (matchedRoom) {
+      setSelectedRoom(matchedRoom);
+    }
+  }, [loading, roomIdFromSearch, rooms]);
 
   const areaOptions = useMemo(() => {
     const map = new Map();
@@ -497,6 +510,18 @@ export default function KhamPhaPhongPage() {
 
   function goLogin() {
     navigate('/dang-nhap', { state: { from: location } });
+  }
+
+  function closeDetail() {
+    setSelectedRoom(null);
+    if (!roomIdFromSearch) return;
+
+    const params = new URLSearchParams(location.search);
+    params.delete('phong');
+    navigate({
+      pathname: location.pathname,
+      search: params.toString() ? `?${params.toString()}` : ''
+    }, { replace: true });
   }
 
   return (
@@ -679,7 +704,7 @@ export default function KhamPhaPhongPage() {
         <button type="button" onClick={goLogin}><LineIcon name="logo" /><span>Tài khoản</span></button>
       </nav>
 
-      <DetailModal room={selectedRoom} onClose={() => setSelectedRoom(null)} onRegister={goRegister} />
+      <DetailModal room={selectedRoom} onClose={closeDetail} onRegister={goRegister} />
     </div>
   );
 }

@@ -66,6 +66,11 @@ function handleDatabaseError(error) {
     51067: 409,
     51068: 409,
     51069: 400,
+    51091: 400,
+    51092: 400,
+    51093: 400,
+    51094: 404,
+    51095: 409,
     51101: 400,
     51102: 400,
     51103: 400,
@@ -82,7 +87,8 @@ function handleDatabaseError(error) {
     51281: 400,
     51282: 400,
     51291: 400,
-    51292: 400
+    51292: 400,
+    51301: 400
   });
 }
 
@@ -204,6 +210,24 @@ export async function capNhatChiNhanh(id, data, user = {}) {
   }
 }
 
+export async function xoaChiNhanh(id, user = {}) {
+  try {
+    const result = await executeProcedure('dbo.SP_Admin_QuanLyChiNhanh', [
+      { name: 'ThaoTac', type: sql.NVarChar(20), value: 'XOA' },
+      { name: 'MaChiNhanh', type: sql.VarChar(6), value: id },
+      { name: 'TenChiNhanh', type: sql.NVarChar(100), value: null },
+      { name: 'DiaChi', type: sql.NVarChar(255), value: null },
+      { name: 'SDT', type: sql.VarChar(20), value: null },
+      { name: 'Email', type: sql.VarChar(100), value: null },
+      { name: 'TrangThai', type: sql.NVarChar(20), value: null },
+      { name: 'AdminId', type: sql.VarChar(6), value: user.maNguoiDung || null }
+    ]);
+    return result.recordset?.[0] || { success: true };
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
 export async function getDanhSachLoaiPhong(query = {}) {
   try {
     const result = await executeProcedure('dbo.SP_Admin_QuanLyLoaiPhong', [
@@ -267,6 +291,45 @@ export async function taoPhongGiuong(data, user = {}) {
           tinhTrangGiuong: row.tinhTrangGiuong
         }))
     };
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
+export async function capNhatPhong(id, data, user = {}) {
+  try {
+    const uploadedImageUrl = await saveRoomImageUpload(data.anhPhong);
+    const result = await executeProcedure('dbo.SP_Admin_QuanLyPhong', [
+      { name: 'ThaoTac', type: sql.NVarChar(20), value: 'CAP_NHAT' },
+      { name: 'MaPhong', type: sql.VarChar(4), value: id },
+      { name: 'TenPhong', type: sql.NVarChar(100), value: data.tenPhong || null },
+      { name: 'GioiTinhChoPhep', type: sql.NVarChar(20), value: data.gioiTinhChoPhep || null },
+      { name: 'TinhTrang', type: sql.NVarChar(20), value: data.tinhTrang || data.trangThai || null },
+      { name: 'UrlImg', type: sql.VarChar(500), value: uploadedImageUrl || data.urlImg || null },
+      { name: 'MaChiNhanh', type: sql.VarChar(6), value: data.maChiNhanh || null },
+      { name: 'MaLoaiPhong', type: sql.VarChar(6), value: data.maLoaiPhong || null },
+      { name: 'AdminId', type: sql.VarChar(6), value: user.maNguoiDung || null }
+    ]);
+    return result.recordset?.[0] || { success: true };
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
+export async function xoaPhong(id, user = {}) {
+  try {
+    const result = await executeProcedure('dbo.SP_Admin_QuanLyPhong', [
+      { name: 'ThaoTac', type: sql.NVarChar(20), value: 'XOA' },
+      { name: 'MaPhong', type: sql.VarChar(4), value: id },
+      { name: 'TenPhong', type: sql.NVarChar(100), value: null },
+      { name: 'GioiTinhChoPhep', type: sql.NVarChar(20), value: null },
+      { name: 'TinhTrang', type: sql.NVarChar(20), value: null },
+      { name: 'UrlImg', type: sql.VarChar(500), value: null },
+      { name: 'MaChiNhanh', type: sql.VarChar(6), value: null },
+      { name: 'MaLoaiPhong', type: sql.VarChar(6), value: null },
+      { name: 'AdminId', type: sql.VarChar(6), value: user.maNguoiDung || null }
+    ]);
+    return result.recordset?.[0] || { success: true };
   } catch (error) {
     handleDatabaseError(error);
   }
@@ -386,6 +449,21 @@ export async function quanLyDichVu(data) {
   }
 }
 
+export async function quanLyQuyDinhHoanCoc(data) {
+  try {
+    const result = await executeProcedure('dbo.SP_Admin_CauHinhQuyDinhHoanCoc', [
+      { name: 'ThaoTac', type: sql.NVarChar(20), value: data.thaoTac || 'DANH_SACH' },
+      { name: 'MaQuyDinhHoanCoc', type: sql.VarChar(6), value: data.maQuyDinhHoanCoc || null },
+      { name: 'TenQuyDinh', type: sql.NVarChar(255), value: data.tenQuyDinh || null },
+      { name: 'TyLeHoanCoc', type: sql.Decimal(5, 2), value: data.tyLeHoanCoc !== undefined ? data.tyLeHoanCoc : null },
+      { name: 'AdminId', type: sql.VarChar(6), value: data.adminId || null }
+    ]);
+    return result.recordset || [];
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
 export async function quanLyNoiQuy(data) {
   try {
     const result = await executeProcedure('dbo.SP_Admin_QuanLyNoiQuy', [
@@ -449,6 +527,7 @@ export async function updateSettings(data, user = {}) {
     
     await executeProcedure('dbo.SP_Admin_CauHinhSaoLuu', [
       { name: 'ChuKyFull', type: sql.NVarChar(20), value: data.chuKyFull || null },
+      { name: 'ChuKyIncremental', type: sql.NVarChar(20), value: data.chuKyIncremental || null },
       { name: 'ThuMucLuuTru', type: sql.NVarChar(500), value: data.thuMucLuuTru || null },
       { name: 'AdminId', type: sql.VarChar(6), value: user.maNguoiDung || null }
     ]);
@@ -478,6 +557,20 @@ export async function saoLuuThuCong(data = {}, user = {}) {
       { name: 'LoaiSaoLuu', type: sql.NVarChar(20), value: data.loaiSaoLuu || 'Full' },
       { name: 'DuongDanFile', type: sql.NVarChar(500), value: data.duongDanFile || null },
       { name: 'AdminId', type: sql.VarChar(6), value: user.maNguoiDung || null }
+    ]);
+    return result.recordset?.[0] || null;
+  } catch (error) {
+    handleDatabaseError(error);
+  }
+}
+
+export async function phucHoiDuLieu(maSaoLuu, data = {}, user = {}) {
+  try {
+    const result = await executeProcedure('dbo.SP_Admin_PhucHoiDuLieu', [
+      { name: 'MaSaoLuu', type: sql.Int, value: Number(maSaoLuu) || null },
+      { name: 'DuongDanFile', type: sql.NVarChar(500), value: data.duongDanFile || null },
+      { name: 'AdminId', type: sql.VarChar(6), value: user.maNguoiDung || null },
+      { name: 'ChiTaoLenh', type: sql.Bit, value: data.chiTaoLenh !== false }
     ]);
     return result.recordset?.[0] || null;
   } catch (error) {

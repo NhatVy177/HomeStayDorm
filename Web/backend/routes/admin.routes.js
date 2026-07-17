@@ -12,9 +12,12 @@ router.use(requireAuth);
 router.get('/branches', controller.getDanhSachChiNhanh);
 router.post('/branches', controller.taoChiNhanh);
 router.put('/branches/:id', controller.capNhatChiNhanh);
+router.delete('/branches/:id', controller.xoaChiNhanh);
 router.get('/room-types', controller.getDanhSachLoaiPhong);
 router.get('/rooms', controller.getDanhSachPhong);
 router.post('/rooms', controller.taoPhongGiuong);
+router.put('/rooms/:id', controller.capNhatPhong);
+router.delete('/rooms/:id', controller.xoaPhong);
 router.patch('/rooms/:id/status', controller.capNhatTrangThaiPhong);
 
 // Giai đoạn 1: Nhân viên
@@ -32,17 +35,23 @@ router.post('/services', (req, res, next) => { req.body.thaoTac = 'TAO'; control
 router.put('/services/:id', (req, res, next) => { req.body.thaoTac = 'CAP_NHAT'; req.body.maDichVu = req.params.id; controller.quanLyDichVu(req, res, next) });
 router.delete('/services/:id', (req, res, next) => { req.body.thaoTac = 'XOA'; req.body.maDichVu = req.params.id; controller.quanLyDichVu(req, res, next) });
 
+// Quy định hoàn cọc
+router.get('/refund-rules', (req, res, next) => { req.body.thaoTac = 'DANH_SACH'; controller.quanLyQuyDinhHoanCoc(req, res, next) });
+router.post('/refund-rules', (req, res, next) => { req.body.thaoTac = 'TAO'; controller.quanLyQuyDinhHoanCoc(req, res, next) });
+router.put('/refund-rules/:id', (req, res, next) => { req.body.thaoTac = 'CAP_NHAT'; req.body.maQuyDinhHoanCoc = req.params.id; controller.quanLyQuyDinhHoanCoc(req, res, next) });
+router.delete('/refund-rules/:id', (req, res, next) => { req.body.thaoTac = 'XOA'; req.body.maQuyDinhHoanCoc = req.params.id; controller.quanLyQuyDinhHoanCoc(req, res, next) });
+
 // Nội quy
 router.get('/rules', (req, res, next) => { req.body.thaoTac = 'DANH_SACH'; controller.quanLyNoiQuy(req, res, next) });
 router.post('/rules', (req, res, next) => { req.body.thaoTac = 'TAO'; controller.quanLyNoiQuy(req, res, next) });
 router.put('/rules/:id', (req, res, next) => { req.body.thaoTac = 'CAP_NHAT'; req.body.maQuyDinh = req.params.id; controller.quanLyNoiQuy(req, res, next) });
-router.delete('/rules/:id', (req, res, next) => { req.body.thaoTac = 'XOA'; req.body.maQuyDinh = req.params.id; controller.quanLyNoiQuy(req, res, next) });
+router.delete('/rules/:id', (req, res, next) => { req.body.thaoTac = 'VO_HIEU'; req.body.maQuyDinh = req.params.id; controller.quanLyNoiQuy(req, res, next) });
 
 // Điều khoản vi phạm
 router.get('/violations', (req, res, next) => { req.body.thaoTac = 'DANH_SACH'; controller.quanLyDieuKhoanViPham(req, res, next) });
 router.post('/violations', (req, res, next) => { req.body.thaoTac = 'TAO'; controller.quanLyDieuKhoanViPham(req, res, next) });
 router.put('/violations/:id', (req, res, next) => { req.body.thaoTac = 'CAP_NHAT'; req.body.maDieuKhoan = req.params.id; controller.quanLyDieuKhoanViPham(req, res, next) });
-router.delete('/violations/:id', (req, res, next) => { req.body.thaoTac = 'XOA'; req.body.maDieuKhoan = req.params.id; controller.quanLyDieuKhoanViPham(req, res, next) });
+router.delete('/violations/:id', (req, res, next) => { req.body.thaoTac = 'VO_HIEU'; req.body.maDieuKhoan = req.params.id; controller.quanLyDieuKhoanViPham(req, res, next) });
 
 // Cấu hình hệ thống
 router.get('/settings', controller.getSettings);
@@ -51,6 +60,7 @@ router.put('/settings', controller.updateSettings);
 // Sao lưu dữ liệu
 router.get('/backups', controller.getDanhSachSaoLuu);
 router.post('/backups/manual', controller.saoLuuThuCong);
+router.post('/backups/:id/restore', controller.phucHoiDuLieu);
 
 // Nhật ký hệ thống
 router.get('/logs', controller.getNhatKyHeThong);

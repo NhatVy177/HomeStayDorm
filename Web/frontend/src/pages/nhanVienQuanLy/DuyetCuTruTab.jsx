@@ -299,13 +299,9 @@ export default function DuyetCuTruTab() {
 
 
 
-      <form
+      <div
         className="residence-filter"
-        style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '16px', alignItems: 'end', marginBottom: '20px' }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          loadData(searchText);
-        }}
+        style={{ display: 'grid', gridTemplateColumns: '1fr', marginBottom: '20px' }}
       >
         <div className="ktp-filter-group" style={{ margin: 0 }}>
           <label className="ktp-filter-label">Tìm kiếm</label>
@@ -314,16 +310,16 @@ export default function DuyetCuTruTab() {
             <input
               className="ktp-input ktp-input-with-icon"
               value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
+              onChange={(event) => {
+                const val = event.target.value;
+                setSearchText(val);
+                loadData(val);
+              }}
               placeholder="Nhập mã hồ sơ, mã phiếu, tên khách"
             />
           </div>
         </div>
-        <button className="ktp-btn-submit" type="submit" style={{ height: '42px', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-          <Icon name="search" />
-          Tìm kiếm
-        </button>
-      </form>
+      </div>
 
       {/* Bộ lọc trạng thái dạng chip */}
       <StatusFilterTabs
