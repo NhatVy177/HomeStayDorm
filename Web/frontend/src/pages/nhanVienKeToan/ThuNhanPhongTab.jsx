@@ -466,6 +466,34 @@ export default function ThuNhanPhongTab() {
                           </span>
                         </div>
                       </div>
+                      
+                      {activeCalculation.summary?.TienHoanCoc > 0 && (
+                        <div style={{
+                          marginTop: '16px',
+                          border: '1px solid #fbbf24',
+                          backgroundColor: '#fffbeb',
+                          color: '#b45309',
+                          borderRadius: '8px',
+                          padding: '12px 16px',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '10px'
+                        }}>
+                          <Icon name="info" style={{ color: '#d97706', marginTop: '2px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '13px' }}>
+                            <strong style={{ display: 'block', marginBottom: '2px' }}>Thông tin hoàn cọc (Thành viên không được duyệt)</strong>
+                            <span>
+                              Nhân viên kế toán cần trả lại cho khách hàng: 
+                              <strong style={{ marginLeft: '4px', fontSize: '15px', color: '#b45309' }}>
+                                {formatCurrency(activeCalculation.summary?.TienHoanCoc)}
+                              </strong>
+                            </span>
+                            <span style={{ display: 'block', fontSize: '11px', color: '#d97706', marginTop: '4px' }}>
+                              (Công thức: {formatCurrency(activeCalculation.summary?.DonGiaHoanCoc / 0.8)} cọc gốc/người × {activeCalculation.summary?.SoNguoiHuy} người × 80%)
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -635,6 +663,28 @@ export default function ThuNhanPhongTab() {
                             {isPaid ? formatCurrency(s.DaThanhToan) : formatCurrency((s.TongKhoanThu || 0) - (s.DaThanhToan || 0))}
                           </strong>
                         </div>
+                        
+                        {s.TienHoanCoc > 0 && (
+                          <>
+                            <div style={{ height: '1px', background: '#e2e8ea', margin: '14px 0 12px' }}></div>
+                            <div style={{ 
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', 
+                              background: '#fffbeb', border: '1px solid #fbbf24', borderRadius: '10px', padding: '12px 14px' 
+                            }}>
+                              <div>
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '2px' }}>
+                                  Tiền cần hoàn cọc cho khách
+                                </span>
+                                <span style={{ fontSize: '11px', color: '#d97706' }}>
+                                  (Hoàn 80% cọc cho {s.SoNguoiHuy} người k duyệt)
+                                </span>
+                              </div>
+                              <strong style={{ fontSize: '18px', fontWeight: 800, color: '#b45309' }}>
+                                {formatCurrency(s.TienHoanCoc)}
+                              </strong>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 

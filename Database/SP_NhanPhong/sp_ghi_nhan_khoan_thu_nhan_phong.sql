@@ -189,6 +189,34 @@ BEGIN
         RETURN;
     END;
 
+    -- Tính toán hoàn cọc nếu có giường bị hủy
+    DECLARE @SoGiuongDatCoc INT = 0;
+    DECLARE @TienCocBanDau DECIMAL(15,2) = 0.00;
+    DECLARE @SoNguoiHuy INT = 0;
+    DECLARE @TienHoanCoc DECIMAL(15,2) = 0.00;
+    DECLARE @DonGiaHoanCoc DECIMAL(15,2) = 0.00;
+
+    DECLARE @MaPhieuCoc VARCHAR(6);
+    DECLARE @SoGiuongThue INT;
+    SELECT @MaPhieuCoc = MaPhieuCoc, @SoGiuongThue = SoGiuongThue FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
+    IF @MaPhieuCoc IS NOT NULL
+    BEGIN
+        SELECT 
+            @SoGiuongDatCoc = COUNT(*),
+            @TienCocBanDau = MIN(pdc.SoTienCoc)
+        FROM dbo.ChiTietDatCoc ctdc
+        JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
+        WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc;
+
+        IF @SoGiuongDatCoc > 0 AND @SoGiuongDatCoc > @SoGiuongThue
+        BEGIN
+            SET @SoNguoiHuy = @SoGiuongDatCoc - @SoGiuongThue;
+            SET @TienHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * @SoNguoiHuy * 0.8;
+            SET @DonGiaHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * 0.8;
+        END;
+    END;
+
     -- RESULT SET 1: Thông tin tổng quan
     SELECT 
         hd.MaHopDong,
@@ -210,7 +238,10 @@ BEGIN
         hd.GiaThue,
         @TienThueKyDau AS TienThueKyDau,
         @TienDichVu AS TienDichVu,
-        (@TienThueKyDau + @TienDichVu) AS TongCongCanThu
+        (@TienThueKyDau + @TienDichVu) AS TongCongCanThu,
+        @TienHoanCoc AS TienHoanCoc,
+        @SoNguoiHuy AS SoNguoiHuy,
+        @DonGiaHoanCoc AS DonGiaHoanCoc
     FROM HopDongThue hd
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
@@ -574,6 +605,34 @@ BEGIN
 
     DECLARE @TongKhoanThuDetail DECIMAL(15,2) = @TienThueDetail + @TienDichVuDetail;
 
+    -- Tính toán hoàn cọc nếu có giường bị hủy
+    DECLARE @SoGiuongDatCoc INT = 0;
+    DECLARE @TienCocBanDau DECIMAL(15,2) = 0.00;
+    DECLARE @SoNguoiHuy INT = 0;
+    DECLARE @TienHoanCoc DECIMAL(15,2) = 0.00;
+    DECLARE @DonGiaHoanCoc DECIMAL(15,2) = 0.00;
+
+    DECLARE @MaPhieuCoc VARCHAR(6);
+    DECLARE @SoGiuongThue INT;
+    SELECT @MaPhieuCoc = MaPhieuCoc, @SoGiuongThue = SoGiuongThue FROM HopDongThue WHERE MaHopDong = @MaHopDong;
+
+    IF @MaPhieuCoc IS NOT NULL
+    BEGIN
+        SELECT 
+            @SoGiuongDatCoc = COUNT(*),
+            @TienCocBanDau = MIN(pdc.SoTienCoc)
+        FROM dbo.ChiTietDatCoc ctdc
+        JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = ctdc.MaPhieuDatCoc
+        WHERE ctdc.MaPhieuDatCoc = @MaPhieuCoc;
+
+        IF @SoGiuongDatCoc > 0 AND @SoGiuongDatCoc > @SoGiuongThue
+        BEGIN
+            SET @SoNguoiHuy = @SoGiuongDatCoc - @SoGiuongThue;
+            SET @TienHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * @SoNguoiHuy * 0.8;
+            SET @DonGiaHoanCoc = (@TienCocBanDau / @SoGiuongDatCoc) * 0.8;
+        END;
+    END;
+
     SELECT 
         hd.MaHopDong,
         CASE 
@@ -598,7 +657,10 @@ BEGIN
         @TongKhoanThuDetail AS TongKhoanThu,
         CASE WHEN h.TrangThai = N'Đã TT' THEN @TongKhoanThuDetail ELSE 0.00 END AS DaThanhToan,
         h.PhuongThucThanhToan,
-        h.NgayThanhToan
+        h.NgayThanhToan,
+        @TienHoanCoc AS TienHoanCoc,
+        @SoNguoiHuy AS SoNguoiHuy,
+        @DonGiaHoanCoc AS DonGiaHoanCoc
     FROM HopDongThue hd
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
