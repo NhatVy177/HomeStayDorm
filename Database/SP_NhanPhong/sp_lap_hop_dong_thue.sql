@@ -1226,8 +1226,16 @@ BEGIN
         p.TenPhong,
         -- Ghép phòng-giường nếu là ghép giường
         CASE
-            WHEN ctdc.MaGiuong IS NOT NULL
-                THEN p.TenPhong + N' - Giường ' + ctdc.MaGiuong
+            WHEN pdc.HinhThucThue = N'Ghép giường'
+                THEN p.TenPhong + N' - Giường ' + (
+                    SELECT STRING_AGG(ctdc2.MaGiuong, ', ') WITHIN GROUP (ORDER BY ctdc2.MaChiTietDC)
+                    FROM (
+                        SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaGiuong, ctdc_inner.MaChiTietDC
+                        FROM dbo.ChiTietDatCoc ctdc_inner
+                        WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                        ORDER BY ctdc_inner.MaChiTietDC
+                    ) AS ctdc2
+                )
             ELSE p.TenPhong
         END AS TenPhongDayDu,
         p.MaPhong,
@@ -1243,8 +1251,12 @@ BEGIN
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd_kh ON nd_kh.MaNguoiDung = kh.MaKhachHang
     JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-    JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-    JOIN Phong p ON p.MaPhong = ctdc.MaPhong
+    OUTER APPLY (
+        SELECT TOP 1 ctdc_first.MaPhong 
+        FROM dbo.ChiTietDatCoc ctdc_first 
+        WHERE ctdc_first.MaPhieuDatCoc = hd.MaPhieuCoc
+    ) AS ctdc_p
+    JOIN Phong p ON p.MaPhong = ctdc_p.MaPhong
     JOIN ChiNhanh cn ON cn.MaChiNhanh = p.MaChiNhanh
     WHERE hd.MaHopDong = @MaHopDong;
 
