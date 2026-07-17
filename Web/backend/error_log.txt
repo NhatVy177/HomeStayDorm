@@ -181,6 +181,13 @@ RequestError: Column 'dbo.PhieuDangKy.TrangThai' is invalid in the select list b
     at Connection.emit (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
     at RequestTokenHandler.onErrorMessage (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
     at Readable.<anonymous> (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+2026-07-17T14:59:14.857Z
+RequestError: Column 'dbo.PhieuDangKy.TrangThai' is invalid in the select list because it is not contained in either an aggregate function or the GROUP BY clause.
+    at handleError (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
     at Readable.emit (node:events:508:28)
     at addChunk (node:internal/streams/readable:559:12)
     at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
@@ -444,4 +451,78 @@ RequestError: Invalid object name 'dbo.ChiTietHopDong'.
     at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
     at Readable.push (node:internal/streams/readable:391:5)
     at nextAsync (node:internal/streams/from:194:22)
+2026-07-17T14:59:14.904Z
+RequestError: Column 'dbo.PhieuDangKy.TrangThai' is invalid in the select list because it is not contained in either an aggregate function or the GROUP BY clause.
+    at handleError (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T14:59:22.056Z
+RequestError: Column 'dbo.PhieuDangKy.TrangThai' is invalid in the select list because it is not contained in either an aggregate function or the GROUP BY clause.
+    at handleError (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T14:59:22.217Z
+RequestError: Column 'dbo.PhieuDangKy.TrangThai' is invalid in the select list because it is not contained in either an aggregate function or the GROUP BY clause.
+    at handleError (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\mssql\lib\tedious\request.js:411:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\connection.js:1013:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\handler.js:285:21)
+    at Readable.<anonymous> (C:\Users\nguye\source\repos\HomeStayDorm\Web\backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+
+2026-07-17T15:10:33.956Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/services/khachMoi.service.js:15:3)
+    at Module.createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/services/khachMoi.service.js:341:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-17T15:10:40.972Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/services/khachMoi.service.js:15:3)
+    at Module.createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/services/khachMoi.service.js:341:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-17T15:10:47.682Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/services/khachMoi.service.js:15:3)
+    at Module.createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/services/khachMoi.service.js:341:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
+
+2026-07-17T15:10:55.373Z
+Error: Vui lòng nhập đầy đủ thông tin nhu cầu thuê.
+    at createServiceError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/services/khachMoi.service.js:15:3)
+    at Module.createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/services/khachMoi.service.js:341:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async createHoSo (file:///C:/Users/nguye/source/repos/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:42:26)
 
