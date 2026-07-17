@@ -466,7 +466,6 @@ CREATE TABLE BienBanViPham (
 	CONSTRAINT CHK_BBVP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Đã xử lý'))
 
 );
-
 -- =============================================
 -- PHẦN KHÓA NGOẠI
 -- =============================================

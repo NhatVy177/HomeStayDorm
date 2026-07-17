@@ -459,7 +459,9 @@ export default function XacNhanPhanHoi() {
           >
             <div className="ktp-modal-header" style={{ flex: '0 0 auto', padding: '16px 24px', backgroundColor: '#3b8280', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 'none' }}>
               <div>
-                <h3 style={{ margin: 0, color: '#fff', fontSize: 20, fontWeight: 700 }}>Xử lý phản hồi đối soát</h3>
+                <h3 style={{ margin: 0, color: '#fff', fontSize: 20, fontWeight: 700 }}>
+                  {selected?.trangThaiDoiSoat === 'Chờ phản hồi' ? 'Xử lý phản hồi đối soát' : 'Chi tiết phản hồi đối soát'}
+                </h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4, color: 'rgba(255,255,255,0.86)', fontSize: 13 }}>
                   <span>Mã đối soát: <strong style={{ color: '#fff' }}>{selected?.maDoiSoat || '—'}</strong></span>
                   <TrangThaiBadge trangThai={chiTiet?.trangThaiDoiSoat || selected?.trangThaiDoiSoat || 'Chờ phản hồi'} />
@@ -551,7 +553,7 @@ export default function XacNhanPhanHoi() {
                 {!loadingDetail && chiTiet && !canAct ? 'Phiếu không còn ở trạng thái Chờ phản hồi.' : ''}
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button type="button" onClick={() => setModalOpen(false)} className="ktp-btn-cancel" disabled={submitting}>Đóng</button>
+                <button type="button" onClick={() => setModalOpen(false)} className="ktp-btn-cancel" disabled={submitting}>Hủy</button>
                 {chiTiet && (
                   <>
                     <button disabled={!canAct || submitting} onClick={() => handleXuLy('XacNhanDieuChinh')} style={{ backgroundColor: '#d05a2a', border: 'none', color: '#fff', padding: '10px 18px', borderRadius: 8, fontWeight: 700, cursor: !canAct || submitting ? 'not-allowed' : 'pointer', opacity: !canAct || submitting ? 0.65 : 1 }}>
