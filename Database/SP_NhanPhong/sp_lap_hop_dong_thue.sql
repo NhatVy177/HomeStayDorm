@@ -885,17 +885,58 @@ BEGIN
         SET @MaHopDong = 'HD' + RIGHT('0000' + CAST(@SoMaMax + 1 AS VARCHAR(4)), 4);
 
         -- -----------------------------------------------
-        -- BƯỚC INSERT-2: Lấy thông tin từ ChiTietDatCoc
+        -- BƯỚC INSERT-2: Lấy thông tin từ ChiTietDatCoc (chỉ lấy số giường tương ứng số thành viên được duyệt nếu thuê ghép giường)
         -- -----------------------------------------------
         DECLARE
             @SoGiuongThue   INT,
             @TongGiaThue    DECIMAL(15,2);
 
-        SELECT
-            @SoGiuongThue = COUNT(*),
-            @TongGiaThue  = SUM(GiaThue)
-        FROM dbo.ChiTietDatCoc
-        WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+        DECLARE @SoMaHoSo VARCHAR(6);
+        SELECT @SoMaHoSo = MaHoSoCuTru FROM dbo.HoSoCuTru WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+
+        DECLARE @SoTVHopLe INT = 0;
+        IF @SoMaHoSo IS NOT NULL
+        BEGIN
+            SELECT @SoTVHopLe = COUNT(*) 
+            FROM dbo.ThanhVienHopDong 
+            WHERE MaHoSoCuTru = @SoMaHoSo AND TrangThai = N'Đủ điều kiện';
+        END;
+
+        IF @HinhThucThue = N'Ghép giường' AND @SoTVHopLe > 0
+        BEGIN
+            -- Chỉ thuê số lượng giường tương ứng số thành viên được duyệt cư trú
+            SELECT
+                @SoGiuongThue = COUNT(*),
+                @TongGiaThue  = SUM(GiaThue)
+            FROM (
+                SELECT TOP (@SoTVHopLe) GiaThue
+                FROM dbo.ChiTietDatCoc
+                WHERE MaPhieuDatCoc = @MaPhieuDatCoc
+                ORDER BY MaChiTietDC
+            ) AS SubBeds;
+
+            -- Giải phóng các giường dư thừa (chuyển sang trạng thái 'Trống')
+            UPDATE g
+            SET    g.TinhTrang = N'Trống'
+            FROM   dbo.Giuong g
+            JOIN   dbo.ChiTietDatCoc ctdc ON ctdc.MaPhong = g.MaPhong AND ctdc.MaGiuong = g.MaGiuong
+            WHERE  ctdc.MaPhieuDatCoc = @MaPhieuDatCoc
+              AND  ctdc.MaChiTietDC NOT IN (
+                  SELECT TOP (@SoTVHopLe) MaChiTietDC
+                  FROM dbo.ChiTietDatCoc
+                  WHERE MaPhieuDatCoc = @MaPhieuDatCoc
+                  ORDER BY MaChiTietDC
+              );
+        END
+        ELSE
+        BEGIN
+            -- Nguyên phòng hoặc trường hợp khác: giữ nguyên theo phiếu đặt cọc
+            SELECT
+                @SoGiuongThue = COUNT(*),
+                @TongGiaThue  = SUM(GiaThue)
+            FROM dbo.ChiTietDatCoc
+            WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+        END;
 
         -- -----------------------------------------------
         -- BƯỚC INSERT-3: Insert HopDongThue
