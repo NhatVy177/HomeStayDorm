@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- ALL IN ONE SCRIPT - MODULE TRẢ PHÒNG
 -- Tự động gộp toàn bộ SP của các chức năng Trả phòng.
 -- Hãy chạy file này để tạo toàn bộ Stored Procedure trong 1 lần.
@@ -180,7 +180,7 @@ BEGIN
             hd.SoGiuongThue                                 AS soGiuong,
             CONVERT(VARCHAR(10), hd.NgayBatDau, 120)        AS ngayBatDau,
             CONVERT(VARCHAR(10), hd.NgayKetThuc, 120)       AS ngayKetThuc,
-            pdc.SoTienCoc                                   AS tienCoc,
+            (hd.GiaThue * ISNULL(hd.SoGiuongThue, 1))       AS tienCoc,
             CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120)  AS ngayDatCoc
         FROM dbo.HopDongThue AS hd
         INNER JOIN dbo.PhieuDatCoc AS pdc    ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
@@ -695,7 +695,7 @@ BEGIN
         p.MaPhong                                   AS maPhong,
         p.TenPhong                                  AS tenPhong,
         ctdc.MaGiuong                               AS maGiuong,
-        pdc.SoTienCoc                               AS tienCocHD,
+        ISNULL((hdt.GiaThue * ISNULL(hdt.SoGiuongThue, 1)), pdc.SoTienCoc) AS tienCocHD,
         pdc.SoTienCoc                               AS tienCocPDC,
         pdc.HinhThucThue                            AS hinhThucThue,
         COALESCE(hdt.GiaThue, ctdc.GiaThue)         AS giaThue,
@@ -2004,7 +2004,7 @@ BEGIN
         hd.TrangThai AS trangThai,
         hd.MaPhieuCoc AS maPhieuCoc,
         hd.MaKhachHang AS maKhachHang,
-        pdc.SoTienCoc AS soTienCoc,
+        (hd.GiaThue * ISNULL(hd.SoGiuongThue, 1)) AS soTienCoc,
         nd.HoTen AS hoTenKhachHang,
         nd.SDT AS sdtKhachHang,
         nd.Email AS emailKhachHang

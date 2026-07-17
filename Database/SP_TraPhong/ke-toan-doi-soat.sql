@@ -1057,7 +1057,7 @@ BEGIN
         hd.TrangThai AS trangThai,
         hd.MaPhieuCoc AS maPhieuCoc,
         hd.MaKhachHang AS maKhachHang,
-        pdc.SoTienCoc AS soTienCoc,
+        (hd.GiaThue * ISNULL(hd.SoGiuongThue, 1)) AS soTienCoc,
         nd.HoTen AS hoTenKhachHang,
         nd.SDT AS sdtKhachHang,
         nd.Email AS emailKhachHang

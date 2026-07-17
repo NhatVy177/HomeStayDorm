@@ -238,14 +238,16 @@ export default function LapPhieuDatCocTab() {
   return (
     <div className="ktp-container">
       <section className="ktp-table-section">
-        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
-          <div style={{ flex: '2 1 240px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên khách hàng, SĐT, mã hồ sơ/phiếu cọc..." className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
+        <div style={{ padding: '16px 20px 0 20px' }}>
+          <div style={{ marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6f797a', marginBottom: '6px' }}>Tìm kiếm</label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên khách hàng, SĐT, mã hồ sơ/phiếu cọc..." className="ktp-input" style={{ flex: 1 }} />
+              {search && (
+                <button type="button" onClick={() => setSearch('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px', whiteSpace: 'nowrap' }}>Xóa lọc</button>
+              )}
+            </div>
           </div>
-          {search && (
-            <button type="button" onClick={() => setSearch('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
-          )}
         </div>
 
         <StatusFilterTabs

@@ -89,7 +89,7 @@ BEGIN
         p.MaPhong                                   AS maPhong,
         p.TenPhong                                  AS tenPhong,
         ctdc.MaGiuong                               AS maGiuong,
-        pdc.SoTienCoc                               AS tienCocHD,
+        ISNULL((hdt.GiaThue * ISNULL(hdt.SoGiuongThue, 1)), pdc.SoTienCoc) AS tienCocHD,
         pdc.SoTienCoc                               AS tienCocPDC,
         pdc.HinhThucThue                            AS hinhThucThue,
         COALESCE(hdt.GiaThue, ctdc.GiaThue)         AS giaThue,

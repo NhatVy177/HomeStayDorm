@@ -1,4 +1,4 @@
-﻿USE [HOMEDORM4];
+USE [HOMEDORM4];
 GO
 
 -- =============================================
@@ -168,7 +168,7 @@ BEGIN
             hd.SoGiuongThue                                 AS soGiuong,
             CONVERT(VARCHAR(10), hd.NgayBatDau, 120)        AS ngayBatDau,
             CONVERT(VARCHAR(10), hd.NgayKetThuc, 120)       AS ngayKetThuc,
-            pdc.SoTienCoc                                   AS tienCoc,
+            (hd.GiaThue * ISNULL(hd.SoGiuongThue, 1))       AS tienCoc,
             CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120)  AS ngayDatCoc
         FROM dbo.HopDongThue AS hd
         INNER JOIN dbo.PhieuDatCoc AS pdc    ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
