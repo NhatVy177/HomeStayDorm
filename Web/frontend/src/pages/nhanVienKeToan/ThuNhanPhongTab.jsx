@@ -493,21 +493,20 @@ export default function ThuNhanPhongTab() {
                         </div>
                       )}
                     </div>
-
-                    {(() => {
-                      const netDiff = (activeCalculation.summary?.TongCongCanThu || 0) - (activeCalculation.summary?.TienHoanCoc || 0);
-                      let inputLabel = "Số tiền khách thanh toán (đ) *";
-                      if (activeCalculation.summary?.TienHoanCoc > 0) {
-                        if (netDiff > 0) {
-                          inputLabel = "Số tiền khách cần thanh toán chênh lệch (đ) *";
-                        } else if (netDiff < 0) {
-                          inputLabel = "Số tiền nhân viên cần thanh toán chênh lệch cho khách (đ) *";
-                        } else {
-                          inputLabel = "Số tiền thanh toán chênh lệch (đ) *";
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {(() => {
+                        const netDiff = (activeCalculation.summary?.TongCongCanThu || 0) - (activeCalculation.summary?.TienHoanCoc || 0);
+                        let inputLabel = "Số tiền khách thanh toán (đ) *";
+                        if (activeCalculation.summary?.TienHoanCoc > 0) {
+                          if (netDiff > 0) {
+                            inputLabel = "Số tiền khách cần thanh toán chênh lệch (đ) *";
+                          } else if (netDiff < 0) {
+                            inputLabel = "Số tiền nhân viên cần thanh toán chênh lệch cho khách (đ) *";
+                          } else {
+                            inputLabel = "Số tiền thanh toán chênh lệch (đ) *";
+                          }
                         }
-                      }
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        return (
                           <div>
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: '#3f494a' }}>{inputLabel}</label>
                             <input 
@@ -519,9 +518,8 @@ export default function ThuNhanPhongTab() {
                               required 
                             />
                           </div>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()}
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: '#3f494a' }}>Phương thức thanh toán *</label>
                         <select 
