@@ -566,7 +566,7 @@ BEGIN
     SET @TienThueDetail = CASE WHEN @KyTTDetail = N'Hàng tháng' THEN @GiaThueDetail ELSE @GiaThueDetail * 3 END;
 
     DECLARE @TienDichVuDetail DECIMAL(15,2);
-    SELECT @TienDichVuDetail = ISNULL(SUM(dv.DonGia), 0)
+    SELECT @TienDichVuDetail = ISNULL(SUM(dv.DonGia * CASE WHEN ISNUMERIC(dvhd.GhiChu) = 1 THEN CAST(dvhd.GhiChu AS DECIMAL(10,2)) ELSE 1.00 END), 0)
     FROM DichVuHopDong dvhd
     JOIN DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
     WHERE dvhd.MaHopDong = @MaHopDong
@@ -583,7 +583,16 @@ BEGIN
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         nd.Email,
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
+        (
+            SELECT STRING_AGG(p2.TenPhong + CASE WHEN ctdc2.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc2.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ')
+            FROM (
+                SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+                FROM dbo.ChiTietDatCoc ctdc_inner
+                WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                ORDER BY ctdc_inner.MaChiTietDC
+            ) AS ctdc2
+            JOIN dbo.Phong p2 ON p2.MaPhong = ctdc2.MaPhong
+        ) AS PhongGiuong,
         hd.NgayBatDau,
         -- Tính động để đảm bảo khớp với chi tiết (không dùng h.TongTien vì có thể lưu sai từ trước)
         @TongKhoanThuDetail AS TongKhoanThu,
@@ -594,8 +603,6 @@ BEGIN
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
     JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-    JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-    JOIN Phong p ON p.MaPhong = ctdc.MaPhong
     LEFT JOIN HoaDon h ON h.MaHopDong = hd.MaHopDong AND h.KyThanhToan = CONVERT(CHAR(7), hd.NgayBatDau, 120)
     WHERE hd.MaHopDong = @MaHopDong
     GROUP BY 
@@ -604,6 +611,8 @@ BEGIN
         nd.SDT, 
         nd.Email, 
         hd.NgayBatDau, 
+        hd.SoGiuongThue,
+        hd.MaPhieuCoc,
         h.TongTien, 
         h.TrangThai, 
         h.PhuongThucThanhToan, 
