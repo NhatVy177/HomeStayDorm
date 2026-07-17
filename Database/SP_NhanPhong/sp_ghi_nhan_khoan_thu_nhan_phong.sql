@@ -26,7 +26,16 @@ BEGIN
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         -- Ghép tên phòng và giường để tương thích với UI (ví dụ: "P.102 - Giường A" hoặc ghép danh sách nếu thuê nhiều giường)
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
+        (
+            SELECT STRING_AGG(p2.TenPhong + CASE WHEN ctdc2.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc2.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ')
+            FROM (
+                SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+                FROM dbo.ChiTietDatCoc ctdc_inner
+                WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                ORDER BY ctdc_inner.MaChiTietDC
+            ) AS ctdc2
+            JOIN dbo.Phong p2 ON p2.MaPhong = ctdc2.MaPhong
+        ) AS PhongGiuong,
         hd.NgayBatDau,
         -- Tính động TongTien theo kỳ thanh toán (GiaThue * 3 nếu Hàng quý, GiaThue nếu Hàng tháng) cộng dịch vụ đi kèm
         (CASE WHEN hd.KyThanhToan = N'Hàng tháng' THEN hd.GiaThue ELSE hd.GiaThue * 3 END)
@@ -75,6 +84,8 @@ BEGIN
         hd.NgayBatDau, 
         hd.KyThanhToan,
         hd.GiaThue,
+        hd.SoGiuongThue,
+        hd.MaPhieuCoc,
         h.TongTien, 
         h.TrangThai
     ORDER BY hd.MaHopDong DESC;
@@ -184,7 +195,16 @@ BEGIN
         nd.HoTen AS HoTenKhachHang,
         nd.SDT,
         nd.Email,
-        STRING_AGG(p.TenPhong + CASE WHEN ctdc.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ') AS PhongGiuong,
+        (
+            SELECT STRING_AGG(p2.TenPhong + CASE WHEN ctdc2.MaGiuong IS NOT NULL THEN N' - Giường ' + CAST(ctdc2.MaGiuong AS NVARCHAR(3)) ELSE N'' END, N', ')
+            FROM (
+                SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaPhong, ctdc_inner.MaGiuong
+                FROM dbo.ChiTietDatCoc ctdc_inner
+                WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                ORDER BY ctdc_inner.MaChiTietDC
+            ) AS ctdc2
+            JOIN dbo.Phong p2 ON p2.MaPhong = ctdc2.MaPhong
+        ) AS PhongGiuong,
         hd.NgayBatDau,
         hd.KyThanhToan,
         hd.GiaThue,
@@ -195,10 +215,8 @@ BEGIN
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
     JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-    JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-    JOIN Phong p ON p.MaPhong = ctdc.MaPhong
     WHERE hd.MaHopDong = @MaHopDong
-    GROUP BY hd.MaHopDong, nd.HoTen, nd.SDT, nd.Email, hd.NgayBatDau, hd.KyThanhToan, hd.GiaThue;
+    GROUP BY hd.MaHopDong, nd.HoTen, nd.SDT, nd.Email, hd.NgayBatDau, hd.KyThanhToan, hd.GiaThue, hd.SoGiuongThue, hd.MaPhieuCoc;
 
     -- RESULT SET 2: Chi tiết các dòng tính tiền
     -- Dòng 1: Tiền thuê kỳ đầu
