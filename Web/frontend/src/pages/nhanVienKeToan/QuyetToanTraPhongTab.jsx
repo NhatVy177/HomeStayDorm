@@ -2035,7 +2035,7 @@ export default function QuyetToanTraPhongTab() {
                   </h4>
                   <InfoRow label="Mã hồ sơ" value={hoSoChinh?.maHopDong || hoSoChinh?.maPhieuDatCoc} />
                   <InfoRow label="Tiền cọc ban đầu" value={formatMoney(preview?.tienCocBanDau)} strong />
-                  <InfoRow label="Phòng/Giường" value={(selected.danhSachPhong || []).map((p) => `${p.tenPhong || p.maPhong}${p.maGiuong ? ` - ${p.maGiuong}` : ''}`).join(', ') || '--'} />
+                  <InfoRow label="Phòng" value={Array.from(new Set((selected.danhSachPhong || []).map(p => p.tenPhong || p.maPhong))).join(', ') || '--'} />
                   {selected.hopDong && (
                     <>
                       <InfoRow label="Ngày bắt đầu" value={formatDate(selected.hopDong.ngayBatDau)} />

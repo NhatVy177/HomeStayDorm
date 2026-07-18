@@ -1791,7 +1791,7 @@ export default function KhachHangPortalPage() {
         code: phieu.maPhieuCoc,
         kindLabel: 'Phiếu cọc',
         title: phieu.tenPhong || phieu.loaiPhong || 'Phòng đã đặt cọc',
-        subtitle: `${phieu.tenChiNhanh || 'HomestayDorm'} · ${phieu.maGiuong ? `Giường ${phieu.maGiuong}` : phieu.hinhThucThue || 'Nguyên phòng'}`,
+        subtitle: `${phieu.tenChiNhanh || 'HomestayDorm'} · ${phieu.hinhThucThue || 'Nguyên phòng'}`,
         amount: formatSettlementMoney(phieu.soTienCoc),
         timeLabel: formatDate(phieu.ngayDatCoc || phieu.ngayLapPhieu || phieu.ngayLap),
         yeuCauTraPhong: phieu.yeuCauTraPhong || null,
@@ -1999,7 +1999,7 @@ export default function KhachHangPortalPage() {
                     <span className="hd-badge">{phieu.trangThaiCoc}</span>
                   )}
                   <h2>{phieu.tenPhong || phieu.loaiPhong || 'Phòng đang thuê'} - {phieu.tenLoaiPhong || phieu.loaiPhong || 'Loại phòng'}</h2>
-                  <p>{phieu.tenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(phieu.maPhong) || 1} • {phieu.maGiuong ? `Giường ${phieu.maGiuong}` : 'Nguyên phòng'}</p>
+                  <p>{phieu.tenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(phieu.maPhong) || 1} • {phieu.hinhThucThue || 'Nguyên phòng'}</p>
                 </div>
               </div>
 
@@ -3242,7 +3242,7 @@ export default function KhachHangPortalPage() {
             </div>
             <div className="hd-detail-row">
               <span>Hình thức thuê</span>
-              <strong>{hinhThucThue}{hd.MaGiuong ? ` • ${hd.MaGiuong}` : ''}</strong>
+              <strong>{hinhThucThue}</strong>
             </div>
             <div className="hd-detail-row">
               <span>Kỳ thanh toán</span>

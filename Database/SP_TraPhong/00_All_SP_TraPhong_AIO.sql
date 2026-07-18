@@ -180,7 +180,15 @@ BEGIN
             hd.SoGiuongThue                                 AS soGiuong,
             CONVERT(VARCHAR(10), hd.NgayBatDau, 120)        AS ngayBatDau,
             CONVERT(VARCHAR(10), hd.NgayKetThuc, 120)       AS ngayKetThuc,
-            (hd.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc2 WHERE ctdc2.MaPhieuDatCoc = hd.MaPhieuCoc))       AS tienCoc,
+            CASE 
+                WHEN pdc.HinhThucThue = N'Ghép giường' THEN 
+                    ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                     FROM dbo.ChiTietDatCoc ctdc 
+                     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong 
+                     INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong 
+                     WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc), 0) * 2 * ISNULL(hd.SoGiuongThue, 1)
+                ELSE pdc.SoTienCoc
+            END AS tienCoc,
             CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120)  AS ngayDatCoc
         FROM dbo.HopDongThue AS hd
         INNER JOIN dbo.PhieuDatCoc AS pdc    ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
@@ -208,7 +216,15 @@ BEGIN
             NULL                                            AS soGiuong,
             NULL                                            AS ngayBatDau,
             NULL                                            AS ngayKetThuc,
-            pdc2.SoTienCoc                                  AS tienCoc,
+            CASE 
+                WHEN pdc2.HinhThucThue = N'Ghép giường' THEN 
+                    ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                     FROM dbo.ChiTietDatCoc ctdc 
+                     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong 
+                     INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong 
+                     WHERE ctdc.MaPhieuDatCoc = pdc2.MaPhieuDatCoc), 0) * 2 * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc WHERE MaPhieuDatCoc = pdc2.MaPhieuDatCoc)
+                ELSE pdc2.SoTienCoc
+            END AS tienCoc,
             CONVERT(VARCHAR(10), pdc2.ThoiDiemDatCoc, 120) AS ngayDatCoc
         FROM dbo.PhieuDatCoc AS pdc2
         INNER JOIN dbo.ChiTietDatCoc AS ctdc2 ON ctdc2.MaPhieuDatCoc = pdc2.MaPhieuDatCoc
@@ -643,13 +659,21 @@ BEGIN
         nd.HoTen                                    AS hoTenKhach,
         nd.SDT                                      AS sdtKhach,
         p.TenPhong                                  AS tenPhong,
-        ctdc.MaGiuong                               AS maGiuong,
+        ctdc_p.MaGiuong                             AS maGiuong,
         ptp.TrangThai                               AS trangThai
     FROM dbo.PhieuTraPhong ptp
     LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = ptp.MaHopDong
     LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hdt.MaPhieuCoc)
-    INNER JOIN dbo.ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-    INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong
+    CROSS APPLY (
+        SELECT TOP 1 MaPhong, 
+               STUFF((SELECT ', ' + c2.MaGiuong 
+                      FROM dbo.ChiTietDatCoc c2
+                      WHERE c2.MaPhieuDatCoc = pdc.MaPhieuDatCoc AND c2.MaGiuong IS NOT NULL
+                      FOR XML PATH('')), 1, 2, '') AS MaGiuong
+        FROM dbo.ChiTietDatCoc c1
+        WHERE c1.MaPhieuDatCoc = pdc.MaPhieuDatCoc
+    ) AS ctdc_p
+    INNER JOIN dbo.Phong p ON p.MaPhong = ctdc_p.MaPhong
     INNER JOIN dbo.KhachHang kh ON kh.MaKhachHang = COALESCE(hdt.MaKhachHang, pdc.MaKhachHang)
     INNER JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = kh.MaKhachHang
     WHERE p.MaChiNhanh = @MaChiNhanh
@@ -695,7 +719,15 @@ BEGIN
         p.MaPhong                                   AS maPhong,
         p.TenPhong                                  AS tenPhong,
         ctdc.MaGiuong                               AS maGiuong,
-        ISNULL((hdt.GiaThue * ISNULL(hdt.SoGiuongThue, 1)), pdc.SoTienCoc) AS tienCocHD,
+        CASE 
+            WHEN pdc.HinhThucThue = N'Ghép giường' THEN 
+                ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                 FROM dbo.ChiTietDatCoc ctdc_sub 
+                 INNER JOIN dbo.Phong p_sub ON p_sub.MaPhong = ctdc_sub.MaPhong 
+                 INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p_sub.MaLoaiPhong 
+                 WHERE ctdc_sub.MaPhieuDatCoc = ptp.MaPhieuDatCoc), 0) * 2 * ISNULL(hdt.SoGiuongThue, 1)
+            ELSE pdc.SoTienCoc
+        END                                         AS tienCocHD,
         pdc.SoTienCoc                               AS tienCocPDC,
         pdc.HinhThucThue                            AS hinhThucThue,
         COALESCE(hdt.GiaThue, ctdc.GiaThue)         AS giaThue,
@@ -774,25 +806,69 @@ BEGIN
     -- 3. Lấy thông tin tài sản trong phòng (để kiểm tra)
     IF @MaHopDong IS NOT NULL
     BEGIN
-        SELECT 
-            ts.MaTaiSan AS maTaiSan,
-            ts.TenTaiSan AS tenTaiSan,
-            COALESCE(ctbg.SoLuongThucTe, ts.SoLuong) AS soLuongBanGiao,
-            ts.DonGia AS donGiaBoiThuong,
-            cthh.MucDoHuHong AS mucDoHuHong,
-            cthh.SoLuong AS soLuongHuMat,
-            cthh.MoTaHuHong AS moTaHuHong,
-            cthh.ChiPhiSuaChua AS chiPhiSuaChua
-        FROM dbo.TaiSan ts
-        LEFT JOIN (
-            SELECT cb.MaTaiSan, cb.SoLuongThucTe
-            FROM dbo.BienBanBanGiao bb
-            JOIN dbo.ChiTietBanGiao cb ON cb.MaBienBan = bb.MaBienBan
-            WHERE bb.MaHopDong = @MaHopDong AND bb.LoaiBanGiao = N'Bàn giao vào'
-        ) ctbg ON ctbg.MaTaiSan = ts.MaTaiSan
-        LEFT JOIN dbo.BienBanKiemTraPhong bbkt ON bbkt.MaPhieuTra = @MaPhieuTra
-        LEFT JOIN dbo.ChiTietHuHong cthh ON cthh.MaBienBanKT = bbkt.MaBienBanKT AND cthh.MaTaiSan = ts.MaTaiSan
-        WHERE ts.MaPhong = @MaPhong;
+        DECLARE @HinhThucThue_Check NVARCHAR(50);
+        SELECT TOP 1 @HinhThucThue_Check = pdc.HinhThucThue
+        FROM dbo.PhieuTraPhong ptp
+        LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = ptp.MaHopDong
+        LEFT JOIN dbo.PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = COALESCE(ptp.MaPhieuDatCoc, hdt.MaPhieuCoc)
+        WHERE ptp.MaPhieuTra = @MaPhieuTra;
+
+        IF @HinhThucThue_Check = N'Nguyên phòng'
+        BEGIN
+            ;WITH Numbers AS (
+                SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 
+                UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8
+                UNION ALL SELECT 9 UNION ALL SELECT 10
+            )
+            SELECT 
+                ts.MaTaiSan + '_' + CAST(Numbers.n AS VARCHAR(2)) AS maTaiSan,
+                ts.MaTaiSan AS maTaiSanGoc,
+                ts.TenTaiSan + CASE 
+                    WHEN (SELECT COUNT(*) FROM dbo.Giuong WHERE MaPhong = @MaPhong) = COALESCE(ctbg.SoLuongThucTe, ts.SoLuong) 
+                         AND (ts.TenTaiSan LIKE N'%Giường%' OR ts.TenTaiSan LIKE N'%Nệm%' OR ts.TenTaiSan LIKE N'%Tủ%' OR ts.TenTaiSan LIKE N'%Chìa%') THEN 
+                        N' ' + ISNULL((SELECT MaGiuong FROM (SELECT MaGiuong, ROW_NUMBER() OVER(ORDER BY MaGiuong) AS rn FROM dbo.Giuong WHERE MaPhong = @MaPhong) g WHERE g.rn = Numbers.n), CAST(Numbers.n AS VARCHAR(2)))
+                    WHEN COALESCE(ctbg.SoLuongThucTe, ts.SoLuong) > 1 THEN N' ' + CAST(Numbers.n AS VARCHAR(2))
+                    ELSE ''
+                END AS tenTaiSan,
+                1 AS soLuongBanGiao,
+                ts.DonGia AS donGiaBoiThuong,
+                NULL AS mucDoHuHong,
+                NULL AS soLuongHuMat,
+                NULL AS moTaHuHong,
+                NULL AS chiPhiSuaChua
+            FROM dbo.TaiSan ts
+            LEFT JOIN (
+                SELECT cb.MaTaiSan, cb.SoLuongThucTe
+                FROM dbo.BienBanBanGiao bb
+                JOIN dbo.ChiTietBanGiao cb ON cb.MaBienBan = bb.MaBienBan
+                WHERE bb.MaHopDong = @MaHopDong AND bb.LoaiBanGiao = N'Bàn giao vào'
+            ) ctbg ON ctbg.MaTaiSan = ts.MaTaiSan
+            INNER JOIN Numbers ON Numbers.n <= COALESCE(ctbg.SoLuongThucTe, ts.SoLuong)
+            WHERE ts.MaPhong = @MaPhong;
+        END
+        ELSE
+        BEGIN
+            SELECT 
+                ts.MaTaiSan AS maTaiSan,
+                ts.MaTaiSan AS maTaiSanGoc,
+                ts.TenTaiSan AS tenTaiSan,
+                COALESCE(ctbg.SoLuongThucTe, ts.SoLuong) AS soLuongBanGiao,
+                ts.DonGia AS donGiaBoiThuong,
+                cthh.MucDoHuHong AS mucDoHuHong,
+                cthh.SoLuong AS soLuongHuMat,
+                cthh.MoTaHuHong AS moTaHuHong,
+                cthh.ChiPhiSuaChua AS chiPhiSuaChua
+            FROM dbo.TaiSan ts
+            LEFT JOIN (
+                SELECT cb.MaTaiSan, cb.SoLuongThucTe
+                FROM dbo.BienBanBanGiao bb
+                JOIN dbo.ChiTietBanGiao cb ON cb.MaBienBan = bb.MaBienBan
+                WHERE bb.MaHopDong = @MaHopDong AND bb.LoaiBanGiao = N'Bàn giao vào'
+            ) ctbg ON ctbg.MaTaiSan = ts.MaTaiSan
+            LEFT JOIN dbo.BienBanKiemTraPhong bbkt ON bbkt.MaPhieuTra = @MaPhieuTra
+            LEFT JOIN dbo.ChiTietHuHong cthh ON cthh.MaBienBanKT = bbkt.MaBienBanKT AND cthh.MaTaiSan = ts.MaTaiSan
+            WHERE ts.MaPhong = @MaPhong;
+        END
     END
     ELSE
     BEGIN
@@ -2004,7 +2080,15 @@ BEGIN
         hd.TrangThai AS trangThai,
         hd.MaPhieuCoc AS maPhieuCoc,
         hd.MaKhachHang AS maKhachHang,
-        (hd.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc)) AS soTienCoc,
+        CASE 
+            WHEN pdc.HinhThucThue = N'Ghép giường' THEN 
+                ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                 FROM dbo.ChiTietDatCoc ctdc 
+                 INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong 
+                 INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong 
+                 WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc), 0) * 2 * ISNULL(hd.SoGiuongThue, 1)
+            ELSE pdc.SoTienCoc
+        END AS soTienCoc,
         nd.HoTen AS hoTenKhachHang,
         nd.SDT AS sdtKhachHang,
         nd.Email AS emailKhachHang

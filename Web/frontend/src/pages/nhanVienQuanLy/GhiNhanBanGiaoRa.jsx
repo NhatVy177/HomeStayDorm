@@ -209,7 +209,6 @@ export default function GhiNhanBanGiaoRa() {
                   </td>
                   <td>
                     <div style={{ fontWeight: 500 }}>{row.tenPhong}</div>
-                    {row.maGiuong && <div style={{ fontSize: 12, color: '#6f797a' }}>Giường {row.maGiuong.replace(/giường/i, '').trim()}</div>}
                   </td>
                   <td>
                     <span className="tp-loai-badge hd" style={{ fontSize: 11 }}>

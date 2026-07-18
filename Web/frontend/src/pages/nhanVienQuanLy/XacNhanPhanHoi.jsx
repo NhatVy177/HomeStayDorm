@@ -431,7 +431,7 @@ export default function XacNhanPhanHoi() {
                     <span className={`tp-loai-badge ${row.maHopDong ? 'hd' : 'dc'}`} style={{ fontSize: 11 }}>{row.maHopDong ? 'Hợp đồng' : 'Đặt cọc'}</span>
                     <div style={{ fontSize: 12, color: '#6f797a', marginTop: 2 }}>{row.maHoSo}</div>
                   </td>
-                  <td><div style={{ fontWeight: 500 }}>{row.tenPhong}</div>{row.maGiuong && <div style={{ fontSize: 12, color: '#6f797a' }}>Giường {row.maGiuong}</div>}</td>
+                  <td><div style={{ fontWeight: 500 }}>{row.tenPhong}</div></td>
                   <td>{fmtDate(row.ngayLap)}</td>
                   <td className="text-center"><TrangThaiBadge trangThai={row.trangThaiDoiSoat} /></td>
                   <td className="text-center">

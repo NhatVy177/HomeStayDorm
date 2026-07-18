@@ -60,7 +60,8 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
 
   useEffect(() => {
     onChange({
-      maTaiSan: asset.maTaiSan,
+      keyTaiSan: asset.maTaiSan,
+      maTaiSan: asset.maTaiSanGoc || asset.maTaiSan,
       status,
       soLuongLoi: isNormal ? 0 : soLuongLoi,
       note,
@@ -241,7 +242,7 @@ export default function KiemTraTraPhong() {
   const handleAssetChange = (assetData) => {
     setDsHuHong(prev => ({
       ...prev,
-      [assetData.maTaiSan]: assetData
+      [assetData.keyTaiSan]: assetData
     }));
   };
 
@@ -376,7 +377,6 @@ export default function KiemTraTraPhong() {
                   </td>
                   <td>
                     <div style={{ fontWeight: 500 }}>{row.tenPhong}</div>
-                    {row.maGiuong && <div style={{ fontSize: 12, color: '#6f797a' }}>Giường {row.maGiuong.replace(/giường/i, '').trim()}</div>}
                   </td>
                   <td>
                     <span className={`tp-loai-badge ${row.loaiNguon === 'HopDong' ? 'hd' : 'dc'}`} style={{ fontSize: 11 }}>

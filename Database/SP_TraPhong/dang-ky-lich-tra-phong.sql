@@ -154,6 +154,9 @@ BEGIN
         CONVERT(VARCHAR(10), ptp.NgayDuKienTra, 120) AS ngayDuKienTra
     FROM (
         -- (a) Hợp đồng thuê
+        -- Dùng CROSS APPLY TOP 1 để lấy MaPhong (tránh nhân dòng khi ghép giường).
+        -- SoGiuong lấy từ HopDongThue.SoGiuongThue — không đếm lại từ ChiTietDatCoc
+        -- vì lúc lập HĐ số giường đã được trigger ghi chính xác vào HĐ.
         SELECT
             N'HopDong'                                      AS loai,
             hd.MaHopDong                                    AS maHoSo,
@@ -161,20 +164,33 @@ BEGIN
             NULL                                            AS maPhieuDatCoc,
             hd.TrangThai                                    AS trangThaiHoSo,
             p.TenPhong                                      AS tenPhong,
-            ctdc.MaGiuong                                   AS maGiuong,
+            NULL                                            AS maGiuong,   -- ghép giường: nhiều giường, không trả 1 mã cụ thể
             cn.TenChiNhanh                                  AS tenChiNhanh,
             pdc.HinhThucThue                                AS hinhThucThue,
             hd.GiaThue                                      AS giaThu,
-            hd.SoGiuongThue                                 AS soGiuong,
-            CONVERT(VARCHAR(10), hd.NgayBatDau, 120)        AS ngayBatDau,
+            hd.SoGiuongThue                                 AS soGiuong,   -- số giường từ HĐ (đã trigger tính lúc ký)
+            CONVERT(VARCHAR(10), hd.NgayBatDau,  120)       AS ngayBatDau,
             CONVERT(VARCHAR(10), hd.NgayKetThuc, 120)       AS ngayKetThuc,
-            (hd.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc2 WHERE ctdc2.MaPhieuDatCoc = hd.MaPhieuCoc))       AS tienCoc,
+            CASE 
+                WHEN pdc.HinhThucThue = N'Ghép giường' THEN 
+                    ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                     FROM dbo.ChiTietDatCoc ctdc 
+                     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong 
+                     INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong 
+                     WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc), 0) * 2 * ISNULL(hd.SoGiuongThue, 1)
+                ELSE pdc.SoTienCoc
+            END AS tienCoc,
             CONVERT(VARCHAR(10), pdc.ThoiDiemDatCoc, 120)  AS ngayDatCoc
         FROM dbo.HopDongThue AS hd
-        INNER JOIN dbo.PhieuDatCoc AS pdc    ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-        INNER JOIN dbo.ChiTietDatCoc AS ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-        INNER JOIN dbo.Phong AS p            ON p.MaPhong = ctdc.MaPhong
-        INNER JOIN dbo.ChiNhanh AS cn        ON cn.MaChiNhanh = p.MaChiNhanh
+        INNER JOIN dbo.PhieuDatCoc AS pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
+        -- Chỉ lấy 1 dòng CTDC để tìm MaPhong — không join thẳng tránh nhân row
+        CROSS APPLY (
+            SELECT TOP 1 MaPhong
+            FROM dbo.ChiTietDatCoc
+            WHERE MaPhieuDatCoc = pdc.MaPhieuDatCoc
+        ) AS ctdc_p
+        INNER JOIN dbo.Phong    AS p  ON p.MaPhong       = ctdc_p.MaPhong
+        INNER JOIN dbo.ChiNhanh AS cn ON cn.MaChiNhanh   = p.MaChiNhanh
         WHERE hd.MaKhachHang = @MaKhachHang
           AND hd.TrangThai IN (N'Hiệu lực', N'Hết hạn')
           AND cn.MaChiNhanh = @MaChiNhanh
@@ -182,6 +198,7 @@ BEGIN
         UNION ALL
 
         -- (b) Phiếu đặt cọc hiệu lực, đã thanh toán, chưa lập hợp đồng
+        -- Tương tự: CROSS APPLY TOP 1 lấy MaPhong, không join trực tiếp CTDC
         SELECT
             N'DatCoc'                                       AS loai,
             pdc2.MaPhieuDatCoc                              AS maHoSo,
@@ -189,21 +206,37 @@ BEGIN
             pdc2.MaPhieuDatCoc                              AS maPhieuDatCoc,
             pdc2.TrangThaiCoc                               AS trangThaiHoSo,
             p2.TenPhong                                     AS tenPhong,
-            ctdc2.MaGiuong                                  AS maGiuong,
+            NULL                                            AS maGiuong,   -- phiếu cọc: có thể nhiều giường
             cn2.TenChiNhanh                                 AS tenChiNhanh,
             pdc2.HinhThucThue                               AS hinhThucThue,
-            ctdc2.GiaThue                                   AS giaThu,
-            NULL                                            AS soGiuong,
+            ctdc_agg.TienThueThang                          AS giaThu,     -- tổng giá thuê/tháng (sum CTDC)
+            ctdc_agg.SoGiuong                               AS soGiuong,   -- số giường đã cọc
             NULL                                            AS ngayBatDau,
             NULL                                            AS ngayKetThuc,
-            pdc2.SoTienCoc                                  AS tienCoc,
+            CASE 
+                WHEN pdc2.HinhThucThue = N'Ghép giường' THEN 
+                    ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                     FROM dbo.ChiTietDatCoc ctdc 
+                     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong 
+                     INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong 
+                     WHERE ctdc.MaPhieuDatCoc = pdc2.MaPhieuDatCoc), 0) * 2 * ctdc_agg.SoGiuong
+                ELSE pdc2.SoTienCoc
+            END AS tienCoc,
             CONVERT(VARCHAR(10), pdc2.ThoiDiemDatCoc, 120) AS ngayDatCoc
         FROM dbo.PhieuDatCoc AS pdc2
-        INNER JOIN dbo.ChiTietDatCoc AS ctdc2 ON ctdc2.MaPhieuDatCoc = pdc2.MaPhieuDatCoc
-        INNER JOIN dbo.Phong AS p2             ON p2.MaPhong = ctdc2.MaPhong
-        INNER JOIN dbo.ChiNhanh AS cn2         ON cn2.MaChiNhanh = p2.MaChiNhanh
+        -- Lấy MaPhong + tổng giá + số giường trong 1 lần aggregation — không nhân dòng
+        CROSS APPLY (
+            SELECT TOP 1
+                MaPhong,
+                SUM(GiaThue) OVER (PARTITION BY MaPhieuDatCoc) AS TienThueThang,
+                COUNT(*)     OVER (PARTITION BY MaPhieuDatCoc) AS SoGiuong
+            FROM dbo.ChiTietDatCoc
+            WHERE MaPhieuDatCoc = pdc2.MaPhieuDatCoc
+        ) AS ctdc_agg
+        INNER JOIN dbo.Phong    AS p2  ON p2.MaPhong      = ctdc_agg.MaPhong
+        INNER JOIN dbo.ChiNhanh AS cn2 ON cn2.MaChiNhanh  = p2.MaChiNhanh
         WHERE pdc2.MaKhachHang = @MaKhachHang
-          AND pdc2.TrangThaiCoc = N'Hiệu lực'
+          AND pdc2.TrangThaiCoc       = N'Hiệu lực'
           AND pdc2.TrangThaiThanhToan = N'Đã TT'
           AND cn2.MaChiNhanh = @MaChiNhanh
           AND NOT EXISTS (
@@ -585,3 +618,128 @@ BEGIN
 END;
 GO
 
+-- =============================================
+-- 6. SP_TraPhong_KhachHang_LayDanhSachHopDong
+-- Khách hàng lấy danh sách hợp đồng / phiếu đặt cọc hiện hành của mình
+-- để chọn khi gửi yêu cầu trả phòng (SP_TraPhong_KhachHang_GuiYeuCau).
+--
+-- Tiền cọc được tính đúng qua trigger TRG_ChiTietDatCoc_TinhGiaThue_Va_SoTienCoc:
+--   Nguyên phòng : SoTienCoc = GiaThueNguyenPhong × 2
+--   Ghép giường  : SoTienCoc = GiaThueTheoGiuong × số giường × 2
+-- =============================================
+IF OBJECT_ID(N'dbo.SP_TraPhong_KhachHang_LayDanhSachHopDong', N'P') IS NULL
+    EXEC(N'CREATE PROCEDURE dbo.SP_TraPhong_KhachHang_LayDanhSachHopDong AS BEGIN SET NOCOUNT ON; RETURN 0; END;');
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_KhachHang_LayDanhSachHopDong
+    @MaKhachHang VARCHAR(6)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SET @MaKhachHang = NULLIF(LTRIM(RTRIM(@MaKhachHang)), '');
+
+    IF @MaKhachHang IS NULL
+        THROW 50011, N'Thiếu mã khách hàng.', 1;
+    IF NOT EXISTS (SELECT 1 FROM dbo.KhachHang WHERE MaKhachHang = @MaKhachHang)
+        THROW 50010, N'Không tìm thấy khách hàng.', 1;
+
+    SELECT
+        hs.loai,
+        hs.maHopDong,
+        hs.maPhieuDatCoc,
+        hs.tenPhong,
+        hs.hinhThucThue,
+        hs.giaThue,
+        hs.tienCoc,
+        hs.soGiuong,
+        hs.ngayBatDau,
+        hs.ngayKetThuc,
+        hs.trangThaiHoSo,
+        -- Cờ: đã có phiếu trả phòng đang xử lý (trạng thái khác 'Hủy' và 'Hoàn tất')
+        CAST(
+            CASE WHEN EXISTS (
+                SELECT 1 FROM dbo.PhieuTraPhong ptp2
+                WHERE (ptp2.MaHopDong     = hs.maHopDong
+                    OR ptp2.MaPhieuDatCoc = hs.maPhieuDatCoc)
+                  AND ptp2.TrangThai NOT IN (N'Hủy', N'Hoàn tất')
+            ) THEN 1 ELSE 0 END
+        AS BIT) AS coPhieuTraHienHanh
+    FROM (
+        -- (a) Hợp đồng thuê hiệu lực / hết hạn, chưa thanh lý
+        SELECT
+            N'HopDong'                                      AS loai,
+            hd.MaHopDong                                    AS maHopDong,
+            NULL                                            AS maPhieuDatCoc,
+            p.TenPhong                                      AS tenPhong,
+            pdc.HinhThucThue                                AS hinhThucThue,
+            hd.GiaThue                                      AS giaThue,
+            CASE 
+                WHEN pdc.HinhThucThue = N'Ghép giường' THEN 
+                    ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                     FROM dbo.ChiTietDatCoc ctdc 
+                     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong 
+                     INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong 
+                     WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc), 0) * 2 * ISNULL(hd.SoGiuongThue, 1)
+                ELSE pdc.SoTienCoc
+            END AS tienCoc,
+            hd.SoGiuongThue                                 AS soGiuong,
+            CONVERT(VARCHAR(10), hd.NgayBatDau,  120)       AS ngayBatDau,
+            CONVERT(VARCHAR(10), hd.NgayKetThuc, 120)       AS ngayKetThuc,
+            hd.TrangThai                                    AS trangThaiHoSo
+        FROM dbo.HopDongThue      AS hd
+        INNER JOIN dbo.PhieuDatCoc AS pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
+        -- CROSS APPLY TOP 1: chỉ lấy MaPhong, tránh nhân row khi ghép giường nhiều dòng CTDC
+        CROSS APPLY (
+            SELECT TOP 1 MaPhong
+            FROM dbo.ChiTietDatCoc
+            WHERE MaPhieuDatCoc = pdc.MaPhieuDatCoc
+        ) AS ctdc_p
+        INNER JOIN dbo.Phong AS p ON p.MaPhong = ctdc_p.MaPhong
+        WHERE hd.MaKhachHang = @MaKhachHang
+          AND hd.TrangThai IN (N'Hiệu lực', N'Hết hạn')
+
+        UNION ALL
+
+        -- (b) Phiếu đặt cọc hiệu lực, đã thanh toán, chưa lập hợp đồng
+        SELECT
+            N'DatCoc'                                       AS loai,
+            NULL                                            AS maHopDong,
+            pdc2.MaPhieuDatCoc                              AS maPhieuDatCoc,
+            p2.TenPhong                                     AS tenPhong,
+            pdc2.HinhThucThue                               AS hinhThucThue,
+            ctdc_agg.TienThueThang                          AS giaThue,    -- tổng giá thuê/tháng
+            CASE 
+                WHEN pdc2.HinhThucThue = N'Ghép giường' THEN 
+                    ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                     FROM dbo.ChiTietDatCoc ctdc 
+                     INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong 
+                     INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong 
+                     WHERE ctdc.MaPhieuDatCoc = pdc2.MaPhieuDatCoc), 0) * 2 * ctdc_agg.SoGiuong
+                ELSE pdc2.SoTienCoc
+            END AS tienCoc,
+            ctdc_agg.SoGiuong                               AS soGiuong,   -- số giường đã cọc
+            NULL                                            AS ngayBatDau,
+            NULL                                            AS ngayKetThuc,
+            pdc2.TrangThaiCoc                               AS trangThaiHoSo
+        FROM dbo.PhieuDatCoc AS pdc2
+        -- Aggregation trong CROSS APPLY: lấy MaPhong + tổng giá + số giường, không nhân row
+        CROSS APPLY (
+            SELECT TOP 1
+                MaPhong,
+                SUM(GiaThue) OVER (PARTITION BY MaPhieuDatCoc) AS TienThueThang,
+                COUNT(*)     OVER (PARTITION BY MaPhieuDatCoc) AS SoGiuong
+            FROM dbo.ChiTietDatCoc
+            WHERE MaPhieuDatCoc = pdc2.MaPhieuDatCoc
+        ) AS ctdc_agg
+        INNER JOIN dbo.Phong AS p2 ON p2.MaPhong = ctdc_agg.MaPhong
+        WHERE pdc2.MaKhachHang        = @MaKhachHang
+          AND pdc2.TrangThaiCoc       = N'Hiệu lực'
+          AND pdc2.TrangThaiThanhToan = N'Đã TT'
+          AND NOT EXISTS (
+              SELECT 1 FROM dbo.HopDongThue WHERE MaPhieuCoc = pdc2.MaPhieuDatCoc
+          )
+    ) AS hs
+    ORDER BY hs.loai, hs.maHopDong, hs.maPhieuDatCoc;
+END;
+GO

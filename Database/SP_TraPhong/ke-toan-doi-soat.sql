@@ -1057,7 +1057,15 @@ BEGIN
         hd.TrangThai AS trangThai,
         hd.MaPhieuCoc AS maPhieuCoc,
         hd.MaKhachHang AS maKhachHang,
-        (hd.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc)) AS soTienCoc,
+        CASE 
+            WHEN pdc.HinhThucThue = N'Ghép giường' THEN 
+                ISNULL((SELECT TOP 1 lp.GiaThueTheoGiuong 
+                 FROM dbo.ChiTietDatCoc ctdc 
+                 INNER JOIN dbo.Phong p ON p.MaPhong = ctdc.MaPhong 
+                 INNER JOIN dbo.LoaiPhong lp ON lp.MaLoaiPhong = p.MaLoaiPhong 
+                 WHERE ctdc.MaPhieuDatCoc = hd.MaPhieuCoc), 0) * 2 * ISNULL(hd.SoGiuongThue, 1)
+            ELSE pdc.SoTienCoc
+        END AS soTienCoc,
         nd.HoTen AS hoTenKhachHang,
         nd.SDT AS sdtKhachHang,
         nd.Email AS emailKhachHang
