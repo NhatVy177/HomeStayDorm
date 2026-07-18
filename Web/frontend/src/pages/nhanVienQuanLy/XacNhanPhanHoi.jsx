@@ -379,37 +379,36 @@ export default function XacNhanPhanHoi() {
           }
         }
       `}</style>
-      <div className="tp-search-container">
-        <div className="tp-search-row">
-          <div className="tp-search-col" style={{ flex: 1 }}>
-            <div className="tp-search-label">TÌM KIẾM</div>
-            <div className="tp-search-wrap">
-              <Icon name="search" className="tp-search-icon" />
-              <input className="ktp-input tp-search-input" type="text" placeholder="Tìm theo tên khách, mã đối soát" value={searchQ} onChange={(e) => setSearchQ(e.target.value)} spellCheck={false} />
-            </div>
+      <section className="ktp-table-section">
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ flex: '2 1 240px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+            <input
+              type="text"
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              placeholder="Tên khách, mã đối soát hoặc mã phiếu trả..."
+              className="ktp-input"
+              style={{ width: '100%', backgroundColor: '#fff' }}
+              spellCheck={false}
+            />
           </div>
-        </div>
-      </div>
-
-      <section className="tp-list-panel">
-        <div className="tp-list-head">
-          <div>
-            <h3>Danh sách phiếu đối soát phản hồi từ khách hàng</h3>
-          </div>
+          {searchQ && (
+            <button type="button" onClick={() => setSearchQ('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          )}
         </div>
 
-        <div className="tp-list-status-row">
-          <StatusFilterTabs
-            className="tp-search-status-tabs"
-            items={[
-              { id: 'Tất cả', label: 'Tất cả', count: countTatCa },
-              { id: 'Chờ phản hồi', label: 'Chờ phản hồi', count: countChoPhanHoi },
-              { id: 'Đã phản hồi', label: 'Đã phản hồi', count: countDaPhanHoi },
-            ].map((st) => ({ key: st.id, label: st.label, count: st.count }))}
-            activeKey={filterStatus}
-            onChange={setFilterStatus}
-          />
-        </div>
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          items={[
+            { key: 'Tất cả', label: 'Tất cả' },
+            { key: 'Chờ phản hồi', label: 'Chờ phản hồi' },
+            { key: 'Đã phản hồi', label: 'Đã phản hồi' }
+          ]}
+          activeKey={filterStatus}
+          counts={{ 'Tất cả': countTatCa, 'Chờ phản hồi': countChoPhanHoi, 'Đã phản hồi': countDaPhanHoi }}
+          onChange={setFilterStatus}
+        />
 
         {loading ? (
           <div style={{ padding: 32, textAlign: 'center', color: '#6f797a' }}>Đang tải...</div>

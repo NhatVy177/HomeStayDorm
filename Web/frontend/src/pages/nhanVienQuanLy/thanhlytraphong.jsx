@@ -190,44 +190,36 @@ export default function ThanhLyTraPhong() {
 
   return (
     <div>
-      <div className="tp-search-container">
-        <div className="tp-search-row">
-          <div className="tp-search-col" style={{ flex: 1 }}>
-            <div className="tp-search-label">TÌM KIẾM</div>
-            <div className="tp-search-wrap">
-              <Icon name="search" className="tp-search-icon" />
-              <input
-                className="ktp-input tp-search-input"
-                type="text"
-                placeholder="Tra cứu theo tên khách hàng, mã phiếu trả phòng"
-                value={searchQuery}
-                spellCheck={false}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </div>
+      <section className="ktp-table-section">
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ flex: '2 1 240px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tên khách hàng, SĐT hoặc mã phiếu..."
+              className="ktp-input"
+              style={{ width: '100%', backgroundColor: '#fff' }}
+              spellCheck={false}
+            />
           </div>
-        </div>
-      </div>
-
-      <section className="tp-list-panel">
-        <div className="tp-list-head">
-          <div>
-            <h3>Danh sách phiếu trả phòng chờ ký biên bản</h3>
-          </div>
+          {searchQuery && (
+            <button type="button" onClick={() => setSearchQuery('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          )}
         </div>
 
-        <div className="tp-list-status-row">
-          <StatusFilterTabs
-            className="tp-search-status-tabs"
-            items={[
-              { key: 'ALL', label: 'Tất cả', count: countAll },
-              { key: 'PENDING', label: 'Chờ ký biên bản', count: countPending },
-              { key: 'SIGNED', label: 'Đã ký biên bản', count: countSigned },
-            ]}
-            activeKey={filterStatus}
-            onChange={setFilterStatus}
-          />
-        </div>
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          items={[
+            { key: 'ALL', label: 'Tất cả' },
+            { key: 'PENDING', label: 'Chờ ký biên bản' },
+            { key: 'SIGNED', label: 'Đã ký biên bản' }
+          ]}
+          activeKey={filterStatus}
+          counts={{ ALL: countAll, PENDING: countPending, SIGNED: countSigned }}
+          onChange={setFilterStatus}
+        />
 
         {loading ? (
           <div style={{ padding: '20px', textAlign: 'center' }}>Đang tải...</div>
