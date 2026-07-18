@@ -250,38 +250,6 @@ export default function TraCuuPhongTab() {
                 </div>
               </div>
 
-              <div>
-                <h4 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: '800', color: '#1b6f6d', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase' }}><Icon name="person" /> KHÁCH ĐANG THUÊ HIỆN TẠI</h4>
-                <div style={{ borderRadius: '8px', border: '1px solid #e0e3e3', overflow: 'hidden' }}>
-                  <table className="ktp-table" style={{ margin: 0, border: 'none' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#f4f7f7' }}>
-                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Mã KH</th>
-                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Họ tên</th>
-                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Số điện thoại</th>
-                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Thời gian thuê</th>
-                        <th style={{ fontSize: '11px', color: '#6f797a' }}>Trạng thái</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {viewRoom.occupied > 0 ? (
-                        <tr>
-                          <td style={{ color: '#1b6f6d', fontWeight: '700' }}>KH-0012</td>
-                          <td style={{ color: '#3f494a', fontWeight: '500' }}>Nguyễn Văn A</td>
-                          <td style={{ color: '#6f797a', fontSize: '13px' }}>0901 234 567</td>
-                          <td style={{ color: '#6f797a', fontSize: '13px' }}>01/01/24 - 01/01/25</td>
-                          <td><span style={{ backgroundColor: '#e8f4f4', color: '#1b6f6d', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '700' }}>Đang ở</span></td>
-                        </tr>
-                      ) : (
-                        <tr>
-                          <td colSpan="5" style={{ textAlign: 'center', color: '#9eaaab', padding: '24px' }}>Chưa có khách thuê</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
             </div>
             <div className="ktp-modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e0e3e3', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#f9fafa', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
               <button onClick={() => setViewRoom(null)} style={{ padding: '10px 24px', borderRadius: '8px', border: '1px solid #bec8c9', backgroundColor: '#fff', color: '#191c1d', fontWeight: '700', cursor: 'pointer' }}>Đóng</button>

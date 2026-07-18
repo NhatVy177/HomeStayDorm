@@ -928,7 +928,7 @@ function GhiNhanThanhToanPanel({ type }) {
     setRefundForm((prev) => ({ ...prev, chungTuThanhToan: '' }));
   }
 
-  function renderSettlementTable(tableRows) {
+  function renderSettlementTable(tableRows, toolbar) {
     const settlementName = isThuThem ? 'thu thêm' : 'hoàn cọc';
     const currentSection = {
       title: isThuThem ? activeThuThemFilterMeta.title : `Chờ ghi nhận ${settlementName}`,
@@ -941,6 +941,7 @@ function GhiNhanThanhToanPanel({ type }) {
 
     return (
       <section className="ktp-table-section qt-settlement-section">
+        {toolbar}
         <div className="qt-settlement-section-head">
           <div>
             <h4>{currentSection.title}</h4>
@@ -1023,32 +1024,38 @@ function GhiNhanThanhToanPanel({ type }) {
     );
   }
 
+  const thuThemToolbar = (
+    <>
+      <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+        <div style={{ flex: '2 1 240px' }}>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+          <input
+            type="text"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder="Tìm kiếm..."
+            className="ktp-input"
+            style={{ width: '100%', backgroundColor: '#fff' }}
+          />
+        </div>
+        {searchText && (
+          <button type="button" onClick={() => setSearchText('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+        )}
+      </div>
+      {isThuThem && (
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          ariaLabel="Bộ lọc thu thêm"
+          items={thuThemFilters}
+          activeKey={thuThemFilter}
+          onChange={setThuThemFilter}
+        />
+      )}
+    </>
+  );
+
   return (
     <>
-      <section className="qt-settlement-toolbar">
-        {isThuThem && (
-          <StatusFilterTabs
-            className="qt-status-filters"
-            ariaLabel="Bộ lọc thu thêm"
-            items={thuThemFilters}
-            activeKey={thuThemFilter}
-            onChange={setThuThemFilter}
-          />
-        )}
-        <div className="qt-toolbar-actions">
-          <div className="ktp-input-icon-wrap qt-compact-search">
-            <span className="ktp-input-icon"><Icon name="search" /></span>
-            <input
-              className="ktp-input ktp-input-with-icon"
-              type="text"
-              placeholder="Tìm kiếm..."
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-            />
-          </div>
-        </div>
-      </section>
-
       {localMessage && (
         <div className="ktp-warning-box" style={{ backgroundColor: '#dbe4e5', color: '#004f55', marginBottom: '16px' }}>
           <Icon name="check_circle" />
@@ -1063,7 +1070,7 @@ function GhiNhanThanhToanPanel({ type }) {
         </div>
       )}
 
-      {renderSettlementTable(displayedRows)}
+      {renderSettlementTable(displayedRows, thuThemToolbar)}
 
       {selectedRefund && (
         <div className="ktp-modal-overlay" onClick={() => setSelectedRefund(null)}>
@@ -1327,28 +1334,6 @@ function KetQuaDoiSoatPanel() {
 
   return (
     <>
-      <section className="qt-settlement-toolbar">
-        <StatusFilterTabs
-          className="qt-status-filters"
-          ariaLabel="Bộ lọc kết quả đối soát"
-          items={ketQuaFilterItems}
-          activeKey={ketQuaFilter}
-          onChange={setKetQuaFilter}
-        />
-        <div className="qt-toolbar-actions">
-          <div className="ktp-input-icon-wrap qt-compact-search">
-            <span className="ktp-input-icon"><Icon name="search" /></span>
-            <input
-              className="ktp-input ktp-input-with-icon"
-              type="text"
-              placeholder="Tìm kiếm..."
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-            />
-          </div>
-        </div>
-      </section>
-
       {error && (
         <div className="ktp-warning-box" style={{ backgroundColor: '#ffdad6', color: '#410002', marginBottom: '16px' }}>
           <Icon name="error_outline" />
@@ -1357,6 +1342,31 @@ function KetQuaDoiSoatPanel() {
       )}
 
       <section className="ktp-table-section qt-settlement-section">
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ flex: '2 1 240px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+            <input
+              type="text"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Tìm kiếm..."
+              className="ktp-input"
+              style={{ width: '100%', backgroundColor: '#fff' }}
+            />
+          </div>
+          {searchText && (
+            <button type="button" onClick={() => setSearchText('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          )}
+        </div>
+
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          ariaLabel="Bộ lọc kết quả đối soát"
+          items={ketQuaFilterItems}
+          activeKey={ketQuaFilter}
+          onChange={setKetQuaFilter}
+        />
+
         <div className="qt-settlement-section-head">
           <div>
             <h4>Kết quả đối soát</h4>
@@ -1790,28 +1800,6 @@ export default function QuyetToanTraPhongTab() {
 
       {activeQuyetToanTab === 'lap-doi-soat' && (
         <>
-      <section className="qt-settlement-toolbar">
-        <StatusFilterTabs
-          className="qt-status-filters"
-          ariaLabel="Bộ lọc đối soát"
-          items={lapFilters}
-          activeKey={lapFilter}
-          onChange={setLapFilter}
-        />
-        <div className="qt-toolbar-actions">
-          <div className="ktp-input-icon-wrap qt-compact-search">
-            <span className="ktp-input-icon"><Icon name="search" /></span>
-            <input
-              className="ktp-input ktp-input-with-icon"
-              type="text"
-              placeholder="Tìm kiếm..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-        </div>
-      </section>
-
       {message && (
         <div className="ktp-warning-box" style={{ backgroundColor: '#dbe4e5', color: '#004f55', marginBottom: '16px' }}>
           <Icon name="check_circle" />
@@ -1827,6 +1815,31 @@ export default function QuyetToanTraPhongTab() {
       )}
 
       <section className="ktp-table-section qt-settlement-section">
+        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ flex: '2 1 240px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Tìm kiếm..."
+              className="ktp-input"
+              style={{ width: '100%', backgroundColor: '#fff' }}
+            />
+          </div>
+          {search && (
+            <button type="button" onClick={() => setSearch('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
+          )}
+        </div>
+
+        <StatusFilterTabs
+          className="status-pill-tabs-offset"
+          ariaLabel="Bộ lọc đối soát"
+          items={lapFilters}
+          activeKey={lapFilter}
+          onChange={setLapFilter}
+        />
+
         <div className="qt-settlement-section-head">
           <div>
             <h4>{currentLapSection.title}</h4>
