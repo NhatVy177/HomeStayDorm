@@ -268,7 +268,8 @@ export default function LichXemPhongTab() {
               {filteredSchedules.map((schedule) => {
                 const time = formatDateTime(schedule.thoiGianHen);
                 const badge = statusStyle(schedule.trangThai);
-                const isClosed = ['Đã hủy', 'Đã xem'].includes(schedule.trangThai);
+                const isRescheduleDisabled = ['Đã hủy', 'Đã xem'].includes(schedule.trangThai);
+                const isCancelDisabled = !schedule.coTheHuy;
                 return (
                   <tr key={schedule.id}>
                     <td>
@@ -295,17 +296,15 @@ export default function LichXemPhongTab() {
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
                         <button
-                          className="ktp-btn-outline"
-                          style={{ padding: '6px 12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                          disabled={isClosed}
+                          className="sale-schedule-action-btn sale-schedule-action-btn-reschedule"
+                          disabled={isRescheduleDisabled}
                           onClick={() => openReschedule(schedule)}
                         >
-                          <Icon name="event_note" style={{ fontSize: '16px' }} /> Đổi lịch
+                          Đổi lịch
                         </button>
                         <button
-                          className="ktp-btn-outline"
-                          style={{ padding: '6px 12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#ba1a1a', borderColor: '#ba1a1a' }}
-                          disabled={isClosed}
+                          className="sale-schedule-action-btn sale-schedule-action-btn-cancel"
+                          disabled={isCancelDisabled}
                           onClick={() => openCancel(schedule)}
                         >
                           <Icon name="cancel" style={{ fontSize: '16px' }} /> Hủy
@@ -323,9 +322,9 @@ export default function LichXemPhongTab() {
       {modalType === 'reschedule' && selectedSchedule && (
         <div className="ktp-modal-overlay" onClick={() => setModalType(null)}>
           <div className="ktp-modal" onClick={(event) => event.stopPropagation()} style={{ width: '480px', maxWidth: '90vw' }}>
-            <div className="ktp-modal-header" style={{ alignItems: 'center' }}>
-              <h3 style={{ fontSize: '18px', margin: 0, color: '#191c1d' }}>Đổi lịch xem phòng</h3>
-              <button className="ktp-modal-close" onClick={() => setModalType(null)}><Icon name="close" /></button>
+            <div className="ktp-modal-header" style={{ alignItems: 'center', backgroundColor: '#2f6765', color: '#ffffff', borderBottom: 'none' }}>
+              <h3 style={{ fontSize: '18px', margin: 0, color: '#ffffff' }}>Đổi lịch xem phòng</h3>
+              <button className="ktp-modal-close" style={{ color: '#ffffff' }} onClick={() => setModalType(null)}><Icon name="close" /></button>
             </div>
             <div className="ktp-modal-body" style={{ padding: '24px', display: 'block' }}>
               <div style={{ padding: '14px', borderRadius: '6px', backgroundColor: '#f4f6f6', marginBottom: '18px', color: '#3f494a' }}>
@@ -378,7 +377,7 @@ export default function LichXemPhongTab() {
               />
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button className="ktp-btn-cancel" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setModalType(null)}>Quay lại</button>
-                <button className="ktp-btn-submit" style={{ flex: 1, justifyContent: 'center', backgroundColor: '#ba1a1a' }} disabled={saving} onClick={handleCancel}>
+                <button className="ktp-btn-submit" style={{ flex: 1, justifyContent: 'center', backgroundColor: '#ba1a1a' }} disabled={saving || !selectedSchedule.coTheHuy} onClick={handleCancel}>
                   {saving ? 'Đang hủy...' : 'Xác nhận hủy'}
                 </button>
               </div>

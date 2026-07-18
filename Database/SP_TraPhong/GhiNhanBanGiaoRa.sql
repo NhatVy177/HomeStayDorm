@@ -363,9 +363,11 @@ BEGIN
         FROM @BanGiao;
 
         UPDATE ts
-        SET ts.SoLuong = bg.SoLuongThuHoi
+        SET ts.SoLuong = ts.SoLuong - (ctVao.SoLuongThucTe - bg.SoLuongThuHoi)
         FROM dbo.TaiSan ts
-        INNER JOIN @BanGiao bg ON bg.MaPhong = ts.MaPhong AND bg.MaTaiSan = ts.MaTaiSan;
+        INNER JOIN @BanGiao bg ON bg.MaPhong = ts.MaPhong AND bg.MaTaiSan = ts.MaTaiSan
+        INNER JOIN dbo.BienBanBanGiao bgVao ON bgVao.MaHopDong = @MaHopDong AND bgVao.LoaiBanGiao = N'Bàn giao vào'
+        INNER JOIN dbo.ChiTietBanGiao ctVao ON ctVao.MaBienBan = bgVao.MaBienBan AND ctVao.MaPhong = bg.MaPhong AND ctVao.MaTaiSan = bg.MaTaiSan;
 
         UPDATE dbo.ThanhVienHopDong
         SET TrangThai = N'Đã rời'

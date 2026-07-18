@@ -64,6 +64,15 @@ export async function capNhatChiNhanh(req, res, next) {
   }
 }
 
+export async function xoaChiNhanh(req, res, next) {
+  try {
+    const data = await adminService.xoaChiNhanh(req.params.id, req.user);
+    res.json(data);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getDanhSachLoaiPhong(req, res, next) {
   try {
     const data = await adminService.getDanhSachLoaiPhong({
@@ -93,6 +102,24 @@ export async function taoPhongGiuong(req, res, next) {
   try {
     const data = await adminService.taoPhongGiuong(req.body, req.user);
     res.status(201).json(data);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function capNhatPhong(req, res, next) {
+  try {
+    const data = await adminService.capNhatPhong(req.params.id, req.body, req.user);
+    res.json(data);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function xoaPhong(req, res, next) {
+  try {
+    const data = await adminService.xoaPhong(req.params.id, req.user);
+    res.json(data);
   } catch (error) {
     next(error);
   }
@@ -172,6 +199,19 @@ export async function quanLyDichVu(req, res, next) {
   }
 }
 
+export async function quanLyQuyDinhHoanCoc(req, res, next) {
+  try {
+    const data = await adminService.quanLyQuyDinhHoanCoc({
+      ...req.query,
+      ...req.body,
+      adminId: req.user?.maNguoiDung
+    });
+    res.json({ data });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function quanLyNoiQuy(req, res, next) {
   try {
     const data = await adminService.quanLyNoiQuy({
@@ -233,6 +273,15 @@ export async function saoLuuThuCong(req, res, next) {
   try {
     const data = await adminService.saoLuuThuCong(req.body, req.user);
     res.status(201).json(data);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function phucHoiDuLieu(req, res, next) {
+  try {
+    const data = await adminService.phucHoiDuLieu(req.params.id, req.body, req.user);
+    res.json(data);
   } catch (error) {
     next(error);
   }

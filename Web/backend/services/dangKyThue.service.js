@@ -1,5 +1,6 @@
-import { executeProcedure, executeQuery, sql } from '../database/connection.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
+import { assertSingleRoomTypeCapacity } from './rentRegistrationRules.js';
+import * as dangKyThueRepository from '../repositories/dangKyThue.repository.js';
 
 function handleDatabaseError(error) {
   mapDatabaseError(error, {
@@ -38,82 +39,72 @@ function normalizeMoneyVnd(value) {
   return vnd;
 }
 
+function normalizeText(value) {
+  return String(value || '').trim().toLocaleLowerCase('vi-VN');
+}
+
+function getAvailableSlots(row = {}) {
+  return Math.max(0, Number(row.soGiuongTrong ?? row.soGiuongDuKienXep ?? row.sucChua ?? 0));
+}
+
+function getRoomCapacity(row = {}) {
+  return Math.max(0, Number(row.sucChua ?? row.SucChuaToiDa ?? row.capacity ?? 0));
+}
+
+function roomAllowsMixedGender(row = {}) {
+  return ['không phân biệt', 'khác', 'hỗn hợp'].includes(normalizeText(row.gioiTinhChoPhep ?? row.GioiTinhChoPhep));
+}
+
+function roomAllowsSingleGender(row = {}, gender) {
+  const roomGender = normalizeText(row.gioiTinhChoPhep ?? row.GioiTinhChoPhep);
+  return roomGender === gender || roomAllowsMixedGender(row);
+}
+
+function getProfileOccupancy(profile = {}) {
+  const total = Math.max(1, Number(
+    profile.SoNguoiDuKienO ?? profile.soNguoiDuKienO ?? profile.soNguoiO ?? profile.SoNguoiO ?? 1
+  ));
+  let male = Math.max(0, Number(profile.SoNam ?? profile.soNam ?? 0));
+  let female = Math.max(0, Number(profile.SoNu ?? profile.soNu ?? 0));
+  const gender = normalizeText(profile.GioiTinh ?? profile.gioiTinh);
+
+  if (male === 0 && female === 0) {
+    if (gender === 'nam') male = total;
+    if (gender === 'nữ') female = total;
+  }
+
+  return { total, male, female };
+}
+
+function isRoomSuitableForProfile(row = {}, profile = {}) {
+  const { total, male, female } = getProfileOccupancy(profile);
+  const availableSlots = getAvailableSlots(row);
+  const capacity = getRoomCapacity(row);
+
+  if (male > 0 && female > 0) {
+    return roomAllowsMixedGender(row)
+      && capacity >= total
+      && availableSlots >= capacity;
+  }
+
+  if (male > 0) {
+    return roomAllowsSingleGender(row, 'nam') && availableSlots >= total;
+  }
+
+  if (female > 0) {
+    return roomAllowsSingleGender(row, 'nữ') && availableSlots >= total;
+  }
+
+  return availableSlots >= total;
+}
+
 const ACTIVE_RENT_FLOW_MESSAGE = 'Khách hàng đang có phiếu đăng ký/đặt cọc/hợp đồng chưa kết thúc. Chỉ được tạo phiếu đăng ký mới khi luồng thuê hiện tại kết thúc.';
 
 async function getActiveRentFlow(khachHangId) {
   const id = String(khachHangId || '').trim();
   if (!id) return null;
 
-  const result = await executeQuery(`
-    SELECT TOP (1) *
-    FROM (
-      SELECT
-        N'Hợp đồng thuê' AS loai,
-        hd.MaHopDong AS maThamChieu,
-        hd.TrangThai AS trangThai,
-        hd.NgayKyHD AS ngayTao,
-        1 AS thuTu
-      FROM dbo.HopDongThue AS hd
-      WHERE hd.MaKhachHang = @KhachHangId
-        AND hd.TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
-
-      UNION ALL
-
-      SELECT
-        N'Phiếu đặt cọc' AS loai,
-        pdc.MaPhieuDatCoc AS maThamChieu,
-        CONCAT(pdc.TrangThaiCoc, N' / ', pdc.TrangThaiThanhToan) AS trangThai,
-        CAST(pdc.ThoiDiemDatCoc AS DATE) AS ngayTao,
-        2 AS thuTu
-      FROM dbo.PhieuDatCoc AS pdc
-      WHERE pdc.MaKhachHang = @KhachHangId
-        AND pdc.TrangThaiCoc <> N'Đã hủy'
-        AND pdc.TrangThaiThanhToan <> N'Hết hạn'
-        AND NOT EXISTS (
-          SELECT 1
-          FROM dbo.HopDongThue AS hd
-          WHERE hd.MaPhieuCoc = pdc.MaPhieuDatCoc
-            AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
-        )
-
-      UNION ALL
-
-      SELECT
-        N'Phiếu đăng ký' AS loai,
-        pdk.MaDangKy AS maThamChieu,
-        pdk.TrangThai AS trangThai,
-        pdk.NgayDangKy AS ngayTao,
-        3 AS thuTu
-      FROM dbo.PhieuDangKy AS pdk
-      WHERE pdk.MaKhachHang = @KhachHangId
-        AND (
-          NOT EXISTS (
-            SELECT 1
-            FROM dbo.LichXemPhong AS lxpAny
-            WHERE lxpAny.MaDangKy = pdk.MaDangKy
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM dbo.LichXemPhong AS lxpActive
-            WHERE lxpActive.MaDangKy = pdk.MaDangKy
-              AND lxpActive.TrangThai <> N'Đã hủy'
-          )
-        )
-        AND pdk.TrangThai <> N'Từ chối'
-        AND NOT EXISTS (
-          SELECT 1
-          FROM dbo.PhieuDatCoc AS pdc
-          INNER JOIN dbo.HopDongThue AS hd ON hd.MaPhieuCoc = pdc.MaPhieuDatCoc
-          WHERE pdc.MaPhieuYeuCauDangKy = pdk.MaDangKy
-            AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
-        )
-    ) AS activeFlow
-    ORDER BY thuTu, ngayTao DESC;
-  `, [
-    { name: 'KhachHangId', type: sql.VarChar(6), value: id }
-  ]);
-
-  return result.recordset[0] || null;
+  return dangKyThueRepository.timLuongThueDangHoatDong(id);
 }
 
 async function assertCanCreateRentRegistration(khachHangId) {
@@ -150,57 +141,35 @@ export async function createHoSoDangKy(data = {}) {
   if (!mucGiaToiDa) {
     throw createServiceError('Vui lòng nhập mức giá mong muốn hợp lệ.');
   }
+  const loaiPhongYeuCau = await assertSingleRoomTypeCapacity(data.loaiPhongYeuCau, soNguoiO);
 
   await assertCanCreateRentRegistration(khachHangId);
 
   try {
-    const result = await executeProcedure('dbo.SP_TaoHoSoDangKy', [
-      { name: 'KhachHangId',     type: sql.NVarChar(20),       value: khachHangId },
-      { name: 'SoNguoiO',        type: sql.Int,                value: soNguoiO },
-      { name: 'SoNamInput',      type: sql.Int,                value: data.soNam || 0 },
-      { name: 'SoNuInput',       type: sql.Int,                value: data.soNu || 0 },
-      { name: 'NgayDuKienVaoO',  type: sql.Date,               value: ngayDuKienVaoO },
-      { name: 'GhiChu',          type: sql.NVarChar(sql.MAX),  value: data.ghiChu || null },
-      { name: 'KhuVucMongMuon',  type: sql.NVarChar(100),      value: data.khuVucMongMuon || null },
-      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(200),      value: data.loaiPhongYeuCau || null },
-      { name: 'MucGiaToiDa',     type: sql.Decimal(18, 2),     value: mucGiaToiDa },
-      { name: 'ThoiHanThue',     type: sql.Int,                value: data.thoiHanThue ? Number(data.thoiHanThue) : null },
-      { name: 'GioiTinh',        type: sql.NVarChar(10),       value: gioiTinhThue }
-    ]);
-
-    return result.recordset[0] || null;
+    return await dangKyThueRepository.taoHoSoDangKy({
+      khachHangId,
+      soNguoiO,
+      soNam: data.soNam || 0,
+      soNu: data.soNu || 0,
+      ngayDuKienVaoO,
+      ghiChu: data.ghiChu || null,
+      khuVucMongMuon: data.khuVucMongMuon || null,
+      loaiPhongYeuCau,
+      mucGiaToiDa,
+      thoiHanThue: data.thoiHanThue,
+      gioiTinh: gioiTinhThue
+    });
   } catch (error) {
     handleDatabaseError(error);
   }
 }
 
 export async function getHoSoDangKy(filter = {}) {
-  const result = await executeProcedure('dbo.SP_DanhSachHoSoDangKy', [
-    { name: 'TrangThai', type: sql.NVarChar(30), value: filter.trangThai || null },
-    { name: 'MaChiNhanh', type: sql.VarChar(6), value: filter.maChiNhanh || null },
-    { name: 'NhanVienSaleId', type: sql.VarChar(6), value: filter.nhanVienSaleId || null },
-    { name: 'KhachHangId', type: sql.VarChar(6), value: filter.khachHangId || null }
-  ]);
+  const rows = await dangKyThueRepository.layDanhSachHoSoDangKy(filter);
+  const cancelledRows = await dangKyThueRepository.layMaDangKyBiHuyDoTatCaLichXemBiHuy();
+  const cancelledIds = new Set(cancelledRows.map((row) => row.MaDangKy));
 
-  const cancelledResult = await executeQuery(`
-    SELECT pdk.MaDangKy
-    FROM dbo.PhieuDangKy AS pdk
-    WHERE pdk.TrangThai = N'Từ chối'
-      AND EXISTS (
-        SELECT 1
-        FROM dbo.LichXemPhong AS lxpAny
-        WHERE lxpAny.MaDangKy = pdk.MaDangKy
-      )
-      AND NOT EXISTS (
-        SELECT 1
-        FROM dbo.LichXemPhong AS lxpActive
-        WHERE lxpActive.MaDangKy = pdk.MaDangKy
-          AND lxpActive.TrangThai <> N'Đã hủy'
-      );
-  `);
-  const cancelledIds = new Set(cancelledResult.recordset.map((row) => row.MaDangKy));
-
-  return result.recordset.map((row) => {
+  return rows.map((row) => {
     const biHuyDoTatCaLich = cancelledIds.has(row.maDangKy);
     return {
       ...row,
@@ -214,52 +183,12 @@ export async function kiemTraKhachHangTonTai(filter = {}) {
   const sdt = String(filter.sdt || '').trim();
   const cccd = String(filter.cccd || '').trim();
 
-  const result = await executeQuery(`
-    SELECT
-      CAST(CASE WHEN EXISTS (
-        SELECT 1
-        FROM dbo.NguoiDung
-        WHERE SDT = @SDT
-          AND LoaiNguoiDung = 'KhachHang'
-      ) THEN 1 ELSE 0 END AS bit) AS sdtTonTai,
-      CAST(CASE WHEN EXISTS (
-        SELECT 1
-        FROM dbo.KhachHang
-        WHERE CCCD = @CCCD
-      ) THEN 1 ELSE 0 END AS bit) AS cccdTonTai
-  `, [
-    { name: 'SDT', type: sql.VarChar(20), value: sdt || null },
-    { name: 'CCCD', type: sql.VarChar(20), value: cccd || null }
-  ]);
-
-  const base = result.recordset[0] || { sdtTonTai: false, cccdTonTai: false };
-  const customer = await executeQuery(`
-    SELECT TOP (1)
-      kh.MaKhachHang,
-      nd.HoTen,
-      nd.NgaySinh,
-      nd.GioiTinh,
-      nd.SDT,
-      nd.Email,
-      kh.QuocTich,
-      kh.CCCD
-    FROM dbo.KhachHang AS kh
-    INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = kh.MaKhachHang
-    WHERE @SDT IS NOT NULL AND nd.SDT = @SDT
-  `, [
-    { name: 'SDT', type: sql.VarChar(20), value: sdt || null }
-  ]);
-
-  const matchedCustomer = customer.recordset[0] || null;
+  const base = await dangKyThueRepository.kiemTraSdtCccdTonTai({ sdt, cccd });
+  const matchedCustomer = await dangKyThueRepository.timKhachHangTheoSdt(sdt);
   const maKhachHang = matchedCustomer?.MaKhachHang || null;
-  const cccdOwner = cccd ? await executeQuery(`
-    SELECT TOP (1) MaKhachHang
-    FROM dbo.KhachHang
-    WHERE CCCD = @CCCD
-  `, [
-    { name: 'CCCD', type: sql.VarChar(20), value: cccd }
-  ]) : null;
-  const maKhachHangTheoCccd = cccdOwner?.recordset[0]?.MaKhachHang || null;
+  const maKhachHangTheoCccd = cccd
+    ? await dangKyThueRepository.timMaKhachHangTheoCccd(cccd)
+    : null;
   const activeFlow = maKhachHang ? await getActiveRentFlow(maKhachHang) : null;
 
   return {
@@ -290,96 +219,56 @@ export async function getPhongGiuongKhaDung(filter = {}) {
   const hoSoId = String(filter.hoSoId || '').trim();
   let mucGiaToiDa = normalizeMoneyVnd(filter.mucGiaToiDa);
   const soNguoiO = Number(filter.soNguoiO);
+  let profileCriteria = {
+    SoNguoiDuKienO: Number.isFinite(soNguoiO) && soNguoiO > 0 ? soNguoiO : null,
+    SoNam: filter.soNam || 0,
+    SoNu: filter.soNu || 0,
+    GioiTinh: filter.gioiTinh || null
+  };
 
-  if (hoSoId && !mucGiaToiDa) {
-    const profile = await executeQuery(`
-      SELECT MucGiaToiDa
-      FROM dbo.PhieuDangKy
-      WHERE MaDangKy = @HoSoId
-    `, [
-      { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId }
-    ]);
-    mucGiaToiDa = normalizeMoneyVnd(profile.recordset[0]?.MucGiaToiDa);
+  if (hoSoId) {
+    const record = await dangKyThueRepository.layTieuChiHoSoDangKy(hoSoId);
+    if (!mucGiaToiDa) {
+      mucGiaToiDa = normalizeMoneyVnd(record.MucGiaToiDa);
+    }
+    profileCriteria = record;
   }
 
-  const result = await executeProcedure('dbo.SP_DanhSachPhongGiuongKhaDung', [
-    { name: 'Loai', type: sql.NVarChar(50), value: filter.loai || null },
-    { name: 'GioiTinh', type: sql.NVarChar(5), value: filter.gioiTinh || null },
-    { name: 'MaChiNhanh', type: sql.VarChar(6), value: filter.maChiNhanh || null },
-    { name: 'KhuVuc', type: sql.NVarChar(100), value: filter.khuVuc || null },
-    { name: 'LoaiPhong', type: sql.NVarChar(50), value: filter.loaiPhong || null },
-    { name: 'MucGiaTu', type: sql.Decimal(15, 2), value: normalizeMoneyVnd(filter.mucGiaTu) },
-    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: mucGiaToiDa },
-    { name: 'SoNguoiO', type: sql.Int, value: Number.isFinite(soNguoiO) && soNguoiO > 0 ? soNguoiO : null },
-    { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId || null }
-  ]);
+  const rooms = await dangKyThueRepository.layDanhSachPhongGiuongKhaDung({
+    loai: filter.loai || null,
+    gioiTinh: filter.gioiTinh || null,
+    maChiNhanh: filter.maChiNhanh || null,
+    khuVuc: filter.khuVuc || null,
+    loaiPhong: filter.loaiPhong || null,
+    mucGiaTu: normalizeMoneyVnd(filter.mucGiaTu),
+    mucGiaToiDa,
+    soNguoiO: Number.isFinite(soNguoiO) && soNguoiO > 0 ? soNguoiO : null,
+    hoSoId: hoSoId || null
+  });
 
   let isRegionValid = true;
   if (hoSoId) {
-    const check = await executeQuery(`
-      SELECT 1 
-      FROM PhieuDangKy pdk
-      JOIN ChiNhanh cn ON (
-        cn.DiaChi LIKE N'%' + pdk.KhuVucMongMuon + N'%'
-        OR cn.TenChiNhanh LIKE N'%' + pdk.KhuVucMongMuon + N'%'
-        OR (
-          cn.MaChiNhanh = 'CN0001'
-          AND (
-            pdk.KhuVucMongMuon LIKE N'%Quận 1%'
-            OR pdk.KhuVucMongMuon LIKE N'%Quận 3%'
-            OR pdk.KhuVucMongMuon LIKE N'%Quận 4%'
-            OR pdk.KhuVucMongMuon LIKE N'%Quận 5%'
-            OR pdk.KhuVucMongMuon LIKE N'%Quận 10%'
-          )
-        )
-        OR (
-          cn.MaChiNhanh = 'CN0002'
-          AND (
-            pdk.KhuVucMongMuon LIKE N'%Bình Thạnh%'
-            OR pdk.KhuVucMongMuon LIKE N'%Phú Nhuận%'
-            OR pdk.KhuVucMongMuon LIKE N'%Gò Vấp%'
-            OR pdk.KhuVucMongMuon LIKE N'%Tân Bình%'
-          )
-        )
-        OR (
-          cn.MaChiNhanh = 'CN0003'
-          AND (
-            pdk.KhuVucMongMuon LIKE N'%Thủ Đức%'
-            OR pdk.KhuVucMongMuon LIKE N'%Quận 2%'
-            OR pdk.KhuVucMongMuon LIKE N'%Quận 9%'
-          )
-        )
-      )
-      WHERE pdk.MaDangKy = @HoSoId
-    `, [
-      { name: 'HoSoId', type: sql.VarChar(6), value: hoSoId }
-    ]);
-    isRegionValid = check.recordset.length > 0;
+    isRegionValid = await dangKyThueRepository.kiemTraKhuVucHoSoHopLe(hoSoId);
   }
 
   return {
-    rooms: result.recordset,
+    rooms: rooms.filter((row) => row.maPhong && isRoomSuitableForProfile(row, profileCriteria)),
     isRegionValid
   };
 }
 
 export async function traCuuPhong(filter = {}) {
-  const result = await executeProcedure('dbo.SP_TraCuuPhong', [
-    { name: 'KhuVuc', type: sql.NVarChar(100), value: filter.khuVuc || null },
-    { name: 'LoaiPhong', type: sql.NVarChar(50), value: filter.loaiPhong || null },
-    { name: 'HinhThucThue', type: sql.NVarChar(50), value: filter.hinhThucThue || null },
-    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: normalizeMoneyVnd(filter.mucGiaToiDa) }
-  ]);
-  return result.recordset;
+  return dangKyThueRepository.traCuuPhong({
+    khuVuc: filter.khuVuc || null,
+    loaiPhong: filter.loaiPhong || null,
+    hinhThucThue: filter.hinhThucThue || null,
+    mucGiaToiDa: normalizeMoneyVnd(filter.mucGiaToiDa)
+  });
 }
 
 export async function kiemTraDieuKienThue(hoSoId) {
   try {
-    const result = await executeProcedure('dbo.SP_KiemTraDieuKienThue', [
-      { name: 'HoSoId', type: sql.NVarChar(30), value: String(hoSoId || '').trim() }
-    ]);
-
-    return result.recordset[0] || null;
+    return await dangKyThueRepository.kiemTraDieuKienThue(hoSoId);
   } catch (error) {
     handleDatabaseError(error);
   }
@@ -387,14 +276,7 @@ export async function kiemTraDieuKienThue(hoSoId) {
 
 export async function capNhatKetQuaXuLy(hoSoId, data = {}) {
   try {
-    const result = await executeProcedure('dbo.SP_CapNhatKetQuaXuLyHoSo', [
-      { name: 'HoSoId',          type: sql.NVarChar(30),       value: String(hoSoId || '').trim() },
-      { name: 'TrangThai',       type: sql.NVarChar(50),       value: data.trangThai || null },
-      { name: 'GhiChuXuLy',     type: sql.NVarChar(sql.MAX),  value: data.ghiChuXuLy || null },
-      { name: 'NhanVienSaleId', type: sql.NVarChar(20),       value: data.nhanVienSaleId || null }
-    ]);
-
-    return result.recordset[0] || null;
+    return await dangKyThueRepository.capNhatKetQuaXuLy(hoSoId, data);
   } catch (error) {
     handleDatabaseError(error);
   }
@@ -402,11 +284,7 @@ export async function capNhatKetQuaXuLy(hoSoId, data = {}) {
 
 export async function tiepNhanHoSoDangKy(hoSoId, nhanVienSaleId) {
   try {
-    const result = await executeProcedure('dbo.SP_TiepNhanHoSoDangKy', [
-      { name: 'MaDangKy', type: sql.VarChar(6), value: String(hoSoId || '').trim() },
-      { name: 'NhanVienSaleId', type: sql.VarChar(6), value: String(nhanVienSaleId || '').trim() }
-    ]);
-    return result.recordset[0] || null;
+    return await dangKyThueRepository.tiepNhanHoSoDangKy(hoSoId, nhanVienSaleId);
   } catch (error) {
     handleDatabaseError(error);
   }
@@ -414,11 +292,7 @@ export async function tiepNhanHoSoDangKy(hoSoId, nhanVienSaleId) {
 
 export async function huyTiepNhanHoSoDangKy(hoSoId, nhanVienSaleId) {
   try {
-    const result = await executeProcedure('dbo.SP_HuyTiepNhanHoSoDangKy', [
-      { name: 'MaDangKy', type: sql.VarChar(6), value: String(hoSoId || '').trim() },
-      { name: 'NhanVienSaleId', type: sql.VarChar(6), value: String(nhanVienSaleId || '').trim() }
-    ]);
-    return result.recordset[0] || null;
+    return await dangKyThueRepository.huyTiepNhanHoSoDangKy(hoSoId, nhanVienSaleId);
   } catch (error) {
     handleDatabaseError(error);
   }
@@ -432,6 +306,7 @@ export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
     const hinhThucThue = data.hinhThucThue || data.hinhThuc || null;
     const sdt = String(data.sdt || '').trim();
     const cccd = String(data.cccd || '').trim();
+    const loaiPhongYeuCau = await assertSingleRoomTypeCapacity(data.loaiPhongYeuCau || data.loaiPhong, soNguoiO);
 
     if (!/^\d{10}$/.test(sdt)) {
       throw createServiceError('Số điện thoại phải có đúng 10 chữ số.');
@@ -440,16 +315,7 @@ export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
       throw createServiceError('CCCD phải có đúng 12 chữ số.');
     }
 
-    const customerResult = await executeQuery(`
-      SELECT TOP (1) kh.MaKhachHang, kh.CCCD
-      FROM dbo.KhachHang AS kh
-      INNER JOIN dbo.NguoiDung AS nd ON nd.MaNguoiDung = kh.MaKhachHang
-      WHERE nd.SDT = @SDT
-        AND nd.LoaiNguoiDung = 'KhachHang'
-    `, [
-      { name: 'SDT', type: sql.VarChar(20), value: sdt || null }
-    ]);
-    const existingCustomer = customerResult.recordset[0] || null;
+    const existingCustomer = await dangKyThueRepository.timKhachHangKhachVangLaiTheoSdt(sdt);
 
     if (existingCustomer) {
       if (String(existingCustomer.CCCD || '').trim() !== cccd) {
@@ -457,57 +323,47 @@ export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
       }
 
       await assertCanCreateRentRegistration(existingCustomer.MaKhachHang);
-      const result = await executeProcedure('dbo.SP_TaoHoSoDangKy', [
-        { name: 'KhachHangId', type: sql.NVarChar(20), value: existingCustomer.MaKhachHang },
-        { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
-        { name: 'SoNamInput', type: sql.Int, value: data.soNam || 0 },
-        { name: 'SoNuInput', type: sql.Int, value: data.soNu || 0 },
-        { name: 'NgayDuKienVaoO', type: sql.Date, value: data.ngayVao || data.ngayDuKienVaoO },
-        { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || data.yeuCau || null },
-        { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || data.khuVuc },
-        { name: 'LoaiPhongYeuCau', type: sql.NVarChar(200), value: data.loaiPhongYeuCau || data.loaiPhong },
-        { name: 'MucGiaToiDa', type: sql.Decimal(18, 2), value: mucGia },
-        { name: 'ThoiHanThue', type: sql.Int, value: thoiHanThue },
-        { name: 'GioiTinh', type: sql.NVarChar(10), value: data.gioiTinhO || data.gioiTinh }
-      ]);
-      const registration = result.recordset[0] || null;
+      const registration = await dangKyThueRepository.taoHoSoDangKy({
+        khachHangId: existingCustomer.MaKhachHang,
+        soNguoiO,
+        soNam: data.soNam || 0,
+        soNu: data.soNu || 0,
+        ngayDuKienVaoO: data.ngayVao || data.ngayDuKienVaoO,
+        ghiChu: data.ghiChu || data.yeuCau || null,
+        khuVucMongMuon: data.khuVucMongMuon || data.khuVuc,
+        loaiPhongYeuCau,
+        mucGiaToiDa: mucGia,
+        thoiHanThue,
+        gioiTinh: data.gioiTinhO || data.gioiTinh
+      });
 
       if (registration?.maDangKy) {
-        await executeQuery(`
-          UPDATE dbo.PhieuDangKy
-          SET MaNhanVienSale = @NhanVienSaleId
-          WHERE MaDangKy = @MaDangKy
-        `, [
-          { name: 'NhanVienSaleId', type: sql.VarChar(6), value: nhanVienSaleId },
-          { name: 'MaDangKy', type: sql.VarChar(6), value: registration.maDangKy }
-        ]);
+        await dangKyThueRepository.capNhatNhanVienSaleChoDangKy(registration.maDangKy, nhanVienSaleId);
       }
 
       return registration ? { ...registration, maNhanVienSale: nhanVienSaleId } : null;
     }
 
-    const result = await executeProcedure('dbo.SP_TaoHoSoKhachVangLai', [
-      { name: 'HoTen', type: sql.NVarChar(100), value: data.hoTen },
-      { name: 'NgaySinh', type: sql.Date, value: data.ngaySinh },
-      { name: 'GioiTinh', type: sql.NVarChar(5), value: data.gioiTinhO || data.gioiTinh },
-      { name: 'SDT', type: sql.VarChar(20), value: sdt },
-      { name: 'Email', type: sql.VarChar(100), value: data.email || null },
-      { name: 'QuocTich', type: sql.NVarChar(50), value: data.quocTich || 'Việt Nam' },
-      { name: 'CCCD', type: sql.VarChar(20), value: cccd },
-      { name: 'HinhThucThue', type: sql.NVarChar(20), value: hinhThucThue },
-      { name: 'KhuVucMongMuon', type: sql.NVarChar(100), value: data.khuVucMongMuon || data.khuVuc },
-      { name: 'LoaiPhongYeuCau', type: sql.NVarChar(200), value: data.loaiPhongYeuCau || data.loaiPhong },
-      { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: mucGia },
-      { name: 'SoNguoiO', type: sql.Int, value: soNguoiO },
-      { name: 'SoNamInput', type: sql.Int, value: data.soNam || 0 },
-      { name: 'SoNuInput', type: sql.Int, value: data.soNu || 0 },
-      { name: 'NgayDuKienVaoO', type: sql.Date, value: data.ngayVao || data.ngayDuKienVaoO },
-      { name: 'ThoiHanThue', type: sql.Int, value: thoiHanThue },
-      { name: 'GhiChu', type: sql.NVarChar(sql.MAX), value: data.ghiChu || data.yeuCau || null },
-      { name: 'NhanVienSaleId', type: sql.VarChar(6), value: nhanVienSaleId }
-    ]);
-
-    return result.recordset[0] || null;
+    return await dangKyThueRepository.taoHoSoKhachVangLai({
+      hoTen: data.hoTen,
+      ngaySinh: data.ngaySinh,
+      gioiTinh: data.gioiTinhO || data.gioiTinh,
+      sdt,
+      email: data.email || null,
+      quocTich: data.quocTich || 'Việt Nam',
+      cccd,
+      hinhThucThue,
+      khuVucMongMuon: data.khuVucMongMuon || data.khuVuc,
+      loaiPhongYeuCau,
+      mucGiaToiDa: mucGia,
+      soNguoiO,
+      soNam: data.soNam || 0,
+      soNu: data.soNu || 0,
+      ngayDuKienVaoO: data.ngayVao || data.ngayDuKienVaoO,
+      thoiHanThue,
+      ghiChu: data.ghiChu || data.yeuCau || null,
+      nhanVienSaleId
+    });
   } catch (error) {
     handleDatabaseError(error);
   }

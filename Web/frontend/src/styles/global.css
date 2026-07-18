@@ -195,7 +195,7 @@ select {
 }
 
 .status-pill-tabs-offset {
-  margin: 0 0 20px 16px;
+  padding: 12px 20px;
 }
 
 .tp-search-status-tabs,

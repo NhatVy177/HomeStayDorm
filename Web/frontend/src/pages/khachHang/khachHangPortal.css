@@ -149,7 +149,7 @@
 .kh-filter-controls {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(4, minmax(120px, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(120px, 1fr)) auto;
 }
 
 .kh-filter-submit {
@@ -667,44 +667,64 @@
   padding: 0;
 }
 
+.kh-edit-profile-modal {
+  max-width: 760px;
+}
+
 .kh-rent-modal .kp-modal-head {
-  margin-bottom: 14px;
+  align-items: center;
+  background: var(--kp-primary, #00666d);
+  color: #ffffff;
+  margin: -20px -22px 18px;
+  padding: 18px 22px;
 }
 
 .kh-register-modal .kh-register-head {
   align-items: flex-start;
-  border-bottom: 1px solid var(--kp-border);
+  background: var(--kp-primary, #00666d);
+  border-bottom: none;
+  color: #ffffff;
   margin: 0;
   padding: 24px 22px 20px;
 }
 
 .kh-rent-modal .kp-modal-head h2 {
+  color: #ffffff;
   font-size: 22px;
   line-height: 1.15;
 }
 
 .kh-register-modal .kh-register-head h2 {
+  color: #ffffff;
   font-size: 22px;
   margin: 0 0 6px;
 }
 
 .kh-register-modal .kh-register-head p {
-  color: var(--kp-muted);
+  color: rgba(255, 255, 255, 0.84);
   font-size: 13px;
   line-height: 1.45;
   margin: 0;
 }
 
 .kh-rent-modal .kp-modal-head button {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
   font-size: 22px;
   height: 34px;
   width: 34px;
 }
 
 .kh-register-modal .kh-register-head button {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
   height: 32px;
   width: 32px;
+}
+
+.kh-rent-modal .kp-modal-head button:hover,
+.kh-register-modal .kh-register-head button:hover {
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .kh-register-scroll {
@@ -830,6 +850,17 @@
   width: 18px !important;
 }
 
+.kh-register-modal .kh-room-type-field > div {
+  background: #f8faf9;
+  border: 1px solid var(--kp-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.kh-register-modal .kh-room-type-field label {
+  min-height: 24px;
+}
+
 .kh-register-modal .kh-register-grid textarea {
   min-height: 72px;
   resize: vertical;
@@ -853,6 +884,14 @@
 
 .kh-field-error {
   color: #b42318;
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.kh-field-hint {
+  color: #5f6f70;
   display: block;
   font-size: 11px;
   font-weight: 650;
@@ -1129,9 +1168,9 @@
 }
 
 .kh-schedule-detail-modal .kp-modal-head {
-  border-bottom: 1px solid var(--kp-border);
-  margin: -2px 0 16px;
-  padding-bottom: 16px;
+  border-bottom: none;
+  margin: -22px -22px 18px;
+  padding: 18px 22px;
 }
 
 .kh-schedule-head-actions {
@@ -1667,7 +1706,7 @@
 .kh-detail-stats {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .kh-detail-stats > div {
@@ -1792,8 +1831,6 @@
   flex-direction: column;
   gap: 14px;
   padding: 20px;
-  position: sticky;
-  top: 96px;
 }
 
 .kh-detail-price-top {
@@ -2187,6 +2224,11 @@
 
 .kh-btn-primary .kp-line-icon {
   color: currentColor;
+}
+
+.kh-profile-filter-bar {
+  justify-content: flex-start;
+  margin-bottom: 18px;
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -2720,7 +2762,7 @@
   border-radius: 12px;
   box-shadow: 0 4px 18px rgba(0, 32, 34, 0.05);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 14px 14px 13px;
   position: relative;
 }
@@ -2744,6 +2786,23 @@
   position: relative;
   text-align: center;
   z-index: 1;
+}
+
+.hd-process-step.is-selectable {
+  cursor: pointer;
+}
+
+.hd-process-step.is-selectable:hover .hd-process-circle,
+.hd-process-step.is-selectable:focus-visible .hd-process-circle {
+  background: #eef9f8;
+  box-shadow: 0 0 0 2px rgba(0, 102, 109, 0.22);
+  color: var(--kp-primary);
+}
+
+.hd-process-step.is-selectable:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid rgba(0, 102, 109, 0.28);
+  outline-offset: 4px;
 }
 
 .hd-process-circle {
@@ -2862,7 +2921,6 @@
   background: rgba(255, 219, 207, 0.5);
   border-color: rgba(237, 107, 63, 0.25);
   color: #5e2d1b;
-  min-height: 280px;
 }
 .hd-contract-summary h3 {
   color: #5e2d1b;
@@ -3296,6 +3354,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.hd-settlement-money.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .hd-settlement-money section {
   border: 1px solid var(--kp-border);
   border-radius: 8px;
@@ -3620,14 +3682,16 @@
 }
 
 .hd-refund-account-grid {
+  align-items: start;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .hd-refund-account-grid label {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .hd-refund-account-grid span {
@@ -3640,10 +3704,13 @@
   background: #fff;
   border: 1px solid var(--kp-border);
   border-radius: 8px;
+  box-sizing: border-box;
   color: var(--kp-text);
   font-size: 14px;
   min-height: 46px;
+  min-width: 0;
   padding: 10px 12px;
+  width: 100%;
 }
 
 .hd-refund-account-grid input:focus {
@@ -3661,7 +3728,7 @@
   border-top: 1px solid var(--kp-border);
   display: flex;
   gap: 12px;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: 4px;
   padding-top: 18px;
 }
@@ -3670,13 +3737,6 @@
   flex: 0 1 auto;
   min-width: 280px;
   width: auto;
-}
-
-.hd-payment-actions .hd-payment-back {
-  flex: 0 0 auto;
-  min-width: 120px;
-  padding-left: 14px;
-  padding-right: 14px;
 }
 
 .hd-payment-review-link {
@@ -4075,8 +4135,7 @@
     flex-direction: column-reverse;
   }
 
-  .hd-payment-actions .hd-payment-submit,
-  .hd-payment-actions .hd-payment-back {
+  .hd-payment-actions .hd-payment-submit {
     min-width: 0;
     width: 100%;
   }
@@ -4140,5 +4199,175 @@
   .kh-contact-item .kp-btn {
     grid-column: 1 / -1;
     width: 100%;
+  }
+}
+
+/* ─── HỢP ĐỒNG TAB ─── */
+.kh-hop-dong-tab {
+  width: 100%;
+}
+
+.hd-tab-container {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.hd-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hd-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hd-grid-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.hd-badge.is-inactive {
+  background: rgba(156, 163, 175, 0.3);
+  border-color: rgba(156, 163, 175, 0.5);
+  color: #e5e7eb;
+}
+
+/* Thành viên hợp đồng */
+.hd-members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.hd-member-card {
+  background: #f8fafc;
+  border: 1px solid var(--kp-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hd-member-card h4 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--kp-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hd-member-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--kp-muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+.hd-member-card p span {
+  font-weight: 500;
+  color: var(--kp-text);
+}
+
+/* Biên bản vi phạm */
+.hd-violation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.hd-violation-item {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 10px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.hd-violation-item.is-resolved {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.hd-violation-info h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #c53030;
+}
+
+.hd-violation-item.is-resolved .hd-violation-info h4 {
+  color: #15803d;
+}
+
+.hd-violation-info p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--kp-muted);
+}
+
+.hd-violation-amount {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hd-violation-amount strong {
+  font-size: 16px;
+  color: #c53030;
+}
+
+.hd-violation-item.is-resolved .hd-violation-amount strong {
+  color: #15803d;
+}
+
+/* Đối soát hoàn cọc */
+.hd-settlement-info {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 12px;
+}
+
+.hd-settlement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .hd-tab-container {
+    grid-template-columns: 1fr;
+  }
+  .hd-sidebar-list {
+    max-height: 250px;
+  }
+  .hd-grid-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .hd-settlement-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -21,12 +21,26 @@ export async function layChiTietPhieuCoc(maPhieuDatCoc) {
     throw createServiceError('Không tìm thấy thông tin phiếu đặt cọc.', 404);
   }
   
-  // Since SQL query joins tables, it might return multiple rows if there are multiple details.
-  // Group them by mapping the first row.
-  return new PhieuDatCocDTO(rawRows[0]);
+  const firstRow = rawRows[0];
+  const dto = new PhieuDatCocDTO(firstRow);
+  
+  if (firstRow.HinhThucThue === 'Ghép giường') {
+    const beds = rawRows.map(r => r.MaGiuong).filter(Boolean);
+    const uniqueBeds = [...new Set(beds)];
+    dto.maGiuong = uniqueBeds.join(', ');
+    dto.viTriThue = uniqueBeds.length > 0 ? `${firstRow.MaPhong}-${uniqueBeds.join(', ')}` : firstRow.MaPhong;
+  }
+  
+  return dto;
 }
 
 function mapThanhVienCuTru(row = {}) {
+  let status = row.TrangThaiDuyet;
+  if (status && (status.includes('di') || status.includes('du') || status.includes('dieu') || status.includes('d?'))) {
+    status = 'Đủ điều kiện';
+  } else if (status && (status.includes('tu choi') || status.includes('t?') || status.includes('choi') || status.includes('chi'))) {
+    status = 'Bị từ chối';
+  }
   return {
     maThanhVienCuTru: row.MaThanhVienCuTru,
     hoTen: row.HoTen,
@@ -37,7 +51,7 @@ function mapThanhVienCuTru(row = {}) {
     sdt: row.SDT,
     email: row.Email,
     quocTich: row.QuocTich,
-    trangThaiDuyet: row.TrangThaiDuyet,
+    trangThaiDuyet: status,
     lyDoTuChoi: row.LyDoTuChoi
   };
 }
@@ -56,12 +70,17 @@ export async function layHoSoCuTruDaDuyetTheoPhieuCoc(maPhieuDatCoc) {
   const soDuDieuKien = thanhVien.filter((item) => item.trangThaiDuyet === 'Đủ điều kiện').length;
   const soBiTuChoi = thanhVien.filter((item) => item.trangThaiDuyet === 'Bị từ chối').length;
 
+  let hosoStatus = result.hoSo.TrangThaiHoSo;
+  if (hosoStatus && (hosoStatus.includes('duy') || hosoStatus.includes('duy?t'))) {
+    hosoStatus = 'Đã duyệt cư trú';
+  }
+
   return {
     hoSo: {
       maHoSoCuTru: result.hoSo.MaHoSoCuTru,
       maPhieuDatCoc: result.hoSo.MaPhieuDatCoc,
       maNhanVienQuanLy: result.hoSo.MaNhanVienQuanLy,
-      trangThaiHoSo: result.hoSo.TrangThaiHoSo,
+      trangThaiHoSo: hosoStatus,
       daDoiChieuGiayTo: result.hoSo.DaDoiChieuGiayTo === true || result.hoSo.DaDoiChieuGiayTo === 1,
       ngayGuiDuyet: result.hoSo.NgayGuiDuyet,
       ngayDuyet: result.hoSo.NgayDuyet,

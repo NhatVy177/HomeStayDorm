@@ -83,6 +83,33 @@ function matchesThuThemFilter(row, filter) {
   return true;
 }
 
+function getLapDoiSoatState(row) {
+  if (row?.trangThaiDoiSoat === 'Cần điều chỉnh') return 'needs-adjustment';
+  if (!row?.daDoiSoat) return 'pending';
+  return 'completed';
+}
+
+function getLapDoiSoatStatusLabel(row) {
+  const state = getLapDoiSoatState(row);
+  if (state === 'needs-adjustment') return 'Cần điều chỉnh';
+  if (state === 'pending') return 'Chờ đối soát';
+  return 'Đã đối soát';
+}
+
+function getLapDoiSoatStatusStyle(row) {
+  const state = getLapDoiSoatState(row);
+  if (state === 'needs-adjustment') return { background: '#e8f1ff', color: '#1d4ed8' };
+  if (state === 'pending') return { background: '#fff4e5', color: '#b45309' };
+  return { background: '#e6f6ec', color: '#15803d' };
+}
+
+function getDoiSoatStatusStyle(status) {
+  const normalized = String(status || '').trim();
+  if (normalized === 'Cần điều chỉnh') return { background: '#e8f1ff', color: '#1d4ed8' };
+  if (normalized.startsWith('Đã') || normalized === 'Hoàn tất') return { background: '#e6f6ec', color: '#15803d' };
+  return { background: '#fff4e5', color: '#b45309' };
+}
+
 function safeNumber(value) {
   if (value === null || value === undefined || value === '') return 0;
   const normalized = String(value).replaceAll(',', '');
@@ -410,6 +437,27 @@ function SummaryLine({ label, value, tone = 'normal' }) {
   );
 }
 
+function AdjustmentRequestBox({ value }) {
+  return (
+    <section
+      className="ktp-section qt-adjustment-request"
+      style={{
+        backgroundColor: '#fff8f0',
+        border: '1px solid #fdba74',
+        borderRadius: 8,
+        padding: '14px 16px'
+      }}
+    >
+      <h4 className="ktp-section-title" style={{ color: '#ba1a1a', marginBottom: 12 }}>
+        <Icon name="feedback" /> Yêu cầu điều chỉnh của khách hàng
+      </h4>
+      <p style={{ margin: 0, fontSize: 14, color: '#3f494a', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+        {value || '(Khách hàng chưa nhập nội dung phản hồi)'}
+      </p>
+    </section>
+  );
+}
+
 function KhauTruPanel({ title, value, children, editing, onEdit, onDone, readOnly = false }) {
   const totalText = formatMoney(value);
   return (
@@ -727,6 +775,7 @@ function GhiNhanThanhToanPanel({ type }) {
     refundDetail?.ngayThanhToan
   );
   const showPaymentEvidenceUpload = !isThuThem
+    || !currentProof
     || refundForm.phuongThucThanhToan === 'Tiền mặt'
     || (!thuThemPaymentMethodLocked && refundForm.phuongThucThanhToan === 'Chuyển khoản');
   const canRejectThuThemProof = Boolean(
@@ -866,6 +915,7 @@ function GhiNhanThanhToanPanel({ type }) {
     });
     setRefundForm((prev) => ({
       ...prev,
+      phuongThucThanhToan: isThuThem && !prev.phuongThucThanhToan ? 'Chuyển khoản' : prev.phuongThucThanhToan,
       chungTuThanhToan: file.name
     }));
   }
@@ -927,6 +977,7 @@ function GhiNhanThanhToanPanel({ type }) {
             ) : tableRows.map((row) => {
               const rowMode = row._settlementMode || 'pending';
               const waitingForCustomerProof = isThuThem && needsThuThemProof(row);
+              const statusLabel = waitingForCustomerProof ? 'Cần bổ sung minh chứng' : row.trangThaiDoiSoat;
 
               return (
                 <tr key={`${rowMode}-${row.maDoiSoat}`}>
@@ -946,8 +997,8 @@ function GhiNhanThanhToanPanel({ type }) {
                     {formatMoney(row[amountField])}
                   </td>
                   <td>
-                    <span className="ktp-badge ktp-badge-secondary">
-                      {waitingForCustomerProof ? 'Cần bổ sung minh chứng' : row.trangThaiDoiSoat}
+                    <span className="ktp-badge ktp-badge-secondary" style={getDoiSoatStatusStyle(statusLabel)}>
+                      {statusLabel}
                     </span>
                   </td>
                   <td className="text-center">
@@ -1179,7 +1230,7 @@ function GhiNhanThanhToanPanel({ type }) {
                       disabled={submittingRefund || loadingDetail}
                     >
                       <Icon name="close" />
-                      {submittingRefund ? 'Đang xử lý' : 'Không xác nhận'}
+                      {submittingRefund ? 'Đang xử lý' : 'Từ chối xác nhận'}
                     </button>
                   )}
                   <button className="ktp-btn-submit" type="button" onClick={submitRefund} disabled={submittingRefund || loadingDetail}>
@@ -1369,7 +1420,11 @@ function KetQuaDoiSoatPanel() {
                   </td>
                   <td><span className={`ktp-badge qt-result-badge ${meta.badgeClass}`}>{meta.label}</span></td>
                   <td style={{ color: meta.amountTone, fontWeight: 800 }}>{formatMoney(meta.amount)}</td>
-                  <td><span className="ktp-badge ktp-badge-secondary">{row.trangThaiDoiSoat}</span></td>
+                  <td>
+                    <span className="ktp-badge ktp-badge-secondary" style={getDoiSoatStatusStyle(row.trangThaiDoiSoat)}>
+                      {row.trangThaiDoiSoat}
+                    </span>
+                  </td>
                   <td>{formatDate(row.ngayThanhToan || row.ngayLap)}</td>
                   <td className="text-center">
                     <button className="ktp-btn-action-fill" type="button" onClick={() => openDetail(row)}>
@@ -1501,9 +1556,9 @@ export default function QuyetToanTraPhongTab() {
   }, [danhSach, search]);
 
   const lapCounts = useMemo(() => {
-    const completed = searchedDanhSach.filter((item) => Boolean(item.daDoiSoat)).length;
-    const needsAdjustment = searchedDanhSach.filter((item) => item.trangThaiDoiSoat === 'Cần điều chỉnh').length;
-    const pending = searchedDanhSach.length - completed;
+    const pending = searchedDanhSach.filter((item) => getLapDoiSoatState(item) === 'pending').length;
+    const needsAdjustment = searchedDanhSach.filter((item) => getLapDoiSoatState(item) === 'needs-adjustment').length;
+    const completed = searchedDanhSach.filter((item) => getLapDoiSoatState(item) === 'completed').length;
     return {
       all: searchedDanhSach.length,
       pending,
@@ -1521,13 +1576,13 @@ export default function QuyetToanTraPhongTab() {
 
   const filteredDanhSach = useMemo(() => {
     if (lapFilter === 'pending') {
-      return searchedDanhSach.filter((item) => !item.daDoiSoat);
+      return searchedDanhSach.filter((item) => getLapDoiSoatState(item) === 'pending');
     }
     if (lapFilter === 'needs-adjustment') {
-      return searchedDanhSach.filter((item) => item.trangThaiDoiSoat === 'Cần điều chỉnh');
+      return searchedDanhSach.filter((item) => getLapDoiSoatState(item) === 'needs-adjustment');
     }
     if (lapFilter === 'completed') {
-      return searchedDanhSach.filter((item) => Boolean(item.daDoiSoat));
+      return searchedDanhSach.filter((item) => getLapDoiSoatState(item) === 'completed');
     }
     return searchedDanhSach;
   }, [lapFilter, searchedDanhSach]);
@@ -1535,11 +1590,11 @@ export default function QuyetToanTraPhongTab() {
   const lapSectionMeta = {
     all: {
       title: 'Tất cả phiếu đối soát',
-      subtitle: 'Bao gồm phiếu chưa đối soát và phiếu đã lập đối soát.'
+      subtitle: 'Bao gồm phiếu chờ đối soát, phiếu cần điều chỉnh và phiếu đã đối soát.'
     },
     pending: {
       title: 'Phiếu chưa đối soát',
-      subtitle: 'Các phiếu trả phòng đang chờ kế toán lập đối soát.'
+      subtitle: 'Chỉ gồm phiếu trả phòng có trạng thái chờ đối soát.'
     },
     'needs-adjustment': {
       title: 'Phiếu cần điều chỉnh',
@@ -1547,7 +1602,7 @@ export default function QuyetToanTraPhongTab() {
     },
     completed: {
       title: 'Phiếu đã đối soát',
-      subtitle: 'Các phiếu đã được kế toán lập phiếu đối soát.'
+      subtitle: 'Các phiếu đã lập đối soát, chỉ cho phép xem chi tiết.'
     }
   };
   const currentLapSection = lapSectionMeta[lapFilter] || lapSectionMeta.all;
@@ -1722,6 +1777,7 @@ export default function QuyetToanTraPhongTab() {
   const bienBanKiemTra = chiTietKhauTru.bienBanKiemTra || [];
   const chiTietHuHong = chiTietKhauTru.chiTietHuHong || [];
   const bienBanViPham = chiTietKhauTru.bienBanViPham || [];
+  const adjustmentRequestText = selected?.doiSoat?.ghiChuPhanHoiKhach || form.ghiChuPhanHoiKhach;
 
   return (
     <div className="ktp-container">
@@ -1816,61 +1872,66 @@ export default function QuyetToanTraPhongTab() {
                   </div>
                 </td>
               </tr>
-            ) : filteredDanhSach.map((row) => (
-              <tr key={row.maPhieuTra}>
-                <td style={{ fontWeight: 700, color: '#00666d' }}>{row.maPhieuTra}</td>
-                <td>
-                  <p style={{ margin: 0, fontWeight: 600 }}>{row.hoTenKhachHang || '--'}</p>
-                  <p style={{ margin: 0, fontSize: '12px', color: '#414753' }}>{row.sdtKhachHang || row.emailKhachHang || '--'}</p>
-                </td>
-                <td>
-                  <span className="ktp-badge ktp-badge-outline">
-                    {row.maHopDong || row.maPhieuDatCoc || '--'}
-                  </span>
-                </td>
-                <td>{formatDate(row.ngayTraThucTe)}</td>
-                <td>
-                  <span className="ktp-badge ktp-badge-secondary">
-                    {row.daDoiSoat ? row.trangThaiDoiSoat : row.trangThai}
-                  </span>
-                  {row.daDoiSoat && (
-                    <p style={{ margin: '4px 0 0', color: '#6f797a', fontSize: '12px' }}>
-                      {row.maDoiSoat} · {row.loaiQuyetToan || '--'}
-                    </p>
-                  )}
-                </td>
-                <td className="text-center">
-                  {row.trangThaiDoiSoat === 'Cần điều chỉnh' ? (
-                    <button
-                      className="ktp-btn-action-fill"
-                      type="button"
-                      onClick={() => openDetail(row)}
-                      disabled={detailLoading}
-                    >
-                      Điều chỉnh
-                    </button>
-                  ) : row.daDoiSoat ? (
-                    <button
-                      className="ktp-btn-action-fill"
-                      type="button"
-                      onClick={() => openDetail(row)}
-                      disabled={detailLoading}
-                    >
-                      Chi tiết
-                    </button>
-                  ) : (
-                    <button
-                      className="ktp-btn-action-fill"
-                      type="button"
-                      onClick={() => openDetail(row)}
-                      disabled={detailLoading}
-                    >
-                      Lập đối soát
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+            ) : filteredDanhSach.map((row) => {
+              const lapState = getLapDoiSoatState(row);
+              const hasDoiSoat = Boolean(row.maDoiSoat);
+
+              return (
+                <tr key={row.maPhieuTra}>
+                  <td style={{ fontWeight: 700, color: '#00666d' }}>{row.maPhieuTra}</td>
+                  <td>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{row.hoTenKhachHang || '--'}</p>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#414753' }}>{row.sdtKhachHang || row.emailKhachHang || '--'}</p>
+                  </td>
+                  <td>
+                    <span className="ktp-badge ktp-badge-outline">
+                      {row.maHopDong || row.maPhieuDatCoc || '--'}
+                    </span>
+                  </td>
+                  <td>{formatDate(row.ngayTraThucTe)}</td>
+                  <td>
+                    <span className="ktp-badge ktp-badge-secondary" style={getLapDoiSoatStatusStyle(row)}>
+                      {getLapDoiSoatStatusLabel(row)}
+                    </span>
+                    {hasDoiSoat && (
+                      <p style={{ margin: '4px 0 0', color: '#6f797a', fontSize: '12px' }}>
+                        {row.maDoiSoat} · {row.loaiQuyetToan || '--'}
+                      </p>
+                    )}
+                  </td>
+                  <td className="text-center">
+                    {lapState === 'needs-adjustment' ? (
+                      <button
+                        className="ktp-btn-action-fill"
+                        type="button"
+                        onClick={() => openDetail(row)}
+                        disabled={detailLoading}
+                      >
+                        Điều chỉnh
+                      </button>
+                    ) : lapState === 'completed' ? (
+                      <button
+                        className="ktp-btn-action-fill"
+                        type="button"
+                        onClick={() => openDetail(row)}
+                        disabled={detailLoading}
+                      >
+                        Xem chi tiết
+                      </button>
+                    ) : (
+                      <button
+                        className="ktp-btn-action-fill"
+                        type="button"
+                        onClick={() => openDetail(row)}
+                        disabled={detailLoading}
+                      >
+                        Lập đối soát
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>
@@ -1941,6 +2002,10 @@ export default function QuyetToanTraPhongTab() {
                     </section>
                   </div>
 
+                  {isAdjustmentDoiSoat && (
+                    <AdjustmentRequestBox value={adjustmentRequestText} />
+                  )}
+
                   <section className="ktp-section ktp-info-box-outline">
                     <h4 className="ktp-section-title">
                       <Icon name="account_balance_wallet" /> 3. Số tiền hoàn cho khách
@@ -2000,6 +2065,10 @@ export default function QuyetToanTraPhongTab() {
                   )}
                 </section>
               </div>
+
+              {isAdjustmentDoiSoat && (
+                <AdjustmentRequestBox value={adjustmentRequestText} />
+              )}
 
               <section className="ktp-section ktp-info-box-outline">
                 <h4 className="ktp-section-title"><Icon name="money_off" /> 3. Các khoản khấu trừ</h4>

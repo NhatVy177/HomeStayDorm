@@ -311,7 +311,10 @@ export default function LapHopDongTab() {
     // Prepare payload
     const selectedDVs = services
       .filter(dv => selectedServices[dv.maDichVu])
-      .map(dv => ({ maDichVu: dv.maDichVu, ghiChu: dv.batBuoc ? 'Bắt buộc' : 'Dịch vụ chọn thêm' }));
+      .map(dv => ({
+        maDichVu: dv.maDichVu,
+        ghiChu: isXeService(dv) ? soXeGuiXe.toString() : (dv.batBuoc ? 'Bắt buộc' : 'Dịch vụ chọn thêm')
+      }));
 
     const payload = {
       maPhieuDatCoc: selectedPhieu.maPhieuDatCoc,
@@ -388,8 +391,20 @@ export default function LapHopDongTab() {
     return list;
   };
 
+  const getDisplayViTriThue = () => {
+    if (!selectedPhieu) return '';
+    if (selectedPhieu.hinhThucThue === 'Ghép giường' && selectedPhieu.maGiuong && selectedPhieu.maGiuong.includes(',')) {
+      const beds = selectedPhieu.maGiuong.split(',').map(b => b.trim());
+      const approvedBedsCount = thanhVien.length || 1;
+      const slicedBeds = beds.slice(0, approvedBedsCount);
+      return `${selectedPhieu.maPhong}-${slicedBeds.join(', ')}`;
+    }
+    return selectedPhieu.viTriThue;
+  };
+
   // Base price and cost calculation
-  const basePrice = selectedPhieu ? selectedPhieu.giaThue : 0;
+  const bedCount = selectedPhieu?.hinhThucThue === 'Ghép giường' ? (thanhVien.length || 1) : 1;
+  const basePrice = selectedPhieu ? (selectedPhieu.giaThue * bedCount) : 0;
   const isXeService = (dv) => dv.tenDichVu?.toLowerCase().includes('xe');
   const dichVuCost = services
     .filter(dv => selectedServices[dv.maDichVu])
@@ -688,14 +703,18 @@ export default function LapHopDongTab() {
         </div>
       )}
 
-      <form onSubmit={handleSearch} className="lhd-card" style={{ display: 'grid', gridTemplateColumns: '1fr 160px auto', gap: '12px', alignItems: 'flex-end', marginBottom: '20px', padding: '16px 20px' }}>
+      <div className="lhd-card" style={{ display: 'grid', gridTemplateColumns: '1fr 160px', gap: '12px', alignItems: 'flex-end', marginBottom: '20px', padding: '16px 20px' }}>
         <div className="lhd-form-group">
           <label className="lhd-label">Tìm kiếm</label>
           <input 
             className="lhd-input" 
             placeholder="Tra cứu theo mã phiếu, tên khách hàng, số điện thoại..." 
             value={searchText} 
-            onChange={e => setSearchText(e.target.value)} 
+            onChange={e => {
+              const val = e.target.value;
+              setSearchText(val);
+              loadPhieuCocs(val, ngayTaoFilter);
+            }} 
           />
         </div>
         <div className="lhd-form-group">
@@ -704,17 +723,14 @@ export default function LapHopDongTab() {
             type="date" 
             className="lhd-input" 
             value={ngayTaoFilter} 
-            onChange={e => setNgayTaoFilter(e.target.value)} 
+            onChange={e => {
+              const val = e.target.value;
+              setNgayTaoFilter(val);
+              loadPhieuCocs(searchText, val);
+            }} 
           />
         </div>
-        <button 
-          type="submit"
-          className="lhd-btn lhd-btn-primary"
-          style={{ height: '40px' }}
-        >
-          {loading ? 'Đang tải...' : 'Áp dụng'}
-        </button>
-      </form>
+      </div>
 
       <div className="lhd-table-wrapper">
         <table className="lhd-table">
@@ -794,10 +810,9 @@ export default function LapHopDongTab() {
                     ) : (
                       <button 
                         className="lhd-btn lhd-btn-outline" 
-                        style={{ padding: '7px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px', width: '160px' }}
+                        style={{ padding: '7px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '160px' }}
                         onClick={() => handleViewContract(p.maPhieuDatCoc)}
                       >
-                        <Icon name="description" style={{ fontSize: '15px' }} />
                         Xem hợp đồng
                       </button>
                     )}
@@ -948,7 +963,7 @@ export default function LapHopDongTab() {
       <div className="lhd-container">
         <StepIndicator current={3} />
         
-        {hinhThucThue === 'Ghép giường' ? (
+        {hinhThucThue === 'Ghép giường' && thanhVien.length <= 1 ? (
           <div className="lhd-card" style={{ marginBottom: '20px' }}>
             <h4 style={{ margin: '0 0 10px', fontSize: '16px', color: 'var(--lhd-primary)' }}>Xử lý khách đi đơn</h4>
             <p style={{ margin: 0, fontSize: '14px', color: 'var(--lhd-text-muted)', lineHeight: '1.6' }}>
@@ -1124,14 +1139,7 @@ export default function LapHopDongTab() {
                   <span style={{ opacity: 0.85 }}>Sức chứa tối đa:</span>
                   <span style={{ fontWeight: '700' }}>{sucChua} người</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginTop: '8px', alignItems: 'center' }}>
-                  <span style={{ opacity: 0.85 }}>Giới tính cho phép:</span>
-                  <span style={{ backgroundColor: 'var(--lhd-white)', color: 'var(--lhd-primary)', padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>{selectedPhieu?.gioiTinhChoPhep}</span>
-                </div>
-                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px', opacity: 0.85, lineHeight: '1.5', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                  <Icon name="info" style={{ fontSize: '14px', flexShrink: 0, marginTop: '1px' }} />
-                  Giới tính các thành viên phải tuân thủ giới tính cho phép của phòng.
-                </div>
+
               </div>
             </div>
           </div>
@@ -1221,7 +1229,7 @@ export default function LapHopDongTab() {
           <div className="lhd-grid-form" style={{ marginTop: '20px' }}>
             <div className="lhd-form-group"><label className="lhd-label">Mã phiếu cọc</label><input className="lhd-input" value={selectedPhieu?.maPhieuDatCoc || ''} readOnly /></div>
             <div className="lhd-form-group"><label className="lhd-label">Khách hàng</label><input className="lhd-input" value={selectedPhieu?.hoTenKhachHang || ''} readOnly /></div>
-            <div className="lhd-form-group"><label className="lhd-label">Phòng/Giường</label><input className="lhd-input" value={selectedPhieu?.viTriThue || ''} readOnly /></div>
+            <div className="lhd-form-group"><label className="lhd-label">Phòng/Giường</label><input className="lhd-input" value={getDisplayViTriThue() || ''} readOnly /></div>
             <div className="lhd-form-group">
               <label className="lhd-label">Kỳ thanh toán</label>
               <select className="lhd-input" value={kyTT} onChange={e => setKyTT(e.target.value)}>
@@ -1461,18 +1469,9 @@ export default function LapHopDongTab() {
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <button 
-                  className="lhd-btn lhd-btn-secondary"
-                  style={{ width: '100%', padding: '12px' }} 
-                  onClick={handleReset}
-                >
-                  <Icon name="list" /> Quay lại trang quản lý
-                </button>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => { setShowSuccessModal(false); setShowChiTiet(true); }} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="description" /> Xem hợp đồng</button>
-                  <button onClick={handleReset} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="list" /> Danh sách phiếu</button>
-                </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button onClick={handleReset} className="lhd-btn lhd-btn-outline" style={{ flex: 1, padding: '10px' }}><Icon name="arrow_back" /> Quay lại</button>
+                <button onClick={() => { setShowSuccessModal(false); setShowChiTiet(true); }} className="lhd-btn lhd-btn-primary" style={{ flex: 1, padding: '10px' }}><Icon name="description" /> Xem hợp đồng</button>
               </div>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { datCocApi } from '../datCoc/datCoc.api.js';
 import ResultModal from '../../components/common/ResultModal.jsx';
 import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
 
-export function Icon({ name, className = '' }) {
+export function Icon({ name, className = '', style = {} }) {
   const shapes = {
     dashboard: <><rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" /><rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" /></>,
     payments: <><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /><path d="M6 12h.01M18 12h.01" /></>,
@@ -13,6 +13,8 @@ export function Icon({ name, className = '' }) {
     search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></>,
     notifications: <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" /><path d="M10 20a2 2 0 0 0 4 0" /></>,
     home: <><path d="M3.5 11.2 12 4l8.5 7.2" /><path d="M5.5 10.4V20h13v-9.6" /><path d="M9.5 20v-5.8h5V20" /></>,
+    badge: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /><path d="M8 17a4 4 0 0 1 8 0" /></>,
+    article: <><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="7" x2="17" y1="8" y2="8" /><line x1="7" x2="17" y1="12" y2="12" /><line x1="7" x2="13" y1="16" y2="16" /></>,
     close: <><path d="M18 6 6 18M6 6l12 12" /></>,
     person: <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
     group: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
@@ -32,6 +34,8 @@ export function Icon({ name, className = '' }) {
     water_drop: <><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></>,
     bellhop_bell: <><path d="M10 2h4"/><path d="M12 2v3"/><path d="M19 18a7 7 0 0 0-14 0"/><path d="M2 18h20"/></>,
     filter_list: <><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></>,
+    event_note: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M8 14h8M8 18h5" /></>,
+    event_repeat: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M17 14h-5a2 2 0 0 0-2 2v1" /><path d="m14 12 3 2-3 2M7 18h5a2 2 0 0 0 2-2v-1" /><path d="m10 20-3-2 3-2" /></>,
     arrow_forward: <><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>,
     account_balance: <><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/></>,
     money_off: <><path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.5L3 3l18 18-5.3-5.3c-.6.3-1.2.5-1.8.6v2c0 .6-.4 1-1 1s-1-.4-1-1v-2h-2"/><path d="M9 7v-2c0-.6.4-1 1-1s1 .4 1 1v2h2a2 2 0 0 1 2 2v2l-6-6z"/></>,
@@ -48,7 +52,7 @@ export function Icon({ name, className = '' }) {
     check: <><polyline points="20 6 9 17 4 12" /></>,
     arrow_back: <><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>,
     electric_bolt: <><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></>,
-    fact_check: <><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><polyline points="9 14 11 16 15 12" /></>,
+    fact_check: <><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><polyline points="17 11 19 13 23 9" /></>,
     save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,
     login: <><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></>,
     list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>,
@@ -63,7 +67,7 @@ export function Icon({ name, className = '' }) {
   };
 
   return (
-    <svg className={`kp-line-icon ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: '1em', height: '1em' }}>
+    <svg className={`kp-line-icon ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: '1em', height: '1em', ...style }}>
       {shapes[name] || shapes.home}
     </svg>
   );
@@ -234,14 +238,16 @@ export default function LapPhieuDatCocTab() {
   return (
     <div className="ktp-container">
       <section className="ktp-table-section">
-        <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
-          <div style={{ flex: '2 1 240px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#191c1d', marginBottom: '8px' }}>Tìm kiếm</label>
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên khách hàng, SĐT, mã hồ sơ/phiếu cọc..." className="ktp-input" style={{ width: '100%', backgroundColor: '#fff' }} />
+        <div style={{ padding: '16px 20px 0 20px' }}>
+          <div style={{ marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6f797a', marginBottom: '6px' }}>Tìm kiếm</label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên khách hàng, SĐT, mã hồ sơ/phiếu cọc..." className="ktp-input" style={{ flex: 1 }} />
+              {search && (
+                <button type="button" onClick={() => setSearch('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px', whiteSpace: 'nowrap' }}>Xóa lọc</button>
+              )}
+            </div>
           </div>
-          {search && (
-            <button type="button" onClick={() => setSearch('')} className="ktp-btn-cancel" style={{ border: '1px solid #c4c7c8', backgroundColor: '#fff', color: '#3f494a', padding: '9px 16px', fontSize: '13px' }}>Xóa lọc</button>
-          )}
         </div>
 
         <StatusFilterTabs

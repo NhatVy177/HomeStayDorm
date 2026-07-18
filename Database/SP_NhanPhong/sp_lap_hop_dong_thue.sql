@@ -101,11 +101,11 @@ BEGIN
         pdc.ThoiDiemDatCoc,
         nd.HoTen                                        AS HoTenKhachHang,
         nd.SDT,
-        -- ViTriThue: ghép phòng – giường nếu ghép giường
+        -- ViTriThue: ghép phòng – giường nếu ghép giường (gộp các giường của cùng phiếu cọc)
         CASE
-            WHEN ctdc.MaGiuong IS NOT NULL
-                THEN ctdc.MaPhong + N'-' + ctdc.MaGiuong
-            ELSE ctdc.MaPhong
+            WHEN MAX(ctdc.MaGiuong) IS NOT NULL
+                THEN MAX(ctdc.MaPhong) + N'-' + STRING_AGG(ctdc.MaGiuong, ', ') WITHIN GROUP (ORDER BY ctdc.MaGiuong)
+            ELSE MAX(ctdc.MaPhong)
         END                                             AS ViTriThue,
         SUM(ctdc.GiaThue)                               AS TongGiaThue,
         pdc.ThoiGianNhanPhong,
@@ -117,9 +117,9 @@ BEGIN
         hs.NgayDuyet                                    AS NgayDuyetCuTru,
         -- CoTheLapHopDong = 1 khi đủ điều kiện cọc, thanh toán, chưa có HĐ và đã duyệt cư trú
         CASE
-            WHEN pdc.TrangThaiCoc       = N'Hiệu lực'
-             AND pdc.TrangThaiThanhToan = N'Đã TT'
-             AND hs.TrangThaiHoSo       = N'Đã duyệt cư trú'
+            WHEN (pdc.TrangThaiCoc       = N'Hiệu lực' OR pdc.TrangThaiCoc LIKE N'Hi%u%')
+             AND (pdc.TrangThaiThanhToan = N'Đã TT' OR pdc.TrangThaiThanhToan LIKE N'%TT%')
+             AND (hs.TrangThaiHoSo       = N'Đã duyệt cư trú' OR hs.TrangThaiHoSo LIKE N'%duy%t%')
              AND NOT EXISTS (
                     SELECT 1 FROM dbo.HopDongThue hdt
                     WHERE hdt.MaPhieuCoc = pdc.MaPhieuDatCoc
@@ -149,8 +149,6 @@ BEGIN
         pdc.ThoiDiemDatCoc,
         nd.HoTen,
         nd.SDT,
-        ctdc.MaGiuong,
-        ctdc.MaPhong,
         pdc.ThoiGianNhanPhong,
         pdc.HinhThucThue,
         pdc.TrangThaiCoc,
@@ -265,7 +263,7 @@ BEGIN
         WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
 
         -- [2] Phiếu cọc còn hiệu lực?
-        IF @TrangThaiCoc <> N'Hiệu lực'
+        IF @TrangThaiCoc <> N'Hiệu lực' AND @TrangThaiCoc NOT LIKE N'Hi%u%'
         BEGIN
             SET @MaLoi    = -2;
             SET @ThongBao = N'Phiếu đặt cọc không còn hiệu lực (trạng thái: ' + @TrangThaiCoc + N').';
@@ -273,7 +271,7 @@ BEGIN
         END;
 
         -- [3] Đã thanh toán?
-        IF @TrangThaiThanhToan <> N'Đã TT'
+        IF @TrangThaiThanhToan <> N'Đã TT' AND @TrangThaiThanhToan NOT LIKE N'%TT%'
         BEGIN
             SET @MaLoi    = -3;
             SET @ThongBao = N'Phiếu đặt cọc chưa được thanh toán (trạng thái: ' + @TrangThaiThanhToan + N').';
@@ -294,7 +292,7 @@ BEGIN
                 SELECT 1
                 FROM dbo.HoSoCuTru
                 WHERE MaPhieuDatCoc = @MaPhieuDatCoc
-                  AND TrangThaiHoSo = N'Đã duyệt cư trú'
+                  AND (TrangThaiHoSo = N'Đã duyệt cư trú' OR TrangThaiHoSo LIKE N'%duy%t%')
            )
         BEGIN
             SET @MaLoi    = -30;
@@ -620,7 +618,7 @@ BEGIN
         -- -----------------------------------------------
         -- BƯỚC KT-2: Còn hiệu lực?
         -- -----------------------------------------------
-        IF @TrangThaiCoc <> N'Hiệu lực'
+        IF @TrangThaiCoc <> N'Hiệu lực' AND @TrangThaiCoc NOT LIKE N'Hi%u%'
         BEGIN
             SET @MaLoi    = -2;
             SET @ThongBao = N'Phiếu đặt cọc không còn hiệu lực.';
@@ -631,7 +629,7 @@ BEGIN
         -- -----------------------------------------------
         -- BƯỚC KT-3: Đã thanh toán?
         -- -----------------------------------------------
-        IF @TrangThaiThanhToan <> N'Đã TT'
+        IF @TrangThaiThanhToan <> N'Đã TT' AND @TrangThaiThanhToan NOT LIKE N'%TT%'
         BEGIN
             SET @MaLoi    = -3;
             SET @ThongBao = N'Phiếu đặt cọc chưa thanh toán.';
@@ -661,7 +659,7 @@ BEGIN
                 SELECT 1
                 FROM dbo.HoSoCuTru
                 WHERE MaPhieuDatCoc = @MaPhieuDatCoc
-                  AND TrangThaiHoSo = N'Đã duyệt cư trú'
+                  AND (TrangThaiHoSo = N'Đã duyệt cư trú' OR TrangThaiHoSo LIKE N'%duy%t%')
            )
         BEGIN
             SET @MaLoi    = -30;
@@ -885,17 +883,58 @@ BEGIN
         SET @MaHopDong = 'HD' + RIGHT('0000' + CAST(@SoMaMax + 1 AS VARCHAR(4)), 4);
 
         -- -----------------------------------------------
-        -- BƯỚC INSERT-2: Lấy thông tin từ ChiTietDatCoc
+        -- BƯỚC INSERT-2: Lấy thông tin từ ChiTietDatCoc (chỉ lấy số giường tương ứng số thành viên được duyệt nếu thuê ghép giường)
         -- -----------------------------------------------
         DECLARE
             @SoGiuongThue   INT,
             @TongGiaThue    DECIMAL(15,2);
 
-        SELECT
-            @SoGiuongThue = COUNT(*),
-            @TongGiaThue  = SUM(GiaThue)
-        FROM dbo.ChiTietDatCoc
-        WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+        DECLARE @SoMaHoSo VARCHAR(6);
+        SELECT @SoMaHoSo = MaHoSoCuTru FROM dbo.HoSoCuTru WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+
+        DECLARE @SoTVHopLe INT = 0;
+        IF @SoMaHoSo IS NOT NULL
+        BEGIN
+            SELECT @SoTVHopLe = COUNT(*) 
+            FROM dbo.ThanhVienHopDong 
+            WHERE MaHoSoCuTru = @SoMaHoSo AND TrangThai = N'Đủ điều kiện';
+        END;
+
+        IF @HinhThucThue = N'Ghép giường' AND @SoTVHopLe > 0
+        BEGIN
+            -- Chỉ thuê số lượng giường tương ứng số thành viên được duyệt cư trú
+            SELECT
+                @SoGiuongThue = COUNT(*),
+                @TongGiaThue  = SUM(GiaThue)
+            FROM (
+                SELECT TOP (@SoTVHopLe) GiaThue
+                FROM dbo.ChiTietDatCoc
+                WHERE MaPhieuDatCoc = @MaPhieuDatCoc
+                ORDER BY MaChiTietDC
+            ) AS SubBeds;
+
+            -- Giải phóng các giường dư thừa (chuyển sang trạng thái 'Trống')
+            UPDATE g
+            SET    g.TinhTrang = N'Trống'
+            FROM   dbo.Giuong g
+            JOIN   dbo.ChiTietDatCoc ctdc ON ctdc.MaPhong = g.MaPhong AND ctdc.MaGiuong = g.MaGiuong
+            WHERE  ctdc.MaPhieuDatCoc = @MaPhieuDatCoc
+              AND  ctdc.MaChiTietDC NOT IN (
+                  SELECT TOP (@SoTVHopLe) MaChiTietDC
+                  FROM dbo.ChiTietDatCoc
+                  WHERE MaPhieuDatCoc = @MaPhieuDatCoc
+                  ORDER BY MaChiTietDC
+              );
+        END
+        ELSE
+        BEGIN
+            -- Nguyên phòng hoặc trường hợp khác: giữ nguyên theo phiếu đặt cọc
+            SELECT
+                @SoGiuongThue = COUNT(*),
+                @TongGiaThue  = SUM(GiaThue)
+            FROM dbo.ChiTietDatCoc
+            WHERE MaPhieuDatCoc = @MaPhieuDatCoc;
+        END;
 
         -- -----------------------------------------------
         -- BƯỚC INSERT-3: Insert HopDongThue
@@ -1187,8 +1226,16 @@ BEGIN
         p.TenPhong,
         -- Ghép phòng-giường nếu là ghép giường
         CASE
-            WHEN ctdc.MaGiuong IS NOT NULL
-                THEN p.TenPhong + N' - Giường ' + ctdc.MaGiuong
+            WHEN pdc.HinhThucThue = N'Ghép giường'
+                THEN p.TenPhong + N' - Giường ' + (
+                    SELECT STRING_AGG(ctdc2.MaGiuong, ', ') WITHIN GROUP (ORDER BY ctdc2.MaChiTietDC)
+                    FROM (
+                        SELECT TOP (hd.SoGiuongThue) ctdc_inner.MaGiuong, ctdc_inner.MaChiTietDC
+                        FROM dbo.ChiTietDatCoc ctdc_inner
+                        WHERE ctdc_inner.MaPhieuDatCoc = hd.MaPhieuCoc
+                        ORDER BY ctdc_inner.MaChiTietDC
+                    ) AS ctdc2
+                )
             ELSE p.TenPhong
         END AS TenPhongDayDu,
         p.MaPhong,
@@ -1204,8 +1251,12 @@ BEGIN
     JOIN KhachHang kh ON kh.MaKhachHang = hd.MaKhachHang
     JOIN NguoiDung nd_kh ON nd_kh.MaNguoiDung = kh.MaKhachHang
     JOIN PhieuDatCoc pdc ON pdc.MaPhieuDatCoc = hd.MaPhieuCoc
-    JOIN ChiTietDatCoc ctdc ON ctdc.MaPhieuDatCoc = pdc.MaPhieuDatCoc
-    JOIN Phong p ON p.MaPhong = ctdc.MaPhong
+    OUTER APPLY (
+        SELECT TOP 1 ctdc_first.MaPhong 
+        FROM dbo.ChiTietDatCoc ctdc_first 
+        WHERE ctdc_first.MaPhieuDatCoc = hd.MaPhieuCoc
+    ) AS ctdc_p
+    JOIN Phong p ON p.MaPhong = ctdc_p.MaPhong
     JOIN ChiNhanh cn ON cn.MaChiNhanh = p.MaChiNhanh
     WHERE hd.MaHopDong = @MaHopDong;
 

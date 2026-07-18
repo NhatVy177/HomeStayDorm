@@ -65,7 +65,8 @@ export default function ThuNhanPhongTab() {
       setNotice(null);
       const res = await thuNhanPhongApi.tinhKhoanThuNhanPhong(maHopDong);
       setActiveCalculation(res.data);
-      setSoTienThucNop(res.data.summary?.TongCongCanThu || 0);
+      const netDiff = (res.data.summary?.TongCongCanThu || 0) - (res.data.summary?.TienHoanCoc || 0);
+      setSoTienThucNop(Math.abs(netDiff));
       setPhuongThucTT('Chuyển khoản');
       setGhiChu('');
       setModalType('tnp-create');
@@ -282,7 +283,6 @@ export default function ThuNhanPhongTab() {
       )}
 
 
-
       {/* Table */}
       <section className="ktp-table-section tnp-table-card">
         <div style={{ backgroundColor: '#f4f7f7', padding: '16px', borderRadius: '8px', display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '20px' }}>
@@ -310,12 +310,6 @@ export default function ThuNhanPhongTab() {
           onChange={setTrangThai}
         />
 
-        <div className="tnp-table-head">
-          <div>
-            <h3>Danh sách hợp đồng</h3>
-            <p>Chọn hợp đồng để ghi nhận thu tiền hoặc xem chi tiết khoản thu đã xử lý.</p>
-          </div>
-        </div>
         {loading && <div className="tnp-state tnp-state-loading">Đang tải dữ liệu...</div>}
         {errorMsg && <div className="tnp-state tnp-state-error">{errorMsg}</div>}
         
@@ -420,7 +414,11 @@ export default function ThuNhanPhongTab() {
                         {(activeCalculation.details || []).map((item, idx) => (
                           <div key={idx} className="ktp-flex-between">
                             <span style={{ color: '#414753', fontSize: '13px' }}>
-                              {item.NoiDung} ({item.SoLuong} {item.DonViTinh})
+                              {item.NoiDung?.toLowerCase().includes('xe') ? (
+                                `${item.NoiDung} (${Math.round(Number(item.SoLuong))} xe / 1 ${item.DonViTinh})`
+                              ) : (
+                                `${item.NoiDung} (${item.SoLuong} ${item.DonViTinh})`
+                              )}
                             </span>
                             <strong style={{ fontSize: '13px' }}>{formatCurrency(item.ThanhTien)}</strong>
                           </div>
@@ -433,20 +431,59 @@ export default function ThuNhanPhongTab() {
                           </span>
                         </div>
                       </div>
+                      
+                      {activeCalculation.summary?.TienHoanCoc > 0 && (
+                        <div style={{
+                          marginTop: '16px',
+                          border: '1px solid #fbbf24',
+                          backgroundColor: '#fffbeb',
+                          color: '#b45309',
+                          borderRadius: '8px',
+                          padding: '12px 16px',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '10px'
+                        }}>
+                          <Icon name="info" style={{ color: '#d97706', marginTop: '2px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '13px' }}>
+                            <strong style={{ display: 'block', marginBottom: '2px' }}>Thông tin hoàn cọc (Thành viên không được duyệt)</strong>
+                            <span>
+                              Nhân viên kế toán cần trả lại cho khách hàng: 
+                              <strong style={{ marginLeft: '4px', fontSize: '15px', color: '#b45309' }}>
+                                {formatCurrency(activeCalculation.summary?.TienHoanCoc)}
+                              </strong>
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: '#3f494a' }}>Số tiền khách thanh toán (đ) *</label>
-                        <input 
-                          type="number" 
-                          className="ktp-input-large" 
-                          value={soTienThucNop} 
-                          onChange={e => setSoTienThucNop(e.target.value)} 
-                          style={{ color: '#191c1d', width: '100%', padding: '10px', boxSizing: 'border-box' }}
-                          required 
-                        />
-                      </div>
+                      {(() => {
+                        const netDiff = (activeCalculation.summary?.TongCongCanThu || 0) - (activeCalculation.summary?.TienHoanCoc || 0);
+                        let inputLabel = "Số tiền khách thanh toán (đ) *";
+                        if (activeCalculation.summary?.TienHoanCoc > 0) {
+                          if (netDiff > 0) {
+                            inputLabel = "Số tiền khách cần thanh toán chênh lệch (đ) *";
+                          } else if (netDiff < 0) {
+                            inputLabel = "Số tiền nhân viên cần thanh toán chênh lệch cho khách (đ) *";
+                          } else {
+                            inputLabel = "Số tiền thanh toán chênh lệch (đ) *";
+                          }
+                        }
+                        return (
+                          <div>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: '#3f494a' }}>{inputLabel}</label>
+                            <input 
+                              type="number" 
+                              className="ktp-input-large" 
+                              value={soTienThucNop} 
+                              onChange={e => setSoTienThucNop(e.target.value)} 
+                              style={{ color: '#191c1d', width: '100%', padding: '10px', boxSizing: 'border-box' }}
+                              required 
+                            />
+                          </div>
+                        );
+                      })()}
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', marginBottom: '6px', color: '#3f494a' }}>Phương thức thanh toán *</label>
                         <select 
@@ -602,6 +639,28 @@ export default function ThuNhanPhongTab() {
                             {isPaid ? formatCurrency(s.DaThanhToan) : formatCurrency((s.TongKhoanThu || 0) - (s.DaThanhToan || 0))}
                           </strong>
                         </div>
+                        
+                        {s.TienHoanCoc > 0 && (
+                          <>
+                            <div style={{ height: '1px', background: '#e2e8ea', margin: '14px 0 12px' }}></div>
+                            <div style={{ 
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', 
+                              background: '#fffbeb', border: '1px solid #fbbf24', borderRadius: '10px', padding: '12px 14px' 
+                            }}>
+                              <div>
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '2px' }}>
+                                  Tiền cần hoàn cọc cho khách
+                                </span>
+                                <span style={{ fontSize: '11px', color: '#d97706' }}>
+                                  (Hoàn 80% cọc cho {s.SoNguoiHuy} người k duyệt)
+                                </span>
+                              </div>
+                              <strong style={{ fontSize: '18px', fontWeight: 800, color: '#b45309' }}>
+                                {formatCurrency(s.TienHoanCoc)}
+                              </strong>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -624,7 +683,13 @@ export default function ThuNhanPhongTab() {
                             >
                               <div>
                                 <span style={{ fontSize: '13px', color: '#111819', fontWeight: 600 }}>{item.NoiDung}</span>
-                                <span style={{ fontSize: '12px', color: '#6f797a', marginLeft: '6px' }}>× {item.SoLuong} {item.DonViTinh}</span>
+                                <span style={{ fontSize: '12px', color: '#6f797a', marginLeft: '6px' }}>
+                                  {item.NoiDung?.toLowerCase().includes('xe') ? (
+                                    `× ${Math.round(Number(item.SoLuong))} xe / 1 ${item.DonViTinh}`
+                                  ) : (
+                                    `× ${item.SoLuong} ${item.DonViTinh}`
+                                  )}
+                                </span>
                               </div>
                               <strong style={{ fontSize: '14px', color: '#111819' }}>{formatCurrency(item.ThanhTien)}</strong>
                             </div>

@@ -89,7 +89,7 @@ BEGIN
         p.MaPhong                                   AS maPhong,
         p.TenPhong                                  AS tenPhong,
         ctdc.MaGiuong                               AS maGiuong,
-        pdc.SoTienCoc                               AS tienCocHD,
+        ISNULL((hdt.GiaThue * (SELECT COUNT(*) FROM dbo.ChiTietDatCoc ctdc WHERE ctdc.MaPhieuDatCoc = hdt.MaPhieuCoc)), pdc.SoTienCoc) AS tienCocHD,
         pdc.SoTienCoc                               AS tienCocPDC,
         pdc.HinhThucThue                            AS hinhThucThue,
         COALESCE(hdt.GiaThue, ctdc.GiaThue)         AS giaThue,
@@ -171,13 +171,19 @@ BEGIN
         SELECT 
             ts.MaTaiSan AS maTaiSan,
             ts.TenTaiSan AS tenTaiSan,
-            ts.SoLuong AS soLuongBanGiao,
+            COALESCE(ctbg.SoLuongThucTe, ts.SoLuong) AS soLuongBanGiao,
             ts.DonGia AS donGiaBoiThuong,
             cthh.MucDoHuHong AS mucDoHuHong,
             cthh.SoLuong AS soLuongHuMat,
             cthh.MoTaHuHong AS moTaHuHong,
             cthh.ChiPhiSuaChua AS chiPhiSuaChua
         FROM dbo.TaiSan ts
+        LEFT JOIN (
+            SELECT cb.MaTaiSan, cb.SoLuongThucTe
+            FROM dbo.BienBanBanGiao bb
+            JOIN dbo.ChiTietBanGiao cb ON cb.MaBienBan = bb.MaBienBan
+            WHERE bb.MaHopDong = @MaHopDong AND bb.LoaiBanGiao = N'Bàn giao vào'
+        ) ctbg ON ctbg.MaTaiSan = ts.MaTaiSan
         LEFT JOIN dbo.BienBanKiemTraPhong bbkt ON bbkt.MaPhieuTra = @MaPhieuTra
         LEFT JOIN dbo.ChiTietHuHong cthh ON cthh.MaBienBanKT = bbkt.MaBienBanKT AND cthh.MaTaiSan = ts.MaTaiSan
         WHERE ts.MaPhong = @MaPhong;
@@ -209,7 +215,7 @@ BEGIN
     BEGIN
         THROW 50010, N'Phiếu trả phòng này đã thay đổi trạng thái hoặc đã được xử lý bởi nhân viên khác, vui lòng làm mới lại danh sách.', 1;
     END
-    
+
     -- Cập nhật trạng thái phiếu
     UPDATE dbo.PhieuTraPhong
     SET TrangThai = N'Chờ đối soát',

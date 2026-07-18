@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../nhanVienKeToan/LapPhieuDatCocTab.jsx';
 import { banGiaoPhongApi } from './banGiaoPhong.api.js';
 import StatusFilterTabs from '../../components/common/StatusFilterTabs.jsx';
+import '../nhanPhong/cuTru.css';
 
 function getErrorMessage(error, fallback) {
   return error?.response?.data?.message || error?.message || fallback;

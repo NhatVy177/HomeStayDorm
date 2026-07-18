@@ -170,6 +170,7 @@ CREATE TABLE PhieuDatCoc (
     MaPhieuYeuCauDangKy     VARCHAR(6)      NOT NULL,
     MaKhachHang             VARCHAR(6)      NOT NULL,
     MaNhanVienKeToan        VARCHAR(6),
+    GhiChu                  NVARCHAR(MAX)   NULL,
     CONSTRAINT CHK_PDC_PhuongThuc   CHECK (PhuongThucThanhToan IN (N'Tiền mặt', N'Chuyển khoản')),
     CONSTRAINT CHK_PDC_TrangThaiTT  CHECK (TrangThaiThanhToan IN (N'Chờ TT', N'Đã TT', N'Hết hạn')),
     CONSTRAINT CHK_PDC_HinhThuc     CHECK (HinhThucThue IN (N'Nguyên phòng', N'Ghép giường')),
@@ -321,7 +322,9 @@ CREATE TABLE ChiTietHoaDon (
     ThanhTien       DECIMAL(15,2)   ,
     MaHoaDon        VARCHAR(6)      NOT NULL,
     MaChiTietDVHD   VARCHAR(6)      NOT NULL,
-    MaPhieuGhi      VARCHAR(6)      NULL
+    MaPhieuGhi      VARCHAR(6)      NULL,
+    GhiChu          NVARCHAR(500)   NULL,
+    NoiDung         NVARCHAR(500)   NULL
 );
 
 -- 24. PHIẾU TRẢ PHÒNG
@@ -443,6 +446,7 @@ CREATE TABLE BienBanViPham (
 	MaKhachHang			VARCHAR(6),
 	MaHopDong			VARCHAR(6),
 	MaDieuKhoan			VARCHAR(6),
+	GhiChu				NVARCHAR(500),
 	CONSTRAINT CHK_BBVP_TrangThai CHECK (TrangThai IN (N'Chờ xử lý', N'Đã xử lý'))
 
 );

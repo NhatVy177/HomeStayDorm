@@ -1,4 +1,4 @@
-import { executeProcedure, getPool, sql } from '../database/connection.js';
+import * as phongKhamPhaRepository from '../repositories/phongKhamPha.repository.js';
 
 // Chuan hoa gia tri HinhThucThue truoc khi truyen vao SP
 function normalizeHinhThucThue(value) {
@@ -34,14 +34,12 @@ export async function getDanhSachPhongKhamPha(filter = {}) {
   })();
   const tuKhoa = String(filter.tuKhoa || filter.tenPhong || '').trim() || null;
 
-  const result = await executeProcedure('dbo.SP_KhachMoi_DanhSachPhong', [
-    { name: 'TenPhong',    type: sql.NVarChar(100),   value: tuKhoa },
-    { name: 'LoaiPhong',   type: sql.NVarChar(100),   value: filter.loaiPhong || null },
-    { name: 'KhuVuc',      type: sql.NVarChar(100),   value: filter.khuVuc || null },
-    { name: 'MucGiaToiDa', type: sql.Decimal(15, 2), value: mucGiaToiDa }
-  ]);
-
-  return result.recordset || [];
+  return phongKhamPhaRepository.layDanhSachPhongKhamPha({
+    tuKhoa,
+    loaiPhong: filter.loaiPhong || null,
+    khuVuc: filter.khuVuc || null,
+    mucGiaToiDa
+  });
 }
 
 /**
@@ -50,39 +48,27 @@ export async function getDanhSachPhongKhamPha(filter = {}) {
  * Tra ve { ...thongTinPhong, hinhAnh, tienNghi, dichVuUocTinh }
  */
 export async function getChiTietPhong(maPhong) {
-  const result = await executeProcedure('dbo.SP_KhachMoi_ChiTietPhong', [
-    { name: 'MaPhong', type: sql.VarChar(4), value: maPhong }
-  ]);
-
-  const phong = result.recordsets?.[0]?.[0] || null;
+  const recordsets = await phongKhamPhaRepository.layChiTietPhong(maPhong);
+  const phong = recordsets?.[0]?.[0] || null;
   if (!phong) return null;
 
   return {
     ...phong,
-    hinhAnh: result.recordsets?.[1] || [],
-    tienNghi: result.recordsets?.[2] || [],
-    dichVuUocTinh: result.recordsets?.[3] || []
+    hinhAnh: recordsets?.[1] || [],
+    tienNghi: recordsets?.[2] || [],
+    dichVuUocTinh: recordsets?.[3] || []
   };
 }
 
 /**
  * Lay danh sach bo loc (loai phong, khu vuc) cho trang kham pha phong.
- * Dung raw query vi day la select don gian, chua co SP rieng.
+ * Repository dung raw query vi day la select don gian, chua co SP rieng.
  */
 export async function getBoLocPhongKhamPha() {
-  const pool = await getPool();
-  const result = await pool.request().query(`
-    SELECT MaLoaiPhong AS maLoaiPhong, TenLoaiPhong AS tenLoaiPhong
-    FROM dbo.LoaiPhong
-    ORDER BY TenLoaiPhong;
-
-    SELECT DISTINCT TenChiNhanh AS tenChiNhanh, DiaChi AS diaChi
-    FROM dbo.ChiNhanh
-    ORDER BY DiaChi;
-  `);
+  const recordsets = await phongKhamPhaRepository.layBoLocPhongKhamPha();
 
   return {
-    loaiPhong: result.recordsets[0] || [],
-    khuVuc: result.recordsets[1] || []
+    loaiPhong: recordsets[0] || [],
+    khuVuc: recordsets[1] || []
   };
 }

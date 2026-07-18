@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../auth/AuthContext.jsx';
 import PortalIcon from '../../components/common/PortalIcon.jsx';
+import ResultModal from '../../components/common/ResultModal.jsx';
 import { khachMoiApi } from './khachMoi.api.js';
 import './khachMoi.css';
 
@@ -103,6 +104,7 @@ export default function KhachMoiPage() {
   const [newScheduleTime, setNewScheduleTime] = useState('2026-05-29T14:00');
   const [accountOpen, setAccountOpen] = useState(false);
   const [toast, setToast] = useState('');
+  const [resultModal, setResultModal] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -190,15 +192,23 @@ export default function KhachMoiPage() {
     event.preventDefault();
     setSubmitting(true);
     try {
-      await khachMoiApi.createHoSo({
+      const { data } = await khachMoiApi.createHoSo({
         ...rentForm,
         phongQuanTam: selectedRooms.map((room) => room.tenPhong).join(', ')
       });
+      const maDangKy = data?.maDangKy || data?.MaDangKy;
       setRentModal(false);
       setSelectedIds([]);
       setActiveTab('ho-so');
-      await loadPortal();           // load xong mới show toast để không bị che
-      setToast('Gửi hồ sơ đăng ký thuê thành công!');
+      await loadPortal();
+      setResultModal({
+        type: 'success',
+        title: 'Gửi thông tin đăng ký thuê thành công',
+        message: maDangKy
+          ? `Hồ sơ ${maDangKy} đã được tạo. Nhân viên Sale sẽ tiếp nhận và liên hệ sắp lịch xem phòng.`
+          : 'Hồ sơ của bạn đã được tạo. Nhân viên Sale sẽ tiếp nhận và liên hệ sắp lịch xem phòng.',
+        confirmText: 'Xem hồ sơ'
+      });
     } catch (requestError) {
       setToast(requestError.response?.data?.message || 'Không thể gửi hồ sơ lúc này.');
     } finally {
@@ -739,6 +749,14 @@ export default function KhachMoiPage() {
       )}
 
       <div className={`km-toast ${toast ? 'show' : ''}`}>{toast}</div>
+      <ResultModal
+        open={Boolean(resultModal)}
+        type={resultModal?.type || 'success'}
+        title={resultModal?.title}
+        message={resultModal?.message}
+        confirmText={resultModal?.confirmText}
+        onClose={() => setResultModal(null)}
+      />
     </div>
   );
 }

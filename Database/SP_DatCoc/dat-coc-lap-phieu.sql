@@ -142,6 +142,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM dbo.PhieuDangKy WHERE MaDangKy = @MaDangKy)
         THROW 50210, N'Không tìm thấy phiếu đăng ký.', 1;
 
+    UPDATE dbo.LichXemPhong
+    SET TrangThai = N'Đã xem'
+    WHERE MaDangKy = @MaDangKy
+      AND TrangThai IN (N'Chờ xem', N'Yêu cầu đổi lịch', N'Yêu cầu hủy')
+      AND ThoiGianHen <= GETDATE();
+
     IF NOT EXISTS (
         SELECT 1 FROM dbo.PhieuDangKy
         WHERE MaDangKy = @MaDangKy AND TrangThai = N'Xác nhận cọc'
