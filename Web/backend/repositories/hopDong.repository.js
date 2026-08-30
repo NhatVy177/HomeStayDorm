@@ -56,36 +56,17 @@ export async function traCuuPhieuCoc(tuKhoa = null, trangThaiCoc = null, ngayTao
 
   const pool = await getPool();
   const request = pool.request();
-  const paramNames = rows.map((row, index) => {
-    const paramName = `MaPhieu${index}`;
-    request.input(paramName, sql.VarChar(6), row.MaPhieuDatCoc);
-    return `@${paramName}`;
-  });
+  const paramKeys = rows.map((_, i) => `$${i + 1}`);
+  const paramValues = rows.map(r => r.MaPhieuDatCoc);
 
-  const residenceResult = await request.query(`
-    IF OBJECT_ID(N'dbo.HoSoCuTru', N'U') IS NULL
-    BEGIN
-      SELECT
-        CAST(NULL AS VARCHAR(6)) AS MaPhieuDatCoc,
-        CAST(NULL AS VARCHAR(6)) AS MaHoSoCuTru,
-        CAST(NULL AS NVARCHAR(30)) AS TrangThaiHoSo,
-        CAST(NULL AS DATETIME) AS NgayDuyet
-      WHERE 1 = 0;
-    END
-    ELSE
-    BEGIN
-      SELECT
-        MaPhieuDatCoc,
-        MaHoSoCuTru,
-        TrangThaiHoSo,
-        NgayDuyet
-      FROM dbo.HoSoCuTru
-      WHERE MaPhieuDatCoc IN (${paramNames.join(', ')});
-    END
-  `);
+  const residenceResult = await getPool().query(`
+    SELECT "MaPhieuDatCoc", "MaHoSoCuTru", "TrangThaiHoSo", "NgayDuyet"
+    FROM "HoSoCuTru"
+    WHERE "MaPhieuDatCoc" IN (${paramKeys.join(', ')});
+  `, paramValues).catch(() => ({ rows: [] }));
 
   const residenceMap = new Map(
-    (residenceResult.recordset || []).map((item) => [item.MaPhieuDatCoc, item])
+    (residenceResult.rows || []).map((item) => [item.MaPhieuDatCoc, item])
   );
 
   return rows.map((row) => {
@@ -111,47 +92,48 @@ export async function layChiTietPhieuCoc(maPhieuDatCoc) {
 
 export async function layHoSoCuTruDaDuyetTheoPhieuCoc(maPhieuDatCoc) {
   const pool = await getPool();
-  const request = pool.request();
-  request.input('MaPhieuDatCoc', sql.VarChar(6), maPhieuDatCoc);
 
-  const result = await request.query(`
-    SELECT TOP 1
-      hs.MaHoSoCuTru,
-      hs.MaPhieuDatCoc,
-      hs.MaNhanVienQuanLy,
-      hs.TrangThaiHoSo,
-      hs.DaDoiChieuGiayTo,
-      hs.NgayGuiDuyet,
-      hs.NgayDuyet,
-      hs.GhiChuSale,
-      hs.GhiChuQuanLy
-    FROM dbo.HoSoCuTru hs
-    WHERE hs.MaPhieuDatCoc = @MaPhieuDatCoc
-      AND (hs.TrangThaiHoSo = N'Đã duyệt cư trú' OR hs.TrangThaiHoSo LIKE N'%duy%t%');
-
+  const hoSoResult = await pool.query(`
     SELECT
-      tv.MaThanhVien AS MaThanhVienCuTru,
-      tv.HoTen,
-      tv.NgaySinh,
-      tv.GioiTinh,
-      tv.CCCD,
-      tv.SDT,
-      tv.Email,
-      tv.QuocTich,
-      tv.TrangThai AS TrangThaiDuyet,
-      tv.LyDoTuChoi
-    FROM dbo.ThanhVienHopDong tv
-    JOIN dbo.HoSoCuTru hs ON hs.MaHoSoCuTru = tv.MaHoSoCuTru
-    WHERE hs.MaPhieuDatCoc = @MaPhieuDatCoc
-      AND (hs.TrangThaiHoSo = N'Đã duyệt cư trú' OR hs.TrangThaiHoSo LIKE N'%duy%t%')
+      hs."MaHoSoCuTru",
+      hs."MaPhieuDatCoc",
+      hs."MaNhanVienQuanLy",
+      hs."TrangThaiHoSo",
+      hs."DaDoiChieuGiayTo",
+      hs."NgayGuiDuyet",
+      hs."NgayDuyet",
+      hs."GhiChuSale",
+      hs."GhiChuQuanLy"
+    FROM "HoSoCuTru" hs
+    WHERE hs."MaPhieuDatCoc" = $1
+      AND (hs."TrangThaiHoSo" = 'Đã duyệt cư trú' OR hs."TrangThaiHoSo" LIKE '%duy%t%')
+    LIMIT 1;
+  `, [maPhieuDatCoc]);
+
+  const thanhVienResult = await pool.query(`
+    SELECT
+      tv."MaThanhVien" AS "MaThanhVienCuTru",
+      tv."HoTen",
+      tv."NgaySinh",
+      tv."GioiTinh",
+      tv."CCCD",
+      tv."SDT",
+      tv."Email",
+      tv."QuocTich",
+      tv."TrangThai" AS "TrangThaiDuyet",
+      tv."LyDoTuChoi"
+    FROM "ThanhVienHopDong" tv
+    JOIN "HoSoCuTru" hs ON hs."MaHoSoCuTru" = tv."MaHoSoCuTru"
+    WHERE hs."MaPhieuDatCoc" = $1
+      AND (hs."TrangThaiHoSo" = 'Đã duyệt cư trú' OR hs."TrangThaiHoSo" LIKE '%duy%t%')
     ORDER BY
-      CASE WHEN (tv.TrangThai = N'Đủ điều kiện' OR tv.TrangThai LIKE N'%di%u%') THEN 0 ELSE 1 END,
-      tv.MaThanhVien;
-  `);
+      CASE WHEN (tv."TrangThai" = 'Đủ điều kiện' OR tv."TrangThai" LIKE '%di%u%') THEN 0 ELSE 1 END,
+      tv."MaThanhVien";
+  `, [maPhieuDatCoc]);
 
   return {
-    hoSo: result.recordsets[0]?.[0] || null,
-    thanhVien: result.recordsets[1] || []
+    hoSo: hoSoResult.rows[0] || null,
+    thanhVien: thanhVienResult.rows || []
   };
 }
 
@@ -238,19 +220,17 @@ export async function layChiTietHopDongThue(maHopDong) {
 
 export async function layMaHopDongTheoPhieuCoc(maPhieuDatCoc) {
   const pool = await getPool();
-  const result = await pool.request()
-    .input('MaPhieuCoc', sql.VarChar(6), maPhieuDatCoc)
-    .query('SELECT MaHopDong FROM dbo.HopDongThue WHERE MaPhieuCoc = @MaPhieuCoc');
-  return result.recordset[0]?.MaHopDong || null;
+  const result = await pool.query('SELECT "MaHopDong" FROM "HopDongThue" WHERE "MaPhieuCoc" = $1', [maPhieuDatCoc]);
+  return result.rows[0]?.MaHopDong || null;
 }
 
 export async function layDanhSachQuanLy() {
   const pool = await getPool();
-  const result = await pool.request().query(
-    `SELECT nv.MaNhanVien, nd.HoTen 
-     FROM dbo.NhanVien nv 
-     JOIN dbo.NguoiDung nd ON nd.MaNguoiDung = nv.MaNhanVien 
-     WHERE nv.ChucVu = N'Quản lý'`
+  const result = await pool.query(
+    `SELECT nv."MaNhanVien", nd."HoTen"
+     FROM "NhanVien" nv 
+     JOIN "NguoiDung" nd ON nd."MaNguoiDung" = nv."MaNhanVien" 
+     WHERE nv."ChucVu" = 'Quản lý'`
   );
-  return result.recordset;
+  return result.rows;
 }

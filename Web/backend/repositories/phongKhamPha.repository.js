@@ -21,15 +21,18 @@ export async function layChiTietPhong(maPhong) {
 
 export async function layBoLocPhongKhamPha() {
   const pool = await getPool();
-  const result = await pool.request().query(`
-    SELECT MaLoaiPhong AS maLoaiPhong, TenLoaiPhong AS tenLoaiPhong
-    FROM dbo.LoaiPhong
-    ORDER BY TenLoaiPhong;
-
-    SELECT DISTINCT TenChiNhanh AS tenChiNhanh, DiaChi AS diaChi
-    FROM dbo.ChiNhanh
-    ORDER BY DiaChi;
+  
+  const loaiPhong = await pool.query(`
+    SELECT "MaLoaiPhong" AS "maLoaiPhong", "TenLoaiPhong" AS "tenLoaiPhong"
+    FROM "LoaiPhong"
+    ORDER BY "TenLoaiPhong";
   `);
 
-  return result.recordsets || [];
+  const chiNhanh = await pool.query(`
+    SELECT DISTINCT "TenChiNhanh" AS "tenChiNhanh", "DiaChi" AS "diaChi"
+    FROM "ChiNhanh"
+    ORDER BY "DiaChi";
+  `);
+
+  return [loaiPhong.rows || [], chiNhanh.rows || []];
 }

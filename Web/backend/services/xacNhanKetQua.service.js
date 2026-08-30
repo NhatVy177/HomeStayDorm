@@ -1,5 +1,4 @@
-import sql from 'mssql';
-import { getPool } from '../database/connection.js';
+import { sql, getPool } from '../database/connection.js';
 import { phanHoiDoiSoatTraPhong } from './khachMoi.service.js';
 import { createServiceError } from './serviceErrors.js';
 

@@ -1,98 +1,192 @@
-import sql from 'mssql';
+import pg from 'pg';
+const { Pool } = pg;
 
-let poolPromise;
+let poolInstance;
 
-function readEnv(name, fallback = '', { trim = true } = {}) {
-  const value = process.env[name] ?? fallback;
-  return trim ? String(value).trim() : String(value);
-}
-
-function getConfig() {
-  const server = readEnv('DB_SERVER', 'localhost');
-  const instanceName = readEnv('DB_INSTANCE');
-  const port = Number(readEnv('DB_PORT', '0'));
-  const hasPort = Number.isFinite(port) && port > 0;
-  const database = readEnv('DB_NAME');
-  const user = readEnv('DB_USER');
-  const password = readEnv('DB_PASS', '', { trim: false });
-  const trustedConnection = readEnv('DB_TRUSTED_CONNECTION', 'false').toLowerCase() === 'true';
-
-  // Nếu không có DB_USER thì bắt buộc phải dùng trusted connection
-  if (!trustedConnection && !user) {
-    const missing = [
-      ['DB_NAME', database],
-      ['DB_USER', user],
-      ['DB_PASS', password.trim()]
-    ]
-      .filter(([, value]) => !value)
-      .map(([name]) => name);
-
-    throw new Error(
-      `Missing SQL Server config: ${missing.join(', ')}. ` +
-      'Create Web/backend/.env from Web/backend/.env.example and fill in your local SQL Server values.'
-    );
+function getConnectionString() {
+  // Use Vercel/Supabase standard environment variables if available
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
   }
-
-  if (!database) {
-    throw new Error('Missing SQL Server config: DB_NAME.');
-  }
-
-  if (hasPort && instanceName) {
-    throw new Error('Use either DB_PORT or DB_INSTANCE in Web/backend/.env, not both.');
-  }
-
-  const config = {
-    server,
-    port: hasPort ? port : undefined,
-    database,
-    options: {
-      encrypt: false,
-      trustServerCertificate: true,
-      trustedConnection,
-      useUTC: false,
-      ...(!hasPort && instanceName ? { instanceName } : {})
-    }
-  };
-
-  // Chỉ thêm user/password khi không dùng Windows Auth
-  if (!trustedConnection && user) {
-    config.user = user;
-    config.password = password;
-  }
-
-  return config;
+  
+  // Fallback to manual construction
+  const host = process.env.DB_SERVER || 'db.dzyjchpbrqasblnvzjkk.supabase.co';
+  const port = process.env.DB_PORT || '5432';
+  const database = process.env.DB_NAME || 'postgres';
+  const user = process.env.DB_USER || 'postgres';
+  const password = process.env.DB_PASS || 'Nhatvy1707@';
+  
+  return `postgresql://${user}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
 }
 
 export function getPool() {
-  if (!poolPromise) {
-    poolPromise = new sql.ConnectionPool(getConfig()).connect().catch((error) => {
-      poolPromise = null;
-      throw error;
+  if (!poolInstance) {
+    const connectionString = getConnectionString();
+    poolInstance = new Pool({
+      connectionString,
+      ssl: { rejectUnauthorized: false }
     });
+    
+    // Add mssql request shim
+    poolInstance.request = function() {
+      const req = {
+        _inputs: [],
+        _outputs: [],
+        input: function(name, type, value) {
+          this._inputs.push({ name, type, value });
+          return this;
+        },
+        output: function(name, type) {
+          this._outputs.push({ name, type });
+          return this;
+        },
+        query: async function(sqlString) {
+          return executeQuery(sqlString, this._inputs);
+        },
+        execute: async function(procedureName) {
+          return executeProcedure(procedureName, this._inputs);
+        }
+      };
+      return req;
+    };
   }
-  return poolPromise;
+  return poolInstance;
 }
 
+function toSnakeCase(str) {
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/^_/, '');
+}
+
+/**
+ * Temporary wrapper to mimic mssql's executeProcedure
+ */
 export async function executeProcedure(procedureName, parameters = []) {
-  const pool = await getPool();
-  const request = pool.request();
-
-  for (const parameter of parameters) {
-    request.input(parameter.name, parameter.type, parameter.value);
+  const pool = getPool();
+  // Remove 'dbo.' prefix and convert to snake_case
+  let funcName = procedureName.replace(/^dbo\./i, '');
+  funcName = funcName.replace(/^SP_/i, 'sp_'); // e.g. SP_LapHopDongThue -> sp_LapHopDongThue
+  funcName = funcName.substring(0, 3) + toSnakeCase(funcName.substring(3)); // sp_lap_hop_dong_thue
+  
+  // Extract values, ignoring mssql types
+  const values = parameters.map(p => {
+    // If the value is a mssql TVP (Table), convert to JSON
+    if (p.value && typeof p.value === 'object' && p.value.rowsArray) {
+      // We need to map the TVP columns to keys for JSON
+      const columns = p.value.columnsList;
+      const jsonArr = p.value.rowsArray.map(row => {
+        const obj = {};
+        columns.forEach((col, i) => {
+          // Convert column name to snake_case
+          const snakeCol = toSnakeCase(col);
+          obj[snakeCol] = row[i];
+        });
+        return obj;
+      });
+      return JSON.stringify(jsonArr);
+    }
+    return p.value;
+  });
+  
+  const args = parameters.map((p, i) => {
+    const paramName = 'p_' + toSnakeCase(p.name);
+    return `${paramName} := $${i + 1}`;
+  }).join(', ');
+  
+function toPascalCase(str) {
+  if (str.includes('_')) {
+    return str.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
   }
-
-  return request.execute(procedureName);
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function mapRowsToPascalCase(rows) {
+  if (!rows) return rows;
+  return rows.map(row => {
+    const newRow = {};
+    for (const key of Object.keys(row)) {
+      newRow[toPascalCase(key)] = row[key];
+    }
+    return newRow;
+  });
+}
+
+  const query = `SELECT * FROM "${funcName}"(${args});`;
+  
+  try {
+    const result = await pool.query(query, values);
+    const pascalRows = mapRowsToPascalCase(result.rows);
+    
+    // In mssql, SPs returning multiple tables use recordsets. 
+    // Postgres returns JSON or records. Since our SPs were ported, we just return rows.
+    return {
+      recordset: pascalRows,
+      recordsets: [pascalRows],
+      output: pascalRows[0] || {} // Map output variables to the first row's columns
+    };
+  } catch (err) {
+    console.error(`Error executing procedure ${funcName}:`, err.message);
+    throw err;
+  }
+}
+
+/**
+ * Temporary wrapper to mimic mssql's executeQuery
+ */
 export async function executeQuery(sqlString, parameters = []) {
-  const pool = await getPool();
-  const request = pool.request();
+  const pool = getPool();
+  let pgSql = sqlString;
+  const values = [];
+  
+  parameters.forEach((param, index) => {
+    // Replace @ParamName with $1, $2, etc.
+    const regex = new RegExp(`@${param.name}\\b`, 'g');
+    pgSql = pgSql.replace(regex, `$${index + 1}`);
+    values.push(param.value);
+  });
+  
+  // Attempt to fix dbo.
+  pgSql = pgSql.replace(/dbo\./g, '"').replace(/([a-zA-Z0-9_]+)(\s)/g, (match, p1, p2) => {
+      // Very naive quoting, real queries in repos need manual fixing
+      return match;
+  });
 
-  for (const parameter of parameters) {
-    request.input(parameter.name, parameter.type, parameter.value);
+  try {
+    const result = await pool.query(pgSql, values);
+    return {
+      recordset: result.rows,
+      recordsets: [result.rows],
+      rowsAffected: [result.rowCount]
+    };
+  } catch (err) {
+    console.error(`Error executing query:`, err.message);
+    throw err;
   }
-
-  return request.query(sqlString);
 }
 
-export { sql };
+// Dummy sql object to prevent immediate crashes in unmigrated files
+export const sql = {
+  VarChar: () => {},
+  NVarChar: () => {},
+  Int: () => {},
+  Date: () => {},
+  Bit: () => {},
+  Decimal: () => {},
+  DateTime: () => {},
+  Text: () => {},
+  NText: () => {},
+  Float: () => {},
+  MAX: 'MAX',
+  TVP: 'TVP',
+  Table: class {
+    constructor() {
+      this.columnsList = [];
+      this.columns = {
+        add: (name) => { this.columnsList.push(name); }
+      };
+      this.rowsArray = [];
+      this.rows = {
+        add: (...args) => { this.rowsArray.push(args); }
+      };
+    }
+  }
+};

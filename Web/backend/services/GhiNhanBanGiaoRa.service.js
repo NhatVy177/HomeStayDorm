@@ -1,5 +1,4 @@
-import sql from 'mssql';
-import { getPool } from '../database/connection.js';
+import { sql, getPool } from '../database/connection.js';
 import { createServiceError } from './serviceErrors.js';
 
 const TRANG_THAI_BAN_GIAO = new Set(['Tất cả', 'Chờ bàn giao', 'Đã bàn giao']);

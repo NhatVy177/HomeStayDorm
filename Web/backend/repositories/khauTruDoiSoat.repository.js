@@ -19,19 +19,18 @@ export async function updateChiPhiSuaChuaBienBan(db, maPhieuTra, chiTietChiPhiSu
   for (const item of chiTietChiPhiSuaChua) {
     if (item.maChiTietHH) {
       const result = await requestFrom(db)
+        .input('ChiPhiSuaChua', sql.Decimal(15, 2), item.chiPhiSuaChua)
         .input('MaPhieuTra', sql.VarChar(6), maPhieuTra)
         .input('MaBienBanKT', sql.VarChar(6), item.maBienBanKT)
         .input('MaChiTietHH', sql.VarChar(6), item.maChiTietHH)
-        .input('ChiPhiSuaChua', sql.Decimal(15, 2), item.chiPhiSuaChua)
         .query(`
-          UPDATE cthh
-          SET ChiPhiSuaChua = @ChiPhiSuaChua
-          FROM dbo.ChiTietHuHong cthh
-          INNER JOIN dbo.BienBanKiemTraPhong bbkt
-              ON bbkt.MaBienBanKT = cthh.MaBienBanKT
-          WHERE bbkt.MaPhieuTra = @MaPhieuTra
-            AND cthh.MaBienBanKT = @MaBienBanKT
-            AND cthh.MaChiTietHH = @MaChiTietHH;
+          UPDATE "ChiTietHuHong" AS cthh
+          SET "ChiPhiSuaChua" = $1
+          FROM "BienBanKiemTraPhong" AS bbkt
+          WHERE bbkt."MaBienBanKT" = cthh."MaBienBanKT"
+            AND bbkt."MaPhieuTra" = $2
+            AND cthh."MaBienBanKT" = $3
+            AND cthh."MaChiTietHH" = $4;
         `);
 
       if ((result.rowsAffected?.[0] || 0) === 0) return false;
@@ -40,19 +39,18 @@ export async function updateChiPhiSuaChuaBienBan(db, maPhieuTra, chiTietChiPhiSu
     }
 
     const result = await requestFrom(db)
+      .input('TongChiPhiSuaChua', sql.Decimal(15, 2), item.tongChiPhiSuaChua)
       .input('MaPhieuTra', sql.VarChar(6), maPhieuTra)
       .input('MaBienBanKT', sql.VarChar(6), item.maBienBanKT)
-      .input('TongChiPhiSuaChua', sql.Decimal(15, 2), item.tongChiPhiSuaChua)
       .query(`
-        UPDATE bbkt
-        SET TongChiPhiSuaChua = @TongChiPhiSuaChua
-        FROM dbo.BienBanKiemTraPhong bbkt
-        WHERE bbkt.MaPhieuTra = @MaPhieuTra
-          AND bbkt.MaBienBanKT = @MaBienBanKT
+        UPDATE "BienBanKiemTraPhong" AS bbkt
+        SET "TongChiPhiSuaChua" = $1
+        WHERE bbkt."MaPhieuTra" = $2
+          AND bbkt."MaBienBanKT" = $3
           AND NOT EXISTS (
               SELECT 1
-              FROM dbo.ChiTietHuHong cthh
-              WHERE cthh.MaBienBanKT = bbkt.MaBienBanKT
+              FROM "ChiTietHuHong" AS cthh
+              WHERE cthh."MaBienBanKT" = bbkt."MaBienBanKT"
           );
       `);
 
@@ -64,15 +62,14 @@ export async function updateChiPhiSuaChuaBienBan(db, maPhieuTra, chiTietChiPhiSu
       .input('MaPhieuTra', sql.VarChar(6), maPhieuTra)
       .input('MaBienBanKT', sql.VarChar(6), maBienBanKT)
       .query(`
-        UPDATE bbkt
-        SET TongChiPhiSuaChua = ISNULL((
-            SELECT SUM(cthh.ChiPhiSuaChua)
-            FROM dbo.ChiTietHuHong cthh
-            WHERE cthh.MaBienBanKT = bbkt.MaBienBanKT
+        UPDATE "BienBanKiemTraPhong" AS bbkt
+        SET "TongChiPhiSuaChua" = COALESCE((
+            SELECT SUM(cthh."ChiPhiSuaChua")
+            FROM "ChiTietHuHong" AS cthh
+            WHERE cthh."MaBienBanKT" = bbkt."MaBienBanKT"
         ), 0)
-        FROM dbo.BienBanKiemTraPhong bbkt
-        WHERE bbkt.MaPhieuTra = @MaPhieuTra
-          AND bbkt.MaBienBanKT = @MaBienBanKT;
+        WHERE bbkt."MaPhieuTra" = $1
+          AND bbkt."MaBienBanKT" = $2;
       `);
 
     if ((result.rowsAffected?.[0] || 0) === 0) return false;

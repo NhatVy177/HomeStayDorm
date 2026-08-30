@@ -1,5 +1,4 @@
-import sql from 'mssql';
-import { getPool } from '../database/connection.js';
+import { sql, getPool } from '../database/connection.js';
 import { createServiceError } from './serviceErrors.js';
 
 function requireNhanVien(maNhanVien) {
