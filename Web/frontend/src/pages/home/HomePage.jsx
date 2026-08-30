@@ -111,10 +111,7 @@ export default function HomePage() {
                 <button className="home-logout" type="button" onClick={dangXuat}>Đăng xuất</button>
               </>
             ) : (
-              <>
-                <Link className="home-btn home-btn-secondary" to="/dang-nhap">Đăng nhập</Link>
-                <Link className="home-btn home-btn-primary" to="/dang-ky">Đăng ký</Link>
-              </>
+              <></>
             )}
             <button
               className="home-mobile-menu"
@@ -143,7 +140,6 @@ export default function HomePage() {
 
               <div className="home-hero-actions">
                 <a href="#rooms" className="home-btn home-btn-primary">Xem phòng trống</a>
-                <Link to="/dang-ky" className="home-btn home-btn-secondary">Đăng ký thuê</Link>
               </div>
 
               <div className="home-hero-features">
@@ -309,8 +305,6 @@ export default function HomePage() {
             <div>
               <h3>Tài khoản</h3>
               <div className="home-footer-links">
-                <Link to="/dang-nhap">Đăng nhập</Link>
-                <Link to="/dang-ky">Đăng ký tài khoản</Link>
                 <a href="#rooms">Xem phòng trống</a>
               </div>
             </div>
@@ -345,7 +339,6 @@ export default function HomePage() {
                 <span>Trạng thái</span>
                 <input value={selectedRoom.status} readOnly />
               </label>
-              <Link className="home-btn home-btn-primary" to="/dang-ky">Đăng ký thuê phòng này</Link>
             </div>
           </div>
         </div>

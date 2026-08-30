@@ -1,1 +1,120 @@
 
+2026-07-18T05:23:01.448Z
+Error: Vui lòng nhập tình trạng phòng thực tế
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at kiemTraThongTinBienBanHopLe (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:71:25)
+    at Object.quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:138:38)
+    at quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/kiemTraTraPhong.controller.js:40:34)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+
+2026-07-18T05:40:15.959Z
+Error: Vui lòng nhập tình trạng phòng thực tế
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at kiemTraThongTinBienBanHopLe (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:71:25)
+    at Object.quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:138:38)
+    at quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/kiemTraTraPhong.controller.js:40:34)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+
+2026-07-18T05:40:50.550Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:19:20)
+
+2026-07-18T05:55:56.187Z
+Error: Vui lòng nhập tình trạng phòng thực tế
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at kiemTraThongTinBienBanHopLe (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:71:25)
+    at Object.quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:138:38)
+    at quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/kiemTraTraPhong.controller.js:40:34)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+
+2026-07-18T05:56:29.511Z
+Error: Vui lòng nhập tình trạng phòng thực tế
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at kiemTraThongTinBienBanHopLe (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:71:25)
+    at Object.quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:138:38)
+    at quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/kiemTraTraPhong.controller.js:40:34)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+
+2026-07-18T06:37:47.308Z
+Error: Ngày sinh phải trước ngày hiện tại.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangKy (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:131:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangKy (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:11:26)
+
+2026-07-18T06:37:58.792Z
+Error: Ngày sinh phải trước ngày hiện tại.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangKy (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:131:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangKy (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:11:26)
+
+2026-07-18T17:12:31.280Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:19:20)
+
+2026-07-18T17:16:11.153Z
+Error: Tên đăng nhập hoặc mật khẩu không đúng.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:82:3)
+    at Module.dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/auth.service.js:189:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async dangNhap (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/auth.controller.js:19:20)
+
+2026-07-18T17:17:42.436Z
+Error: Chỉ có thể hủy yêu cầu trả phòng đang chờ xử lý.
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at mapDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:19:11)
+    at handleDatabaseError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/khachMoi.service.js:16:3)
+    at Module.huyYeuCauTraPhong (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/khachMoi.service.js:1219:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async huyYeuCauTraPhong (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/khachMoi.controller.js:115:18)
+
+2026-07-18T17:34:15.809Z
+Error: Vui lòng nhập tình trạng phòng thực tế
+    at createServiceError (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/errors/serviceErrors.js:2:17)
+    at kiemTraThongTinBienBanHopLe (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:71:25)
+    at Object.quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/services/kiemTraTraPhong.service.js:138:38)
+    at quanLyLapBienBanKiemTra (file:///D:/NAM3/PTTK_NHOM10/HomeStayDorm/Web/backend/controllers/kiemTraTraPhong.controller.js:40:34)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\layer.js:95:5)
+    at D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:284:15
+    at router.process_params (D:\NAM3\PTTK_NHOM10\HomeStayDorm\Web\backend\node_modules\express\lib\router\index.js:346:12)
+

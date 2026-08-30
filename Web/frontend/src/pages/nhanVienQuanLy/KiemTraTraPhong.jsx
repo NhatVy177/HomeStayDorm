@@ -62,6 +62,7 @@ const AssetRow = ({ asset, onChange, readOnly }) => {
     onChange({
       keyTaiSan: asset.maTaiSan,
       maTaiSan: asset.maTaiSanGoc || asset.maTaiSan,
+      thuTuTaiSan: asset.thuTuTaiSan || null,
       status,
       soLuongLoi: isNormal ? 0 : soLuongLoi,
       note,
@@ -265,6 +266,7 @@ export default function KiemTraTraPhong() {
       .filter(item => item.status !== 'Bình thường')
       .map(item => ({
         maTaiSan: item.maTaiSan,
+        thuTuTaiSan: item.thuTuTaiSan,
         soLuong: item.soLuongLoi,
         mucDoHuHong: item.status,
         donGiaBoiThuong: item.donGiaBoiThuong,

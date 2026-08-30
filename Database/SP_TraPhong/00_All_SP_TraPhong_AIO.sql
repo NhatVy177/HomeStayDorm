@@ -6,6 +6,13 @@
 USE [HOMEDORM4];
 GO
 
+IF OBJECT_ID(N'dbo.ChiTietHuHong', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChiTietHuHong', N'ThuTuTaiSan') IS NULL
+BEGIN
+    ALTER TABLE dbo.ChiTietHuHong ADD ThuTuTaiSan INT NULL;
+END
+GO
+
 
 -- =============================================
 -- START FILE: dang-ky-lich-tra-phong.sql
@@ -823,6 +830,7 @@ BEGIN
             SELECT 
                 ts.MaTaiSan + '_' + CAST(Numbers.n AS VARCHAR(2)) AS maTaiSan,
                 ts.MaTaiSan AS maTaiSanGoc,
+                Numbers.n AS thuTuTaiSan,
                 ts.TenTaiSan + CASE 
                     WHEN (SELECT COUNT(*) FROM dbo.Giuong WHERE MaPhong = @MaPhong) = COALESCE(ctbg.SoLuongThucTe, ts.SoLuong) 
                          AND (ts.TenTaiSan LIKE N'%Giường%' OR ts.TenTaiSan LIKE N'%Nệm%' OR ts.TenTaiSan LIKE N'%Tủ%' OR ts.TenTaiSan LIKE N'%Chìa%') THEN 
@@ -831,28 +839,6 @@ BEGIN
                     ELSE ''
                 END AS tenTaiSan,
                 1 AS soLuongBanGiao,
-                ts.DonGia AS donGiaBoiThuong,
-                NULL AS mucDoHuHong,
-                NULL AS soLuongHuMat,
-                NULL AS moTaHuHong,
-                NULL AS chiPhiSuaChua
-            FROM dbo.TaiSan ts
-            LEFT JOIN (
-                SELECT cb.MaTaiSan, cb.SoLuongThucTe
-                FROM dbo.BienBanBanGiao bb
-                JOIN dbo.ChiTietBanGiao cb ON cb.MaBienBan = bb.MaBienBan
-                WHERE bb.MaHopDong = @MaHopDong AND bb.LoaiBanGiao = N'Bàn giao vào'
-            ) ctbg ON ctbg.MaTaiSan = ts.MaTaiSan
-            INNER JOIN Numbers ON Numbers.n <= COALESCE(ctbg.SoLuongThucTe, ts.SoLuong)
-            WHERE ts.MaPhong = @MaPhong;
-        END
-        ELSE
-        BEGIN
-            SELECT 
-                ts.MaTaiSan AS maTaiSan,
-                ts.MaTaiSan AS maTaiSanGoc,
-                ts.TenTaiSan AS tenTaiSan,
-                COALESCE(ctbg.SoLuongThucTe, ts.SoLuong) AS soLuongBanGiao,
                 ts.DonGia AS donGiaBoiThuong,
                 cthh.MucDoHuHong AS mucDoHuHong,
                 cthh.SoLuong AS soLuongHuMat,
@@ -865,8 +851,61 @@ BEGIN
                 JOIN dbo.ChiTietBanGiao cb ON cb.MaBienBan = bb.MaBienBan
                 WHERE bb.MaHopDong = @MaHopDong AND bb.LoaiBanGiao = N'Bàn giao vào'
             ) ctbg ON ctbg.MaTaiSan = ts.MaTaiSan
-            LEFT JOIN dbo.BienBanKiemTraPhong bbkt ON bbkt.MaPhieuTra = @MaPhieuTra
-            LEFT JOIN dbo.ChiTietHuHong cthh ON cthh.MaBienBanKT = bbkt.MaBienBanKT AND cthh.MaTaiSan = ts.MaTaiSan
+            INNER JOIN Numbers ON Numbers.n <= COALESCE(ctbg.SoLuongThucTe, ts.SoLuong)
+            LEFT JOIN (
+                SELECT 
+                    MaTaiSan, ThuTuTaiSan, MucDoHuHong, SoLuong, MoTaHuHong, ChiPhiSuaChua,
+                    ROW_NUMBER() OVER(PARTITION BY MaTaiSan ORDER BY MaChiTietHH) AS rn
+                FROM dbo.ChiTietHuHong
+                WHERE MaBienBanKT = (SELECT MaBienBanKT FROM dbo.BienBanKiemTraPhong WHERE MaPhieuTra = @MaPhieuTra)
+            ) cthh ON cthh.MaTaiSan = ts.MaTaiSan AND COALESCE(cthh.ThuTuTaiSan, cthh.rn) = Numbers.n
+            WHERE ts.MaPhong = @MaPhong;
+        END
+        ELSE
+        BEGIN
+            ;WITH Numbers AS (
+                SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 
+                UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8
+                UNION ALL SELECT 9 UNION ALL SELECT 10
+            ),
+            CtBanGiao AS (
+                SELECT cb.MaTaiSan, SUM(cb.SoLuongThucTe) AS SoLuongThucTe
+                FROM dbo.BienBanBanGiao bb
+                JOIN dbo.ChiTietBanGiao cb ON cb.MaBienBan = bb.MaBienBan
+                WHERE bb.MaHopDong = @MaHopDong AND bb.LoaiBanGiao = N'Bàn giao vào'
+                GROUP BY cb.MaTaiSan
+            ),
+            HuHong AS (
+                SELECT 
+                    MaTaiSan, ThuTuTaiSan, MucDoHuHong, SoLuong, MoTaHuHong, ChiPhiSuaChua,
+                    ROW_NUMBER() OVER(PARTITION BY MaTaiSan ORDER BY MaChiTietHH) AS rn
+                FROM dbo.ChiTietHuHong
+                WHERE MaBienBanKT = (
+                    SELECT TOP 1 MaBienBanKT
+                    FROM dbo.BienBanKiemTraPhong
+                    WHERE MaPhieuTra = @MaPhieuTra
+                    ORDER BY NgayKiemTra DESC, MaBienBanKT DESC
+                )
+            )
+            SELECT 
+                ts.MaTaiSan + '_' + CAST(Numbers.n AS VARCHAR(2)) AS maTaiSan,
+                ts.MaTaiSan AS maTaiSanGoc,
+                Numbers.n AS thuTuTaiSan,
+                ts.TenTaiSan + CASE
+                    WHEN COALESCE(ctbg.SoLuongThucTe, hdt.SoGiuongThue, ts.SoLuong) > 1 THEN N' ' + CAST(Numbers.n AS VARCHAR(2))
+                    ELSE ''
+                END AS tenTaiSan,
+                1 AS soLuongBanGiao,
+                ts.DonGia AS donGiaBoiThuong,
+                cthh.MucDoHuHong AS mucDoHuHong,
+                cthh.SoLuong AS soLuongHuMat,
+                cthh.MoTaHuHong AS moTaHuHong,
+                cthh.ChiPhiSuaChua AS chiPhiSuaChua
+            FROM dbo.TaiSan ts
+            LEFT JOIN dbo.HopDongThue hdt ON hdt.MaHopDong = @MaHopDong
+            LEFT JOIN CtBanGiao ctbg ON ctbg.MaTaiSan = ts.MaTaiSan
+            INNER JOIN Numbers ON Numbers.n <= COALESCE(ctbg.SoLuongThucTe, hdt.SoGiuongThue, ts.SoLuong)
+            LEFT JOIN HuHong cthh ON cthh.MaTaiSan = ts.MaTaiSan AND COALESCE(cthh.ThuTuTaiSan, cthh.rn) = Numbers.n
             WHERE ts.MaPhong = @MaPhong;
         END
     END
@@ -981,7 +1020,8 @@ CREATE OR ALTER PROCEDURE dbo.SP_TraPhong_QuanLy_ThemChiTietHuHong
     @SoLuong        INT,
     @MucDoHuHong    NVARCHAR(100),
     @TyLeHuHong     DECIMAL(5,2),
-    @MaQuyDinhTruTien VARCHAR(6)
+    @MaQuyDinhTruTien VARCHAR(6),
+    @ThuTuTaiSan    INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1003,8 +1043,8 @@ BEGIN
         SELECT @MaChiTietHH = 'HH' + RIGHT('0000' + CAST(ISNULL(MAX(CAST(SUBSTRING(MaChiTietHH, 3, 4) AS INT)), 0) + 1 AS VARCHAR), 4) FROM dbo.ChiTietHuHong;
 
         -- Insert Chi Tiết
-        INSERT INTO dbo.ChiTietHuHong (MaChiTietHH, MaBienBanKT, MaPhong, MaTaiSan, MoTaHuHong, ChiPhiSuaChua, SoLuong, MucDoHuHong, TyLeHuHong, MaQuyDinhTruTien)
-        VALUES (@MaChiTietHH, @MaBienBanKT, @MaPhong, @MaTaiSan, @MoTaHuHong, @ChiPhiSuaChua, @SoLuong, @MucDoHuHong, @TyLeHuHong, @MaQuyDinhTruTien);
+        INSERT INTO dbo.ChiTietHuHong (MaChiTietHH, MaBienBanKT, MaPhong, MaTaiSan, MoTaHuHong, ChiPhiSuaChua, SoLuong, MucDoHuHong, TyLeHuHong, MaQuyDinhTruTien, ThuTuTaiSan)
+        VALUES (@MaChiTietHH, @MaBienBanKT, @MaPhong, @MaTaiSan, @MoTaHuHong, @ChiPhiSuaChua, @SoLuong, @MucDoHuHong, @TyLeHuHong, @MaQuyDinhTruTien, @ThuTuTaiSan);
 
         COMMIT TRANSACTION;
     END TRY

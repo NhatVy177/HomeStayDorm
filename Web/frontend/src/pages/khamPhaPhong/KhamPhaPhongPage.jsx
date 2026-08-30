@@ -505,12 +505,10 @@ export default function KhamPhaPhongPage() {
 
   function goRegister() {
     setSelectedRoom(null);
-    navigate(user ? '/khach-hang' : '/dang-ky');
+    if (user) navigate('/khach-hang');
   }
 
-  function goLogin() {
-    navigate('/dang-nhap', { state: { from: location } });
-  }
+  function goLogin() {}
 
   function closeDetail() {
     setSelectedRoom(null);
@@ -546,8 +544,6 @@ export default function KhamPhaPhongPage() {
               </div>
             ) : (
               <div className="kp-auth-actions">
-                <button className="kp-btn kp-btn-ghost" type="button" onClick={goLogin}>Đăng nhập</button>
-                <button className="kp-btn kp-btn-primary" type="button" onClick={() => navigate('/dang-ky')}>Đăng ký</button>
               </div>
             )}
           </div>

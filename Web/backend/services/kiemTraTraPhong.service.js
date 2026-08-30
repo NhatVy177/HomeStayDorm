@@ -145,6 +145,7 @@ export const kiemTraTraPhongService = {
       const quyDinh = MUC_DO_HU_HONG[hh.mucDoHuHong];
       const soLuong = Number(hh.soLuong || 1);
       const donGia = Number(hh.donGiaBoiThuong || 0);
+      const thuTuTaiSan = Number(hh.thuTuTaiSan || 0) || null;
       const chiPhi = donGia * quyDinh.tyLe * soLuong;
       
       tongChiPhi += chiPhi;
@@ -152,6 +153,7 @@ export const kiemTraTraPhongService = {
       return {
         ...hh,
         soLuong,
+        thuTuTaiSan,
         tyLeHuHong: quyDinh.tyLe,
         maQuyDinhTruTien: quyDinh.maQuyDinh,
         chiPhi
@@ -186,6 +188,7 @@ export const kiemTraTraPhongService = {
             .input('MucDoHuHong', sql.NVarChar(100), hh.mucDoHuHong || '')
             .input('TyLeHuHong', sql.Decimal(5,2), hh.tyLeHuHong || 0)
             .input('MaQuyDinhTruTien', sql.VarChar(6), hh.maQuyDinhTruTien || null)
+            .input('ThuTuTaiSan', sql.Int, hh.thuTuTaiSan || null)
             .execute('SP_TraPhong_QuanLy_ThemChiTietHuHong');
         }
       }

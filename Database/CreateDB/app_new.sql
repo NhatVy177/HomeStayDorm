@@ -276,7 +276,7 @@ CREATE TABLE ThanhVienHopDong (
 -- 19. TÀI SẢN
 CREATE TABLE TaiSan (
 	MaPhong     VARCHAR(4)      NOT NULL,
-MaTaiSan    VARCHAR(6)      NOT NULL,
+    MaTaiSan    VARCHAR(6)      NOT NULL,
     TenTaiSan   NVARCHAR(100)   NOT NULL,
     SoLuong     INT             NOT NULL DEFAULT 1,
     DonGia      DECIMAL(15,2),

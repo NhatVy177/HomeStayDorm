@@ -337,11 +337,7 @@ export async function taoHoSoKhachVangLai(data, nhanVienSaleId) {
         gioiTinh: data.gioiTinhO || data.gioiTinh
       });
 
-      if (registration?.maDangKy) {
-        await dangKyThueRepository.capNhatNhanVienSaleChoDangKy(registration.maDangKy, nhanVienSaleId);
-      }
-
-      return registration ? { ...registration, maNhanVienSale: nhanVienSaleId } : null;
+      return registration ? { ...registration, maNhanVienSale: null, hoTenSale: null } : null;
     }
 
     return await dangKyThueRepository.taoHoSoKhachVangLai({

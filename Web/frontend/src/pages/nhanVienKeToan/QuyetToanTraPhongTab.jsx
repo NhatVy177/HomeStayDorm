@@ -303,6 +303,32 @@ function buildAdjustmentDefaults(doiSoat) {
   };
 }
 
+function buildRepairAdjustmentPayload(detail, deductionValues) {
+  const chiTietKhauTru = detail?.chiTietKhauTru || {};
+  const bienBanKiemTra = chiTietKhauTru.bienBanKiemTra || [];
+  const chiTietHuHong = chiTietKhauTru.chiTietHuHong || [];
+
+  return bienBanKiemTra.flatMap((bienBan) => {
+    const damages = chiTietHuHong.filter((item) => item.maBienBanKT === bienBan.maBienBanKT);
+    if (damages.length === 0) {
+      const key = makeLineKey('repair-report', bienBan.maBienBanKT);
+      return [{
+        maBienBanKT: bienBan.maBienBanKT,
+        tongChiPhiSuaChua: getLineAmount(deductionValues.repairLines, key, bienBan.tongChiPhiSuaChua)
+      }];
+    }
+
+    return damages.map((damage) => {
+      const key = makeLineKey('repair', damage.maChiTietHH, damage.maBienBanKT);
+      return {
+        maBienBanKT: damage.maBienBanKT,
+        maChiTietHH: damage.maChiTietHH,
+        chiPhiSuaChua: getLineAmount(deductionValues.repairLines, key, damage.chiPhiSuaChua)
+      };
+    });
+  });
+}
+
 function calculateStayMonths(startDateValue, returnDateValue) {
   const startDate = toDate(startDateValue);
   const returnDate = toDate(returnDateValue);
@@ -1733,6 +1759,9 @@ export default function QuyetToanTraPhongTab() {
         tienDichVuConNo,
         tongChiPhiSuaChua,
         tienPhat,
+        chiTietChiPhiSuaChua: isAdjustment
+          ? buildRepairAdjustmentPayload(selected, deductionValues)
+          : undefined,
         ghiChuPhanHoiKhach: form.ghiChuPhanHoiKhach
       });
       setMessage(`${isAdjustment ? 'Đã điều chỉnh' : 'Đã lập'} phiếu đối soát ${response.data.doiSoat?.maDoiSoat || ''}.`);

@@ -311,6 +311,100 @@ function distributeSettlementServiceTotal(total, services) {
   return values;
 }
 
+function buildRepairDeductionDetails(chiTietHuHong, bienBanKiemTra, targetTotal) {
+  const damageRows = (chiTietHuHong || []).map((item) => ({
+    key: item.maChiTietHH || `${item.maBienBanKT}-${item.maTaiSan}`,
+    title: item.tenTaiSan || item.maTaiSan || 'HÆ° há»ng phÃ²ng',
+    meta: item.moTaHuHong || 'ChÆ°a cÃ³ mÃ´ táº£',
+    amount: numberValue(item.chiPhiSuaChua)
+  }));
+  const reportRows = (bienBanKiemTra || [])
+    .filter((bb) => !(chiTietHuHong || []).some((ct) => ct.maBienBanKT === bb.maBienBanKT))
+    .map((item) => ({
+      key: item.maBienBanKT,
+      title: `BiÃªn báº£n ${item.maBienBanKT}`,
+      meta: `NgÃ y kiá»ƒm tra: ${formatDate(item.ngayKiemTra)} Â· ${item.tinhTrangPhong || '--'}`,
+      amount: numberValue(item.tongChiPhiSuaChua)
+    }));
+  const rows = [...damageRows, ...reportRows];
+  const expectedTotal = numberValue(targetTotal);
+  if (rows.length === 0 || expectedTotal <= 0) return rows;
+
+  const actualTotal = rows.reduce((sum, item) => sum + numberValue(item.amount), 0);
+  const delta = Math.round(expectedTotal - actualTotal);
+  if (Math.abs(delta) <= 0) return rows;
+
+  const index = rows.findIndex((item) => numberValue(item.amount) + delta >= 0);
+  if (index === -1) {
+    return [{
+      key: 'repair-total-adjusted',
+      title: 'Chi phÃ­ sá»­a chá»¯a Ä‘Ã£ Ä‘iá»u chá»‰nh',
+      meta: 'Theo phiáº¿u Ä‘á»‘i soÃ¡t hiá»‡n táº¡i',
+      amount: expectedTotal
+    }];
+  }
+
+  return rows.map((item, itemIndex) => (
+    itemIndex === index
+      ? { ...item, amount: numberValue(item.amount) + delta }
+      : item
+  ));
+}
+
+function reconcileRepairSourceAmounts(chiTietHuHong, bienBanKiemTra, targetTotal) {
+  const damageRows = chiTietHuHong || [];
+  const reportRows = bienBanKiemTra || [];
+  const expectedTotal = numberValue(targetTotal);
+  if ((damageRows.length === 0 && reportRows.length === 0) || expectedTotal <= 0) {
+    return { chiTietHuHong: damageRows, bienBanKiemTra: reportRows };
+  }
+
+  const damageTotal = damageRows.reduce((sum, item) => sum + numberValue(item.chiPhiSuaChua), 0);
+  const reportsWithoutDetails = reportRows.filter((bb) => !damageRows.some((ct) => ct.maBienBanKT === bb.maBienBanKT));
+  const reportTotal = reportsWithoutDetails.reduce((sum, item) => sum + numberValue(item.tongChiPhiSuaChua), 0);
+  const delta = Math.round(expectedTotal - damageTotal - reportTotal);
+  if (delta === 0) {
+    return { chiTietHuHong: damageRows, bienBanKiemTra: reportRows };
+  }
+
+  const damageIndex = damageRows.findIndex((item) => numberValue(item.chiPhiSuaChua) + delta >= 0);
+  if (damageIndex >= 0) {
+    return {
+      chiTietHuHong: damageRows.map((item, index) => (
+        index === damageIndex
+          ? { ...item, chiPhiSuaChua: numberValue(item.chiPhiSuaChua) + delta }
+          : item
+      )),
+      bienBanKiemTra: reportRows
+    };
+  }
+
+  const reportIndex = reportRows.findIndex((item) => (
+    !damageRows.some((ct) => ct.maBienBanKT === item.maBienBanKT)
+      && numberValue(item.tongChiPhiSuaChua) + delta >= 0
+  ));
+  if (reportIndex >= 0) {
+    return {
+      chiTietHuHong: damageRows,
+      bienBanKiemTra: reportRows.map((item, index) => (
+        index === reportIndex
+          ? { ...item, tongChiPhiSuaChua: numberValue(item.tongChiPhiSuaChua) + delta }
+          : item
+      ))
+    };
+  }
+
+  return {
+    chiTietHuHong: [],
+    bienBanKiemTra: [{
+      maBienBanKT: 'adjusted-repair-total',
+      ngayKiemTra: null,
+      tinhTrangPhong: 'Theo phiáº¿u Ä‘á»‘i soÃ¡t hiá»‡n táº¡i',
+      tongChiPhiSuaChua: expectedTotal
+    }]
+  };
+}
+
 function parseMoney(value) {
   if (value == null || value === '') return null;
   if (typeof value === 'number') return Number.isFinite(value) ? value : null;
@@ -2373,7 +2467,7 @@ export default function KhachHangPortalPage() {
                     {selectedHd.TrangThai || 'Hợp đồng'}
                   </span>
                   <h2>{selectedHd.TenPhong || 'Phòng đang thuê'} - {selectedHd.TenLoaiPhong || 'Loại phòng'}</h2>
-                  <p>{selectedHd.TenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(selectedHd.MaPhong) || 1} • {selectedHd.MaGiuong ? `Giường ${selectedHd.MaGiuong}` : 'Nguyên phòng'}</p>
+                  <p>{selectedHd.TenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(selectedHd.MaPhong) || 1}</p>
                 </div>
               </div>
 
@@ -2874,8 +2968,13 @@ export default function KhachHangPortalPage() {
       tienDichVuConNoTraPhong,
       fallbackDichVuTraPhong
     );
-    const chiTietHuHong = chiTietKhauTruTraPhong.chiTietHuHong || [];
-    const bienBanKiemTra = chiTietKhauTruTraPhong.bienBanKiemTra || [];
+    const repairSources = reconcileRepairSourceAmounts(
+      chiTietKhauTruTraPhong.chiTietHuHong || [],
+      chiTietKhauTruTraPhong.bienBanKiemTra || [],
+      doiSoatTraPhong?.tongChiPhiSuaChua
+    );
+    const chiTietHuHong = repairSources.chiTietHuHong;
+    const bienBanKiemTra = repairSources.bienBanKiemTra;
     const bienBanViPham = chiTietKhauTruTraPhong.bienBanViPham || [];
     
     return (
@@ -2896,7 +2995,7 @@ export default function KhachHangPortalPage() {
                 <span className="hd-badge">{hd.TrangThai}</span>
               )}
               <h2>{hd.TenPhong || 'Phòng đang thuê'} - {hd.TenLoaiPhong || 'Loại phòng'}</h2>
-              <p>{hd.TenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(hd.MaPhong) || 1} • {hd.MaGiuong ? `Giường ${hd.MaGiuong}` : 'Nguyên phòng'}</p>
+              <p>{hd.TenChiNhanh || 'HomestayDorm'} • Tầng {getRoomFloor(hd.MaPhong) || 1}</p>
             </div>
           </div>
 

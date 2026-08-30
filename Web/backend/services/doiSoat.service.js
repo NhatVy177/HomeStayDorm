@@ -10,6 +10,7 @@ import * as phieuTraPhongService from './phieuTraPhong.service.js';
 import * as hoSoThueService from './hoSoThue.service.js';
 import * as khauTruDoiSoatService from './khauTruDoiSoat.service.js';
 import * as doiSoatRepository from '../repositories/doiSoat.repository.js';
+import * as khauTruDoiSoatRepository from '../repositories/khauTruDoiSoat.repository.js';
 import * as quyDinhHoanCocRepository from '../repositories/quyDinhHoanCoc.repository.js';
 import * as thuThemDoiSoatRepository from '../repositories/thuThemDoiSoat.repository.js';
 import * as hoanCocDoiSoatRepository from '../repositories/hoanCocDoiSoat.repository.js';
@@ -82,6 +83,53 @@ function validateNonNegativeMoney(values) {
       throw createServiceError(`${label} không được âm.`, 400);
     }
   }
+}
+
+function requireShortCode(value, label) {
+  const code = String(value || '').trim();
+  if (!code || code.length > 6) {
+    throw createServiceError(`${label} khong hop le.`, 400);
+  }
+
+  return code;
+}
+
+function normalizeRepairCostAdjustments(items) {
+  if (!Array.isArray(items)) return [];
+
+  return items.map((item) => {
+    const maBienBanKT = requireShortCode(item?.maBienBanKT, 'Ma bien ban kiem tra');
+    const maChiTietHH = String(item?.maChiTietHH || '').trim();
+
+    if (maChiTietHH) {
+      const chiPhiSuaChua = safeNumber(item?.chiPhiSuaChua);
+      if (chiPhiSuaChua < 0) {
+        throw createServiceError('Chi phi sua chua khong duoc am.', 400);
+      }
+
+      return {
+        maBienBanKT,
+        maChiTietHH: requireShortCode(maChiTietHH, 'Ma chi tiet hu hong'),
+        chiPhiSuaChua
+      };
+    }
+
+    const tongChiPhiSuaChua = safeNumber(item?.tongChiPhiSuaChua);
+    if (tongChiPhiSuaChua < 0) {
+      throw createServiceError('Chi phi sua chua khong duoc am.', 400);
+    }
+
+    return {
+      maBienBanKT,
+      tongChiPhiSuaChua
+    };
+  });
+}
+
+function sumRepairCostAdjustments(items) {
+  return items.reduce((total, item) => (
+    total + safeNumber(item.maChiTietHH ? item.chiPhiSuaChua : item.tongChiPhiSuaChua)
+  ), 0);
 }
 
 function buildDoiSoatContext(hoSoContext, khauTruContext) {
@@ -168,6 +216,7 @@ export async function getChiTietPhieuTraPhong(maPhieuTraInput, maNhanVienKeToan)
 export async function taoDoiSoat(data, maNhanVienKeToan) {
   const maPhieuTra = requireMaPhieuTra(data?.maPhieuTra);
   const maDoiSoatDieuChinh = data?.maDoiSoat ? requireMaDoiSoat(data.maDoiSoat) : null;
+  const repairCostAdjustments = normalizeRepairCostAdjustments(data?.chiTietChiPhiSuaChua);
 
   validateNonNegativeMoney({
     'Tiền thuê còn nợ': data?.tienThueConNo,
@@ -175,6 +224,13 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
     'Chi phí sửa chữa': data?.tongChiPhiSuaChua,
     'Tiền phạt': data?.tienPhat
   });
+
+  if (repairCostAdjustments.length > 0) {
+    const repairTotal = sumRepairCostAdjustments(repairCostAdjustments);
+    if (Math.abs(repairTotal - safeNumber(data?.tongChiPhiSuaChua)) > 0.01) {
+      throw createServiceError('Tong chi phi sua chua khong khop voi chi tiet bien ban kiem tra.', 400);
+    }
+  }
 
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -230,6 +286,18 @@ export async function taoDoiSoat(data, maNhanVienKeToan) {
 
       if (!updated) {
         throw createServiceError(MESSAGE_STALE, 409);
+      }
+
+      if (repairCostAdjustments.length > 0) {
+        const syncedRepairCosts = await khauTruDoiSoatRepository.updateChiPhiSuaChuaBienBan(
+          transaction,
+          maPhieuTra,
+          repairCostAdjustments
+        );
+
+        if (!syncedRepairCosts) {
+          throw createServiceError(MESSAGE_STALE, 409);
+        }
       }
 
       await transaction.commit();

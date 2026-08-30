@@ -588,7 +588,7 @@ BEGIN
         VALUES (
             @MaDangKy, CAST(GETDATE() AS DATE), @SoNguoiO, @SoNam, @SoNu,
             @KhuVucMongMuon, @MucGiaToiDa, @NgayDuKienVaoO,
-            @ThoiHanThue, @GhiChu, N'Chờ tiếp nhận', @MaKhachHang, @NhanVienSaleId
+            @ThoiHanThue, @GhiChu, N'Chờ tiếp nhận', @MaKhachHang, NULL
         );
 
         IF @LoaiPhongYeuCau IS NOT NULL

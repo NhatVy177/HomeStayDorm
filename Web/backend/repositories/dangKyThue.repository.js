@@ -305,17 +305,6 @@ export async function timKhachHangKhachVangLaiTheoSdt(sdt) {
   return result.recordset[0] || null;
 }
 
-export async function capNhatNhanVienSaleChoDangKy(maDangKy, nhanVienSaleId) {
-  await executeQuery(`
-    UPDATE dbo.PhieuDangKy
-    SET MaNhanVienSale = @NhanVienSaleId
-    WHERE MaDangKy = @MaDangKy
-  `, [
-    { name: 'NhanVienSaleId', type: sql.VarChar(6), value: nhanVienSaleId },
-    { name: 'MaDangKy', type: sql.VarChar(6), value: maDangKy }
-  ]);
-}
-
 export async function taoHoSoKhachVangLai(data = {}) {
   const result = await executeProcedure('dbo.SP_TaoHoSoKhachVangLai', [
     { name: 'HoTen', type: sql.NVarChar(100), value: data.hoTen },

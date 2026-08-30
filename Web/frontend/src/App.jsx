@@ -3,8 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext.jsx';
 import { getAuthenticatedHomePath } from './auth/auth.routes.js';
 import MainLayout from './layouts/MainLayout.jsx';
-import DangNhapPage from './pages/auth/DangNhapPage.jsx';
-import DangKyPage from './pages/auth/DangKyPage.jsx';
+
 import TrangChu from './pages/TrangChu.jsx';
 import KhamPhaPhongPage from './pages/khamPhaPhong/KhamPhaPhongPage.jsx';
 import DashboardPage from './pages/dashboard/DashboardPage.jsx';
@@ -27,7 +26,7 @@ function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (isLoading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/dang-nhap" state={{ from: location }} replace />;
+  if (!user) return <Navigate to="/" state={{ from: location }} replace />;
   return children;
 }
 
@@ -43,7 +42,7 @@ function CustomerOnlyRoute({ children }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/dang-nhap" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (user.vaiTro !== 'KhachHang') return <Navigate to={getAuthenticatedHomePath(user)} replace />;
   return children;
 }
@@ -52,7 +51,7 @@ function EmployeePositionRoute({ position, children }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/dang-nhap" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (user.vaiTro !== 'NhanVien') return <Navigate to="/khach-hang" replace />;
   if (user.chucVu !== position) return <Navigate to={getAuthenticatedHomePath(user)} replace />;
   return children;
@@ -63,22 +62,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<TrangChu />} />
       <Route path="/kham-pha-phong" element={<KhamPhaPhongPage />} />
-      <Route
-        path="/dang-nhap"
-        element={(
-          <PublicOnlyRoute>
-            <DangNhapPage />
-          </PublicOnlyRoute>
-        )}
-      />
-      <Route
-        path="/dang-ky"
-        element={(
-          <PublicOnlyRoute>
-            <DangKyPage />
-          </PublicOnlyRoute>
-        )}
-      />
+
       <Route
         path="/khach-hang"
         element={(
