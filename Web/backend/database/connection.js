@@ -8,6 +8,9 @@ function getConnectionString() {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
   }
+  if (process.env.SUPABASE_DB_URL) {
+    return process.env.SUPABASE_DB_URL;
+  }
   
   // Fallback to manual construction
   const host = process.env.DB_SERVER || 'db.dzyjchpbrqasblnvzjkk.supabase.co';
