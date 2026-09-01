@@ -11,23 +11,24 @@ export async function getPhongNoiBat(req, res, next) {
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
-      SELECT TOP 3
-        p.MaPhong,
-        p.TenPhong,
-        p.GioiTinhChoPhep,
-        lp.MaLoaiPhong,
-        lp.TenLoaiPhong,
-        lp.SucChuaToiDa,
-        lp.MoTa,
-        lp.GiaThueTheoGiuong,
-        lp.GiaThueNguyenPhong,
-        cn.TenChiNhanh,
-        cn.DiaChi,
-        (SELECT TOP 1 UrlImg FROM HinhAnhPhong WHERE MaPhong = p.MaPhong ORDER BY STTAnh) AS UrlImg
-      FROM Phong p
-      INNER JOIN LoaiPhong lp ON p.MaLoaiPhong = lp.MaLoaiPhong
-      INNER JOIN ChiNhanh cn ON p.MaChiNhanh = cn.MaChiNhanh
-      ORDER BY p.MaPhong
+      SELECT
+        p."MaPhong",
+        p."TenPhong",
+        p."GioiTinhChoPhep",
+        lp."MaLoaiPhong",
+        lp."TenLoaiPhong",
+        lp."SucChuaToiDa",
+        lp."MoTa",
+        lp."GiaThueTheoGiuong",
+        lp."GiaThueNguyenPhong",
+        cn."TenChiNhanh",
+        cn."DiaChi",
+        (SELECT "UrlImg" FROM "HinhAnhPhong" WHERE "MaPhong" = p."MaPhong" ORDER BY "STTAnh" LIMIT 1) AS "UrlImg"
+      FROM "Phong" p
+      INNER JOIN "LoaiPhong" lp ON p."MaLoaiPhong" = lp."MaLoaiPhong"
+      INNER JOIN "ChiNhanh" cn ON p."MaChiNhanh" = cn."MaChiNhanh"
+      ORDER BY p."MaPhong"
+      LIMIT 3
     `);
 
     res.json({ data: result.recordset });

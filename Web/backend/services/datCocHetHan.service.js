@@ -16,8 +16,8 @@ export async function nhaChoCocHetHan() {
   // nó được EXEC lồng bên trong nhiều SP khác của luồng đặt cọc (xem ghi chú trong dat-coc.sql),
   // nên không thể thêm SELECT vào đó mà không làm sai lệch result.recordset ở các nơi gọi khác.
   const countResult = await executeQuery(`
-    SELECT COUNT(*) AS soPhieu FROM dbo.PhieuDatCoc
-    WHERE TrangThaiThanhToan = N'Chờ TT' AND ThoiHanThanhToan < GETDATE();
+    SELECT COUNT(*) AS soPhieu FROM "PhieuDatCoc"
+    WHERE "TrangThaiThanhToan" = 'Chờ TT' AND "ThoiHanThanhToan" < CURRENT_TIMESTAMP;
   `);
   const soPhieu = countResult.recordset?.[0]?.soPhieu || 0;
 

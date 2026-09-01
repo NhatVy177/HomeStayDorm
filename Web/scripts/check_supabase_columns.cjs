@@ -1,7 +1,7 @@
 const path = require('path');
 const { Client } = require(path.join(__dirname, '../backend/node_modules/pg'));
 
-const connectionString = 'postgresql://postgres:Nhatvy1707%40@db.dzyjchpbrqasblnvzjkk.supabase.co:5432/postgres';
+const connectionString = 'postgresql://postgres.dzyjchpbrqasblnvzjkk:Nhatvy1707%40@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres';
 
 async function checkCols() {
   const client = new Client({
