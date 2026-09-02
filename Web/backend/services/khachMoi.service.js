@@ -62,14 +62,14 @@ async function getActiveRentFlow(khachHangId) {
   if (!id) return null;
 
   const result = await executeQuery(`
-    SELECT TOP (1) *
+    SELECT *
     FROM (
       SELECT
         N'Hợp đồng thuê' AS loai,
-        hd.MaHopDong AS maThamChieu,
-        hd.TrangThai AS trangThai,
-        hd.NgayKyHD AS ngayTao,
-        1 AS thuTu
+        hd.MaHopDong AS "maThamChieu",
+        hd.TrangThai AS "trangThai",
+        hd.NgayKyHD AS "ngayTao",
+        1 AS "thuTu"
       FROM dbo.HopDongThue AS hd
       WHERE hd.MaKhachHang = @KhachHangId
         AND hd.TrangThai NOT IN (N'Hết hạn', N'Đã thanh lý')
@@ -78,10 +78,10 @@ async function getActiveRentFlow(khachHangId) {
 
       SELECT
         N'Phiếu đặt cọc' AS loai,
-        pdc.MaPhieuDatCoc AS maThamChieu,
-        CONCAT(pdc.TrangThaiCoc, N' / ', pdc.TrangThaiThanhToan) AS trangThai,
-        CAST(pdc.ThoiDiemDatCoc AS DATE) AS ngayTao,
-        2 AS thuTu
+        pdc.MaPhieuDatCoc AS "maThamChieu",
+        CONCAT(pdc.TrangThaiCoc, N' / ', pdc.TrangThaiThanhToan) AS "trangThai",
+        CAST(pdc.ThoiDiemDatCoc AS DATE) AS "ngayTao",
+        2 AS "thuTu"
       FROM dbo.PhieuDatCoc AS pdc
       WHERE pdc.MaKhachHang = @KhachHangId
         AND pdc.TrangThaiCoc <> N'Đã hủy'
@@ -97,10 +97,10 @@ async function getActiveRentFlow(khachHangId) {
 
       SELECT
         N'Phiếu đăng ký' AS loai,
-        pdk.MaDangKy AS maThamChieu,
-        pdk.TrangThai AS trangThai,
-        pdk.NgayDangKy AS ngayTao,
-        3 AS thuTu
+        pdk.MaDangKy AS "maThamChieu",
+        pdk.TrangThai AS "trangThai",
+        pdk.NgayDangKy AS "ngayTao",
+        3 AS "thuTu"
       FROM dbo.PhieuDangKy AS pdk
       WHERE pdk.MaKhachHang = @KhachHangId
         AND (
@@ -125,7 +125,8 @@ async function getActiveRentFlow(khachHangId) {
             AND hd.TrangThai IN (N'Hết hạn', N'Đã thanh lý')
         )
     ) AS activeFlow
-    ORDER BY thuTu, ngayTao DESC;
+    ORDER BY "thuTu", "ngayTao" DESC
+    LIMIT 1;
   `, [
     { name: 'KhachHangId', type: sql.VarChar(6), value: id }
   ]);
@@ -161,7 +162,7 @@ async function assertUniqueCustomerContact(data = {}, khachHangId) {
   if (!phone && !cccd) return;
 
   const result = await executeQuery(`
-    SELECT TOP (1)
+    SELECT
       CASE
         WHEN @SDT IS NOT NULL AND nd.SDT = @SDT THEN N'SDT'
         WHEN @CCCD IS NOT NULL AND kh.CCCD = @CCCD THEN N'CCCD'
@@ -172,7 +173,8 @@ async function assertUniqueCustomerContact(data = {}, khachHangId) {
       AND (
         (@SDT IS NOT NULL AND nd.SDT = @SDT)
         OR (@CCCD IS NOT NULL AND kh.CCCD = @CCCD)
-      );
+      )
+    LIMIT 1;
   `, [
     { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
     { name: 'SDT', type: sql.VarChar(20), value: phone },

@@ -179,6 +179,68 @@ export async function executeProcedure(procedureName, parameters = []) {
   }
 }
 
+const DB_TABLES = [
+  'BienBanBanGiao', 'BienBanKiemTraPhong', 'BienBanViPham', 'CauHinhSaoLuu',
+  'ChiNhanh', 'ChiTietBanGiao', 'ChiTietDatCoc', 'ChiTietHoaDon', 'ChiTietHuHong',
+  'ChiTietXemPhong', 'DichVu', 'DichVuHopDong', 'DieuKhoanViPham', 'DoiSoat',
+  'Giuong', 'HinhAnhPhong', 'HoSoCuTru', 'HoaDon', 'HopDongThue', 'KhachHang',
+  'LichSuSaoLuu', 'LichXemPhong', 'LoaiPhong', 'NguoiDung', 'NhanVien',
+  'NhatKyHeThong', 'PDK_LoaiPhong', 'PhieuDangKy', 'PhieuDatCoc', 'PhieuGhiChiSo',
+  'PhieuTraPhong', 'Phong', 'QuiDinh', 'QuyDinhHoanCoc', 'QuyDinhTruTien',
+  'TaiKhoan', 'TaiSan', 'ThamSoHeThong', 'ThanhVienHopDong', 'YeuCauSuaChua'
+];
+
+const DB_COLUMNS = [
+  "MaPhieuYeuCauDangKy","PhuongThucThanhToan","ThongTinNhanHoanCoc","GhiChuPhanHoiKhach",
+  "GiaThueNguyenPhong","ThoiGianDuKienVaoO","TrangThaiThanhToan","TyLeHoanCocHienTai",
+  "GiaThueTheoGiuong","SoTienKhachPhaiTT","ThoiGianNhanPhong","ThoiGianXacNhanTT",
+  "TongChiPhiSuaChua","ChuKyIncremental","ChungTuThanhToan","DaDoiChieuGiayTo",
+  "HinhAnhMinhChung","MaNhanVienKeToan","MaNhanVienQuanLy","MaQuyDinhHoanCoc",
+  "MaQuyDinhTruTien","SoTienHoanThucTe","ThoiHanThanhToan","GioiTinhChoPhep",
+  "LoaiPhongYeuCau","LoiDoKhachGayRa","ThoiGianKetThuc","TienCocDuocHoan",
+  "TienDichVuConNo","HinhThucXuPhat","KhuVucMongMuon","MaNhanVienSale",
+  "SoNguoiDuKienO","ThoiDiemDatCoc","ThoiGianBatDau","TinhTrangPhong",
+  "ChiPhiSuaChua","ChiSoDienCuoi","ChiSoNuocCuoi","DungLuongByte",
+  "LoaiNguoiDung","LoaiQuyetToan","MaChiTietDVHD","MaPhieuDatCoc",
+  "NgayDangKyTra","NgayDuKienTra","NgayThanhToan","NgayTraThucTe",
+  "SoLuongThucTe","SoThangLuuTru","TienCocBanDau","TienThueConNo",
+  "TrangThaiHoSo","ChiSoDienDau","ChiSoNuocDau","DonGiaApDung",
+  "DuongDanFile","GhiChuQuanLy","HinhThucThue","MaNhanVienQL",
+  "NgayGuiDuyet","NgayTiepNhan","SoGiuongThue","SucChuaToiDa",
+  "TenDieuKhoan","TenLoaiPhong","ThuMucLuuTru","TieuDeNoiQuy",
+  "TrangThaiCoc","DaKyBienBan","DuLieuTruoc","GhiChuChung",
+  "KyThanhToan","LoaiBanGiao","MaBienBanKT","MaChiTietBG",
+  "MaChiTietDC","MaChiTietHD","MaChiTietHH","MaDieuKhoan",
+  "MaHoSoCuTru","MaKhachHang","MaLoaiPhong","MaNguoiDung",
+  "MaThanhVien","MucDoHuHong","MucGiaToiDa","NgayBanGiao",
+  "NgayCapNhat","NgayHoanTat","NgayKetThuc","NgayKiemTra",
+  "TenChiNhanh","TenDangNhap","ThoiGianHen","ThoiHanThue",
+  "ThuTuTaiSan","TongKhauTru","TyLeHoanCoc","CapNhatBoi",
+  "CapNhatLuc","GhiChuSale","GhiChuXuLy","KhachCoMat",
+  "KieuDuLieu","LoaiSaoLuu","LoaiTaiSan","LyDoTuChoi",
+  "MaBBViPham","MaChiNhanh","MaDoiTuong","MaNhanVien",
+  "MaPhieuCoc","MaPhieuGhi","MaPhieuTra","MoTaHuHong",
+  "MoTaViPham","NgayBatDau","NgayDangKy","NgayVaoLam",
+  "NgayViPham","NgayYeuCau","NhomThamSo","SoTienPhat",
+  "TenQuyDinh","TyLeHuHong","YeuCauKhac","ChuKyFull",
+  "DonViTinh","DuLieuSau","KhachChon","MaBienBan",
+  "MaCauHinh","MaDoiSoat","MaHopDong","MaQuyDinh",
+  "NgayDuyet","NgayHanTT","SoTienCoc","TenDichVu",
+  "TenTaiSan","TenThamSo","ThanhTien","TinhTrang",
+  "TrangThai","ChucNang","DoiTuong","GioiTinh",
+  "HanhDong","MaDangKy","MaDichVu","MaGiuong",
+  "MaHoaDon","MaNhatKy","MaSaoLuu","MaTaiSan",
+  "MaThamSo","MaYeuCau","NgayKyHD","NgaySinh",
+  "QuocTich","SoGiuong","TenPhong","ThoiGian",
+  "ThongBao","TienPhat","TongTien","GiaThue",
+  "MaPhong","MatKhau","MucPhat","NgayGhi",
+  "NgayLap","NoiDung","STTLich","SoLuong",
+  "ChucVu","DiaChi","DonGia","GhiChu",
+  "GiaTri","STTAnh","UrlAvt","UrlImg",
+  "VaiTro","Email","HoTen","KyGhi",
+  "SoNam","CCCD","MoTa","SoNu","SDT"
+];
+
 /**
  * Robust wrapper to mimic mssql's executeQuery
  */
@@ -199,6 +261,43 @@ export async function executeQuery(sqlString, parameters = []) {
   pgSql = pgSql.replace(/\bGETDATE\(\)/gi, 'CURRENT_TIMESTAMP');
   pgSql = pgSql.replace(/\bSYSDATETIME\(\)/gi, 'CURRENT_TIMESTAMP');
   pgSql = pgSql.replace(/\bISNULL\s*\(/gi, 'COALESCE(');
+
+  // Convert OUTER APPLY (SELECT TOP N ...) AS alias -> LEFT JOIN LATERAL (SELECT ... LIMIT N) AS alias ON true
+  pgSql = pgSql.replace(
+    /OUTER\s+APPLY\s*\(\s*SELECT\s+TOP\s*(\d+)\s+([\s\S]*?)\)\s+AS\s+([a-zA-Z0-9_]+)/gi,
+    'LEFT JOIN LATERAL (SELECT $2 LIMIT $1) AS $3 ON true'
+  );
+
+  // Convert standalone SELECT TOP (N) or SELECT TOP N at beginning
+  pgSql = pgSql.replace(
+    /^(\s*SELECT)\s+TOP\s*(?:\(\s*(\d+)\s*\)|(\d+))\s+([\s\S]*)$/i,
+    (match, sel, p1, p2, rest) => {
+      const limit = p1 || p2;
+      const cleanRest = rest.trim().replace(/;$/, '');
+      return `${sel} ${cleanRest} LIMIT ${limit};`;
+    }
+  );
+
+  // Convert subquery SELECT TOP
+  pgSql = pgSql.replace(
+    /(\(\s*SELECT)\s+TOP\s*(?:\(\s*(\d+)\s*\)|(\d+))\s+([\s\S]*?)\)/gi,
+    (match, sel, p1, p2, rest) => {
+      const limit = p1 || p2;
+      return `${sel} ${rest} LIMIT ${limit})`;
+    }
+  );
+
+  // Auto-quote known tables so PascalCase names match PostgreSQL
+  for (const t of DB_TABLES) {
+    const tableRegex = new RegExp(`(?<!["'])\\b${t}\\b(?!["'])`, 'gi');
+    pgSql = pgSql.replace(tableRegex, `"${t}"`);
+  }
+
+  // Auto-quote dot-referenced columns (e.g. hd.MaHopDong -> hd."MaHopDong")
+  for (const c of DB_COLUMNS) {
+    const dotRe = new RegExp(`\\.(\\b${c}\\b)(?!["'])`, 'gi');
+    pgSql = pgSql.replace(dotRe, `."${c}"`);
+  }
 
   try {
     const result = await pool.query(pgSql, values);
