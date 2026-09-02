@@ -41,20 +41,20 @@ function verifyToken(token) {
 
 function toUser(record) {
   const user = {
-    id: record.maNguoiDung,
-    maNguoiDung: record.maNguoiDung,
-    tenDangNhap: record.tenDangNhap,
-    hoTen: record.hoTen,
-    ngaySinh: record.ngaySinh,
-    gioiTinh: record.gioiTinh,
-    email: record.email,
-    soDienThoai: record.soDienThoai,
-    vaiTro: record.vaiTro,
-    trangThai: record.trangThai,
-    chucVu: record.chucVu || null,
-    maChiNhanh: record.maChiNhanh || null,
-    quocTich: record.quocTich || null,
-    cccd: record.cccd || null
+    id: record.maNguoiDung ?? record.MaNguoiDung,
+    maNguoiDung: record.maNguoiDung ?? record.MaNguoiDung,
+    tenDangNhap: record.tenDangNhap ?? record.TenDangNhap,
+    hoTen: record.hoTen ?? record.HoTen,
+    ngaySinh: record.ngaySinh ?? record.NgaySinh,
+    gioiTinh: record.gioiTinh ?? record.GioiTinh,
+    email: record.email ?? record.Email,
+    soDienThoai: record.soDienThoai ?? record.SoDienThoai ?? record.sdt ?? record.SDT,
+    vaiTro: record.vaiTro ?? record.VaiTro ?? record.loaiNguoiDung ?? record.LoaiNguoiDung,
+    trangThai: record.trangThai ?? record.TrangThai,
+    chucVu: record.chucVu ?? record.ChucVu ?? null,
+    maChiNhanh: record.maChiNhanh ?? record.MaChiNhanh ?? null,
+    quocTich: record.quocTich ?? record.QuocTich ?? null,
+    cccd: record.cccd ?? record.CCCD ?? null
   };
 
   return {

@@ -78,7 +78,10 @@ function mapRowsToPascalCase(rows) {
     if (!row || typeof row !== 'object') return row;
     const newRow = {};
     for (const key of Object.keys(row)) {
+      newRow[key] = row[key];
       newRow[toPascalCase(key)] = row[key];
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      newRow[camelKey] = row[key];
     }
     return newRow;
   });
