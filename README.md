@@ -113,9 +113,9 @@ flowchart TB
 
 | Layer | Technology | Directory |
 |---|---|---|
-| Presentation | React + Vite + CSS | `Web/frontend/src/` |
-| Business Logic | Express.js + Services | `Web/backend/services/` + `Web/backend/controllers/` |
-| Data Access | pg (node-postgres) + SQL | `Web/backend/repositories/` + `Database/` |
+| Presentation | React + Vite + CSS | `web/frontend/src/` |
+| Business Logic | Express.js + Services | `web/backend/services/` + `web/backend/controllers/` |
+| Data Access | pg (node-postgres) + SQL | `web/backend/repositories/` + `database/` |
 
 ---
 
@@ -291,7 +291,7 @@ HomeStayDorm/
 │   ├── mockups/         # Original Google Stitch HTML mockups (design reference)
 │   ├── references/      # Project specification, final report, and reference documents
 │   └── screenshots/     # Actual application screenshots
-├── Database/            # SQL scripts: schema creation, stored procedures, triggers, seed data
+├── database/            # SQL scripts: schema creation, stored procedures, triggers, seed data
 │   ├── CreateDB/        # Table creation scripts (34 tables)
 │   ├── GenData/         # Mock data generation scripts
 │   ├── SP_DKyThue/      # Stored procedures: Rental Registration
@@ -301,7 +301,7 @@ HomeStayDorm/
 │   ├── SP_Admin/        # Stored procedures: Administration
 │   ├── SP_Chung/        # Stored procedures: Shared (Auth, scheduled tasks)
 │   └── Trigger/         # Database triggers
-├── Web/
+├── web/
 │   ├── frontend/        # React SPA (Vite)
 │   │   └── src/
 │   │       ├── pages/           # Feature pages by module
@@ -342,7 +342,7 @@ HomeStayDorm/
 
 2. Install backend dependencies:
    ```bash
-   cd Web/backend
+   cd web/backend
    npm install
    ```
 
@@ -354,7 +354,7 @@ HomeStayDorm/
 
 4. Configure environment variables:
    ```bash
-   # In Web/backend/, create a .env file:
+   # In web/backend/, create a .env file:
    DATABASE_URL=postgresql://user:password@host:port/database
    JWT_SECRET=your_jwt_secret
    PORT=5000
@@ -362,21 +362,21 @@ HomeStayDorm/
 
 5. Initialize the database:
    ```bash
-   # Run the schema creation script (Database/CreateDB/app.sql)
-   # Then run seed data (Database/GenData/data.sql)
+   # Run the schema creation script (database/CreateDB/app.sql)
+   # Then run seed data (database/GenData/data.sql)
    # Then deploy stored procedures:
-   cd Web/scripts
+   cd web/scripts
    node generate_complete_supabase_sql.cjs
    ```
 
 6. Start the development servers:
    ```bash
    # Terminal 1 — Backend
-   cd Web/backend
+   cd web/backend
    npm run dev
 
    # Terminal 2 — Frontend
-   cd Web/frontend
+   cd web/frontend
    npm run dev
    ```
 
