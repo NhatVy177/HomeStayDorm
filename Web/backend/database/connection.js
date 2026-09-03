@@ -72,7 +72,7 @@ function toPascalCase(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function mapRowsToPascalCase(rows) {
+export function mapRowsToPascalCase(rows) {
   if (!Array.isArray(rows)) return rows;
   return rows.map(row => {
     if (!row || typeof row !== 'object') return row;

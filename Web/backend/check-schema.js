@@ -1,25 +1,14 @@
-import dotenv from 'dotenv';
-import sql from 'mssql';
-
-dotenv.config();
-
-const dbConfig = {
-  server: process.env.DB_SERVER || 'localhost',
-  port: parseInt(process.env.DB_PORT) || 1433,
-  database: process.env.DB_NAME || 'HOMEDORM4',
-  user: process.env.DB_USER || 'sa',
-  password: process.env.DB_PASS || '123456',
-  options: {
-    encrypt: false,
-    trustServerCertificate: true
-  }
-};
-
 import { getHopDongDashboard } from './services/khachMoi.service.js';
 
 async function checkSchema() {
-  const result = await getHopDongDashboard({ vaiTro: 'KhachHang', maNguoiDung: 'KH0008' });
-  console.log(JSON.stringify(result, null, 2));
+  console.log('Testing KH0018 (Duong Anh Khoa):');
+  const result18 = await getHopDongDashboard({ vaiTro: 'KhachHang', maNguoiDung: 'KH0018' });
+  console.log('KH0018 contract:', result18?.data?.MaHopDong, 'Status:', result18?.data?.TrangThai);
+  console.log('KH0018 contracts count:', result18?.data?.danhSachHopDong?.length);
+
+  console.log('Testing KH0008:');
+  const result08 = await getHopDongDashboard({ vaiTro: 'KhachHang', maNguoiDung: 'KH0008' });
+  console.log('KH0008 contract:', result08?.data?.MaHopDong, 'Status:', result08?.data?.TrangThai);
   process.exit(0);
 }
 

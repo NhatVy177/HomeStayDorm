@@ -1,4 +1,4 @@
-import { executeProcedure, executeQuery, getPool, sql } from '../database/connection.js';
+import { executeProcedure, executeQuery, getPool, sql, mapRowsToPascalCase } from '../database/connection.js';
 import { getDanhSachPhongKhamPha } from './phongKhamPha.service.js';
 import { createServiceError, mapDatabaseError } from './serviceErrors.js';
 import * as phieuTraPhongRepository from '../repositories/phieuTraPhong.repository.js';
@@ -975,16 +975,217 @@ export async function getHopDongDashboard(user, options = {}) {
   const maHopDongChon = String(options.maHopDong || options.MaHopDong || '').trim() || null;
   const pool = await getPool();
 
-  // Gọi Stored Procedure để lấy chi tiết hợp đồng
-  const result = await executeProcedure('dbo.SP_KhachMoi_ChiTietHopDong', [
-    { name: 'KhachHangId', type: sql.VarChar(6), value: khachHangId },
-    { name: 'MaHopDong', type: sql.VarChar(6), value: maHopDongChon }
-  ]);
+  // 1. Lấy danh sách tất cả hợp đồng của khách hàng (kèm thông tin phòng, phiếu trả phòng, đối soát nếu có)
+  const danhSachHopDongRes = await pool.query(`
+    SELECT
+      hd."MaHopDong",
+      hd."NgayKyHD",
+      hd."NgayBatDau",
+      hd."NgayKetThuc",
+      hd."SoGiuongThue",
+      hd."GiaThue",
+      hd."KyThanhToan",
+      hd."TrangThai",
+      hd."MaPhieuCoc",
+      hd."MaKhachHang",
+      pdc."HinhThucThue" AS "HinhThucThue",
+      pdc."SoTienCoc",
+      p."MaPhong",
+      p."TenPhong",
+      ct."MaGiuong",
+      lp."TenLoaiPhong",
+      cn."TenChiNhanh",
+      cn."DiaChi",
+      ha."UrlImg",
+      ptp."MaPhieuTra",
+      ptp."NgayDangKyTra",
+      ptp."NgayDuKienTra",
+      ptp."NgayTraThucTe",
+      ptp."TrangThai" AS "TrangThaiTraPhong",
+      ds."MaDoiSoat" AS "MaDoiSoatTraPhong",
+      ds."NgayLap" AS "NgayLapDoiSoatTraPhong",
+      ds."TienCocBanDau" AS "TienCocBanDauTraPhong",
+      ds."SoThangLuuTru" AS "SoThangLuuTruTraPhong",
+      ds."TyLeHoanCocHienTai" AS "TyLeHoanCocHienTaiTraPhong",
+      ds."TienCocDuocHoan" AS "TienCocDuocHoanTraPhong",
+      ds."TienThueConNo" AS "TienThueConNoTraPhong",
+      ds."TienDichVuConNo" AS "TienDichVuConNoTraPhong",
+      ds."TongChiPhiSuaChua" AS "TongChiPhiSuaChuaTraPhong",
+      ds."TienPhat" AS "TienPhatTraPhong",
+      ds."TongKhauTru" AS "TongKhauTruTraPhong",
+      ds."SoTienHoanThucTe" AS "SoTienHoanThucTeTraPhong",
+      ds."SoTienKhachPhaiTT" AS "SoTienKhachPhaiTTTraPhong",
+      ds."PhuongThucThanhToan" AS "PhuongThucThanhToanTraPhong",
+      ds."ChungTuThanhToan" AS "ChungTuThanhToanTraPhong",
+      ds."NgayThanhToan" AS "NgayThanhToanTraPhong",
+      ds."ThongTinNhanHoanCoc" AS "ThongTinNhanHoanCocTraPhong",
+      ds."GhiChuPhanHoiKhach" AS "GhiChuPhanHoiKhachTraPhong",
+      ds."LoaiQuyetToan" AS "LoaiQuyetToanTraPhong",
+      ds."TrangThai" AS "TrangThaiDoiSoatTraPhong"
+    FROM "HopDongThue" AS hd
+    LEFT JOIN "PhieuDatCoc" AS pdc
+      ON pdc."MaPhieuDatCoc" = hd."MaPhieuCoc"
+    LEFT JOIN LATERAL (
+      SELECT ctdc."MaPhong", ctdc."MaGiuong"
+      FROM "ChiTietDatCoc" AS ctdc
+      WHERE ctdc."MaPhieuDatCoc" = pdc."MaPhieuDatCoc"
+      ORDER BY ctdc."MaChiTietDC"
+      LIMIT 1
+    ) AS ct ON true
+    LEFT JOIN "Phong" AS p
+      ON p."MaPhong" = ct."MaPhong"
+    LEFT JOIN "LoaiPhong" AS lp
+      ON lp."MaLoaiPhong" = p."MaLoaiPhong"
+    LEFT JOIN "ChiNhanh" AS cn
+      ON cn."MaChiNhanh" = p."MaChiNhanh"
+    LEFT JOIN LATERAL (
+      SELECT hap."UrlImg"
+      FROM "HinhAnhPhong" AS hap
+      WHERE hap."MaPhong" = p."MaPhong"
+      ORDER BY hap."STTAnh"
+      LIMIT 1
+    ) AS ha ON true
+    LEFT JOIN LATERAL (
+      SELECT
+        ptp_inner."MaPhieuTra",
+        ptp_inner."NgayDangKyTra",
+        ptp_inner."NgayDuKienTra",
+        ptp_inner."NgayTraThucTe",
+        ptp_inner."TrangThai"
+      FROM "PhieuTraPhong" AS ptp_inner
+      WHERE ptp_inner."MaHopDong" = hd."MaHopDong"
+        AND ptp_inner."TrangThai" NOT IN ('Hủy', 'Hoàn tất')
+      ORDER BY ptp_inner."NgayDangKyTra" DESC, ptp_inner."MaPhieuTra" DESC
+      LIMIT 1
+    ) AS ptp ON true
+    LEFT JOIN LATERAL (
+      SELECT
+        d."MaDoiSoat",
+        d."NgayLap",
+        d."TienCocBanDau",
+        d."SoThangLuuTru",
+        d."TyLeHoanCocHienTai",
+        d."TienCocDuocHoan",
+        d."TienThueConNo",
+        d."TienDichVuConNo",
+        d."TongChiPhiSuaChua",
+        d."TienPhat",
+        d."TongKhauTru",
+        d."SoTienHoanThucTe",
+        d."SoTienKhachPhaiTT",
+        d."PhuongThucThanhToan",
+        d."ChungTuThanhToan",
+        d."NgayThanhToan",
+        d."ThongTinNhanHoanCoc",
+        d."GhiChuPhanHoiKhach",
+        d."LoaiQuyetToan",
+        d."TrangThai"
+      FROM "DoiSoat" AS d
+      WHERE d."MaPhieuTra" = ptp."MaPhieuTra"
+      ORDER BY d."NgayLap" DESC, d."MaDoiSoat" DESC
+      LIMIT 1
+    ) AS ds ON true
+    WHERE hd."MaKhachHang" = $1
+    ORDER BY
+      CASE WHEN hd."TrangThai" = 'Hiệu lực' THEN 0 ELSE 1 END,
+      hd."NgayKyHD" DESC,
+      hd."MaHopDong" DESC;
+  `, [khachHangId]);
 
-  const hopDong = result.recordsets[0]?.[0] || null;
-  if (!hopDong) {
+  const danhSachHopDongRaw = mapRowsToPascalCase(danhSachHopDongRes.rows || []);
+  if (danhSachHopDongRaw.length === 0) {
     return { data: null };
   }
+
+  const hopDong = (maHopDongChon && danhSachHopDongRaw.find(h => h.MaHopDong === maHopDongChon))
+    || danhSachHopDongRaw[0];
+
+  const maPhong = hopDong.MaPhong;
+  const maHopDong = hopDong.MaHopDong;
+
+  // Lấy chi tiết các thông tin liên quan (tài sản, quy định, thành viên, dịch vụ, vi phạm, đối soát...)
+  const [
+    taiSanRes,
+    quyDinhRes,
+    thanhVienRes,
+    dichVuRes,
+    viPhamRes,
+    hoanCocRes,
+    quyDinhHoanCocRes,
+    dieuKhoanViPhamRes
+  ] = await Promise.all([
+    pool.query(`
+      SELECT ts."MaTaiSan", ts."TenTaiSan", ctbg."SoLuongThucTe" AS "SoLuong", ts."DonGia"
+      FROM "ChiTietBanGiao" AS ctbg
+      INNER JOIN "BienBanBanGiao" AS bbbg ON bbbg."MaBienBan" = ctbg."MaBienBan"
+      INNER JOIN "TaiSan" AS ts ON ts."MaTaiSan" = ctbg."MaTaiSan" AND ts."MaPhong" = ctbg."MaPhong"
+      WHERE bbbg."MaHopDong" = $1 AND bbbg."LoaiBanGiao" = 'Bàn giao vào'
+      UNION ALL
+      SELECT "MaTaiSan", "TenTaiSan", "SoLuong", "DonGia"
+      FROM "TaiSan"
+      WHERE "MaPhong" = $2 AND NOT EXISTS (
+        SELECT 1 FROM "BienBanBanGiao" bbbg WHERE bbbg."MaHopDong" = $1 AND bbbg."LoaiBanGiao" = 'Bàn giao vào'
+      )
+      ORDER BY "MaTaiSan";
+    `, [maHopDong, maPhong]),
+
+    pool.query(`
+      SELECT "MaQuyDinh", "TieuDeNoiQuy", "NoiDung"
+      FROM "QuiDinh"
+      WHERE "TrangThai" = 'Hiệu lực'
+      ORDER BY "MaQuyDinh";
+    `),
+
+    pool.query(`
+      SELECT "MaThanhVien", "HoTen", "NgaySinh", "GioiTinh", "CCCD", "SDT", "Email", "QuocTich", "TrangThai", "LyDoTuChoi"
+      FROM "ThanhVienHopDong"
+      WHERE "MaHopDong" = $1
+      ORDER BY "MaThanhVien";
+    `, [maHopDong]),
+
+    pool.query(`
+      SELECT dvhd."MaChiTietDVHD", dv."MaDichVu", dv."TenDichVu", dv."DonGia", dv."DonViTinh", dvhd."GhiChu"
+      FROM "DichVuHopDong" dvhd
+      INNER JOIN "DichVu" dv ON dv."MaDichVu" = dvhd."MaDichVu"
+      WHERE dvhd."MaHopDong" = $1
+      ORDER BY dv."MaDichVu";
+    `, [maHopDong]),
+
+    pool.query(`
+      SELECT bbvp."MaBBViPham", bbvp."NgayViPham", bbvp."MoTaViPham", bbvp."SoTienPhat", bbvp."TrangThai",
+             dkvp."TenDieuKhoan", dkvp."HinhThucXuPhat"
+      FROM "BienBanViPham" bbvp
+      LEFT JOIN "DieuKhoanViPham" dkvp ON dkvp."MaDieuKhoan" = bbvp."MaDieuKhoan"
+      WHERE bbvp."MaHopDong" = $1
+      ORDER BY bbvp."NgayViPham" DESC, bbvp."MaBBViPham" DESC;
+    `, [maHopDong]),
+
+    pool.query(`
+      SELECT ds."MaDoiSoat", ds."NgayLap", ds."TienCocBanDau", ds."SoThangLuuTru", ds."TyLeHoanCocHienTai",
+             ds."TienCocDuocHoan", ds."TienThueConNo", ds."TienDichVuConNo", ds."TongChiPhiSuaChua",
+             ds."TienPhat", ds."TongKhauTru", ds."SoTienHoanThucTe", ds."SoTienKhachPhaiTT",
+             ds."PhuongThucThanhToan", ds."ChungTuThanhToan", ds."NgayThanhToan", ds."ThongTinNhanHoanCoc",
+             ds."LoaiQuyetToan", ds."TrangThai" AS "TrangThaiDoiSoat",
+             ptp."MaPhieuTra", ptp."NgayDangKyTra", ptp."TrangThai" AS "TrangThaiPhieuTra"
+      FROM "DoiSoat" ds
+      INNER JOIN "PhieuTraPhong" ptp ON ptp."MaPhieuTra" = ds."MaPhieuTra"
+      WHERE ptp."MaHopDong" = $1
+      ORDER BY ds."NgayLap" DESC, ds."MaDoiSoat" DESC;
+    `, [maHopDong]),
+
+    pool.query(`
+      SELECT "MaQuyDinhHoanCoc", "TenQuyDinh", "TyLeHoanCoc"
+      FROM "QuyDinhHoanCoc"
+      ORDER BY "MaQuyDinhHoanCoc";
+    `),
+
+    pool.query(`
+      SELECT "MaDieuKhoan", "TenDieuKhoan", "HinhThucXuPhat", "MucPhat"
+      FROM "DieuKhoanViPham"
+      WHERE "TrangThai" = 'Hiệu lực'
+      ORDER BY "MaDieuKhoan";
+    `)
+  ]);
 
   let chiTietKhauTru = {
     hoaDonConNo: [],
@@ -1004,123 +1205,109 @@ export async function getHopDongDashboard(user, options = {}) {
       bienBanViPhamResult,
       dichVuHopDongResult
     ] = await Promise.all([
-      pool.request()
-        .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
-        .query(`
-          SELECT
-            hd.MaHoaDon AS maHoaDon,
-            N'Tiền thuê kỳ ' + ISNULL(hd.KyThanhToan, N'--') AS tenKhoanThue,
-            hd.KyThanhToan AS kyThanhToan,
-            hd.NgayLap AS ngayLap,
-            hd.NgayHanTT AS ngayHanTT,
-            hdt.GiaThue AS thanhTien,
-            ISNULL(dvNo.tienDichVuConNo, 0) AS tienDichVuConNo,
-            hdt.GiaThue + ISNULL(dvNo.tienDichVuConNo, 0) AS tongTienNo,
-            hd.TongTien AS tongTienHoaDon,
-            hd.TrangThai AS trangThai,
-            hdt.MaHopDong AS maHopDong,
-            hdt.GiaThue AS giaThueHopDong,
-            hdt.KyThanhToan AS kyThanhToanHopDong
-          FROM dbo.HoaDon AS hd
-          INNER JOIN dbo.HopDongThue AS hdt ON hdt.MaHopDong = hd.MaHopDong
-          OUTER APPLY (
-            SELECT SUM(ct.ThanhTien) AS tienDichVuConNo
-            FROM dbo.ChiTietHoaDon AS ct
-            WHERE ct.MaHoaDon = hd.MaHoaDon
-              AND ct.GhiChu <> N'Tiền phòng'
-          ) AS dvNo
-          WHERE hd.TrangThai = N'Chưa thanh toán'
-            AND hdt.MaHopDong = @MaHopDong;
-        `),
-      pool.request()
-        .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
-        .query(`
-          SELECT
-            ct.MaChiTietHD AS maChiTietHD,
-            ct.NoiDung AS noiDung,
-            ct.SoLuong AS soLuong,
-            ct.DonGia AS donGia,
-            ct.ThanhTien AS thanhTien,
-            ct.GhiChu AS ghiChu,
-            hd.MaHoaDon AS maHoaDon,
-            hd.TrangThai AS trangThaiHoaDon
-          FROM dbo.ChiTietHoaDon AS ct
-          INNER JOIN dbo.HoaDon AS hd ON hd.MaHoaDon = ct.MaHoaDon
-          WHERE hd.TrangThai = N'Chưa thanh toán'
-            AND hd.MaHopDong = @MaHopDong;
-        `),
-      pool.request()
-        .input('MaPhieuTra', sql.VarChar(6), hopDong.MaPhieuTra || null)
-        .query(`
-          SELECT
-            bbkt.MaBienBanKT AS maBienBanKT,
-            bbkt.MaPhieuTra AS maPhieuTra,
-            bbkt.NgayKiemTra AS ngayKiemTra,
-            bbkt.TinhTrangPhong AS tinhTrangPhong,
-            bbkt.TongChiPhiSuaChua AS tongChiPhiSuaChua
-          FROM dbo.BienBanKiemTraPhong bbkt
-          WHERE bbkt.MaPhieuTra = @MaPhieuTra;
-        `),
-      pool.request()
-        .input('MaPhieuTra', sql.VarChar(6), hopDong.MaPhieuTra || null)
-        .query(`
-          SELECT
-            bbkt.MaBienBanKT AS maBienBanKT,
-            cthh.MaChiTietHH AS maChiTietHH,
-            cthh.MaPhong AS maPhong,
-            cthh.MaTaiSan AS maTaiSan,
-            ts.TenTaiSan AS tenTaiSan,
-            cthh.MoTaHuHong AS moTaHuHong,
-            cthh.ChiPhiSuaChua AS chiPhiSuaChua
-          FROM dbo.BienBanKiemTraPhong bbkt
-          INNER JOIN dbo.ChiTietHuHong cthh ON cthh.MaBienBanKT = bbkt.MaBienBanKT
-          LEFT JOIN dbo.TaiSan ts ON ts.MaPhong = cthh.MaPhong AND ts.MaTaiSan = cthh.MaTaiSan
-          WHERE bbkt.MaPhieuTra = @MaPhieuTra
-          ORDER BY bbkt.MaBienBanKT ASC, cthh.MaChiTietHH ASC;
-        `),
-      pool.request()
-        .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
-        .query(`
-          SELECT
-            bbvp.MaBBViPham AS maBBViPham,
-            bbvp.NgayViPham AS ngayViPham,
-            bbvp.MoTaViPham AS moTaViPham,
-            bbvp.SoTienPhat AS soTienPhat,
-            bbvp.TrangThai AS trangThai,
-            bbvp.MaDieuKhoan AS maDieuKhoan,
-            dkvp.TenDieuKhoan AS tenDieuKhoan,
-            dkvp.HinhThucXuPhat AS hinhThucXuPhat
-          FROM dbo.BienBanViPham bbvp
-          LEFT JOIN dbo.DieuKhoanViPham dkvp ON dkvp.MaDieuKhoan = bbvp.MaDieuKhoan
-          WHERE @MaHopDong IS NOT NULL
-            AND bbvp.MaHopDong = @MaHopDong
-          ORDER BY bbvp.NgayViPham ASC, bbvp.MaBBViPham ASC;
-        `),
-      pool.request()
-        .input('MaHopDong', sql.VarChar(6), hopDong.MaHopDong || null)
-        .query(`
-          SELECT
-            dvhd.MaChiTietDVHD AS maChiTietDVHD,
-            dvhd.MaDichVu AS maDichVu,
-            dv.TenDichVu AS tenDichVu,
-            dv.DonViTinh AS donViTinh,
-            dv.DonGia AS donGia,
-            dvhd.GhiChu AS ghiChu
-          FROM dbo.DichVuHopDong dvhd
-          LEFT JOIN dbo.DichVu dv ON dv.MaDichVu = dvhd.MaDichVu
-          WHERE @MaHopDong IS NOT NULL
-            AND dvhd.MaHopDong = @MaHopDong
-          ORDER BY dv.TenDichVu ASC, dvhd.MaChiTietDVHD ASC;
-        `)
+      pool.query(`
+        SELECT
+          hd."MaHoaDon" AS "maHoaDon",
+          'Tiền thuê kỳ ' || COALESCE(hd."KyThanhToan", '--') AS "tenKhoanThue",
+          hd."KyThanhToan" AS "kyThanhToan",
+          hd."NgayLap" AS "ngayLap",
+          hd."NgayHanTT" AS "ngayHanTT",
+          hdt."GiaThue" AS "thanhTien",
+          COALESCE(dvNo."tienDichVuConNo", 0) AS "tienDichVuConNo",
+          hdt."GiaThue" + COALESCE(dvNo."tienDichVuConNo", 0) AS "tongTienNo",
+          hd."TongTien" AS "tongTienHoaDon",
+          hd."TrangThai" AS "trangThai",
+          hdt."MaHopDong" AS "maHopDong",
+          hdt."GiaThue" AS "giaThueHopDong",
+          hdt."KyThanhToan" AS "kyThanhToanHopDong"
+        FROM "HoaDon" AS hd
+        INNER JOIN "HopDongThue" AS hdt ON hdt."MaHopDong" = hd."MaHopDong"
+        LEFT JOIN LATERAL (
+          SELECT SUM(ct."ThanhTien") AS "tienDichVuConNo"
+          FROM "ChiTietHoaDon" AS ct
+          WHERE ct."MaHoaDon" = hd."MaHoaDon"
+            AND ct."GhiChu" <> 'Tiền phòng'
+        ) AS dvNo ON true
+        WHERE hd."TrangThai" = 'Chưa thanh toán'
+          AND hdt."MaHopDong" = $1;
+      `, [hopDong.MaHopDong]),
+      pool.query(`
+        SELECT
+          ct."MaChiTietHD" AS "maChiTietHD",
+          ct."NoiDung" AS "noiDung",
+          ct."SoLuong" AS "soLuong",
+          ct."DonGia" AS "donGia",
+          ct."ThanhTien" AS "thanhTien",
+          ct."GhiChu" AS "ghiChu",
+          hd."MaHoaDon" AS "maHoaDon",
+          hd."TrangThai" AS "trangThaiHoaDon"
+        FROM "ChiTietHoaDon" AS ct
+        INNER JOIN "HoaDon" AS hd ON hd."MaHoaDon" = ct."MaHoaDon"
+        WHERE hd."TrangThai" = 'Chưa thanh toán'
+          AND hd."MaHopDong" = $1;
+      `, [hopDong.MaHopDong]),
+      pool.query(`
+        SELECT
+          bbkt."MaBienBanKT" AS "maBienBanKT",
+          bbkt."MaPhieuTra" AS "maPhieuTra",
+          bbkt."NgayKiemTra" AS "ngayKiemTra",
+          bbkt."TinhTrangPhong" AS "tinhTrangPhong",
+          bbkt."TongChiPhiSuaChua" AS "tongChiPhiSuaChua"
+        FROM "BienBanKiemTraPhong" bbkt
+        WHERE bbkt."MaPhieuTra" = $1;
+      `, [hopDong.MaPhieuTra]),
+      pool.query(`
+        SELECT
+          bbkt."MaBienBanKT" AS "maBienBanKT",
+          cthh."MaChiTietHH" AS "maChiTietHH",
+          cthh."MaPhong" AS "maPhong",
+          cthh."MaTaiSan" AS "maTaiSan",
+          ts."TenTaiSan" AS "tenTaiSan",
+          cthh."MoTaHuHong" AS "moTaHuHong",
+          cthh."ChiPhiSuaChua" AS "chiPhiSuaChua"
+        FROM "BienBanKiemTraPhong" bbkt
+        INNER JOIN "ChiTietHuHong" cthh ON cthh."MaBienBanKT" = bbkt."MaBienBanKT"
+        LEFT JOIN "TaiSan" ts ON ts."MaPhong" = cthh."MaPhong" AND ts."MaTaiSan" = cthh."MaTaiSan"
+        WHERE bbkt."MaPhieuTra" = $1
+        ORDER BY bbkt."MaBienBanKT" ASC, cthh."MaChiTietHH" ASC;
+      `, [hopDong.MaPhieuTra]),
+      pool.query(`
+        SELECT
+          bbvp."MaBBViPham" AS "maBBViPham",
+          bbvp."NgayViPham" AS "ngayViPham",
+          bbvp."MoTaViPham" AS "moTaViPham",
+          bbvp."SoTienPhat" AS "soTienPhat",
+          bbvp."TrangThai" AS "trangThai",
+          bbvp."MaDieuKhoan" AS "maDieuKhoan",
+          dkvp."TenDieuKhoan" AS "tenDieuKhoan",
+          dkvp."HinhThucXuPhat" AS "hinhThucXuPhat"
+        FROM "BienBanViPham" bbvp
+        LEFT JOIN "DieuKhoanViPham" dkvp ON dkvp."MaDieuKhoan" = bbvp."MaDieuKhoan"
+        WHERE bbvp."MaHopDong" = $1
+        ORDER BY bbvp."NgayViPham" ASC, bbvp."MaBBViPham" ASC;
+      `, [hopDong.MaHopDong]),
+      pool.query(`
+        SELECT
+          dvhd."MaChiTietDVHD" AS "maChiTietDVHD",
+          dvhd."MaDichVu" AS "maDichVu",
+          dv."TenDichVu" AS "tenDichVu",
+          dv."DonViTinh" AS "donViTinh",
+          dv."DonGia" AS "donGia",
+          dvhd."GhiChu" AS "ghiChu"
+        FROM "DichVuHopDong" dvhd
+        LEFT JOIN "DichVu" dv ON dv."MaDichVu" = dvhd."MaDichVu"
+        WHERE dvhd."MaHopDong" = $1
+        ORDER BY dv."TenDichVu" ASC, dvhd."MaChiTietDVHD" ASC;
+      `, [hopDong.MaHopDong])
     ]);
 
     chiTietKhauTru = {
-      hoaDonConNo: hoaDonConNoResult.recordset || [],
-      chiTietHoaDon: chiTietHoaDonResult.recordset || [],
-      bienBanKiemTra: bienBanKiemTraResult.recordset || [],
-      chiTietHuHong: chiTietHuHongResult.recordset || [],
-      bienBanViPham: bienBanViPhamResult.recordset || [],
-      dichVuHopDong: dichVuHopDongResult.recordset || []
+      hoaDonConNo: mapRowsToPascalCase(hoaDonConNoResult.rows || []),
+      chiTietHoaDon: mapRowsToPascalCase(chiTietHoaDonResult.rows || []),
+      bienBanKiemTra: mapRowsToPascalCase(bienBanKiemTraResult.rows || []),
+      chiTietHuHong: mapRowsToPascalCase(chiTietHuHongResult.rows || []),
+      bienBanViPham: mapRowsToPascalCase(bienBanViPhamResult.rows || []),
+      dichVuHopDong: mapRowsToPascalCase(dichVuHopDongResult.rows || [])
     };
   }
 
@@ -1166,18 +1353,17 @@ export async function getHopDongDashboard(user, options = {}) {
     taiKhoanThanhToan
   });
 
-  const danhSachHopDongRaw = result.recordsets[1] || [];
   const danhSachHopDong = danhSachHopDongRaw.map((row) => normalizeHopDongDashboardItem(row));
   const hopDongDaChon = normalizeHopDongDashboardItem(hopDong, chiTietKhauTru);
 
-  hopDongDaChon.taiSan = result.recordsets[2] || [];
-  hopDongDaChon.quyDinh = result.recordsets[3] || [];
-  hopDongDaChon.thanhVien = result.recordsets[4] || [];
-  hopDongDaChon.dichVu = result.recordsets[5] || [];
-  hopDongDaChon.viPham = result.recordsets[6] || [];
-  hopDongDaChon.hoanCoc = result.recordsets[7] || [];
-  hopDongDaChon.quyDinhHoanCoc = result.recordsets[8] || [];
-  hopDongDaChon.dieuKhoanViPham = result.recordsets[9] || [];
+  hopDongDaChon.taiSan = mapRowsToPascalCase(taiSanRes.rows || []);
+  hopDongDaChon.quyDinh = mapRowsToPascalCase(quyDinhRes.rows || []);
+  hopDongDaChon.thanhVien = mapRowsToPascalCase(thanhVienRes.rows || []);
+  hopDongDaChon.dichVu = mapRowsToPascalCase(dichVuRes.rows || []);
+  hopDongDaChon.viPham = mapRowsToPascalCase(viPhamRes.rows || []);
+  hopDongDaChon.hoanCoc = mapRowsToPascalCase(hoanCocRes.rows || []);
+  hopDongDaChon.quyDinhHoanCoc = mapRowsToPascalCase(quyDinhHoanCocRes.rows || []);
+  hopDongDaChon.dieuKhoanViPham = mapRowsToPascalCase(dieuKhoanViPhamRes.rows || []);
 
   hopDongDaChon.danhSachHopDong = danhSachHopDong.map((item) => (
     item.MaHopDong === hopDongDaChon.MaHopDong
