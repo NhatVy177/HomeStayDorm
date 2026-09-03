@@ -39,6 +39,16 @@ A quick overview of the operational flow by role:
 - **Accountant:** calculate deposit amounts, confirm deposit payments, generate monthly utility bills, perform checkout financial reconciliation (refund percentage, deductions, penalties), process deposit refunds
 - **Admin:** manage system-wide catalogs — users, branches, room types, rooms, beds, services, assets, rules, and violation terms
 
+### 🎬 Quick Preview
+
+| 🔍 Room Discovery & Smart Filters | 🛋️ Room Details & Booking Action |
+|:---:|:---:|
+| [![Room Discovery](docs/screenshots/room_discovery.png)](docs/screenshots/room_discovery.png) | [![Room Details & Booking](docs/screenshots/room_detail_booking.png)](docs/screenshots/room_detail_booking.png) |
+| *Real-time branch, price, and room-type filtering* | *Interactive 360° details, amenities, and instant deposit CTA* |
+
+> 🌐 **Live Application**: Try the full tenant experience live at [home-stay-dorm.vercel.app](https://home-stay-dorm.vercel.app)  
+> 🔑 **Demo Account**: Username `kh0011` · Password `123` (Customer role)
+
 ---
 
 ## 👥 Team Information
@@ -64,6 +74,19 @@ A quick overview of the operational flow by role:
 - **Deployment:** Vercel (frontend) + Supabase (database & connection pooling)
 - **Diagramming tools:** Enterprise Architect, draw.io
 - **UI Prototyping:** Google Stitch (AI-generated HTML mockups as design reference)
+
+### 🔄 Engineering Highlight: MSSQL to PostgreSQL (Supabase) Migration
+
+> *A real-world engineering case study demonstrating adaptability, database internals proficiency, and zero-downtime architectural transition.*
+
+The system was initially modeled and scripted for **Microsoft SQL Server (MSSQL)** with complex stored procedures, multi-table result sets, and table-valued parameters. To deploy efficiently to the cloud with Supabase and Vercel, the team engineered a comprehensive database migration:
+
+| Challenge | Architectural Impact | Solution Implemented |
+|---|---|---|
+| **Dialect Divergence** | T-SQL functions (`ISNULL`, `GETDATE()`, `SELECT TOP N`, `OUTER APPLY`) are incompatible with PostgreSQL syntax. | Implemented an automated query translation layer in `connection.js` that converts T-SQL syntax on-the-fly to standard PostgreSQL (`COALESCE`, `CURRENT_TIMESTAMP`, `LIMIT`, `LEFT JOIN LATERAL`). |
+| **Case-Sensitivity & Alias Folding** | PostgreSQL folds unquoted column aliases to lowercase, breaking frontend camelCase API contracts (`maPhieuCoc` became `maphieucoc`). | Designed an AST-regex pre-processor that auto-quotes column aliases in `SELECT` expressions (`AS "maPhieuCoc"`) while preserving SQL types in `CAST` and keeping table aliases unquoted for case-insensitive resolution. |
+| **Multiple Tabular Result Sets** | MSSQL procedures returned up to 10 distinct result sets in a single call (unsupported natively in PostgreSQL). | Decomposed monolithic stored procedures into concurrent, connection-pooled queries orchestrated via `Promise.all` with transactional consistency. |
+| **Schema & Data Migration** | 34 relational tables with custom check constraints, foreign keys, and seed data. | Converted schema DDL, translated trigger functions to PL/pgSQL, and verified data integrity across all 5 operational user roles. |
 
 ---
 
@@ -279,6 +302,12 @@ See [`docs/mockups/`](docs/mockups) for the original HTML design files covering:
 - Check-in & handover forms
 - Checkout inspection & settlement
 - Monthly billing
+
+### 📸 Production UI Gallery
+
+| 🏠 Landing Page & Hero Banner | 🔍 Room Catalog & Dynamic Filters | 🛏️ Room Detail & Instant Booking |
+|:---:|:---:|:---:|
+| [![Home](docs/screenshots/homepage_hero.png)](docs/screenshots/homepage_hero.png) | [![Discovery](docs/screenshots/room_discovery.png)](docs/screenshots/room_discovery.png) | [![Detail](docs/screenshots/room_detail_booking.png)](docs/screenshots/room_detail_booking.png) |
 
 ---
 
