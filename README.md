@@ -41,6 +41,8 @@ A quick overview of the operational flow by role:
 
 ### 🎬 Quick Preview
 
+![End-to-End Room Booking Demo](docs/screenshots/demo_flow.gif)
+
 | 🔍 Room Discovery & Smart Filters | 🛋️ Room Details & Booking Action |
 |:---:|:---:|
 | [![Room Discovery](docs/screenshots/room_discovery.png)](docs/screenshots/room_discovery.png) | [![Room Details & Booking](docs/screenshots/room_detail_booking.png)](docs/screenshots/room_detail_booking.png) |
@@ -175,7 +177,46 @@ The system models **10 core business processes**, each fully specified with main
 
 The system implements **40+ system-level use cases** covering all core requirements. Full use case specifications (actors, preconditions, main/alternative flows, exceptions, post-conditions) are available in the [design report](docs/references/10_BaoCao.pdf).
 
-### Key System Use Cases by Module
+### 🌟 Core Feature Highlights: Checkout Settlement Engine
+
+As the System Analyst and Full-Stack Developer designing the Settlement & Checkout module, key architectural patterns and automated business logic were implemented to eliminate paper-based errors and automate financial audit:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as 👤 Customer
+    actor Manager as 🏢 Manager
+    actor Accountant as 📊 Accountant
+    participant System as ⚙️ System (API & DB)
+
+    Customer->>System: Submit Checkout Request (MaHopDong / MaPhieuCoc)
+    Manager->>System: Inspect Room & Record Damages (BienBanKiemTra, ChiTietHuHong)
+    Accountant->>System: Trigger Settlement Audit (DoiSoat Engine)
+    Note over System,Accountant: Auto-calculate refund % + Deduct unpaid utilities + Deduct damage fees
+    System->>Customer: Present Detailed Settlement Sheet (DoiSoat)
+    alt Customer Agrees
+        Customer->>System: Confirm & Sign Settlement
+        Accountant->>System: Process Refund or Collect Difference
+        System->>System: Cascading state: Contract -> Liquidated; Room/Bed -> Available
+    else Customer Disputes
+        Customer->>System: Submit Feedback Note (GhiChuPhanHoiKhach)
+        System->>Accountant: Re-audit flag (TrangThai = 'Khách khiếu nại')
+    end
+```
+
+- **⚡ Automated Financial Reconciliation Engine (`DoiSoat`)**:
+  - **Graduated Refund Rates**: Computes baseline refund according to strict business policy:
+    - `80%` deposit refunded if cancelled prior to contract signing.
+    - `50%` deposit refunded for early termination under 6 months.
+    - `70%` deposit refunded for early termination after 6 months or more.
+    - `100%` full deposit refunded upon contract completion.
+  - **Dynamic Debt & Penalty Deductions**: Auto-aggregates unpaid utility invoices (`HoaDon`), incident violation penalties (`BienBanViPham`), and room repair compensation items (`ChiTietHuHong`) to calculate `SoTienHoanThucTe` (Net Refund) or `SoTienKhachPhaiTT` (Outstanding Surcharge).
+- **🔄 Cascading State Transition & Instant Room Release**:
+  - Upon settlement completion, an atomic transaction transitions the contract to `Đã thanh lý` (Liquidated), automatically resetting the room and bed statuses to `Trống` (Available) for new tenant discovery while revoking tenant building access privileges.
+- **🤝 Multi-Role Collaborative Dispute Handling**:
+  - Bridges the **Customer**, **Branch Manager**, and **Accountant** with structured objection logging (`GhiChuPhanHoiKhach`), preventing arbitrary deductions and ensuring complete legal transparency before funds transfer.
+
+### 📋 Key System Use Cases by Module
 
 <details>
 <summary><strong>🔍 Rental Registration & Room Viewing (Đăng ký thuê & Xem phòng)</strong></summary>
@@ -289,6 +330,45 @@ The relational database consists of **34 tables** organized into the following l
 
 Full ERD and schema details are available in the [design report](docs/references/10_BaoCao.pdf), Section 2.1.
 
+### 🏛️ Backbone Table Schemas: Reconciliation & Checkout
+
+To handle complex financial settlements without accounting discrepancies, our database architecture centers around two key transactional entities:
+
+#### 1. Table `DoiSoat` (Financial Reconciliation Ledger)
+*Central entity tracking deposit refunds, deductions, tenant disputes, and payment status.*
+
+| Column | Type | Constraints | Business Purpose |
+|---|---|---|---|
+| `MaDoiSoat` | VARCHAR(6) | PK | Unique reconciliation voucher ID (`DS0001`, `DS0002`...). |
+| `MaPhieuTra` | VARCHAR(6) | FK -> `PhieuTraPhong` | Direct link to the tenant's checkout request. |
+| `TienCocBanDau` | DECIMAL(15,2) | NOT NULL | Baseline deposit amount from the signed lease contract. |
+| `SoThangLuuTru` | INT | NOT NULL | Tenancy duration (in months) used to calculate refund bracket. |
+| `TyLeHoanCocHienTai`| DECIMAL(5,2) | CHECK IN (0, 50, 70, 80, 100) | Current applicable refund percentage based on policy. |
+| `TienCocDuocHoan` | DECIMAL(15,2) | Computed | Base refundable deposit: `TienCocBanDau * (TyLe / 100)`. |
+| `TienThueConNo` | DECIMAL(15,2) | DEFAULT 0 | Accumulated unpaid room rent. |
+| `TienDichVuConNo` | DECIMAL(15,2) | DEFAULT 0 | Accumulated unpaid electricity, water, and service invoices. |
+| `TongChiPhiSuaChua`| DECIMAL(15,2) | DEFAULT 0 | Total repair cost aggregated from checkout room damage inspection. |
+| `TienPhat` | DECIMAL(15,2) | DEFAULT 0 | Total fines issued from violation incident reports (`BienBanViPham`). |
+| `TongKhauTru` | DECIMAL(15,2) | Computed | Total deductions: `TienThue + TienDichVu + SuaChua + TienPhat`. |
+| `SoTienHoanThucTe` | DECIMAL(15,2) | Computed | Net refund paid to tenant if `TienCocDuocHoan > TongKhauTru`. |
+| `SoTienKhachPhaiTT`| DECIMAL(15,2) | Computed | Surcharge required from tenant if `TongKhauTru > TienCocDuocHoan`. |
+| `LoaiQuyetToan` | NVARCHAR(20) | CHECK IN ('Hoàn cọc', 'Thu thêm', 'Không hoàn không thu') | Final settlement outcome categorization. |
+| `TrangThai` | NVARCHAR(30) | Status Flow | Lifecycle: `Chờ đối soát` ➔ `Chờ khách xác nhận` ➔ `Khách khiếu nại` ➔ `Chờ hoàn cọc` / `Chờ thanh toán thêm` ➔ `Hoàn tất`. |
+| `GhiChuPhanHoiKhach`| NVARCHAR(MAX) | Nullable | Tenant objection / dispute details when rejecting audit results. |
+
+#### 2. Table `PhieuTraPhong` (Room Checkout Voucher)
+*Coordinates physical checkout, inspection scheduling, and contract termination.*
+
+| Column | Type | Constraints | Business Purpose |
+|---|---|---|---|
+| `MaPhieuTra` | VARCHAR(6) | PK | Unique checkout voucher identifier (`TP0001`...). |
+| `MaHopDong` | VARCHAR(6) | FK -> `HopDongThue` | Reference to the active tenancy contract. |
+| `MaPhieuDatCoc`| VARCHAR(6) | FK -> `PhieuDatCoc` | Fallback reference for tenants who cancel prior to contract signing. |
+| `NgayDangKyTra`| DATE | NOT NULL | Timestamp when the tenant requested checkout. |
+| `NgayDuKienTra`| DATE | Nullable | Agreed appointment date for physical room turnover. |
+| `NgayTraThucTe` | DATE | Nullable | Actual inspection and key surrender date. |
+| `TrangThai` | NVARCHAR(30) | State Machine | `Chờ xác nhận` ➔ `Chờ kiểm tra` ➔ `Đã kiểm tra` ➔ `Đã đối soát` ➔ `Hoàn tất` (or `Hủy`). |
+
 ---
 
 ## 🎨 UI Design
@@ -382,34 +462,85 @@ HomeStayDorm/
    ```
 
 4. Configure environment variables:
+
+   **Backend Configuration (`web/backend/.env`):**
    ```bash
-   # In web/backend/, create a .env file:
-   DATABASE_URL=postgresql://user:password@host:port/database
-   JWT_SECRET=your_jwt_secret
+   # Copy sample configuration
+   cp web/backend/.env.example web/backend/.env   # or create manually:
+
+   # PostgreSQL Connection (Supabase Pooler or direct connection)
+   DATABASE_URL="postgresql://postgres:[YOUR_PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres"
+   SUPABASE_DB_URL="postgresql://postgres:[YOUR_PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres"
+
+   # Server Settings
    PORT=5000
+   NODE_ENV="development"
+
+   # Security & Session
+   JWT_SECRET="your_jwt_super_secret_key_change_in_production"
+   JWT_EXPIRES_IN="7d"
+
+   # Allowed CORS Origin
+   CLIENT_URL="http://localhost:5173"
+   ```
+
+   **Frontend Configuration (`web/frontend/.env`):**
+   ```bash
+   # Backend API Endpoint
+   VITE_API_BASE_URL="http://localhost:5000/api"
    ```
 
 5. Initialize the database:
    ```bash
    # Run the schema creation script (database/CreateDB/app.sql)
    # Then run seed data (database/GenData/data.sql)
-   # Then deploy stored procedures:
+   # Then deploy stored procedures and triggers:
    cd web/scripts
    node generate_complete_supabase_sql.cjs
    ```
 
 6. Start the development servers:
    ```bash
-   # Terminal 1 — Backend
+   # Terminal 1 — Backend API
    cd web/backend
    npm run dev
 
-   # Terminal 2 — Frontend
+   # Terminal 2 — Frontend Client
    cd web/frontend
    npm run dev
    ```
 
 7. Open `http://localhost:5173` in your browser.
+
+---
+
+## 🚢 CI/CD & Cloud Deployment
+
+The project implements a modern cloud deployment workflow ensuring continuous integration, zero-downtime previews, and automated database sync:
+
+```mermaid
+flowchart LR
+    subgraph VCS ["Version Control"]
+        Commit["Git Commit / PR"] -->|Push to main| GitHub["GitHub Repository\n(NhatVy177/HomeStayDorm)"]
+    end
+
+    subgraph CI_CD ["Continuous Deployment"]
+        GitHub -->|Webhook Trigger| Vercel["Vercel Build Pipeline\n(Vite Production Bundle)"]
+        Vercel -->|Deploy Edge CDN| ProdApp["Live SPA\nhome-stay-dorm.vercel.app"]
+    end
+
+    subgraph CloudDB ["Cloud Infrastructure"]
+        ProdApp -->|HTTPS / REST API| BackendAPI["Node.js Express Engine"]
+        BackendAPI -->|PgBouncer / SSL Pool| Supabase[("Supabase Cloud\nPostgreSQL Cluster")]
+    end
+```
+
+- **Frontend Hosting (Vercel)**:
+  - **Automated Deployments**: Every push to `main` automatically triggers an optimized Vite production build and deploys to Vercel's global CDN edge network.
+  - **SPA Routing Support**: Configured [`web/frontend/vercel.json`](web/frontend/vercel.json) with client-side URL rewrites (`/(.*) -> /index.html`) to support HTML5 PushState history routing without 404 errors on deep linking.
+- **Database Infrastructure (Supabase Cloud)**:
+  - High-availability PostgreSQL cluster hosted in Singapore region (`ap-southeast-1`) with SSL enforcement and transaction connection pooling via Supabase PgBouncer.
+  - Automated deployment scripts in `web/scripts/` enable repeatable schema and procedure synchronization.
 
 ---
 
