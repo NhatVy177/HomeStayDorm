@@ -71,8 +71,8 @@ A quick overview of the operational flow by role:
 
 Full specifications, analysis, and design documentation:
 
-- **Project specification (PDF):** [`FIT_4.0_DATH_PTTK HTTT_2526.pdf`](nguồn%20để%20viết%20readme/FIT_4.0_DATH_PTTK%20HTTT_2526.pdf)
-- **Full design report (PDF):** [`10_BaoCao.pdf`](nguồn%20để%20viết%20readme/10_BaoCao.pdf) — detailed use case specifications, activity diagrams, class diagrams, sequence diagrams, ERD, UI prototypes
+- **Project specification (PDF):** [`FIT_4.0_DATH_PTTK HTTT_2526.pdf`](docs/references/FIT_4.0_DATH_PTTK%20HTTT_2526.pdf)
+- **Full design report (PDF):** [`10_BaoCao.pdf`](docs/references/10_BaoCao.pdf) — detailed use case specifications, activity diagrams, class diagrams, sequence diagrams, ERD, UI prototypes
 
 ---
 
@@ -150,7 +150,7 @@ The system models **10 core business processes**, each fully specified with main
 
 [![System Use Case Diagram](docs/diagrams/system-usecase.jpg)](docs/diagrams/system-usecase.jpg)
 
-The system implements **40+ system-level use cases** covering all core requirements. Full use case specifications (actors, preconditions, main/alternative flows, exceptions, post-conditions) are available in the [design report](nguồn%20để%20viết%20readme/10_BaoCao.pdf).
+The system implements **40+ system-level use cases** covering all core requirements. Full use case specifications (actors, preconditions, main/alternative flows, exceptions, post-conditions) are available in the [design report](docs/references/10_BaoCao.pdf).
 
 ### Key System Use Cases by Module
 
@@ -242,7 +242,7 @@ Detailed sequence diagrams are provided for each system use case, illustrating t
 - **Control classes** (business logic controllers)
 - **Entity classes** (data access objects)
 
-All sequence diagrams follow the 3-tier architecture pattern and are documented in the [full report](nguồn%20để%20viết%20readme/10_BaoCao.pdf), Section 2.5.
+All sequence diagrams follow the 3-tier architecture pattern and are documented in the [full report](docs/references/10_BaoCao.pdf), Section 2.5.
 
 ---
 
@@ -264,7 +264,7 @@ The relational database consists of **34 tables** organized into the following l
 | **Rules & Violations** | `QuiDinh` (Rules), `DieuKhoanViPham` (Violation Terms), `BienBanViPham` (Violation Report) |
 | **Maintenance** | `YeuCauSuaChua` (Repair Request) |
 
-Full ERD and schema details are available in the [design report](nguồn%20để%20viết%20readme/10_BaoCao.pdf), Section 2.1.
+Full ERD and schema details are available in the [design report](docs/references/10_BaoCao.pdf), Section 2.1.
 
 ---
 
@@ -289,6 +289,7 @@ HomeStayDorm/
 ├── docs/
 │   ├── diagrams/        # Use case, sequence, class diagram, ERD exports (PNG/PDF)
 │   ├── mockups/         # Original Google Stitch HTML mockups (design reference)
+│   ├── references/      # Project specification, final report, and reference documents
 │   └── screenshots/     # Actual application screenshots
 ├── Database/            # SQL scripts: schema creation, stored procedures, triggers, seed data
 │   ├── CreateDB/        # Table creation scripts (34 tables)
