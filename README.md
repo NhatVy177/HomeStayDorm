@@ -197,10 +197,10 @@ sequenceDiagram
     alt Customer Agrees
         Customer->>System: Confirm & Sign Settlement
         Accountant->>System: Process Refund or Collect Difference
-        System->>System: Cascading state: Contract -> Liquidated; Room/Bed -> Available
+        System->>System: Auto update: Contract liquidated, Room and Bed released
     else Customer Disputes
         Customer->>System: Submit Feedback Note (GhiChuPhanHoiKhach)
-        System->>Accountant: Re-audit flag (TrangThai = 'Khách khiếu nại')
+        System->>Accountant: Flag dispute for re-audit (Khach khieu nai)
     end
 ```
 
