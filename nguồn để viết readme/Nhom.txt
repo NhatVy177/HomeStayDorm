@@ -1,0 +1,6 @@
+Student ID,Full Name,Actual Role & Project Contributions
+23120192,Nguyễn Nhật Vy,"Project Leader, Lead Tester & UI/UX Designer.System Analyst: Usecases, Sequence & 3-Tier Class Diagrams.Full-Stack Developer: General Interface, Room Discovery, Booking Flow & Settlement (Quyết toán)."
+23120300,Nguyễn Trà My,Database Designer (ERD) & Data Specialist (Mock Data).System Analyst: Sequence & 3-Tier Class Diagrams.Full-Stack Developer: Checkout Flow (Trả phòng).
+23120198,Nguyễn Nhựt Thanh,Database Designer (ERD).System Analyst: Sequence & 3-Tier Class Diagrams.Full-Stack Developer: Check-in Flow (Nhận phòng).
+23120206,Ngô Thuận An,System Analyst: Sequence & 3-Tier Class Diagrams.Full-Stack Developer: Deposit Flow (Đặt cọc).
+23120218,Nguyễn Ngọc Bình,Data Specialist (Mock Data).System Analyst: Sequence & 3-Tier Class Diagrams.Full-Stack Developer: Schedule Management & Admin Dashboard.

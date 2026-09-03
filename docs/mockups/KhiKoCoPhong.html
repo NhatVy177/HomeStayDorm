@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Hồ sơ đăng ký - HomestayDorm</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          primary: '#00666d',
+          'primary-container': '#00818a',
+          secondary: '#a43c12',
+          'secondary-container': '#fe7e4f',
+          background: '#f8f9fa',
+          surface: '#f8f9fa',
+          'surface-container-lowest': '#ffffff',
+          'surface-container-low': '#f3f4f5',
+          'surface-container': '#edeeef',
+          'surface-container-high': '#e7e8e9',
+          'surface-container-highest': '#e1e3e4',
+          'on-surface': '#191c1d',
+          'on-surface-variant': '#3e494a',
+          outline: '#6e797a',
+          'outline-variant': '#bdc9ca',
+          'on-primary': '#ffffff',
+          'on-primary-container': '#f5feff',
+          'on-secondary': '#ffffff',
+          error: '#ba1a1a',
+          'error-container': '#ffdad6'
+        },
+        borderRadius: {
+          DEFAULT: '0.25rem',
+          lg: '0.5rem',
+          xl: '0.75rem',
+          full: '9999px'
+        },
+        spacing: {
+          gutter: '24px',
+          xs: '4px',
+          sm: '12px',
+          md: '24px',
+          lg: '48px',
+          xl: '80px',
+          'container-max': '1280px'
+        },
+        fontFamily: {
+          'headline-md': ['Montserrat'],
+          'headline-lg': ['Montserrat'],
+          'body-md': ['Inter'],
+          'label-md': ['Inter'],
+          caption: ['Inter']
+        },
+        fontSize: {
+          'headline-lg': ['32px', { lineHeight: '1.3', fontWeight: '600' }],
+          'headline-md': ['24px', { lineHeight: '1.4', fontWeight: '600' }],
+          'body-md': ['16px', { lineHeight: '1.6', fontWeight: '400' }],
+          'label-md': ['14px', { lineHeight: '1.2', letterSpacing: '0', fontWeight: '600' }],
+          caption: ['12px', { lineHeight: '1.4', fontWeight: '400' }]
+        }
+      }
+    }
+  };
+</script>
+<style>
+  body {
+    background: #f8f9fa;
+    color: #191c1d;
+    font-family: Inter, Arial, sans-serif;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+  }
+
+  .sidebar-active {
+    background: rgba(0, 102, 109, 0.08);
+    color: #00666d;
+    font-weight: 700;
+    position: relative;
+  }
+
+  .sidebar-active::before {
+    background: #00666d;
+    border-radius: 0 999px 999px 0;
+    bottom: 10px;
+    content: '';
+    left: 0;
+    position: absolute;
+    top: 10px;
+    width: 4px;
+  }
+
+  .room-placeholder {
+    align-items: center;
+    background: #edeeef;
+    color: #6e797a;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    justify-content: center;
+    min-height: 180px;
+  }
+
+  .room-placeholder .material-symbols-outlined {
+    font-size: 42px;
+  }
+
+  .state-box {
+    background: #ffffff;
+    border: 1px solid #bdc9ca;
+    border-radius: 16px;
+  }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="flex min-h-screen">
+  <aside class="hidden md:flex w-64 bg-surface-container-lowest border-r border-outline-variant flex-col sticky top-0 h-screen z-40">
+    <div class="h-20 flex items-center px-6 border-b border-outline-variant">
+      <span class="font-headline-md text-headline-md font-bold text-primary">HomestayDorm</span>
+    </div>
+    <nav class="flex-1 py-6 px-4 space-y-2">
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="KhamPhaPhong.html">
+        <span class="material-symbols-outlined">explore</span>
+        <span class="font-label-md text-label-md">Khám phá phòng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl sidebar-active transition-all" href="KhiKoCoPhong.html">
+        <span class="material-symbols-outlined">assignment</span>
+        <span class="font-label-md text-label-md">Hồ sơ đăng ký</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="LichXemPhong.html">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span class="font-label-md text-label-md">Lịch xem phòng</span>
+      </a>
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant/50 cursor-not-allowed" title="Hoàn thành hồ sơ trước khi sử dụng tính năng này">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">payments</span>
+          <span class="font-label-md text-label-md">Đặt cọc</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </div>
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant/50 cursor-not-allowed" title="Hoàn thành hồ sơ trước khi sử dụng tính năng này">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">bed</span>
+          <span class="font-label-md text-label-md">Phòng/Giường của tôi</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </div>
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant/50 cursor-not-allowed" title="Hoàn thành hồ sơ trước khi sử dụng tính năng này">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">description</span>
+          <span class="font-label-md text-label-md">Hợp đồng</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </div>
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant/50 cursor-not-allowed" title="Hoàn thành hồ sơ trước khi sử dụng tính năng này">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">receipt_long</span>
+          <span class="font-label-md text-label-md">Hóa đơn</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </div>
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant/50 cursor-not-allowed" title="Hoàn thành hồ sơ trước khi sử dụng tính năng này">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">construction</span>
+          <span class="font-label-md text-label-md">Bảo trì</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </div>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+        <span class="material-symbols-outlined">person</span>
+        <span class="font-label-md text-label-md">Thông tin cá nhân</span>
+      </a>
+    </nav>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0">
+    <header class="h-20 bg-surface/85 backdrop-blur-md sticky top-0 z-30 border-b border-outline-variant px-gutter flex items-center justify-between">
+      <div>
+        <h1 class="font-headline-md text-headline-md text-on-surface leading-tight">Chào <span data-user-first-name>bạn</span>,</h1>
+        <p class="font-caption text-caption text-on-surface-variant">Theo dõi hồ sơ đăng ký thuê phòng của bạn.</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="relative p-2 rounded-full bg-surface-container-low text-on-surface-variant">
+          <span class="material-symbols-outlined">notifications</span>
+        </div>
+        <div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+          <div class="text-right hidden sm:block">
+            <p class="font-label-md text-label-md text-on-surface" data-user-name>Khách hàng</p>
+            <p class="font-caption text-caption text-primary">Khách hàng mới</p>
+          </div>
+          <div class="w-10 h-10 rounded-full border-2 border-primary-container bg-primary text-on-primary flex items-center justify-center font-bold" data-user-avatar>KH</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto px-gutter pb-28 pt-8">
+      <div class="max-w-5xl mx-auto">
+        <section class="state-box p-lg flex flex-col items-center justify-center text-center shadow-sm">
+          <div class="w-24 h-24 bg-surface-container-high rounded-full flex items-center justify-center mb-md">
+            <span class="material-symbols-outlined text-[64px] text-outline">assignment</span>
+          </div>
+          <p class="font-caption text-caption text-primary font-bold uppercase tracking-[0.08em] mb-xs">Hồ sơ đăng ký</p>
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-sm" id="empty-title">Bạn chưa có hồ sơ đăng ký</h2>
+          <p class="font-body-md text-body-md text-on-surface-variant max-w-xl mb-lg" id="empty-message">
+            Khi chưa có hồ sơ, hệ thống chỉ hiển thị trạng thái trống và danh sách phòng lấy từ dữ liệu thật để bạn chọn gửi yêu cầu.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-sm">
+            <a class="bg-primary text-on-primary px-lg py-sm rounded-lg font-bold text-label-md hover:bg-primary-container transition-all shadow-md active:scale-95 duration-200 flex items-center justify-center gap-sm" href="KhamPhaPhong.html">
+              <span class="material-symbols-outlined">search</span>
+              Tìm phòng ngay
+            </a>
+            <button class="border border-outline text-on-surface px-lg py-sm rounded-lg font-bold text-label-md hover:bg-surface-container transition-all flex items-center justify-center gap-sm" type="button" id="reload-button">
+              <span class="material-symbols-outlined">refresh</span>
+              Tải lại dữ liệu
+            </button>
+          </div>
+        </section>
+
+        <section class="mt-lg hidden" id="notice-box">
+          <div class="state-box p-md flex gap-sm items-start">
+            <span class="material-symbols-outlined text-primary">info</span>
+            <p class="text-on-surface-variant" id="notice-text"></p>
+          </div>
+        </section>
+
+        <section class="mt-xl">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm mb-md">
+            <div>
+              <h3 class="font-headline-md text-headline-md text-on-surface">Phòng khả dụng</h3>
+              <p class="font-caption text-caption text-on-surface-variant">Dữ liệu được lấy từ hệ thống, không dùng phòng mẫu.</p>
+            </div>
+            <a class="text-primary font-bold text-label-md hover:underline" href="KhamPhaPhong.html">Xem tất cả</a>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-md" id="room-grid">
+            <div class="state-box p-lg text-center text-on-surface-variant md:col-span-2">
+              <span class="material-symbols-outlined text-[40px] text-outline mb-sm">sync</span>
+              <p>Đang tải danh sách phòng...</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<nav class="fixed bottom-0 w-full md:hidden z-50 bg-surface shadow-[0_-4px_10px_rgba(0,0,0,0.08)] border-t border-outline-variant">
+  <div class="flex justify-around items-center h-16 w-full px-base">
+    <a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors" href="KhamPhaPhong.html">
+      <span class="material-symbols-outlined">explore</span>
+      <span class="font-label-md text-[10px] mt-1">Khám phá</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-primary font-bold" href="KhiKoCoPhong.html">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">assignment</span>
+      <span class="font-label-md text-[10px] mt-1">Hồ sơ</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors" href="LichXemPhong.html">
+      <span class="material-symbols-outlined">calendar_month</span>
+      <span class="font-label-md text-[10px] mt-1">Lịch xem</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors" href="#">
+      <span class="material-symbols-outlined">person</span>
+      <span class="font-label-md text-[10px] mt-1">Cá nhân</span>
+    </a>
+  </div>
+</nav>
+
+<script>
+  const API_BASE = (window.HOMESTAYDORM_API_BASE || localStorage.getItem('homestaydorm_api_base') || 'http://localhost:5000/api').replace(/\/$/, '');
+  const APP_ORIGIN = API_BASE.replace(/\/api$/, '');
+  const SESSION_KEY = 'happyroom_session';
+
+  function readSession() {
+    try {
+      return JSON.parse(localStorage.getItem(SESSION_KEY)) || {};
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
+      return {};
+    }
+  }
+
+  const session = readSession();
+  const token = session.token || '';
+  const user = session.user || {};
+
+  function initials(name) {
+    const value = String(name || 'Khách hàng').trim();
+    return value
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(-2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() || 'KH';
+  }
+
+  function firstName(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : 'bạn';
+  }
+
+  function hydrateUser() {
+    document.querySelectorAll('[data-user-first-name]').forEach((node) => {
+      node.textContent = firstName(user.hoTen);
+    });
+    document.querySelectorAll('[data-user-name]').forEach((node) => {
+      node.textContent = user.hoTen || 'Khách hàng';
+    });
+    document.querySelectorAll('[data-user-avatar]').forEach((node) => {
+      node.textContent = initials(user.hoTen);
+    });
+  }
+
+  function unwrap(payload) {
+    return payload && Object.prototype.hasOwnProperty.call(payload, 'data') ? payload.data : payload;
+  }
+
+  async function apiGet(path) {
+    if (!token) {
+      const error = new Error('Bạn cần đăng nhập tài khoản khách hàng để xem dữ liệu hồ sơ.');
+      error.code = 'NO_AUTH';
+      throw error;
+    }
+
+    const response = await fetch(`${API_BASE}${path}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.message || 'Không thể tải dữ liệu từ hệ thống.');
+    }
+    return unwrap(payload);
+  }
+
+  function formatMoney(value) {
+    if (value == null || value === '') return 'Liên hệ';
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? `${numberValue.toLocaleString('vi-VN')}đ` : 'Liên hệ';
+  }
+
+  function resolveAssetUrl(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    return new URL(url, APP_ORIGIN).href;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[char]));
+  }
+
+  function setNotice(message) {
+    const box = document.getElementById('notice-box');
+    const text = document.getElementById('notice-text');
+    if (!message) {
+      box.classList.add('hidden');
+      text.textContent = '';
+      return;
+    }
+    text.textContent = message;
+    box.classList.remove('hidden');
+  }
+
+  function renderEmptyRooms(message) {
+    document.getElementById('room-grid').innerHTML = `
+      <div class="state-box p-lg text-center text-on-surface-variant md:col-span-2">
+        <span class="material-symbols-outlined text-[40px] text-outline mb-sm">meeting_room</span>
+        <p>${escapeHtml(message)}</p>
+      </div>
+    `;
+  }
+
+  function renderRooms(rooms) {
+    const grid = document.getElementById('room-grid');
+    if (!Array.isArray(rooms) || rooms.length === 0) {
+      renderEmptyRooms('Hiện chưa có phòng khả dụng từ hệ thống.');
+      return;
+    }
+
+    grid.innerHTML = rooms.slice(0, 4).map((room) => {
+      const image = resolveAssetUrl(room.anhDai || room.urlImg || room.urlAnh);
+      const detailUrl = room.maPhong
+        ? `ChiTietXemPhong.html?maPhong=${encodeURIComponent(room.maPhong)}`
+        : '#';
+      const unit = room.hinhThucThue === 'Nguyên căn' ? '/căn/tháng' : '/giường/tháng';
+      const roomName = room.tenPhong || room.maPhong || 'Phòng chưa cập nhật tên';
+      const roomCode = room.maPhong || '';
+      const roomLocation = room.diaChi || room.chiNhanh || 'Chưa cập nhật địa chỉ';
+      return `
+        <article class="group bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant hover:shadow-lg transition-all duration-300">
+          <div class="relative h-48 overflow-hidden">
+            ${image
+              ? `<img alt="${escapeHtml(roomName)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${escapeHtml(image)}">`
+              : `<div class="room-placeholder"><span class="material-symbols-outlined">meeting_room</span><span>${escapeHtml(roomCode || 'Phòng')}</span></div>`}
+            <div class="absolute top-sm left-sm bg-primary text-on-primary px-sm py-xs rounded-full font-label-md text-[12px] shadow-sm">
+              ${escapeHtml(room.tinhTrang || 'Khả dụng')}
+            </div>
+          </div>
+          <div class="p-md">
+            <div class="flex justify-between items-start gap-sm mb-xs">
+              <h4 class="font-headline-md text-[18px] text-on-surface truncate">${escapeHtml(roomName)}</h4>
+              <span class="font-label-md text-label-md text-primary whitespace-nowrap">${escapeHtml(roomCode)}</span>
+            </div>
+            <p class="text-on-surface-variant text-caption mb-md flex items-center gap-xs">
+              <span class="material-symbols-outlined text-[16px]">location_on</span>
+              ${escapeHtml(roomLocation)}
+            </p>
+            <div class="flex flex-wrap gap-xs mb-md">
+              ${room.loaiPhong ? `<span class="bg-surface-container text-on-surface-variant text-[12px] px-sm py-xs rounded-full">${escapeHtml(room.loaiPhong)}</span>` : ''}
+              ${room.hinhThucThue ? `<span class="bg-surface-container text-on-surface-variant text-[12px] px-sm py-xs rounded-full">${escapeHtml(room.hinhThucThue)}</span>` : ''}
+              ${room.soChoTrong != null ? `<span class="bg-surface-container text-on-surface-variant text-[12px] px-sm py-xs rounded-full">Còn ${escapeHtml(room.soChoTrong)} chỗ</span>` : ''}
+            </div>
+            <div class="flex items-center justify-between gap-sm">
+              <span class="font-headline-md text-secondary">${formatMoney(room.giaThue)}<span class="text-caption font-normal text-on-surface-variant">${unit}</span></span>
+              <a class="text-primary border border-primary px-md py-xs rounded-lg font-bold text-label-md hover:bg-primary hover:text-on-primary transition-all ${room.maPhong ? '' : 'pointer-events-none opacity-50'}" href="${detailUrl}">
+                Chi tiết
+              </a>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  async function loadPage() {
+    hydrateUser();
+    setNotice('');
+    renderEmptyRooms('Đang tải danh sách phòng...');
+
+    try {
+      const overview = await apiGet('/khach-moi/tong-quan');
+      const profiles = Array.isArray(overview.hoSo) ? overview.hoSo : [];
+
+      if (profiles.length > 0) {
+        document.getElementById('empty-title').textContent = 'Tài khoản đã có hồ sơ đăng ký';
+        document.getElementById('empty-message').textContent = 'Trang này chỉ dành cho trường hợp khách chưa có hồ sơ. Bạn có thể chuyển sang mục hồ sơ hoặc lịch xem phòng để theo dõi tiến trình hiện tại.';
+        setNotice(`Hồ sơ gần nhất: ${profiles[0].maDangKy || profiles[0].id || 'đang cập nhật'} - ${profiles[0].trangThai || 'chưa cập nhật trạng thái'}.`);
+      } else {
+        document.getElementById('empty-title').textContent = 'Bạn chưa có hồ sơ đăng ký';
+        document.getElementById('empty-message').textContent = 'Hãy chọn phòng phù hợp rồi gửi yêu cầu đăng ký thuê để nhân viên Sale tư vấn và sắp lịch xem phòng.';
+      }
+
+      const rooms = Array.isArray(overview.phongGoiY) && overview.phongGoiY.length
+        ? overview.phongGoiY
+        : await apiGet('/khach-moi/phong-kha-dung');
+      renderRooms(rooms);
+    } catch (error) {
+      document.getElementById('empty-title').textContent = error.code === 'NO_AUTH' ? 'Chưa đăng nhập' : 'Không tải được hồ sơ';
+      document.getElementById('empty-message').textContent = error.message;
+      renderEmptyRooms(error.code === 'NO_AUTH' ? 'Đăng nhập để xem phòng khả dụng theo tài khoản khách hàng.' : 'Không thể tải danh sách phòng lúc này.');
+    }
+  }
+
+  document.getElementById('reload-button').addEventListener('click', loadPage);
+  loadPage();
+</script>
+</body>
+</html>

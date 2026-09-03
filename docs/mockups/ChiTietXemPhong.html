@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Chi tiết lịch xem phòng - HomestayDorm</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+  }
+
+  .timeline-line {
+    background: linear-gradient(to bottom, transparent 0%, #bdc9ca 15%, #bdc9ca 85%, transparent 100%);
+  }
+
+  .room-placeholder {
+    align-items: center;
+    background: #edeeef;
+    color: #6e797a;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    min-height: 128px;
+    width: 100%;
+  }
+
+  .room-placeholder .material-symbols-outlined {
+    font-size: 40px;
+  }
+
+  .modal-backdrop {
+    align-items: center;
+    background: rgba(25, 28, 29, 0.42);
+    display: none;
+    inset: 0;
+    justify-content: center;
+    padding: 24px;
+    position: fixed;
+    z-index: 80;
+  }
+
+  .modal-backdrop.is-open {
+    display: flex;
+  }
+</style>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          tertiary: '#555e5f',
+          primary: '#00666d',
+          secondary: '#a43c12',
+          'primary-container': '#00818a',
+          'secondary-container': '#fe7e4f',
+          background: '#f8f9fa',
+          surface: '#f8f9fa',
+          'surface-container-lowest': '#ffffff',
+          'surface-container-low': '#f3f4f5',
+          'surface-container': '#edeeef',
+          'surface-container-high': '#e7e8e9',
+          'surface-container-highest': '#e1e3e4',
+          'on-surface': '#191c1d',
+          'on-surface-variant': '#3e494a',
+          'inverse-surface': '#2e3132',
+          'inverse-on-surface': '#f0f1f2',
+          outline: '#6e797a',
+          'outline-variant': '#bdc9ca',
+          'on-primary': '#ffffff',
+          'on-primary-container': '#f5feff',
+          'on-secondary': '#ffffff',
+          error: '#ba1a1a',
+          'error-container': '#ffdad6'
+        },
+        borderRadius: {
+          DEFAULT: '0.25rem',
+          lg: '0.5rem',
+          xl: '0.75rem',
+          full: '9999px'
+        },
+        spacing: {
+          xs: '4px',
+          sm: '12px',
+          base: '8px',
+          gutter: '24px',
+          md: '24px',
+          lg: '48px',
+          xl: '80px',
+          'container-max': '1280px'
+        },
+        fontFamily: {
+          'headline-xl': ['Montserrat'],
+          'headline-lg': ['Montserrat'],
+          'headline-md': ['Montserrat'],
+          'body-md': ['Inter'],
+          'label-md': ['Inter'],
+          caption: ['Inter']
+        },
+        fontSize: {
+          'headline-xl': ['48px', { lineHeight: '1.2', letterSpacing: '0', fontWeight: '700' }],
+          'headline-lg': ['32px', { lineHeight: '1.3', fontWeight: '600' }],
+          'headline-md': ['24px', { lineHeight: '1.4', fontWeight: '600' }],
+          'body-md': ['16px', { lineHeight: '1.6', fontWeight: '400' }],
+          'label-md': ['14px', { lineHeight: '1.2', letterSpacing: '0', fontWeight: '600' }],
+          caption: ['12px', { lineHeight: '1.4', fontWeight: '400' }]
+        }
+      }
+    }
+  };
+</script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<div class="flex min-h-screen">
+  <aside class="w-64 bg-surface-container-lowest border-r border-outline-variant flex-col sticky top-0 h-screen z-40 hidden md:flex">
+    <div class="h-20 flex items-center px-6 border-b border-outline-variant">
+      <span class="font-headline-md text-headline-md font-bold text-primary">HomestayDorm</span>
+    </div>
+    <nav class="flex-1 py-6 px-4 space-y-2">
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="KhamPhaPhong.html">
+        <span class="material-symbols-outlined">explore</span>
+        <span class="font-label-md text-label-md">Khám phá phòng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="KhiKoCoPhong.html">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span class="font-label-md text-label-md">Hồ sơ đăng ký</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-container/20 text-primary relative overflow-hidden transition-all" href="LichXemPhong.html">
+        <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span class="font-label-md text-label-md">Lịch xem phòng</span>
+      </a>
+      <a class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant opacity-60 cursor-not-allowed" href="#" onclick="alert('Vui lòng hoàn thành hồ sơ để sử dụng tính năng này')">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">payments</span>
+          <span class="font-label-md text-label-md">Đặt cọc</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </a>
+      <a class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant opacity-60 cursor-not-allowed" href="#" onclick="alert('Vui lòng hoàn thành hồ sơ để sử dụng tính năng này')">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">bed</span>
+          <span class="font-label-md text-label-md">Phòng/Giường của tôi</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </a>
+      <a class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant opacity-60 cursor-not-allowed" href="#" onclick="alert('Vui lòng hoàn thành hồ sơ để sử dụng tính năng này')">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">description</span>
+          <span class="font-label-md text-label-md">Hợp đồng</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </a>
+      <a class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant opacity-60 cursor-not-allowed" href="#" onclick="alert('Vui lòng hoàn thành hồ sơ để sử dụng tính năng này')">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">receipt</span>
+          <span class="font-label-md text-label-md">Hóa đơn</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </a>
+      <a class="flex items-center justify-between px-4 py-3 rounded-xl text-on-surface-variant opacity-60 cursor-not-allowed" href="#" onclick="alert('Vui lòng hoàn thành hồ sơ để sử dụng tính năng này')">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined">build</span>
+          <span class="font-label-md text-label-md">Bảo trì</span>
+        </div>
+        <span class="material-symbols-outlined text-sm">lock</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+        <span class="material-symbols-outlined">person</span>
+        <span class="font-label-md text-label-md">Thông tin cá nhân</span>
+      </a>
+    </nav>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0">
+    <header class="h-20 bg-surface/80 backdrop-blur-md sticky top-0 z-30 border-b border-outline-variant px-gutter flex items-center justify-between w-full">
+      <div>
+        <h1 class="font-headline-md text-headline-md text-on-surface">Chào <span data-user-first-name>bạn</span>,</h1>
+        <p class="font-caption text-caption text-on-surface-variant">Theo dõi chi tiết lịch xem phòng của bạn.</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="relative p-2 rounded-full hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+        </div>
+        <div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+          <div class="text-right hidden sm:block">
+            <p class="font-label-md text-label-md text-on-surface" data-user-name>Khách hàng</p>
+            <p class="font-caption text-caption text-primary">Khách hàng mới</p>
+          </div>
+          <div class="w-10 h-10 rounded-full border-2 border-primary-container bg-primary text-on-primary flex items-center justify-center font-bold" data-user-avatar>KH</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="p-lg min-h-screen bg-background">
+      <div class="max-w-container-max mx-auto">
+        <div class="mb-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
+          <div>
+            <a class="inline-flex items-center gap-xs text-primary font-label-md text-label-md hover:underline mb-sm" href="LichXemPhong.html">
+              <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+              Quay lại lịch xem phòng
+            </a>
+            <h2 class="font-headline-lg text-headline-lg text-on-surface">Chi tiết lịch xem phòng</h2>
+          </div>
+          <span class="px-4 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md" id="schedule-id-chip">Đang tải</span>
+        </div>
+
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg text-center text-on-surface-variant" id="state-box">
+          <span class="material-symbols-outlined text-[44px] text-outline mb-sm">sync</span>
+          <p>Đang tải chi tiết lịch xem phòng...</p>
+        </section>
+
+        <section class="hidden" id="detail-content">
+          <div class="relative pl-0 md:pl-16 lg:pl-24">
+            <div class="absolute left-6 md:left-[5.5rem] lg:left-[7.5rem] top-4 bottom-4 w-1 timeline-line hidden sm:block"></div>
+            <div class="relative flex flex-col md:flex-row gap-gutter group">
+              <div class="md:absolute md:-left-32 lg:-left-40 flex flex-col items-center md:items-end w-24" id="date-marker"></div>
+              <div class="hidden sm:flex absolute left-6 md:left-[5.5rem] lg:left-[7.5rem] -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-4 border-background z-10 shadow-[0_0_0_4px_rgba(0,105,112,0.1)]"></div>
+
+              <div class="flex-1 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-md">
+                <div class="flex flex-col lg:flex-row gap-md">
+                  <div class="w-full lg:w-56 h-36 rounded-lg overflow-hidden shrink-0" id="main-room-media"></div>
+                  <div class="flex-1 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-sm">
+                      <div>
+                        <h3 class="font-headline-md text-headline-md text-on-surface" id="schedule-title">Lịch xem phòng</h3>
+                        <p class="text-on-surface-variant flex items-center gap-1" id="schedule-location">
+                          <span class="material-symbols-outlined text-sm">location_on</span>
+                          <span>Đang cập nhật</span>
+                        </p>
+                      </div>
+                      <span class="px-3 py-1 rounded-full bg-primary/10 text-primary font-label-md text-label-md border border-primary/20 flex items-center gap-1 w-fit" id="schedule-status">
+                        <span class="material-symbols-outlined text-sm">schedule</span>
+                        <span>Đang cập nhật</span>
+                      </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-sm py-2" id="schedule-facts"></div>
+
+                    <div class="flex flex-wrap gap-base pt-2">
+                      <a class="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all shadow-sm" id="contact-button" href="#">
+                        <span class="material-symbols-outlined text-sm">chat</span>
+                        Liên hệ tư vấn
+                      </a>
+                      <button class="flex items-center gap-2 px-6 py-2.5 border border-primary text-primary rounded-lg font-label-md text-label-md hover:bg-primary/5 active:scale-95 transition-all" id="open-reschedule" type="button">
+                        <span class="material-symbols-outlined text-sm">event_repeat</span>
+                        Đổi lịch
+                      </button>
+                      <button class="flex items-center gap-2 px-6 py-2.5 border border-outline text-on-surface-variant rounded-lg font-label-md text-label-md hover:bg-surface-container transition-all" id="cancel-schedule" type="button">
+                        <span class="material-symbols-outlined text-sm">cancel</span>
+                        Hủy lịch
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-lg mt-xl">
+            <section class="lg:col-span-2 space-y-lg">
+              <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md">
+                <h3 class="font-headline-md text-headline-md text-on-surface mb-md">Phòng trong lịch xem</h3>
+                <div class="space-y-md" id="room-list"></div>
+              </div>
+
+              <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md">
+                <h3 class="font-headline-md text-headline-md text-on-surface mb-md">Thông tin hồ sơ đăng ký</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-sm" id="profile-grid"></div>
+              </div>
+            </section>
+
+            <aside class="space-y-lg">
+              <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md">
+                <h3 class="font-headline-md text-headline-md text-on-surface mb-md">Nhân viên phụ trách</h3>
+                <div class="flex items-start gap-sm">
+                  <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold" id="staff-avatar">NV</div>
+                  <div class="min-w-0">
+                    <p class="font-bold text-on-surface" id="staff-name">Chưa phân công</p>
+                    <p class="text-caption text-on-surface-variant" id="staff-phone"></p>
+                    <p class="text-caption text-on-surface-variant" id="staff-email"></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-primary-container/5 border border-primary/10 rounded-xl p-md flex gap-sm">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-primary">info</span>
+                </div>
+                <p class="text-on-surface-variant text-body-md">Nếu cần thay đổi thời gian, gửi yêu cầu đổi lịch để nhân viên xác nhận lại.</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="reschedule-modal">
+  <form class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-lg p-md" id="reschedule-form">
+    <div class="flex items-start justify-between gap-sm mb-md">
+      <div>
+        <h3 class="font-headline-md text-headline-md text-on-surface">Yêu cầu đổi lịch</h3>
+        <p class="text-caption text-on-surface-variant">Chọn thời gian mong muốn mới để nhân viên xác nhận.</p>
+      </div>
+      <button class="w-9 h-9 rounded-full hover:bg-surface-container flex items-center justify-center" type="button" id="close-reschedule">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <label class="block mb-md">
+      <span class="font-label-md text-label-md text-on-surface-variant block mb-xs">Thời gian mới</span>
+      <input class="w-full rounded-lg border-outline-variant focus:border-primary focus:ring-primary" id="new-time" type="datetime-local" required>
+    </label>
+    <div class="flex justify-end gap-sm">
+      <button class="px-5 py-2.5 rounded-lg border border-outline text-on-surface-variant font-label-md" type="button" id="dismiss-reschedule">Đóng</button>
+      <button class="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-label-md" type="submit">Gửi yêu cầu</button>
+    </div>
+  </form>
+</div>
+
+<div class="fixed bottom-5 right-5 z-[90] hidden rounded-lg bg-inverse-surface text-inverse-on-surface px-md py-sm shadow-lg" id="toast"></div>
+
+<script>
+  const API_BASE = (window.HOMESTAYDORM_API_BASE || localStorage.getItem('homestaydorm_api_base') || 'http://localhost:5000/api').replace(/\/$/, '');
+  const APP_ORIGIN = API_BASE.replace(/\/api$/, '');
+  const SESSION_KEY = 'happyroom_session';
+  const params = new URLSearchParams(window.location.search);
+
+  function readSession() {
+    try {
+      return JSON.parse(localStorage.getItem(SESSION_KEY)) || {};
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
+      return {};
+    }
+  }
+
+  const session = readSession();
+  const token = session.token || '';
+  const user = session.user || {};
+  let currentScheduleId = params.get('id') || '';
+  if (!currentScheduleId) {
+    const maDangKy = params.get('maDangKy');
+    const sttLich = params.get('sttLich');
+    currentScheduleId = maDangKy && sttLich ? `${maDangKy}-${sttLich}` : '';
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[char]));
+  }
+
+  function initials(name) {
+    return String(name || 'Khách hàng')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(-2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() || 'KH';
+  }
+
+  function firstName(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : 'bạn';
+  }
+
+  function hydrateUser() {
+    document.querySelectorAll('[data-user-first-name]').forEach((node) => {
+      node.textContent = firstName(user.hoTen);
+    });
+    document.querySelectorAll('[data-user-name]').forEach((node) => {
+      node.textContent = user.hoTen || 'Khách hàng';
+    });
+    document.querySelectorAll('[data-user-avatar]').forEach((node) => {
+      node.textContent = initials(user.hoTen);
+    });
+  }
+
+  function resolveAssetUrl(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    return new URL(url, APP_ORIGIN).href;
+  }
+
+  function formatDate(value) {
+    if (!value) return 'Chưa cập nhật';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Chưa cập nhật';
+    return date.toLocaleDateString('vi-VN');
+  }
+
+  function formatDateTime(value) {
+    if (!value) return 'Chưa cập nhật';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Chưa cập nhật';
+    return date.toLocaleString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  function formatMoney(value) {
+    if (value == null || value === '') return 'Chưa cập nhật';
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? `${numberValue.toLocaleString('vi-VN')}đ` : 'Chưa cập nhật';
+  }
+
+  function getDateParts(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return { day: '--', month: 'Tháng --', weekday: '' };
+    }
+    return {
+      day: String(date.getDate()).padStart(2, '0'),
+      month: `Tháng ${date.getMonth() + 1}`,
+      weekday: date.toLocaleDateString('vi-VN', { weekday: 'long' })
+    };
+  }
+
+  function unwrap(payload) {
+    return payload && Object.prototype.hasOwnProperty.call(payload, 'data') ? payload.data : payload;
+  }
+
+  async function api(path, options = {}) {
+    if (!token) {
+      const error = new Error('Bạn cần đăng nhập tài khoản khách hàng để xem lịch.');
+      error.code = 'NO_AUTH';
+      throw error;
+    }
+
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.message || 'Không thể tải dữ liệu lịch xem phòng.');
+    }
+    return unwrap(payload);
+  }
+
+  function showState(message, icon = 'info') {
+    document.getElementById('detail-content').classList.add('hidden');
+    document.getElementById('state-box').classList.remove('hidden');
+    document.getElementById('state-box').innerHTML = `
+      <span class="material-symbols-outlined text-[44px] text-outline mb-sm">${escapeHtml(icon)}</span>
+      <p>${escapeHtml(message)}</p>
+    `;
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 2600);
+  }
+
+  function fact(icon, label, value) {
+    return `
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-body-md">${escapeHtml(icon)}</span>
+        </div>
+        <div>
+          <p class="font-label-md text-label-md text-on-surface-variant">${escapeHtml(label)}</p>
+          <p class="font-bold text-on-surface">${escapeHtml(value)}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function profileCell(label, value) {
+    return `
+      <div class="bg-surface-container-low p-sm rounded-lg">
+        <span class="text-caption text-on-surface-variant">${escapeHtml(label)}</span>
+        <strong class="block text-on-surface mt-xs">${escapeHtml(value || 'Chưa cập nhật')}</strong>
+      </div>
+    `;
+  }
+
+  function renderRoomMedia(room) {
+    const url = resolveAssetUrl(room?.anhDaiDien);
+    if (!url) {
+      return '<div class="room-placeholder"><span class="material-symbols-outlined">meeting_room</span></div>';
+    }
+    return `<img class="w-full h-full object-cover" src="${escapeHtml(url)}" alt="${escapeHtml(room.tenPhong || room.maPhong || 'Phòng')}">`;
+  }
+
+  function renderRooms(rooms) {
+    const list = document.getElementById('room-list');
+    if (!Array.isArray(rooms) || rooms.length === 0) {
+      list.innerHTML = `
+        <div class="text-on-surface-variant bg-surface-container-low p-md rounded-lg">
+          Chưa có phòng/giường được gắn với lịch xem này.
+        </div>
+      `;
+      document.getElementById('main-room-media').innerHTML = renderRoomMedia(null);
+      return;
+    }
+
+    document.getElementById('main-room-media').innerHTML = renderRoomMedia(rooms[0]);
+    list.innerHTML = rooms.map((room) => `
+      <article class="flex flex-col sm:flex-row gap-sm rounded-xl border border-outline-variant bg-surface-container-low p-sm">
+        <div class="w-full sm:w-40 h-28 rounded-lg overflow-hidden shrink-0">
+          ${renderRoomMedia(room)}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-xs">
+            <div>
+              <h4 class="font-bold text-on-surface">${escapeHtml(room.tenPhong || room.maPhong || 'Phòng')}</h4>
+              <p class="text-caption text-on-surface-variant">${escapeHtml(room.diaChi || room.chiNhanh || 'Chưa cập nhật địa chỉ')}</p>
+            </div>
+            <span class="text-primary font-bold whitespace-nowrap">${escapeHtml(formatMoney(room.giaThue))}</span>
+          </div>
+          <div class="flex flex-wrap gap-xs mt-sm">
+            <span class="px-2 py-1 rounded-full bg-surface-container-high text-caption text-on-surface-variant">${escapeHtml(room.loaiPhong || 'Loại phòng')}</span>
+            <span class="px-2 py-1 rounded-full bg-surface-container-high text-caption text-on-surface-variant">${escapeHtml(room.maGiuong ? `Giường ${room.maGiuong}` : 'Nguyên phòng')}</span>
+            <span class="px-2 py-1 rounded-full bg-surface-container-high text-caption text-on-surface-variant">${escapeHtml(room.tinhTrangPhong || 'Trạng thái phòng')}</span>
+          </div>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function renderSchedule(detail) {
+    const rooms = detail.phongXem || [];
+    const firstRoom = rooms[0] || {};
+    const parts = getDateParts(detail.thoiGianHen);
+
+    document.getElementById('schedule-id-chip').textContent = detail.id || currentScheduleId;
+    document.getElementById('date-marker').innerHTML = `
+      <span class="font-headline-lg text-headline-lg text-primary">${escapeHtml(parts.day)}</span>
+      <span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">${escapeHtml(parts.month)}</span>
+      <span class="font-label-md text-label-md text-tertiary mt-xs">${escapeHtml(parts.weekday)}</span>
+    `;
+    document.getElementById('schedule-title').textContent = rooms.length > 1
+      ? `Lịch xem ${rooms.length} phòng`
+      : (firstRoom.tenPhong || 'Lịch xem phòng');
+    document.getElementById('schedule-location').innerHTML = `
+      <span class="material-symbols-outlined text-sm">location_on</span>
+      <span>${escapeHtml(firstRoom.diaChi || firstRoom.chiNhanh || detail.khuVucMongMuon || 'Chưa cập nhật địa chỉ')}</span>
+    `;
+    document.getElementById('schedule-status').innerHTML = `
+      <span class="material-symbols-outlined text-sm">schedule</span>
+      <span>${escapeHtml(detail.trangThai || 'Đang cập nhật')}</span>
+    `;
+    document.getElementById('schedule-facts').innerHTML = [
+      fact('access_time', 'Thời gian hẹn', formatDateTime(detail.thoiGianHen)),
+      fact('assignment', 'Hồ sơ đăng ký', detail.maDangKy || 'Chưa cập nhật'),
+      fact('home_work', 'Hình thức thuê', detail.hinhThucThue || 'Chưa cập nhật'),
+      fact('person', 'Nhân viên hướng dẫn', detail.tenNhanVienSale || 'Chưa phân công')
+    ].join('');
+
+    document.getElementById('profile-grid').innerHTML = [
+      profileCell('Ngày đăng ký', formatDate(detail.ngayDangKy)),
+      profileCell('Trạng thái hồ sơ', detail.trangThaiHoSo),
+      profileCell('Khu vực mong muốn', detail.khuVucMongMuon),
+      profileCell('Loại phòng yêu cầu', detail.loaiPhongYeuCau),
+      profileCell('Mức giá mong muốn', formatMoney(detail.mucGia)),
+      profileCell('Ngày dự kiến vào ở', formatDate(detail.ngayDuKienVaoO)),
+      profileCell('Số người ở', detail.soNguoiO ? `${detail.soNguoiO} người` : ''),
+      profileCell('Thời hạn thuê', detail.thoiHanThue ? `${detail.thoiHanThue} tháng` : '')
+    ].join('');
+
+    document.getElementById('staff-name').textContent = detail.tenNhanVienSale || 'Chưa phân công';
+    document.getElementById('staff-avatar').textContent = initials(detail.tenNhanVienSale || 'Nhân viên');
+    document.getElementById('staff-phone').textContent = detail.sdtNhanVienSale || '';
+    document.getElementById('staff-email').textContent = detail.emailNhanVienSale || '';
+    const contact = document.getElementById('contact-button');
+    if (detail.sdtNhanVienSale) {
+      contact.href = `tel:${detail.sdtNhanVienSale}`;
+      contact.classList.remove('pointer-events-none', 'opacity-60');
+    } else {
+      contact.href = '#';
+      contact.classList.add('pointer-events-none', 'opacity-60');
+    }
+
+    renderRooms(rooms);
+    document.getElementById('state-box').classList.add('hidden');
+    document.getElementById('detail-content').classList.remove('hidden');
+  }
+
+  async function loadDetail() {
+    hydrateUser();
+    if (!currentScheduleId) {
+      showState('Thiếu mã lịch xem. Mở trang với dạng ChiTietXemPhong.html?id=MaDangKy-STTLich hoặc maDangKy + sttLich.', 'warning');
+      return;
+    }
+
+    try {
+      const detail = await api(`/khach-moi/lich-xem/${encodeURIComponent(currentScheduleId)}`);
+      renderSchedule(detail);
+    } catch (error) {
+      showState(error.message, error.code === 'NO_AUTH' ? 'lock' : 'error');
+    }
+  }
+
+  async function submitAdjustment(thaoTac, thoiGianMoi) {
+    try {
+      await api(`/khach-moi/lich-xem/${encodeURIComponent(currentScheduleId)}/yeu-cau-dieu-chinh`, {
+        method: 'PUT',
+        body: JSON.stringify({ thaoTac, thoiGianMoi })
+      });
+      showToast(thaoTac === 'Hủy' ? 'Đã gửi yêu cầu hủy lịch.' : 'Đã gửi yêu cầu đổi lịch.');
+      await loadDetail();
+    } catch (error) {
+      showToast(error.message);
+    }
+  }
+
+  const modal = document.getElementById('reschedule-modal');
+  document.getElementById('open-reschedule').addEventListener('click', () => modal.classList.add('is-open'));
+  document.getElementById('close-reschedule').addEventListener('click', () => modal.classList.remove('is-open'));
+  document.getElementById('dismiss-reschedule').addEventListener('click', () => modal.classList.remove('is-open'));
+  modal.addEventListener('mousedown', (event) => {
+    if (event.target === modal) modal.classList.remove('is-open');
+  });
+  document.getElementById('reschedule-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const value = document.getElementById('new-time').value;
+    if (!value) return;
+    modal.classList.remove('is-open');
+    await submitAdjustment('Đổi lịch', value);
+  });
+  document.getElementById('cancel-schedule').addEventListener('click', async () => {
+    if (window.confirm('Gửi yêu cầu hủy lịch xem phòng này?')) {
+      await submitAdjustment('Hủy');
+    }
+  });
+
+  loadDetail();
+</script>
+</body>
+</html>

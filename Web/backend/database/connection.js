@@ -191,6 +191,7 @@ const DB_TABLES = [
 ];
 
 const DB_COLUMNS = [
+  "TrangThaiTraPhong",
   "MaPhieuYeuCauDangKy","PhuongThucThanhToan","ThongTinNhanHoanCoc","GhiChuPhanHoiKhach",
   "GiaThueNguyenPhong","ThoiGianDuKienVaoO","TrangThaiThanhToan","TyLeHoanCocHienTai",
   "GiaThueTheoGiuong","SoTienKhachPhaiTT","ThoiGianNhanPhong","ThoiGianXacNhanTT",
@@ -286,6 +287,21 @@ export async function executeQuery(sqlString, parameters = []) {
       return `${sel} ${rest} LIMIT ${limit})`;
     }
   );
+
+  // Protect table/subquery aliases (FROM ... AS tbl, JOIN ... AS tbl, ) AS tbl)
+  pgSql = pgSql.replace(/(\bFROM\s+[^\s,]+|\bJOIN\s+[^\s,]+|\))\s+AS\s+([a-zA-Z_][a-zA-Z0-9_]*)/gi, '$1 __TBL_AS__ $2');
+
+  // Auto-quote AS aliases so PostgreSQL preserves exact casing (camelCase / PascalCase)
+  const SQL_TYPES = new Set([
+    'bit', 'boolean', 'int', 'integer', 'bigint', 'smallint', 'varchar',
+    'nvarchar', 'char', 'nchar', 'decimal', 'numeric', 'float', 'real',
+    'date', 'time', 'timestamp', 'datetime', 'text'
+  ]);
+  pgSql = pgSql.replace(/\bAS\s+([a-zA-Z_][a-zA-Z0-9_]*)(?!["'])/gi, (match, alias) => {
+    if (SQL_TYPES.has(alias.toLowerCase())) return match;
+    return `AS "${alias}"`;
+  });
+  pgSql = pgSql.replace(/__TBL_AS__/g, 'AS');
 
   // Auto-quote known tables so PascalCase names match PostgreSQL
   for (const t of DB_TABLES) {

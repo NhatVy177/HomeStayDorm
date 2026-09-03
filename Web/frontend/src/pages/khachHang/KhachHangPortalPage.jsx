@@ -2648,57 +2648,7 @@ export default function KhachHangPortalPage() {
                 </div>
               )}
 
-              {/* Quyết toán đối soát hoàn cọc */}
-              {selectedHd.hoanCoc && selectedHd.hoanCoc.length > 0 && (
-                <div className="hd-card">
-                  <div className="hd-card-header">
-                    <Icon name="calendar" />
-                    <h3>Quyết toán hoàn cọc khi trả phòng</h3>
-                  </div>
-                  <div className="hd-card-body">
-                    {selectedHd.hoanCoc.map((ds) => (
-                      <div className="hd-settlement-info" key={ds.MaDoiSoat}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #bae6fd', paddingBottom: 10 }}>
-                          <strong>Quyết toán #{ds.MaDoiSoat} (Phiếu trả: {ds.MaPhieuTra})</strong>
-                          <span className={`kh-status-chip kh-status-chip--${ds.TrangThaiDoiSoat === 'Đã quyết toán' ? 'success' : 'warning'}`}>
-                            {ds.TrangThaiDoiSoat}
-                          </span>
-                        </div>
-                        <div className="hd-settlement-grid">
-                          <div>
-                            <div className="hd-summary-row"><span>Tiền cọc ban đầu</span><strong>{formatSettlementMoney(ds.TienCocBanDau)}</strong></div>
-                            <div className="hd-summary-row"><span>Số tháng lưu trú</span><strong>{ds.SoThangLuuTru} tháng</strong></div>
-                            <div className="hd-summary-row"><span>Tỷ lệ hoàn cọc</span><strong>{ds.TyLeHoanCocHienTai}%</strong></div>
-                            <div className="hd-summary-row"><span>Tiền cọc được hoàn</span><strong>{formatSettlementMoney(ds.TienCocDuocHoan)}</strong></div>
-                          </div>
-                          <div>
-                            <div className="hd-summary-row"><span>Tiền thuê còn nợ</span><strong>{formatSettlementMoney(ds.TienThueConNo)}</strong></div>
-                            <div className="hd-summary-row"><span>Tiền dịch vụ còn nợ</span><strong>{formatSettlementMoney(ds.TienDichVuConNo)}</strong></div>
-                            <div className="hd-summary-row"><span>Chi phí hư hại phòng</span><strong>{formatSettlementMoney(ds.TongChiPhiSuaChua)}</strong></div>
-                            <div className="hd-summary-row"><span>Tiền phạt vi phạm</span><strong>{formatSettlementMoney(ds.TienPhat)}</strong></div>
-                          </div>
-                        </div>
-                        <div style={{ marginTop: 15, paddingTop: 10, borderTop: '1px solid #bae6fd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <span style={{ fontSize: 13, color: '#4b5563' }}>Tổng khấu trừ: <strong>{formatSettlementMoney(ds.TongKhauTru)}</strong></span>
-                          </div>
-                          <div>
-                            {ds.LoaiQuyetToan === 'Hoàn cọc' ? (
-                              <span>Khách nhận lại: <strong style={{ color: '#16a34a', fontSize: 18 }}>{formatSettlementMoney(ds.SoTienHoanThucTe)}</strong></span>
-                            ) : ds.LoaiQuyetToan === 'Thu thêm' ? (
-                              <span>Khách phải nộp thêm: <strong style={{ color: '#dc2626', fontSize: 18 }}>{formatSettlementMoney(ds.SoTienKhachPhaiTT)}</strong></span>
-                            ) : (
-                              <strong style={{ color: '#4b5563' }}>Không phát sinh hoàn/nộp</strong>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Quy định hoàn cọc */}
+{/* Quy định hoàn cọc */}
               {selectedHd.quyDinhHoanCoc && selectedHd.quyDinhHoanCoc.length > 0 && (
                 <div className="hd-card">
                   <div className="hd-card-header">

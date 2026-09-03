@@ -1,0 +1,308 @@
+<!DOCTYPE html><html class="light" lang="vi" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Ghi nhận thanh lý hợp đồng thuê - HomestayDorm</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#ffb59c",
+                        "on-primary-fixed-variant": "#004f55",
+                        "surface": "#f8f9fa",
+                        "inverse-primary": "#86d3da",
+                        "secondary-container": "#fe7e50",
+                        "on-secondary-fixed": "#390c00",
+                        "on-secondary-fixed-variant": "#822700",
+                        "on-tertiary-fixed-variant": "#3f4849",
+                        "tertiary-fixed": "#dbe4e5",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f8f9fa",
+                        "primary-fixed": "#a2eff7",
+                        "primary": "#004c52",
+                        "on-primary-container": "#94e1e9",
+                        "primary-container": "#00818a",
+                        "on-surface": "#191c1d",
+                        "on-tertiary-fixed": "#141d1e",
+                        "surface-container-high": "#e7e8e9",
+                        "on-primary-fixed": "#002022",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container": "#edeeef",
+                        "secondary": "#a43c12",
+                        "tertiary-fixed-dim": "#bfc8c9",
+                        "on-secondary-container": "#6b1f00",
+                        "tertiary": "#3d4546",
+                        "primary-fixed-dim": "#86d3da",
+                        "outline": "#6f797a",
+                        "surface-variant": "#e1e3e4",
+                        "secondary-fixed": "#ffdbcf",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-background": "#191c1d",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#545d5e",
+                        "surface-tint": "#076970",
+                        "on-tertiary-container": "#ccd6d6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#3f494a",
+                        "on-error": "#ffffff",
+                        "coral-cta": "#ff7f50",
+                        "surface-dim": "#d9dadb",
+                        "inverse-on-surface": "#f0f1f2",
+                        "outline-variant": "#bec8c9",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2e3132",
+                        "mint-mist": "#f6feff",
+                        "surface-container-low": "#f3f4f5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "xs": "4px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "lg": "48px",
+                        "md": "24px",
+                        "gutter": "24px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Montserrat"],
+                        "body-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "headline-xl-mobile": ["Montserrat"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "headline-lg": ["Montserrat"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "headline-xl-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-panel {
+                @apply bg-surface/80 backdrop-blur-md border border-outline-variant shadow-sm rounded-xl;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-full py-md fixed left-0 top-0 h-screen w-[210px] bg-surface-container-lowest border-r border-outline-variant z-50">
+<div class="px-md mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">HomestayDorm</h1>
+<p class="font-caption text-caption text-on-surface-variant">Staff Portal</p>
+</div>
+<div class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<!-- Navigation Items -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>Dashboard quản lý</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]">payments</span>Xác nhận nhận cọc</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>Xác nhận thanh toán</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]">assignment_return</span>Lập biên bản bàn giao</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]">checklist</span>Lập biên bảng kiểm tra phòng</a>
+<a class="flex items-center gap-3 px-4 py-3 text-primary font-bold border-r-4 border-primary bg-surface-container-high opacity-90 transition-opacity duration-200 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]">contract</span>Ghi nhận thanh lý hợp đồng</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]">edit_notifications</span>Cập nhận dịch vụ</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]">build</span>Bảo trì sửa chữa</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-0 md:ml-[210px] w-full md:w-[calc(100%-210px)] min-h-screen flex flex-col relative">
+<!-- TopNavBar -->
+<header class="sticky top-0 right-0 w-full z-40 bg-surface/80 backdrop-blur-md shadow-sm border-b border-outline-variant flex justify-between items-center h-16 px-md">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary md:hidden">Staff Portal</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-container overflow-hidden border border-outline-variant">
+<img alt="Staff User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALCBIaYxcxW65ISNmamH3KGHnZUncVXFtFHFY-VfegivorI8shL65KcZwQqZwuiciaaX-5Vjo1Iprwy4anqATV1ni3dPtXCo8_FEYSkgvF-FqRaSDUhupqPZTfeEyy7bkZUIz5B2ANQfbrsKoej5InbkLeIuZD3pFlnaMxqIOrKBZFN2GiZNJhUL7b8FJrQj8VIKFh1E-CTXovKvy_HzgTGon3P88VqlGZRLai5na_vD6bJHsRMoe9_eCC9EaNZU4_s6C_sKOfnRU">
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 p-md md:p-lg w-full max-w-[1200px] mx-auto">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Ghi nhận thanh lý hợp đồng thuê</h2>
+
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface text-primary border border-outline-variant rounded-lg hover:bg-surface-container transition-colors shadow-sm font-label-md text-label-md whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+                    Làm mới
+                </button>
+</div>
+<!-- Stats Grid -->
+
+<!-- Filter Section -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-8 shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+<!-- Search Input -->
+<div class="md:col-span-5">
+<label class="block font-label-md text-label-md text-on-surface mb-2" for="search">Tìm kiếm</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2.5 border border-outline-variant rounded-lg bg-surface text-on-surface focus:ring-primary focus:border-primary font-body-md text-body-md" id="search" placeholder="Tìm theo mã phiếu trả phòng, mã hợp đồng hoặc tên khách hàng..." type="text">
+</div>
+</div>
+<!-- Status Dropdown -->
+<div class="md:col-span-3">
+
+
+</div>
+<!-- Location Dropdown -->
+<div class="md:col-span-2">
+
+
+</div>
+<!-- Action Buttons -->
+<div class="md:col-span-2 flex gap-2">
+
+<button class="px-3 py-2.5 bg-surface-container border border-outline-variant text-on-surface-variant rounded-lg hover:bg-surface-container-high transition-colors shadow-sm" title="Xóa lọc">
+
+</button>
+</div>
+</div>
+</div>
+<!-- Data Table Container -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Mã phiếu trả phòng</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Mã hợp đồng</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Khách hàng</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Phòng/Giường</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Ngày trả thực tế</th>
+
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap text-right">Thao tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface font-medium">PTP001</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">HDT001</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface">Nguyễn Minh Anh</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">P.203 - G1, G2</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">20/06/2026</td>
+
+<td class="py-4 px-6 text-right">
+<button class="inline-flex items-center gap-1.5 px-4 py-2 bg-coral-cta text-on-primary rounded-lg hover:opacity-90 transition-opacity font-label-md text-label-md shadow-sm">
+                                        Thanh lý hợp đồng
+                                    </button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface font-medium">PTP002</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">HDT002</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface">Lê Gia Hân</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">P.105 - G2</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">20/06/2026</td>
+
+<td class="py-4 px-6 text-right">
+<button class="inline-flex items-center gap-1.5 px-4 py-2 bg-coral-cta text-on-primary rounded-lg hover:opacity-90 transition-opacity font-label-md text-label-md shadow-sm">
+                                        Thanh lý hợp đồng
+                                    </button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface font-medium">PTP003</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">HDT003</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface">Võ Quốc Bảo</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">P.301 - G1</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">20/06/2026</td>
+
+<td class="py-4 px-6 text-right">
+<button class="inline-flex items-center gap-1.5 px-4 py-2 bg-coral-cta text-on-primary rounded-lg hover:opacity-90 transition-opacity font-label-md text-label-md shadow-sm">
+                                        Thanh lý hợp đồng
+                                    </button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface font-medium">PTP004</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">HDT004</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface">Trần Mai Phương</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">P.402</td>
+<td class="py-4 px-6 font-body-md text-body-md text-on-surface-variant">20/06/2026</td>
+
+<td class="py-4 px-6 text-right">
+<button class="inline-flex items-center gap-1.5 px-4 py-2 bg-coral-cta text-on-primary rounded-lg hover:opacity-90 transition-opacity font-label-md text-label-md shadow-sm">
+                                        Thanh lý hợp đồng
+                                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination (Optional visual indicator for completeness) -->
+<div class="px-6 py-4 border-t border-outline-variant bg-surface-container-low flex items-center justify-between">
+<span class="font-caption text-caption text-on-surface-variant">Hiển thị 1-4 trong 5 kết quả</span>
+<div class="flex gap-1">
+<button class="p-1 rounded text-outline hover:bg-surface-container transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="p-1 px-3 rounded bg-surface border border-outline-variant font-label-md text-label-md text-on-surface">1</button>
+<button class="p-1 px-3 rounded hover:bg-surface-container font-label-md text-label-md text-on-surface-variant transition-colors">2</button>
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+
+
+
+
+
+
+
+</body></html>

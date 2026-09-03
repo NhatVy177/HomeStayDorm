@@ -1,4 +1,17 @@
+# Dependencies
 node_modules/
+
+# Environment files
 .env
 .env.local
+.env.*.local
+
+# Visual Studio & IDE temporary files
+.vs/
+.vscode/
+
+# Build & Archives
+dist/
+build/
 *.zip
+*.log

@@ -776,7 +776,9 @@ export async function getDatCoc(user) {
   const deposits = result.recordset || [];
   if (!deposits.length) return [];
 
-  const maPhieuValues = deposits.map((row) => row.maPhieuCoc).filter(Boolean);
+  const maPhieuValues = deposits.map((row) => row.maPhieuCoc || row.maphieucoc || row.MaPhieuCoc).filter(Boolean);
+  if (!maPhieuValues.length) return deposits;
+
   const detailRequest = pool.request();
   const detailParams = maPhieuValues.map((value, index) => {
     const name = `MaPhieuCoc${index}`;
@@ -816,10 +818,10 @@ export async function getDatCoc(user) {
       ORDER BY ctdc.MaPhieuDatCoc, ctdc.MaChiTietDC;
     `),
     pool.request().query(`
-      SELECT MaQuyDinh, TieuDeNoiQuy, NoiDung
-      FROM dbo.QuiDinh
-      WHERE TrangThai = N'Hiệu lực'
-      ORDER BY MaQuyDinh;
+      SELECT qd.MaQuyDinh AS maQuyDinh, qd.TieuDeNoiQuy AS tieuDeNoiQuy, qd.NoiDung AS noiDung
+      FROM dbo.QuiDinh AS qd
+      WHERE qd.TrangThai = N'Hiệu lực'
+      ORDER BY qd.MaQuyDinh;
     `)
   ]);
 
@@ -835,10 +837,10 @@ export async function getDatCoc(user) {
             return `@${name}`;
           });
           return request.query(`
-            SELECT MaPhong AS maPhong, MaTaiSan AS maTaiSan, TenTaiSan AS tenTaiSan, SoLuong AS soLuong, DonGia AS donGia
-            FROM dbo.TaiSan
-            WHERE MaPhong IN (${params.join(', ')})
-            ORDER BY MaPhong, MaTaiSan;
+            SELECT ts.MaPhong AS maPhong, ts.MaTaiSan AS maTaiSan, ts.TenTaiSan AS tenTaiSan, ts.SoLuong AS soLuong, ts.DonGia AS donGia
+            FROM dbo.TaiSan AS ts
+            WHERE ts.MaPhong IN (${params.join(', ')})
+            ORDER BY ts.MaPhong, ts.MaTaiSan;
           `);
         })(),
         (() => {
@@ -849,10 +851,10 @@ export async function getDatCoc(user) {
             return `@${name}`;
           });
           return request.query(`
-            SELECT MaPhong AS maPhong, STTAnh AS sttAnh, UrlImg AS urlAnh, UrlImg AS urlImg
-            FROM dbo.HinhAnhPhong
-            WHERE MaPhong IN (${params.join(', ')})
-            ORDER BY MaPhong, STTAnh;
+            SELECT hap.MaPhong AS maPhong, hap.STTAnh AS sttAnh, hap.UrlImg AS urlAnh, hap.UrlImg AS urlImg
+            FROM dbo.HinhAnhPhong AS hap
+            WHERE hap.MaPhong IN (${params.join(', ')})
+            ORDER BY hap.MaPhong, hap.STTAnh;
           `);
         })()
       ])
