@@ -45,9 +45,9 @@ export async function getLoaiPhong(req, res, next) {
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
-      SELECT MaLoaiPhong, TenLoaiPhong, SucChuaToiDa, GiaThueTheoGiuong, GiaThueNguyenPhong
-      FROM LoaiPhong
-      ORDER BY MaLoaiPhong
+      SELECT "MaLoaiPhong", "TenLoaiPhong", "SucChuaToiDa", "GiaThueTheoGiuong", "GiaThueNguyenPhong"
+      FROM "LoaiPhong"
+      ORDER BY "MaLoaiPhong"
     `);
     res.json({ data: result.recordset });
   } catch (err) {
